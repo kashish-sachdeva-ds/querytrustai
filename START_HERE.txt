@@ -1,0 +1,14 @@
+QUERYTRUST AI - ANTIGRAVITY START HERE
+
+1) Open a new Antigravity workspace.
+2) Put these files in the workspace root:
+   - PROJECT_SPEC.md
+   - ANTIGRAVITY_MASTER_PROMPT.md
+   - AGENTS.md
+3) Start an Antigravity agent session and paste the complete contents of ANTIGRAVITY_MASTER_PROMPT.md.
+4) Let it perform Milestone 0 first (inspect workspace, create plan, and report it). Review the plan before implementation.
+5) Continue milestone by milestone. Require it to run tests and update docs/BUILD_STATUS.md. Do not ask it to generate the entire app in a single uncontrolled pass.
+6) For a live LLM, configure a provider API key in a local .env file. Antigravity's coding-agent access does not automatically supply runtime credentials to your app. If you have no provider key, the deterministic demo mode should still let you demonstrate the rest of the application.
+7) Never commit .env or real secrets. Use synthetic data only.
+
+Important: this is an implementation specification and acceptance checklist, not a guarantee that an AI coding agent will generate a perfect app in one attempt. Test each milestone and have the agent fix failures before proceeding.

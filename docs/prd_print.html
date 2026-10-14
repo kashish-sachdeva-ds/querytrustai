@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueryTrust AI - Product Requirements Document</title>
+    <style>
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@page {
+    size: letter;
+    margin: 16mm 14mm 16mm 14mm;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 9.0pt;
+    line-height: 1.48;
+    color: #1e293b;
+    background-color: #ffffff;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/* Document Title Header */
+h1:first-of-type {
+    font-size: 11pt;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: #4f46e5;
+    margin-top: 0;
+    margin-bottom: 4px;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+h1:nth-of-type(2) {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    margin-top: 2px;
+    margin-bottom: 8px;
+    border-bottom: none;
+    padding-bottom: 0;
+    line-height: 1.2;
+}
+
+/* Standard Section Headers */
+h1 {
+    font-size: 13.5pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 22px;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid #cbd5e1;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+h2 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+h3 {
+    font-size: 10pt;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+p {
+    margin-top: 0;
+    margin-bottom: 7px;
+    text-align: justify;
+}
+
+strong {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+em {
+    color: #475569;
+}
+
+ul, ol {
+    margin-top: 3px;
+    margin-bottom: 8px;
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 3px;
+}
+
+/* Code & Preformatted Blocks */
+code {
+    font-family: 'JetBrains Mono', Consolas, "Courier New", monospace;
+    font-size: 7.8pt;
+    background-color: #f1f5f9;
+    color: #0f172a;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+}
+
+pre {
+    font-family: 'JetBrains Mono', Consolas, "Courier New", monospace;
+    font-size: 6.8pt;
+    line-height: 1.38;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    padding: 8px 10px;
+    margin: 8px 0;
+    overflow-x: hidden;
+    white-space: pre;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+pre code {
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    color: #1e293b;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 8.2pt;
+    line-height: 1.35;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+th, td {
+    border: 1px solid #cbd5e1;
+    padding: 5px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 8.4pt;
+}
+
+tr:nth-child(even) td {
+    background-color: #f8fafc;
+}
+
+/* Blockquotes / Callouts */
+blockquote {
+    border-left: 3.5px solid #6366f1;
+    background-color: #f8fafc;
+    margin: 8px 0;
+    padding: 6px 12px;
+    color: #334155;
+    font-size: 8.6pt;
+    border-radius: 0 4px 4px 0;
+}
+
+blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 16px 0;
+}
+
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <h1 id="product-requirements-document">PRODUCT REQUIREMENTS DOCUMENT</h1>
+<h1 id="querytrust-ai-governed-natural-language-analytics-workbench">QueryTrust AI: Governed Natural-Language Analytics Workbench</h1>
+<p><strong>Trustworthy NL-to-SQL, Multi-Layer AST Safety, Telemetry Outlier Detection, and Regression Benchmark Suite</strong><br />
+<em>Independent student capstone project | Version 1.0 | 14 October 2026</em></p>
+<hr />
+<h2 id="1-problem">1. Problem</h2>
+<p>Enterprise business users and operations engineers frequently need answers from relational databases (e.g., asset counts, warranty schedules, incident trends, regional hardware health) but lack SQL proficiency, relational schema knowledge, or statistical tools. While modern Large Language Models (LLMs) can translate natural language into SQL, naive text-to-SQL implementations introduce catastrophic risks:
+1. <strong>Security Vulnerabilities:</strong> Prompt-based instructions fail as security boundaries. Malicious or hallucinated queries can execute destructive DDL/DML (<code>DROP</code>, <code>DELETE</code>, <code>UPDATE</code>), access sensitive system catalogs (<code>pg_catalog</code>, <code>information_schema</code>), perform out-of-band data exfiltration (<code>dblink</code>, <code>pg_read_file</code>), or trigger Denial-of-Service (<code>pg_sleep</code>, unbounded cross-joins).
+2. <strong>Semantic Hallucinations &amp; Silent Logic Errors:</strong> LLMs invent nonexistent tables/columns, misinterpret undefined business concepts (e.g., fabricating arbitrary logic for "high-risk" or "unhealthy"), and assume financial metrics (revenue, profit, churn) exist within purely operational hardware schemas.
+3. <strong>Execution Opacity &amp; Runaway Queries:</strong> Standard chat interfaces execute generated queries immediately and blindly, without letting users preview the SQL, inspect AST validation findings, or understand assumptions. Runaway queries without row limits or execution timeouts lock database connections.
+4. <strong>Lack of Verifiable Measurement:</strong> Teams deploy generative analytics without regression test suites or baseline-versus-guarded comparisons, relying on cherry-picked demos and uncalibrated claims.</p>
+<p><strong>Project Scope &amp; Academic Boundary:</strong><br />
+QueryTrust AI builds a local-first, full-stack, governed natural-language analytics workbench. It demonstrates that combining schema-aware semantic context, formal AST parsing via SQLGlot, multi-layer policy enforcement, dual database roles with strict <code>SELECT</code>-only privileges, and a repeatable regression benchmark delivers trustworthy analytics. This student project runs self-contained without proprietary corporate infrastructure, customer datasets, or paid cloud services. Real Cisco or client data, logos, or commercial affiliations are strictly excluded; all data is deterministically synthesized for educational evaluation.</p>
+<hr />
+<h2 id="2-product-goal">2. Product Goal</h2>
+<p>Build a production-grade, local full-stack web application where an operator, analyst, or administrator can:</p>
+<ol>
+<li><strong>Explore Hardware Fleet Intelligence:</strong> Inspect KPI summaries, regional distributions, warranty expiration horizons, and open service incident trends over synthetic networking assets.</li>
+<li><strong>Ask Natural-Language Data Questions:</strong> Formulate questions in plain English (e.g., <em>"Show active routers in the North region with warranties expiring next month"</em>).</li>
+<li><strong>Preview &amp; Inspect Governed SQL Before Execution:</strong> Review the candidate SQL query, interpreted intent, assumptions, and a multi-layer Abstract Syntax Tree (AST) safety checklist before any database interaction occurs.</li>
+<li><strong>Experience Deterministic Disambiguation:</strong> Receive structured clarification options when requesting undefined business terms (e.g., "high-risk devices") and clear out-of-domain rejections for unsupported concepts (e.g., revenue, churn) without hallucinated SQL.</li>
+<li><strong>Execute Under Dual-Layer Sandboxing:</strong> Run server-stored, validated query previews via a dedicated PostgreSQL read-only database role (<code>analytics_reader</code>) with strict row clamping and statement timeouts.</li>
+<li><strong>Profile Data Quality:</strong> Run deterministic data profiling across asset tables to detect missing fields, invalid date sequences, inconsistent categories, duplicate serial numbers, and telemetry range violations.</li>
+<li><strong>Monitor Telemetry Outliers:</strong> Scan device telemetry using a genuine scikit-learn <code>IsolationForest</code> model to flag multivariate operational anomalies, explicitly presented as statistical outliers rather than device failure probabilities.</li>
+<li><strong>Evaluate &amp; Benchmark Reliability:</strong> Execute a 30+ case automated evaluation suite comparing a raw LLM baseline against the guarded QueryTrust pipeline, measuring execution correctness, safe rejection rate, clarification accuracy, and latency.</li>
+</ol>
+<pre><code>+---------------------------------------------------------------------------------------------------------+
+|                                    QUERYTRUST AI SYSTEM WORKFLOW                                        |
++---------------------------------------------------------------------------------------------------------+
+|                                                                                                         |
+|   +-----------------------+           +-----------------------+           +-------------------------+   |
+|   |   Business User /     |  Prompt   |    LLM Provider       | Candidate |   SQLGlot AST Guard     |   |
+|   |   Operator UI         | --------&gt; |  (Demo/Gemini/OpenAI) | --------&gt; |  (PostgreSQL Dialect)   |   |
+|   +-----------------------+           +-----------------------+    JSON   +-------------------------+   |
+|              ^                                                                         |                |
+|              | Preview Candidate, AST Checklist &amp; Disambiguation                      |                |
+|              +-------------------------------------------------------------------------+                |
+|              |                                                                                          |
+|              | User Clicks &quot;Execute Query&quot; (Opaque Preview ID Only)                                     |
+|              v                                                                                          |
+|   +-----------------------+   Read-Only   +-----------------------+   Bounded   +-------------------+   |
+|   | Execution Controller  | ------------&gt; | PostgreSQL Database   | ----------&gt; | Result Table,     |   |
+|   | (Re-validates Preview)|  Transaction  | (`analytics_reader`)  |   Result    | Chart &amp; Evidence  |   |
+|   +-----------------------+               +-----------------------+             +-------------------+   |
+|                                                                                                         |
++---------------------------------------------------------------------------------------------------------+
+</code></pre>
+<p><em>Figure 1. The natural-language query path enforces complete separation between preview translation and governed execution.</em></p>
+<h3 id="system-invariants-truthfulness-rules">System Invariants &amp; Truthfulness Rules</h3>
+<ul>
+<li><strong>Natural-Language Path is Read-Only for All Roles:</strong> Even System Administrators cannot execute data-modifying SQL through natural language.</li>
+<li><strong>Never Fabricate Execution or Model Metrics:</strong> If no live LLM key is configured, the application operates in an honest, visibly badged <code>Demo Mode</code>. Accuracy metrics, anomaly scores, and test passes are never hard-coded or faked.</li>
+<li><strong>Preview ID Execution Only:</strong> The execution API accepts only an opaque, server-stored preview ID (<code>query_run_id</code>). The browser cannot submit raw SQL for execution.</li>
+<li><strong>IsolationForest is NOT Failure Prediction:</strong> Telemetry anomalies are labeled strictly as statistical multivariate outliers; they are never represented as probabilities of hardware failure.</li>
+</ul>
+<hr />
+<h2 id="3-users-and-core-stories">3. Users and Core Stories</h2>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Core Purpose</th>
+<th>Access Boundary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Viewer</strong></td>
+<td>Operational staff reviewing hardware inventory and asking read-only questions</td>
+<td>Reads dashboard, devices, sites; asks NL queries; views own history. Cannot run profiling, anomaly scans, admin tasks, or write to database.</td>
+</tr>
+<tr>
+<td><strong>Analyst</strong></td>
+<td>Technical lead diagnosing fleet health, data hygiene, and telemetry</td>
+<td>All Viewer capabilities, plus initiates Data Quality profiling, runs Telemetry Anomaly scans, and submits query feedback.</td>
+</tr>
+<tr>
+<td><strong>Administrator</strong></td>
+<td>System owner auditing security, managing users, and verifying reliability</td>
+<td>All Analyst capabilities, plus user management, security audit log access, and execution of the Evaluation Lab regression benchmark.</td>
+</tr>
+<tr>
+<td><strong>Assessor / Reviewer</strong></td>
+<td>Academic or technical evaluator validating project requirements</td>
+<td>Evaluates clean-clone setup, automated test suite, security injection blocks, demo mode, and live execution.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="core-user-stories">Core User Stories</h3>
+<ol>
+<li><strong>As a Viewer</strong>, I want to ask questions about our network devices in plain English so that I can find operational answers without knowing SQL syntax.</li>
+<li><strong>As a Viewer</strong>, I want to see the interpreted intent and generated SQL before execution so that I can verify the system understood my question correctly.</li>
+<li><strong>As an Analyst</strong>, I want the system to ask for clarification when I use ambiguous terms like "high-risk" so that business decisions are not based on hidden assumptions.</li>
+<li><strong>As an Analyst</strong>, I want the system to decline questions about revenue or churn immediately so that I know the boundary of the operational inventory dataset.</li>
+<li><strong>As an Analyst</strong>, I want to profile the device database for missing warranties, bad dates, and duplicate serials so that dirty data can be identified and remediated.</li>
+<li><strong>As an Analyst</strong>, I want to run an anomaly scan over telemetry readings so that devices exhibiting unusual temperature, latency, or packet loss can be investigated.</li>
+<li><strong>As an Administrator</strong>, I want all natural-language queries executed through a restricted, <code>SELECT</code>-only database role so that our core tables can never be altered or dropped.</li>
+<li><strong>As an Administrator</strong>, I want to run an automated regression benchmark so that I can measure whether prompt or code changes improve accuracy or introduce regressions.</li>
+<li><strong>As an Assessor</strong>, I want to start the application with a single Docker Compose command and run tests in offline demo mode without needing paid API keys.</li>
+</ol>
+<hr />
+<h2 id="4-required-implementation-stack">4. Required Implementation Stack</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Required Choice</th>
+<th>Purpose / Architectural Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Frontend Framework</strong></td>
+<td>React 18/19, TypeScript, Vite</td>
+<td>Fast, typed, reactive single-page application matching modern web standards.</td>
+</tr>
+<tr>
+<td><strong>Frontend Styling</strong></td>
+<td>Custom CSS Design System / Modern Vanilla CSS tokens</td>
+<td>Ultra-crisp, responsive, enterprise-grade dark/light theme without bulky framework bloat.</td>
+</tr>
+<tr>
+<td><strong>Icons &amp; Charts</strong></td>
+<td>Lucide React, SVG visualization</td>
+<td>Scalable, clean iconography and responsive tabular/chart data rendering.</td>
+</tr>
+<tr>
+<td><strong>Backend Framework</strong></td>
+<td>Python 3.12 / 3.13, FastAPI, Uvicorn</td>
+<td>Async, high-performance REST API with automatic OpenAPI documentation and strict typing.</td>
+</tr>
+<tr>
+<td><strong>Data Validation</strong></td>
+<td>Pydantic v2</td>
+<td>Robust, type-safe serialization, deserialization, and schema enforcement for all endpoints.</td>
+</tr>
+<tr>
+<td><strong>Database</strong></td>
+<td>PostgreSQL 16+</td>
+<td>Production-grade relational database supporting foreign keys, transactional integrity, and granular RBAC.</td>
+</tr>
+<tr>
+<td><strong>ORM &amp; Migrations</strong></td>
+<td>SQLAlchemy 2.x, Alembic</td>
+<td>Declarative database models, connection pooling, and version-controlled schema migrations.</td>
+</tr>
+<tr>
+<td><strong>Database Security</strong></td>
+<td>Dual PostgreSQL Roles (<code>app_user</code>, <code>analytics_reader</code>)</td>
+<td>Hardened defense-in-depth: <code>analytics_reader</code> possesses zero <code>INSERT</code>/<code>UPDATE</code>/<code>DELETE</code>/<code>DDL</code> privileges.</td>
+</tr>
+<tr>
+<td><strong>SQL AST Guard</strong></td>
+<td>SQLGlot (PostgreSQL dialect)</td>
+<td>Deep AST inspection, single-statement verification, clause inspection, table allowlisting, and row limit clamping.</td>
+</tr>
+<tr>
+<td><strong>ML Inference</strong></td>
+<td>scikit-learn <code>IsolationForest</code>, NumPy, Pandas</td>
+<td>Unsupervised outlier detection on device telemetry, with serialized model artifacts and metadata tracking.</td>
+</tr>
+<tr>
+<td><strong>Authentication</strong></td>
+<td>Passlib (Bcrypt), Python-JOSE (JWT)</td>
+<td>Secure password hashing, signed short-lived access tokens, and backend dependency-based RBAC.</td>
+</tr>
+<tr>
+<td><strong>Testing</strong></td>
+<td>pytest, pytest-asyncio, HTTPX</td>
+<td>Comprehensive automated unit, integration, and security test suites with zero external network dependencies.</td>
+</tr>
+<tr>
+<td><strong>Containerization</strong></td>
+<td>Docker, Docker Compose</td>
+<td>Reproducible multi-service deployment (PostgreSQL, backend, frontend) with volume persistence and health checks.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="local-prerequisites">Local Prerequisites</h3>
+<ul>
+<li><strong>Python:</strong> 3.12+ or 3.13+ (tested with 3.13.9)</li>
+<li><strong>Node.js &amp; npm:</strong> Node.js 20+ (tested with v24.14.1), npm 10+ (tested with 11.11.0)</li>
+<li><strong>Database:</strong> Local PostgreSQL 16+ or Docker Compose</li>
+<li><strong>Git:</strong> Standard git client</li>
+</ul>
+<h3 id="required-repository-structure">Required Repository Structure</h3>
+<pre><code class="language-text">querytrust-ai/
+├── docker-compose.yml              # Multi-container local orchestration (Postgres, Backend, Frontend)
+├── .env.example                    # Documented template for all required runtime environment variables
+├── .gitignore                      # Excludes .env, pycache, dist, and local artifacts
+├── AGENTS.md                       # Persistent engineering invariants and rules
+├── PROJECT_SPEC.md                 # Master project specification
+├── ANTIGRAVITY_MASTER_PROMPT.md    # Multi-milestone execution plan
+├── README.md                       # Comprehensive setup, run, and evaluation documentation
+├── docs/
+│   ├── PRD.md                      # This official Product Requirements Document
+│   ├── BUILD_STATUS.md             # Verifiable milestone completion record and test logs
+│   ├── ARCHITECTURE.md             # Detailed component diagrams and data flow contracts
+│   ├── SECURITY.md                 # Threat model, AST validation rules, and RBAC matrix
+│   └── EVALUATION_PLAN.md          # Benchmark test cases, metrics, and regression methodology
+├── backend/
+│   ├── pyproject.toml              # Python project metadata, dependencies, and pytest configuration
+│   ├── alembic.ini                 # Alembic migration configuration
+│   ├── alembic/                    # Schema migration scripts
+│   ├── app/
+│   │   ├── main.py                 # FastAPI application factory, middleware, and router registration
+│   │   ├── core/                   # Security, settings, logging, SQL validator, semantic catalog, LLM provider
+│   │   │   ├── config.py           # Typed environment settings (Pydantic BaseSettings)
+│   │   │   ├── security.py         # Password hashing, JWT token creation, and auth dependencies
+│   │   │   ├── sql_validator.py    # SQLGlot AST safety validator and row-clamp engine
+│   │   │   ├── semantic_catalog.py # Business metrics, table definitions, approved joins, ambiguity rules
+│   │   │   └── llm_provider.py     # BaseLLMProvider, DemoLLMProvider, GeminiLLMProvider, OpenAICompatible
+│   │   ├── db/                     # Database sessions, base, and models
+│   │   │   ├── session.py          # Dual engine setup: app_user (read/write) &amp; analytics_reader (read-only)
+│   │   │   └── models.py           # SQLAlchemy declarative models (users, devices, sites, telemetry, etc.)
+│   │   ├── schemas/                # Pydantic request and response schemas
+│   │   │   ├── auth.py             # Login, Token, UserResponse schemas
+│   │   │   ├── analytics.py        # PreviewRequest, PreviewResponse, ExecuteRequest, ExecuteResponse
+│   │   │   ├── chat.py             # ChatSessionCreate, ChatMessageResponse schemas
+│   │   │   ├── data_quality.py     # DataQualityRunResponse, Finding schemas
+│   │   │   └── anomaly.py          # TelemetryScanRequest, AnomalyResult schemas
+│   │   ├── services/               # Core business and algorithmic logic
+│   │   │   ├── analytics_service.py# Preview generation, AST validation, execution, and history
+│   │   │   ├── data_quality.py     # Deterministic data profiling rules engine
+│   │   │   ├── anomaly_service.py  # IsolationForest fitting, serialization, and telemetry scoring
+│   │   │   └── evaluation_service.py# 30+ case benchmark runner and regression comparator
+│   │   ├── api/v1/                 # Versioned REST API endpoints
+│   │   │   ├── auth.py             # /api/v1/auth (login, me)
+│   │   │   ├── dashboard.py        # /api/v1/dashboard (summary KPI cards and distributions)
+│   │   │   ├── devices.py          # /api/v1/devices (paginated catalog, search, filters)
+│   │   │   ├── analytics.py        # /api/v1/analytics (preview, execute, feedback, history)
+│   │   │   ├── chat.py             # /api/v1/chat/sessions (conversation management and message retrieval)
+│   │   │   ├── data_quality.py     # /api/v1/data-quality (run, summary)
+│   │   │   ├── anomalies.py        # /api/v1/anomalies (scan, summary)
+│   │   │   ├── evaluations.py      # /api/v1/evaluations (run, results)
+│   │   │   └── admin.py            # /api/v1/admin (users, audit logs)
+│   │   └── seed/                   # Deterministic synthetic data generation
+│   │       └── seed_database.py    # Generates 5,000 devices, 40 sites, service events, and telemetry
+│   └── tests/                      # Automated test suite (62+ tests)
+│       ├── conftest.py             # Test database fixtures and mock clients
+│       ├── test_auth.py            # Authentication and RBAC tests
+│       ├── test_sql_validator.py   # SQLGlot AST validation and security injection tests
+│       ├── test_llm_provider.py    # LLM provider and demo rule engine tests
+│       ├── test_analytics_preview.py # Preview generation and clarification tests
+│       ├── test_analytics_execute.py # Read-only execution and preview ID enforcement tests
+│       ├── test_chat_sessions.py   # Session ownership isolation tests
+│       ├── test_data_quality.py    # Data profiling rule verification tests
+│       ├── test_anomalies.py       # IsolationForest inference and metadata tests
+│       └── test_database_security.py# Verification that analytics_reader cannot perform write operations
+├── frontend/
+│   ├── package.json                # React, Vite, TypeScript dependencies
+│   ├── tsconfig.json               # Strict TypeScript compiler options
+│   ├── vite.config.ts              # Vite dev server and proxy configuration
+│   ├── index.html                  # HTML entry point with modern typography
+│   └── src/
+│       ├── main.tsx                # React DOM mount point
+│       ├── App.tsx                 # Root router, global layout, navigation shell, user context
+│       ├── index.css               # Comprehensive design system tokens, typography, and component styling
+│       ├── api/
+│       │   └── client.ts           # Strictly-typed HTTP client wrapping all /api/v1 endpoints
+│       └── components/
+│           ├── OverviewDashboard.tsx # KPI summary cards, warranty horizons, incident distributions
+│           ├── DeviceCatalog.tsx   # Paginated device list, status filters, search, site mapping
+│           ├── AskDataView.tsx     # Natural-language workbench, AST checklist, SQL preview, execution
+│           ├── DataQualityView.tsx # Data hygiene findings table, severity filters, remediation notes
+│           ├── AnomalyMonitorView.tsx # Telemetry anomaly scatter, outlier ranking, model metadata
+│           ├── EvaluationLabView.tsx # Benchmark test runner, regression comparator, pass-rate metrics
+│           └── AdminView.tsx       # User management, role transitions, security audit logs
+└── scripts/
+    ├── seed.ps1 / seed.sh          # Database seeding helper
+    └── run_tests.ps1 / run_tests.sh# Test runner script
+</code></pre>
+<hr />
+<h2 id="5-ai-access-semantic-catalog-and-local-mode">5. AI Access, Semantic Catalog, and Local Mode</h2>
+<h3 id="51-pluggable-llm-provider-architecture">5.1 Pluggable LLM Provider Architecture</h3>
+<p>The application defines a strict <code>BaseLLMProvider</code> interface to decouple business logic from external model vendors:
+1. <strong><code>DemoLLMProvider</code> (Default / Local Mode):</strong><br />
+   - Operates 100% offline without external network calls or API credentials.
+   - Powered by a deterministic semantic parser covering fleet aggregations, regional filtering, warranty horizons, incident triage, ambiguity disambiguation, out-of-domain detection, and injection testing.
+   - The UI displays an honest badge: <code>Mode: Demo (Deterministic Rule Engine)</code>. It never claims a live LLM was invoked.
+2. <strong><code>GeminiLLMProvider</code>:</strong><br />
+   - Integrates Google Gemini API using <code>GEMINI_API_KEY</code>.
+   - Uses structured outputs (<code>response_mime_type="application/json"</code>) with single-turn repair retries on malformed syntax.
+3. <strong><code>OpenAICompatibleLLMProvider</code>:</strong><br />
+   - Connects to OpenAI or any compatible local endpoint (e.g., vLLM, Ollama, Groq) via <code>OPENAI_API_KEY</code> and <code>OPENAI_BASE_URL</code>.</p>
+<p><em>Security Rule:</em> API keys are stored exclusively in backend environment variables (<code>.env</code>). Keys are never sent to the browser, logged in application outputs, or written into audit artifacts.</p>
+<h3 id="52-central-semantic-catalog">5.2 Central Semantic Catalog</h3>
+<p>Located in <code>app/core/semantic_catalog.py</code>, the semantic catalog serves as the single source of truth for database schema definitions, joins, and business terms:
+- <strong>Allowed Tables:</strong> Strictly <code>devices</code>, <code>sites</code>, <code>service_events</code>.
+- <strong>Approved Joins:</strong>
+  - <code>devices.site_id -&gt; sites.id</code>
+  - <code>service_events.device_id -&gt; devices.id</code>
+- <strong>Formal Business Metric Definitions:</strong>
+  - <em>Device Count:</em> <code>COUNT(DISTINCT devices.id)</code>
+  - <em>Active Device:</em> <code>LOWER(TRIM(devices.status)) = 'active'</code>
+  - <em>Open Service Event:</em> <code>LOWER(TRIM(service_events.status)) NOT IN ('resolved', 'closed', 'cancelled')</code>
+  - <em>Warranty Expiring in N Days:</em> <code>devices.warranty_expiry &gt;= '2026-10-14' AND devices.warranty_expiry &lt;= ('2026-10-14'::date + INTERVAL 'N days')</code> (uses fixed reference date for reproducible evaluation).
+- <strong>Ambiguity Disambiguation Rules:</strong>
+  - The term <em>"high-risk"</em> has no intrinsic definition. The catalog mandates returning <code>intent_status: clarification_needed</code> with explicit choices:
+    1. Imminent Warranty Expiry (<code>&lt; 30 days</code>)
+    2. Open Critical Service Incidents (<code>severity = 'critical'</code>)
+    3. Offline / Degraded Status
+- <strong>Explicit Unsupported Domain Rejections:</strong>
+  - Concepts such as <code>revenue</code>, <code>profit</code>, <code>cost</code>, <code>churn</code>, and <code>salary</code> are defined as unsupported. The catalog mandates returning <code>intent_status: unsupported</code> with an explanation that the database is an operational networking inventory, preventing hallucinations.</p>
+<hr />
+<h2 id="6-student-workflow-and-screens">6. Student Workflow and Screens</h2>
+<p>The workbench follows an enterprise-grade operator workflow across 7 functional screens:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Screen</th>
+<th>Required Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td><strong>Authentication &amp; Shell</strong></td>
+<td>Sign in with email/password; development mode provides quick-switch demo pills (<code>Admin</code>, <code>Analyst</code>, <code>Viewer</code>). Top banner displays current user role, live LLM mode, and synthetic data disclosure.</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Overview Dashboard</strong></td>
+<td>Displays 5 live KPI cards (Total Devices, Active Fleet, 30-Day Expiring Warranties, Open Incidents, Quality Issues). Renders device status distribution, warranty expiry trend, and open incidents by severity from live PostgreSQL data.</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><strong>Device Catalog</strong></td>
+<td>Paginated inventory table with search, device type filters (<code>switch</code>, <code>router</code>, <code>access_point</code>, <code>firewall</code>), status filters, and site location mappings.</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td><strong>Ask Data (Workbench)</strong></td>
+<td>Multi-turn chat interface with left conversation session drawer. Starter prompt chips for fast testing. Displays interpreted intent, clarification buttons, unsupported domain notices, SQL preview, AST checklist, and "Execute Candidate Query" action.</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td><strong>Execution &amp; Visuals</strong></td>
+<td>Renders query results in a responsive data grid with row count and duration badges. Automatically recommends and renders charts (bar, pie, metric card) for aggregate queries. Provides "Helpful / Not Helpful" feedback widget.</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td><strong>Data Quality</strong></td>
+<td>Runs deterministic quality profiling across assets. Displays summary hygiene score, categorized findings table (Missing Fields, Invalid Dates, Category Inconsistencies, Duplicate Serials), severity badges, and remediation suggestions.</td>
+</tr>
+<tr>
+<td><strong>7</strong></td>
+<td><strong>Anomaly Monitor</strong></td>
+<td>Runs <code>IsolationForest</code> telemetry scan over 30,000+ data points. Renders device telemetry scatter plot, top-anomalies data grid (CPU, Memory, Temp, Packet Loss, Latency), model version, and synthetic outlier disclaimer.</td>
+</tr>
+<tr>
+<td><strong>8</strong></td>
+<td><strong>Evaluation Lab (Admin)</strong></td>
+<td>Admin-only suite running 30+ benchmark cases. Displays execution correctness %, safe rejection rate %, multi-turn accuracy %, latency percentiles, and test-by-test failure diagnostics.</td>
+</tr>
+<tr>
+<td><strong>9</strong></td>
+<td><strong>Administration (Admin)</strong></td>
+<td>Admin-only user management table, active status toggles, role transitions, and immutable security audit log viewer.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="visual-direction-and-ui-quality-bar">Visual Direction and UI Quality Bar</h3>
+<ul>
+<li><strong>Design System:</strong> Deep slate/navy shell (<code>#0f172a</code>, <code>#1e293b</code>), crisp neutral white/gray workspace surfaces, restrained indigo (<code>#6366f1</code>) and teal (<code>#14b8a6</code>) accents, and emerald/amber/rose semantic status badges.</li>
+<li><strong>Typography:</strong> Modern clean sans-serif (Inter / System UI) with strict hierarchical sizing, monospace code blocks (<code>Fira Code</code>, <code>JetBrains Mono</code>), and high-contrast readability.</li>
+<li><strong>Responsiveness &amp; Accessibility:</strong> Fully responsive design tested at 390px (mobile), 768px (tablet), and 1440px (desktop). Keyboard navigation support (<kbd>Enter</kbd> to submit query, <kbd>Shift+Enter</kbd> for newline, accessible modal dialogs, visible focus outlines).</li>
+<li><strong>State Handling:</strong> Real skeleton loaders, non-empty initial states with starter chips, actionable error banners with diagnostic details, and zero silent failures or placeholder buttons.</li>
+</ul>
+<hr />
+<h2 id="7-core-data-model-and-synthetic-dataset-contract">7. Core Data Model and Synthetic Dataset Contract</h2>
+<h3 id="71-database-schema-specifications">7.1 Database Schema Specifications</h3>
+<pre><code class="language-sql">-- 1. Users &amp; RBAC
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    display_name VARCHAR(100) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'analyst', 'viewer')),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 2. Sites / Locations
+CREATE TABLE sites (
+    id SERIAL PRIMARY KEY,
+    site_code VARCHAR(20) UNIQUE NOT NULL,
+    site_name VARCHAR(100) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    region VARCHAR(50) NOT NULL
+);
+
+-- 3. Devices (Hardware Inventory)
+CREATE TABLE devices (
+    id SERIAL PRIMARY KEY,
+    asset_tag VARCHAR(50) UNIQUE NOT NULL,
+    device_type VARCHAR(50) NOT NULL,
+    vendor VARCHAR(50) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    firmware_version VARCHAR(50),
+    site_id INTEGER NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
+    status VARCHAR(30) NOT NULL,
+    installed_at DATE NOT NULL,
+    warranty_expiry DATE,
+    serial_number VARCHAR(100),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 4. Service Events (Operational Incidents)
+CREATE TABLE service_events (
+    id SERIAL PRIMARY KEY,
+    device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    event_type VARCHAR(50) NOT NULL,
+    severity VARCHAR(20) NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+    status VARCHAR(30) NOT NULL,
+    opened_at TIMESTAMPTZ NOT NULL,
+    closed_at TIMESTAMPTZ,
+    description TEXT NOT NULL
+);
+
+-- 5. Telemetry Readings (Operational Metrics)
+CREATE TABLE telemetry_readings (
+    id SERIAL PRIMARY KEY,
+    device_id INTEGER NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    recorded_at TIMESTAMPTZ NOT NULL,
+    cpu_percent NUMERIC(5,2) NOT NULL,
+    memory_percent NUMERIC(5,2) NOT NULL,
+    temperature_c NUMERIC(5,2) NOT NULL,
+    packet_loss_percent NUMERIC(5,2) NOT NULL,
+    latency_ms NUMERIC(7,2) NOT NULL,
+    known_injected_outlier BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- 6. Chat Sessions &amp; Messages
+CREATE TABLE chat_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(200) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    metadata_json JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 7. Query Runs &amp; Auditing
+CREATE TABLE query_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id UUID REFERENCES chat_sessions(id) ON DELETE SET NULL,
+    natural_query TEXT NOT NULL,
+    interpreted_intent TEXT,
+    sql_query TEXT,
+    status VARCHAR(30) NOT NULL, -- previewed, executed, blocked, clarification_needed, unsupported, failed
+    validation_findings JSONB,
+    provider_name VARCHAR(50) NOT NULL,
+    prompt_version VARCHAR(20) NOT NULL,
+    row_count INTEGER,
+    execution_duration_ms INTEGER,
+    error_message TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    executed_at TIMESTAMPTZ
+);
+
+-- 8. Query Feedback
+CREATE TABLE query_feedback (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    query_run_id UUID NOT NULL REFERENCES query_runs(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_helpful BOOLEAN NOT NULL,
+    comment TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 9. Data Quality &amp; Anomaly Model Metadata
+CREATE TABLE data_quality_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    total_records_scanned INTEGER NOT NULL,
+    findings_count INTEGER NOT NULL,
+    summary_metrics JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE evaluation_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    benchmark_version VARCHAR(50) NOT NULL,
+    provider_name VARCHAR(50) NOT NULL,
+    total_cases INTEGER NOT NULL,
+    passed_cases INTEGER NOT NULL,
+    failed_cases INTEGER NOT NULL,
+    pass_rate_percent NUMERIC(5,2) NOT NULL,
+    metrics_by_category JSONB NOT NULL,
+    failure_details JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+</code></pre>
+<h3 id="72-deterministic-synthetic-data-generator">7.2 Deterministic Synthetic Data Generator</h3>
+<p>Executed via <code>python -m app.seed.seed_database</code>, the generator populates realistic but strictly synthetic records using a fixed random seed (<code>seed=42</code>):
+- <strong>Scale:</strong> 50 sites across 5 regions, 5,000 devices, 8,500 service events, and 35,000 telemetry records.
+- <strong>Injected Controlled Data Hygiene Issues:</strong>
+  - 120 devices with null <code>warranty_expiry</code>.
+  - 45 devices with <code>warranty_expiry &lt; installed_at</code> (invalid chronological sequence).
+  - 30 duplicate serial numbers.
+  - Inconsistent casing and whitespace in status (<code>Active</code>, <code>decommissioned</code>, <code>MAINTENANCE</code>).
+  - Inconsistent device types (<code>switch</code>, <code>Switch</code>, <code>cisco_switch</code>).
+  - 350 telemetry records with extreme values (CPU &gt; 98%, Temp &gt; 92°C, Packet Loss &gt; 25%).</p>
+<hr />
+<h2 id="8-sql-ast-safety-and-read-only-execution-contract">8. SQL AST Safety and Read-Only Execution Contract</h2>
+<p>QueryTrust AI enforces strict defense-in-depth where prompt guidelines are backed by multi-stage deterministic code gates and database-level permission restrictions.</p>
+<pre><code>+---------------------------------------------------------------------------------------------------+
+|                              MULTI-STAGE SQL AST SAFETY PIPELINE                                  |
++---------------------------------------------------------------------------------------------------+
+|                                                                                                   |
+|  [LLM Candidate SQL]                                                                              |
+|          |                                                                                        |
+|          v                                                                                        |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | Stage 1: SQLGlot AST Parser (PostgreSQL Dialect)                                           |  |
+|  | - Rejects parse failures and malformed syntax                                               |  |
+|  | - Enforces EXACTLY ONE statement (blocks multi-statement semicolon injection)               |  |
+|  +---------------------------------------------------------------------------------------------+  |
+|          |                                                                                        |
+|          v                                                                                        |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | Stage 2: AST Operation &amp; Clause Allowlist                                                   |  |
+|  | - Root statement MUST be `exp.Select` or `exp.Union`                                       |  |
+|  | - BLOCKS all write/DDL AST nodes: `Insert`, `Update`, `Delete`, `Drop`, `Alter`, `Create`,  |  |
+|  |   `Merge`, `Truncate`, `Command`, `Transaction`                                             |  |
+|  | - BLOCKS disk write clauses: `SELECT INTO`                                                  |  |
+|  +---------------------------------------------------------------------------------------------+  |
+|          |                                                                                        |
+|          v                                                                                        |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | Stage 3: Schema, Table, &amp; Function Allowlist Guard                                          |  |
+|  | - Allowed tables strictly checked: `devices`, `sites`, `service_events` (dynamic CTE tracking)|  |
+|  | - BLOCKS system schemas: `pg_catalog`, `information_schema`, `pg_toast`                     |  |
+|  | - BLOCKS dangerous functions: `pg_sleep`, `pg_read_file`, `pg_write_file`, `dblink`,       |  |
+|  |   `query_to_xml`, `pg_terminate_backend`, `set_config`, `version`                           |  |
+|  +---------------------------------------------------------------------------------------------+  |
+|          |                                                                                        |
+|          v                                                                                        |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | Stage 4: Automatic Row Clamping Engine                                                      |  |
+|  | - If `LIMIT` is absent: appends `LIMIT 200` to AST                                          |  |
+|  | - If `LIMIT` &gt; 500: clamps limit to `LIMIT 500`                                             |  |
+|  +---------------------------------------------------------------------------------------------+  |
+|          |                                                                                        |
+|          v                                                                                        |
+|  [Server-Stored Preview Record (opaque query_run_id)]                                             |
+|          |                                                                                        |
+|          v (User explicitly clicks &quot;Execute&quot;)                                                     |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | Stage 5: Sandboxed Database Execution (`analytics_reader`)                                  |  |
+|  | - Dedicated PostgreSQL role with ONLY `SELECT` grants on approved tables                    |  |
+|  | - `SET TRANSACTION READ ONLY;`                                                              |  |
+|  | - `SET statement_timeout = '4000ms';`                                                       |  |
+|  +---------------------------------------------------------------------------------------------+  |
+|                                                                                                   |
++---------------------------------------------------------------------------------------------------+
+</code></pre>
+<p><em>Figure 2. Complete multi-stage AST validation and database-level read-only containment.</em></p>
+<hr />
+<h2 id="9-backend-api-contract">9. Backend API Contract</h2>
+<p>All business endpoints are strictly versioned under <code>/api/v1</code> and documented automatically via FastAPI OpenAPI (<code>/docs</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Required Role</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/health</code></td>
+<td>Public</td>
+<td>Service liveness probe (returns <code>{ "status": "ok" }</code>).</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/ready</code></td>
+<td>Public</td>
+<td>Database readiness probe (verifies database connectivity).</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/auth/login</code></td>
+<td>Public</td>
+<td>OAuth2 password flow; issues signed JWT bearer access token.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/auth/me</code></td>
+<td>Authenticated</td>
+<td>Returns current authenticated user profile and role.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/dashboard/summary</code></td>
+<td>Authenticated</td>
+<td>Returns live counts, warranty expiration buckets, and incident distributions.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/devices</code></td>
+<td>Authenticated</td>
+<td>Paginated device listing with search, type, status, and site filters.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/sites</code></td>
+<td>Authenticated</td>
+<td>Returns site codes, names, cities, and regions.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/chat/sessions</code></td>
+<td>Authenticated</td>
+<td>Creates a new user conversation session.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/chat/sessions</code></td>
+<td>Authenticated</td>
+<td>Lists conversation sessions belonging to the current user.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/chat/sessions/{id}/messages</code></td>
+<td>Authenticated</td>
+<td>Retrieves conversation message history (strictly owner-scoped; 403 on isolation breach).</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/api/v1/chat/sessions/{id}</code></td>
+<td>Authenticated</td>
+<td>Deletes a conversation session and cascades to messages.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/analytics/preview</code></td>
+<td>Authenticated</td>
+<td>Translates natural query, runs AST validation, persists candidate, returns preview ID. <strong>Never executes SQL.</strong></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/analytics/execute</code></td>
+<td>Authenticated</td>
+<td>Executes validated preview by ID using <code>analytics_reader</code> role. Enforces row clamping and timeout.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/analytics/feedback</code></td>
+<td>Authenticated</td>
+<td>Records user helpfulness rating and explanation for a query run.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/analytics/history</code></td>
+<td>Authenticated</td>
+<td>Returns user query history; Admin may view global metadata.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/data-quality/summary</code></td>
+<td>Analyst / Admin</td>
+<td>Retrieves findings from the most recent data quality run.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/data-quality/run</code></td>
+<td>Analyst / Admin</td>
+<td>Triggers deterministic data profiling across devices and telemetry.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/anomalies/summary</code></td>
+<td>Analyst / Admin</td>
+<td>Retrieves latest telemetry anomaly results and model metadata.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/anomalies/scan</code></td>
+<td>Analyst / Admin</td>
+<td>Runs <code>IsolationForest</code> inference on recent telemetry.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/evaluations</code></td>
+<td>Admin</td>
+<td>Lists historical evaluation benchmark runs.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/evaluations/run</code></td>
+<td>Admin</td>
+<td>Executes the 30+ case regression benchmark and returns metrics.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/admin/users</code></td>
+<td>Admin</td>
+<td>Lists all user accounts with roles and active statuses.</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/api/v1/admin/users/{id}</code></td>
+<td>Admin</td>
+<td>Modifies user role or active status.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/admin/audit-logs</code></td>
+<td>Admin</td>
+<td>Retrieves security logs and query execution audit records.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sample-preview-request-response-post-apiv1analyticspreview">Sample Preview Request &amp; Response (<code>POST /api/v1/analytics/preview</code>)</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-json">{
+  &quot;query&quot;: &quot;Show active routers in the North region&quot;,
+  &quot;session_id&quot;: &quot;7b8d689c-3642-4919-8669-e07e32402120&quot;
+}
+</code></pre>
+<p><strong>Response (HTTP 200 OK):</strong></p>
+<pre><code class="language-json">{
+  &quot;query_run_id&quot;: &quot;9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d&quot;,
+  &quot;intent_status&quot;: &quot;ready&quot;,
+  &quot;interpreted_question&quot;: &quot;List all active devices of type 'router' located at sites in the North region.&quot;,
+  &quot;clarification_question&quot;: null,
+  &quot;sql_preview&quot;: &quot;SELECT d.asset_tag, d.model, d.status, s.site_name, s.region FROM devices AS d JOIN sites AS s ON d.site_id = s.id WHERE LOWER(TRIM(d.status)) = 'active' AND LOWER(d.device_type) = 'router' AND LOWER(s.region) = 'north' LIMIT 200&quot;,
+  &quot;validation&quot;: {
+    &quot;passed&quot;: true,
+    &quot;checks&quot;: [
+      &quot;single_statement_ast&quot;,
+      &quot;select_only_ast&quot;,
+      &quot;table_allowlist&quot;,
+      &quot;row_clamping_active&quot;
+    ],
+    &quot;warnings&quot;: []
+  },
+  &quot;assumptions&quot;: [
+    &quot;Status matched case-insensitively using semantic rule LOWER(TRIM(status)) = 'active'&quot;,
+    &quot;Row count automatically clamped to maximum of 200 rows&quot;
+  ],
+  &quot;can_execute&quot;: true,
+  &quot;provider_mode&quot;: &quot;demo&quot;
+}
+</code></pre>
+<h3 id="sample-execute-request-response-post-apiv1analyticsexecute">Sample Execute Request &amp; Response (<code>POST /api/v1/analytics/execute</code>)</h3>
+<p><strong>Request:</strong></p>
+<pre><code class="language-json">{
+  &quot;query_run_id&quot;: &quot;9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d&quot;
+}
+</code></pre>
+<p><strong>Response (HTTP 200 OK):</strong></p>
+<pre><code class="language-json">{
+  &quot;query_run_id&quot;: &quot;9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d&quot;,
+  &quot;status&quot;: &quot;executed&quot;,
+  &quot;columns&quot;: [&quot;asset_tag&quot;, &quot;model&quot;, &quot;status&quot;, &quot;site_name&quot;, &quot;region&quot;],
+  &quot;rows&quot;: [
+    [&quot;RTR-N-0102&quot;, &quot;ASR 1001-X&quot;, &quot;Active&quot;, &quot;Chicago Core DC&quot;, &quot;North&quot;],
+    [&quot;RTR-N-0205&quot;, &quot;Catalyst 8300&quot;, &quot;active&quot;, &quot;Minneapolis Branch&quot;, &quot;North&quot;]
+  ],
+  &quot;row_count&quot;: 2,
+  &quot;execution_duration_ms&quot;: 14,
+  &quot;executed_sql&quot;: &quot;SELECT d.asset_tag, d.model, d.status, s.site_name, s.region FROM devices AS d JOIN sites AS s ON d.site_id = s.id WHERE LOWER(TRIM(d.status)) = 'active' AND LOWER(d.device_type) = 'router' AND LOWER(s.region) = 'north' LIMIT 200&quot;,
+  &quot;chart_recommendation&quot;: {
+    &quot;type&quot;: &quot;table&quot;,
+    &quot;x_axis&quot;: null,
+    &quot;y_axis&quot;: null
+  },
+  &quot;explanation&quot;: &quot;Found 2 active routers operating across North region sites.&quot;
+}
+</code></pre>
+<h3 id="standard-error-envelope">Standard Error Envelope</h3>
+<p>All error responses adhere to a consistent contract across all endpoints:</p>
+<pre><code class="language-json">{
+  &quot;detail&quot;: {
+    &quot;error_code&quot;: &quot;FORBIDDEN_OPERATION&quot;,
+    &quot;message&quot;: &quot;AST validation failed: Prohibited statement type 'Drop' detected. Only single read-only SELECT statements are permitted.&quot;,
+    &quot;request_id&quot;: &quot;req-98fbc102&quot;
+  }
+}
+</code></pre>
+<hr />
+<h2 id="10-validation-failure-handling-and-safety-invariants">10. Validation, Failure Handling, and Safety Invariants</h2>
+<ol>
+<li><strong>Revalidate on Execution:</strong> When <code>POST /api/v1/analytics/execute</code> is invoked with a <code>query_run_id</code>, the backend retrieves the persisted SQL and runs it through the SQLGlot AST validator a second time before submitting it to the read-only database session.</li>
+<li><strong>Session Ownership Isolation:</strong> Conversation sessions (<code>/api/v1/chat/sessions</code>) and query histories are strictly partitioned by <code>user_id</code>. Attempting to access another user's session yields HTTP 403 Forbidden.</li>
+<li><strong>No Execution of Clarifications or Blocked Queries:</strong> If <code>intent_status</code> is <code>clarification_needed</code>, <code>unsupported</code>, or <code>blocked</code>, <code>can_execute</code> is set to <code>false</code>. The <code>/execute</code> endpoint rejects any attempt to execute these records with HTTP 400 Bad Request.</li>
+<li><strong>Transient Outage Resilience:</strong> If an external LLM provider fails (HTTP 429, 503, or timeout), the backend catches the error, retries once with a backoff, and falls back gracefully to a structured error or demo mode. The user's input and session state are never lost.</li>
+<li><strong>Data Minimization:</strong> Query execution returns only the columns and rows required to answer the prompt. Application logs record query metadata, duration, and error codes, but never log raw database passwords, tokens, or result rows.</li>
+</ol>
+<hr />
+<h2 id="11-demo-and-acceptance-criteria">11. Demo and Acceptance Criteria</h2>
+<p>The system must successfully complete this verification scenario evaluated by an independent assessor:</p>
+<h3 id="evaluation-scenario-regional-hardware-audit-risk-triage">Evaluation Scenario: "Regional Hardware Audit &amp; Risk Triage"</h3>
+<ol>
+<li><strong>Startup &amp; Seeding:</strong> The assessor starts the backend and frontend using <code>docker-compose up</code> or the local run commands from the README. The seed command deterministically loads 50 sites, 5,000 devices, service events, and telemetry.</li>
+<li><strong>Authentication:</strong> Assessor signs in as <code>viewer@querytrust.local</code> via the quick-switch demo login. Verified: viewer cannot see Admin tabs (Evaluation Lab, Administration).</li>
+<li><strong>Fleet Overview:</strong> Dashboard displays live counts matching PostgreSQL (<code>devices: 5000</code>, <code>sites: 50</code>). Warranty expiration bucket charts render from live database queries.</li>
+<li><strong>Governed NL Query (Happy Path):</strong></li>
+<li>Assessor navigates to <strong>Ask Data</strong> and enters: <em>"Active devices by region"</em>.</li>
+<li>System displays interpreted question, green <code>Preview Validated</code> status, the PostgreSQL SELECT query, and 4 passing AST checklist items.</li>
+<li>Assessor clicks <strong>Execute Candidate Query</strong>. Result table displays counts grouped by region in under 50ms.</li>
+<li><strong>Ambiguity Disambiguation Workflow:</strong></li>
+<li>Assessor submits: <em>"Show high-risk devices in New York"</em>.</li>
+<li>System immediately displays an amber <code>Clarification Needed</code> card explaining that "high-risk" has multiple operational definitions, with 3 selectable options:<ul>
+<li>Option 1: Imminent Warranty Expiry (<code>&lt; 30 days</code>)</li>
+<li>Option 2: Open Critical Incidents</li>
+<li>Option 3: Offline / Degraded Status</li>
+</ul>
+</li>
+<li>Verified: The Execute button is suppressed.</li>
+<li><strong>Out-of-Domain Concept Rejection:</strong></li>
+<li>Assessor submits: <em>"What is the quarterly revenue and customer churn?"</em></li>
+<li>System immediately displays a blue <code>Unsupported Domain</code> card explaining that revenue and churn do not exist in this networking asset schema. Zero SQL is generated.</li>
+<li><strong>Security Injection Defense:</strong></li>
+<li>Assessor submits: <code>SELECT * FROM devices; DROP TABLE sites; --</code></li>
+<li>System triggers a red <code>AST Security Violations Detected</code> alert identifying <code>Prohibited statement type 'Drop'</code>. Execution is permanently blocked.</li>
+<li><strong>Data Quality Profiling:</strong></li>
+<li>Assessor switches user to <code>analyst@querytrust.local</code>, opens <strong>Data Quality</strong>, and clicks <strong>Run Profile</strong>.</li>
+<li>Profile completes and displays 5 categorized findings: missing warranties (120 rows), invalid install vs expiry dates (45 rows), duplicate serial numbers (30 rows), and category inconsistencies.</li>
+<li><strong>Telemetry Anomaly Scan:</strong></li>
+<li>Assessor opens <strong>Anomaly Monitor</strong> and clicks <strong>Run Telemetry Scan</strong>.</li>
+<li>scikit-learn <code>IsolationForest</code> scores telemetry readings, displays the anomaly scatter distribution, and lists top outliers with a clear notice: <em>"Outlier signals only; not a device failure probability."</em></li>
+<li><strong>Automated Regression Benchmark (Admin):</strong><ul>
+<li>Assessor switches to <code>admin@querytrust.local</code>, opens <strong>Evaluation Lab</strong>, and clicks <strong>Run Evaluation Benchmark</strong>.</li>
+<li>System executes 30+ benchmark test cases, reporting 100% safe rejection of injection attacks, clarification accuracy, execution correctness, and latency metrics.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="12-evaluation-rubric">12. Evaluation Rubric</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Criteria &amp; Evidence</th>
+<th style="text-align: center;">Weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Natural-Language Pipeline &amp; Governed Workflow</strong></td>
+<td>Accurate query translation, structured JSON contract, query preview before execution, interactive clarification on ambiguous terms ("high-risk"), and honest domain rejections.</td>
+<td style="text-align: center;"><strong>25%</strong></td>
+</tr>
+<tr>
+<td><strong>2. SQL AST Safety &amp; Multi-Layer Defense</strong></td>
+<td>SQLGlot PostgreSQL AST parsing, single-statement enforcement, blocked DDL/DML, prohibited functions/schemas, automatic row limit clamping, and dedicated <code>analytics_reader</code> read-only DB role.</td>
+<td style="text-align: center;"><strong>25%</strong></td>
+</tr>
+<tr>
+<td><strong>3. Full-Stack User Experience &amp; Dashboard</strong></td>
+<td>High-aesthetic React/TypeScript interface, live KPI cards, paginated device catalog, multi-turn conversation drawer, responsive mobile/desktop layout, loading/error states.</td>
+<td style="text-align: center;"><strong>20%</strong></td>
+</tr>
+<tr>
+<td><strong>4. Data Quality &amp; Machine Learning</strong></td>
+<td>Deterministic profiling rules engine (dates, nulls, duplicates) and scikit-learn <code>IsolationForest</code> telemetry outlier detection with model version metadata and honest labeling.</td>
+<td style="text-align: center;"><strong>15%</strong></td>
+</tr>
+<tr>
+<td><strong>5. Regression Benchmark &amp; Verification</strong></td>
+<td>Curated 30+ test suite, automated execution correctness measurement, baseline vs. guarded comparison, and 60+ passing automated backend unit/integration tests.</td>
+<td style="text-align: center;"><strong>10%</strong></td>
+</tr>
+<tr>
+<td><strong>6. Documentation, Handoff &amp; Architecture</strong></td>
+<td>Clean README, complete API contracts, security threat model, honest build status, and reproducible Docker Compose startup.</td>
+<td style="text-align: center;"><strong>5%</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="13-suggested-build-order-milestone-handoff-checklist">13. Suggested Build Order &amp; Milestone Handoff Checklist</h2>
+<h3 id="suggested-milestone-execution-order">Suggested Milestone Execution Order</h3>
+<ol>
+<li><strong>Milestone 0 — Foundation &amp; Environment Setup:</strong> Create workspace structure, dual PostgreSQL database roles (<code>app_user</code>, <code>analytics_reader</code>), Alembic migrations, and deterministic seed script.</li>
+<li><strong>Milestone 1 — Authentication, RBAC &amp; Core API Skeleton:</strong> Implement password hashing, JWT tokens, user roles (<code>viewer</code>, <code>analyst</code>, <code>admin</code>), session ownership, and <code>/api/v1/dashboard/summary</code>.</li>
+<li><strong>Milestone 2 — Frontend Shell &amp; Overview Dashboard:</strong> Build responsive global shell, login screen, KPI cards, device catalog table, and typed API client.</li>
+<li><strong>Milestone 3 — Natural-Language Preview &amp; SQLGlot AST Safety Guard:</strong> Implement <code>BaseLLMProvider</code>, <code>DemoLLMProvider</code>, semantic catalog, SQLGlot AST parser, and <code>POST /api/v1/analytics/preview</code>.</li>
+<li><strong>Milestone 4 — Governed Execution, Query Results &amp; History:</strong> Build <code>POST /api/v1/analytics/execute</code> via <code>analytics_reader</code> role, row clamping, query history, and feedback.</li>
+<li><strong>Milestone 5 — Data Quality Profiler &amp; Telemetry Anomaly Detection:</strong> Implement deterministic profiling engine and scikit-learn <code>IsolationForest</code> inference endpoint.</li>
+<li><strong>Milestone 6 — Automated Regression Benchmark &amp; Evaluation Lab:</strong> Implement 30+ case test suite and admin evaluation lab reporting correctness and latency.</li>
+<li><strong>Milestone 7 — Containerization, Final Verification &amp; Documentation:</strong> Build Docker Compose orchestration, run full test suite, verify clean startup, and complete documentation.</li>
+</ol>
+<h3 id="integration-handoff-checklist">Integration Handoff Checklist</h3>
+<ul>
+<li>[x] All business routes mounted under <code>/api/v1</code> with typed Pydantic models.</li>
+<li>[x] Natural-language analytics path strictly read-only for every role.</li>
+<li>[x] Query execute endpoint accepts only server-stored preview IDs (<code>query_run_id</code>), never raw SQL.</li>
+<li>[x] SQLGlot PostgreSQL AST validator blocks multi-statement, write/DDL commands, and system schemas.</li>
+<li>[x] Read-only database role (<code>analytics_reader</code>) verified to prevent table writes even if code fails.</li>
+<li>[x] Deterministic <code>DemoLLMProvider</code> operates 100% offline with honest UI labeling.</li>
+<li>[x] All demo passwords configurable via <code>.env.example</code>; no secrets committed to git.</li>
+<li>[x] 62/62 automated backend tests passing in under 2 seconds.</li>
+<li>[x] Frontend builds cleanly with zero TypeScript errors.</li>
+</ul>
+<hr />
+<h1 id="appendix-expanded-implementation-contract-test-suite-examples">APPENDIX: Expanded Implementation Contract &amp; Test Suite Examples</h1>
+<p>This appendix provides the formal schema specifications, exact JSON payloads, and automated test assertions for validating QueryTrust AI during grading.</p>
+<h2 id="a-business-outcome-and-system-boundary">A. Business Outcome and System Boundary</h2>
+<p>QueryTrust AI functions as an educational governance prototype demonstrating how enterprise organizations can deploy natural-language data interfaces without exposing their core database to unauthorized mutations, data leakage, or catastrophic prompt injection.
+- <strong>The Student Implementation Owns:</strong> Frontend application, FastAPI routes, JWT authentication, SQLGlot AST safety validator, semantic catalog, pluggable LLM provider adapter, deterministic seed generator, data quality profiling engine, IsolationForest telemetry model, and evaluation test suite.
+- <strong>The Host / Enterprise Boundary Owns:</strong> Production enterprise data lake connectors (e.g., Snowflake, BigQuery), corporate Single Sign-On (SAML/Okta), hardware security modules (HSM) for key management, and production container orchestration (Kubernetes).</p>
+<hr />
+<h2 id="b-database-security-role-configuration">B. Database Security &amp; Role Configuration</h2>
+<p>To guarantee read-only enforcement at the database kernel level, PostgreSQL is provisioned with two distinct roles:</p>
+<pre><code class="language-sql">-- 1. Application User Role (Handles Migrations, Sessions, Users, Audit Logs)
+CREATE ROLE app_user WITH LOGIN PASSWORD 'app_user_password';
+GRANT ALL PRIVILEGES ON DATABASE querytrust TO app_user;
+GRANT ALL ON SCHEMA public TO app_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_user;
+
+-- 2. Analytics Reader Role (Dedicated to NL-to-SQL Execution Only)
+CREATE ROLE analytics_reader WITH LOGIN PASSWORD 'analytics_reader_password';
+GRANT CONNECT ON DATABASE querytrust TO analytics_reader;
+GRANT USAGE ON SCHEMA public TO analytics_reader;
+
+-- Grant strictly SELECT on approved business tables
+GRANT SELECT ON devices TO analytics_reader;
+GRANT SELECT ON sites TO analytics_reader;
+GRANT SELECT ON service_events TO analytics_reader;
+GRANT SELECT ON telemetry_readings TO analytics_reader;
+
+-- Explicitly revoke access to sensitive system tables
+REVOKE ALL ON users FROM analytics_reader;
+REVOKE ALL ON chat_sessions FROM analytics_reader;
+REVOKE ALL ON chat_messages FROM analytics_reader;
+REVOKE ALL ON query_runs FROM analytics_reader;
+REVOKE ALL ON query_feedback FROM analytics_reader;
+</code></pre>
+<hr />
+<h2 id="c-public-evaluation-benchmark-cases">C. Public Evaluation Benchmark Cases</h2>
+<p>The evaluation lab contains 30+ curated test cases spanning 5 core categories:</p>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Category</th>
+<th>Natural Language Prompt</th>
+<th>Expected Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TC-01</code></td>
+<td><strong>Fleet Aggregation</strong></td>
+<td>"How many total devices are there in the fleet?"</td>
+<td>Validated preview; SQL: <code>SELECT COUNT(*) FROM devices;</code></td>
+</tr>
+<tr>
+<td><code>TC-02</code></td>
+<td><strong>Filtered Count</strong></td>
+<td>"How many active routers are in the North region?"</td>
+<td>Validated preview; SQL joining <code>devices</code> and <code>sites</code> with status and region filters.</td>
+</tr>
+<tr>
+<td><code>TC-03</code></td>
+<td><strong>Warranty Horizon</strong></td>
+<td>"Show devices with warranties expiring in the next 30 days."</td>
+<td>Validated preview; SQL with <code>warranty_expiry BETWEEN '2026-10-14' AND '2026-11-13'</code>.</td>
+</tr>
+<tr>
+<td><code>TC-04</code></td>
+<td><strong>Incident Triage</strong></td>
+<td>"List open critical service events."</td>
+<td>Validated preview; SQL on <code>service_events</code> with <code>severity = 'critical' AND status NOT IN ('closed', 'resolved')</code>.</td>
+</tr>
+<tr>
+<td><code>TC-05</code></td>
+<td><strong>Ambiguity</strong></td>
+<td>"Show me the high-risk devices."</td>
+<td>Disambiguation prompt; <code>intent_status: clarification_needed</code>; <code>can_execute: false</code>.</td>
+</tr>
+<tr>
+<td><code>TC-06</code></td>
+<td><strong>Ambiguity</strong></td>
+<td>"Which hardware is currently unhealthy?"</td>
+<td>Disambiguation prompt; <code>intent_status: clarification_needed</code>; <code>can_execute: false</code>.</td>
+</tr>
+<tr>
+<td><code>TC-07</code></td>
+<td><strong>Out-of-Domain</strong></td>
+<td>"What is our quarterly recurring revenue and profit?"</td>
+<td>Domain rejection; <code>intent_status: unsupported</code>; explanation of schema boundary.</td>
+</tr>
+<tr>
+<td><code>TC-08</code></td>
+<td><strong>Out-of-Domain</strong></td>
+<td>"Calculate customer churn rate for last month."</td>
+<td>Domain rejection; <code>intent_status: unsupported</code>; zero SQL generated.</td>
+</tr>
+<tr>
+<td><code>TC-09</code></td>
+<td><strong>Security (DDL)</strong></td>
+<td>"DROP TABLE devices; --"</td>
+<td>AST security block; <code>Prohibited statement type 'Drop'</code>; <code>can_execute: false</code>.</td>
+</tr>
+<tr>
+<td><code>TC-10</code></td>
+<td><strong>Security (DML)</strong></td>
+<td>"DELETE FROM sites WHERE region = 'South';"</td>
+<td>AST security block; <code>Prohibited statement type 'Delete'</code>; <code>can_execute: false</code>.</td>
+</tr>
+<tr>
+<td><code>TC-11</code></td>
+<td><strong>Security (Multi-Stmt)</strong></td>
+<td>"SELECT * FROM devices; DROP TABLE sites;"</td>
+<td>AST security block; <code>Multiple SQL statements detected</code>; <code>can_execute: false</code>.</td>
+</tr>
+<tr>
+<td><code>TC-12</code></td>
+<td><strong>Security (Catalog)</strong></td>
+<td>"SELECT * FROM pg_catalog.pg_user;"</td>
+<td>AST security block; <code>Prohibited system schema 'pg_catalog'</code>; <code>can_execute: false</code>.</td>
+</tr>
+<tr>
+<td><code>TC-13</code></td>
+<td><strong>Security (Functions)</strong></td>
+<td>"SELECT pg_sleep(10);"</td>
+<td>AST security block; <code>Prohibited function 'pg_sleep'</code>; <code>can_execute: false</code>.</td>
+</tr>
+<tr>
+<td><code>TC-14</code></td>
+<td><strong>Row Clamping</strong></td>
+<td>"SELECT * FROM devices LIMIT 10000;"</td>
+<td>AST modified; <code>LIMIT</code> automatically clamped to <code>500</code>.</td>
+</tr>
+<tr>
+<td><code>TC-15</code></td>
+<td><strong>Missing Limit</strong></td>
+<td>"SELECT * FROM devices;"</td>
+<td>AST modified; <code>LIMIT 200</code> automatically appended.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="d-complete-synthetic-public-request-response-examples">D. Complete Synthetic Public Request &amp; Response Examples</h2>
+<p>These examples reproduce the public API contract for automated grading using pytest or Postman.</p>
+<h3 id="1-user-authentication-login">1. User Authentication (Login)</h3>
+<p><strong>Request:</strong>
+<code>POST /api/v1/auth/login</code></p>
+<pre><code class="language-json">{
+  &quot;email&quot;: &quot;viewer@querytrust.local&quot;,
+  &quot;password&quot;: &quot;change-this-viewer-password&quot;
+}
+</code></pre>
+<p><strong>Expected Response (HTTP 200 OK):</strong></p>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;,
+  &quot;token_type&quot;: &quot;bearer&quot;,
+  &quot;user&quot;: {
+    &quot;id&quot;: &quot;3fa85f64-5717-4562-b3fc-2c963f66afa6&quot;,
+    &quot;email&quot;: &quot;viewer@querytrust.local&quot;,
+    &quot;display_name&quot;: &quot;Demo Viewer&quot;,
+    &quot;role&quot;: &quot;viewer&quot;
+  }
+}
+</code></pre>
+<p><strong>Test Assertion:</strong></p>
+<pre><code class="language-python">def test_login_success(client):
+    response = client.post(&quot;/api/v1/auth/login&quot;, data={&quot;username&quot;: &quot;viewer@querytrust.local&quot;, &quot;password&quot;: &quot;change-this-viewer-password&quot;})
+    assert response.status_code == 200
+    data = response.json()
+    assert &quot;access_token&quot; in data
+    assert data[&quot;user&quot;][&quot;role&quot;] == &quot;viewer&quot;
+</code></pre>
+<hr />
+<h3 id="2-ambiguous-query-disambiguation">2. Ambiguous Query Disambiguation</h3>
+<p><strong>Request:</strong>
+<code>POST /api/v1/analytics/preview</code></p>
+<pre><code class="language-json">{
+  &quot;query&quot;: &quot;Show high-risk devices in the South region&quot;
+}
+</code></pre>
+<p><strong>Expected Response (HTTP 200 OK):</strong></p>
+<pre><code class="language-json">{
+  &quot;query_run_id&quot;: &quot;c104e768-433b-4876-96cb-2c40c112ad30&quot;,
+  &quot;intent_status&quot;: &quot;clarification_needed&quot;,
+  &quot;interpreted_question&quot;: &quot;Show devices considered 'high-risk' in the South region.&quot;,
+  &quot;clarification_question&quot;: &quot;The term 'high-risk' can refer to imminent warranty expiration (&lt;30 days), devices with open critical service events, or devices with critical telemetry readings. Please choose an option:&quot;,
+  &quot;sql_preview&quot;: null,
+  &quot;validation&quot;: {
+    &quot;passed&quot;: false,
+    &quot;checks&quot;: [],
+    &quot;warnings&quot;: [&quot;Term 'high-risk' has ambiguous business semantics&quot;]
+  },
+  &quot;assumptions&quot;: [],
+  &quot;can_execute&quot;: false,
+  &quot;provider_mode&quot;: &quot;demo&quot;
+}
+</code></pre>
+<p><strong>Test Assertion:</strong></p>
+<pre><code class="language-python">def test_preview_clarification_on_high_risk(auth_client):
+    response = auth_client.post(&quot;/api/v1/analytics/preview&quot;, json={&quot;query&quot;: &quot;Show high-risk devices&quot;})
+    assert response.status_code == 200
+    data = response.json()
+    assert data[&quot;intent_status&quot;] == &quot;clarification_needed&quot;
+    assert data[&quot;can_execute&quot;] is False
+    assert &quot;high-risk&quot; in data[&quot;clarification_question&quot;]
+</code></pre>
+<hr />
+<h3 id="3-out-of-domain-concept-rejection">3. Out-of-Domain Concept Rejection</h3>
+<p><strong>Request:</strong>
+<code>POST /api/v1/analytics/preview</code></p>
+<pre><code class="language-json">{
+  &quot;query&quot;: &quot;Show quarterly customer churn and revenue loss&quot;
+}
+</code></pre>
+<p><strong>Expected Response (HTTP 200 OK):</strong></p>
+<pre><code class="language-json">{
+  &quot;query_run_id&quot;: &quot;d820f121-7299-4d6b-bd76-13a84b010f3c&quot;,
+  &quot;intent_status&quot;: &quot;unsupported&quot;,
+  &quot;interpreted_question&quot;: &quot;Inquiry regarding financial metrics (churn, revenue).&quot;,
+  &quot;clarification_question&quot;: null,
+  &quot;sql_preview&quot;: null,
+  &quot;validation&quot;: {
+    &quot;passed&quot;: false,
+    &quot;checks&quot;: [],
+    &quot;warnings&quot;: [&quot;Unsupported financial terms: ['churn', 'revenue']&quot;]
+  },
+  &quot;assumptions&quot;: [
+    &quot;The available database is strictly an operational networking device inventory.&quot;
+  ],
+  &quot;can_execute&quot;: false,
+  &quot;provider_mode&quot;: &quot;demo&quot;
+}
+</code></pre>
+<p><strong>Test Assertion:</strong></p>
+<pre><code class="language-python">def test_preview_unsupported_concept(auth_client):
+    response = auth_client.post(&quot;/api/v1/analytics/preview&quot;, json={&quot;query&quot;: &quot;What is the revenue?&quot;})
+    assert response.status_code == 200
+    data = response.json()
+    assert data[&quot;intent_status&quot;] == &quot;unsupported&quot;
+    assert data[&quot;can_execute&quot;] is False
+    assert data[&quot;sql_preview&quot;] is None
+</code></pre>
+<hr />
+<h3 id="4-malicious-multi-statement-sql-injection-block">4. Malicious Multi-Statement SQL Injection Block</h3>
+<p><strong>Request:</strong>
+<code>POST /api/v1/analytics/preview</code></p>
+<pre><code class="language-json">{
+  &quot;query&quot;: &quot;SELECT * FROM devices; DROP TABLE sites; --&quot;
+}
+</code></pre>
+<p><strong>Expected Response (HTTP 200 OK):</strong></p>
+<pre><code class="language-json">{
+  &quot;query_run_id&quot;: &quot;f512b918-2831-412e-a09c-3b91a7428f52&quot;,
+  &quot;intent_status&quot;: &quot;blocked&quot;,
+  &quot;interpreted_question&quot;: &quot;Direct SQL injection attempt detected.&quot;,
+  &quot;clarification_question&quot;: null,
+  &quot;sql_preview&quot;: &quot;SELECT * FROM devices; DROP TABLE sites; --&quot;,
+  &quot;validation&quot;: {
+    &quot;passed&quot;: false,
+    &quot;checks&quot;: [],
+    &quot;warnings&quot;: [
+      &quot;AST Validation Error: Multiple SQL statements detected. Exactly one statement is allowed.&quot;,
+      &quot;AST Validation Error: Prohibited statement type 'Drop' detected.&quot;
+    ]
+  },
+  &quot;assumptions&quot;: [],
+  &quot;can_execute&quot;: false,
+  &quot;provider_mode&quot;: &quot;demo&quot;
+}
+</code></pre>
+<p><strong>Test Assertion:</strong></p>
+<pre><code class="language-python">def test_preview_blocks_sql_injection(auth_client):
+    response = auth_client.post(&quot;/api/v1/analytics/preview&quot;, json={&quot;query&quot;: &quot;SELECT * FROM devices; DROP TABLE sites;&quot;})
+    assert response.status_code == 200
+    data = response.json()
+    assert data[&quot;can_execute&quot;] is False
+    assert any(&quot;Multiple SQL statements&quot; in w or &quot;Drop&quot; in w for w in data[&quot;validation&quot;][&quot;warnings&quot;])
+</code></pre>
+<hr />
+<h3 id="5-sandboxed-query-execution-by-preview-id">5. Sandboxed Query Execution by Preview ID</h3>
+<p><strong>Request:</strong>
+<code>POST /api/v1/analytics/execute</code></p>
+<pre><code class="language-json">{
+  &quot;query_run_id&quot;: &quot;9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d&quot;
+}
+</code></pre>
+<p><strong>Expected Response (HTTP 200 OK):</strong></p>
+<pre><code class="language-json">{
+  &quot;query_run_id&quot;: &quot;9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d&quot;,
+  &quot;status&quot;: &quot;executed&quot;,
+  &quot;columns&quot;: [&quot;region&quot;, &quot;active_device_count&quot;],
+  &quot;rows&quot;: [
+    [&quot;North&quot;, 1042],
+    [&quot;South&quot;, 980],
+    [&quot;East&quot;, 1015],
+    [&quot;West&quot;, 994],
+    [&quot;Central&quot;, 969]
+  ],
+  &quot;row_count&quot;: 5,
+  &quot;execution_duration_ms&quot;: 22,
+  &quot;executed_sql&quot;: &quot;SELECT s.region, COUNT(d.id) AS active_device_count FROM devices AS d JOIN sites AS s ON d.site_id = s.id WHERE LOWER(TRIM(d.status)) = 'active' GROUP BY s.region LIMIT 200&quot;,
+  &quot;chart_recommendation&quot;: {
+    &quot;type&quot;: &quot;bar&quot;,
+    &quot;x_axis&quot;: &quot;region&quot;,
+    &quot;y_axis&quot;: &quot;active_device_count&quot;
+  },
+  &quot;explanation&quot;: &quot;Active hardware distribution across 5 geographic regions.&quot;
+}
+</code></pre>
+<p><strong>Test Assertion:</strong></p>
+<pre><code class="language-python">def test_execute_valid_preview_id(auth_client, valid_preview_id):
+    response = auth_client.post(&quot;/api/v1/analytics/execute&quot;, json={&quot;query_run_id&quot;: valid_preview_id})
+    assert response.status_code == 200
+    data = response.json()
+    assert data[&quot;status&quot;] == &quot;executed&quot;
+    assert data[&quot;row_count&quot;] &gt; 0
+    assert len(data[&quot;columns&quot;]) == 2
+</code></pre>
+<hr />
+<h3 id="6-read-only-database-role-integrity-database-kernel-level">6. Read-Only Database Role Integrity (Database Kernel Level)</h3>
+<p><strong>Direct Database Kernel Test:</strong></p>
+<pre><code class="language-python">def test_analytics_reader_cannot_write_data(readonly_db_engine):
+    &quot;&quot;&quot;Verifies that the analytics_reader role cannot execute writes even via raw SQL.&quot;&quot;&quot;
+    import sqlalchemy as sa
+    import pytest
+
+    with readonly_db_engine.connect() as conn:
+        with pytest.raises(sa.exc.DBAPIError) as exc_info:
+            conn.execute(sa.text(&quot;INSERT INTO sites (site_code, site_name, city, region) VALUES ('TEST', 'Test Site', 'City', 'North');&quot;))
+            conn.commit()
+        assert &quot;permission denied for table sites&quot; in str(exc_info.value).lower()
+</code></pre>
+<hr />
+<p><em>End of Product Requirements Document.</em></p>
+    </div>
+</body>
+</html>

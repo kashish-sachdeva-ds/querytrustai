@@ -495,3 +495,304 @@ export async function fetchQueryHistory(
   }
   return res.json()
 }
+
+// ==========================================
+// DATA QUALITY API CLIENT
+// ==========================================
+
+export interface DataQualityFindingItem {
+  id: string
+  run_id: string
+  table_name: string
+  column_name?: string | null
+  rule_id: string
+  rule_name: string
+  severity: 'critical' | 'high' | 'medium' | 'low'
+  affected_rows: number
+  total_rows: number
+  affected_percentage: number
+  example_identifiers: string[]
+  suggested_action: string
+  created_at: string
+}
+
+export interface DataQualityRunSummary {
+  id: string
+  triggered_by?: string | null
+  status: string
+  total_findings: number
+  critical_count: number
+  high_count: number
+  medium_count: number
+  low_count: number
+  total_records_analyzed: number
+  overall_health_score: number
+  created_at: string
+  completed_at?: string | null
+}
+
+export interface DataQualityRunResponse {
+  summary: DataQualityRunSummary
+  findings: DataQualityFindingItem[]
+}
+
+export interface DataQualityFindingsResponse {
+  total: number
+  page: number
+  limit: number
+  findings: DataQualityFindingItem[]
+}
+
+export async function fetchDataQualitySummary(): Promise<DataQualityRunSummary> {
+  const res = await authFetch(`${API_BASE}/data-quality/summary`)
+  if (!res.ok) {
+    throw new Error(`Failed to load data quality summary: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function runDataQualityProfile(): Promise<DataQualityRunResponse> {
+  const res = await authFetch(`${API_BASE}/data-quality/run`, {
+    method: 'POST',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Data quality profiling failed: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function fetchDataQualityFindings(
+  severity?: string,
+  tableName?: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<DataQualityFindingsResponse> {
+  const params = new URLSearchParams()
+  if (severity) params.set('severity', severity)
+  if (tableName) params.set('table_name', tableName)
+  params.set('page', page.toString())
+  params.set('limit', limit.toString())
+
+  const res = await authFetch(`${API_BASE}/data-quality/findings?${params.toString()}`)
+  if (!res.ok) {
+    throw new Error(`Failed to load data quality findings: ${res.status}`)
+  }
+  return res.json()
+}
+
+// ==========================================
+// ANOMALY DETECTION API CLIENT
+// ==========================================
+
+export interface ModelMetadataResponse {
+  id: string
+  model_name: string
+  version: string
+  algorithm: string
+  feature_list: string[]
+  dataset_identifier: string
+  contamination: number
+  fit_time: string
+  metrics: {
+    training_samples?: number
+    detected_outliers_count?: number
+    known_injected_outliers_count?: number
+    synthetic_benchmark_metrics?: {
+      precision: number
+      recall: number
+      f1_score: number
+      true_positives: number
+      false_positives: number
+      false_negatives: number
+    }
+    disclaimer?: string
+  }
+  is_active: boolean
+  status: string
+}
+
+export interface TelemetryFeatureValues {
+  cpu_percent: number
+  memory_percent: number
+  temperature_c: number
+  packet_loss_percent: number
+  latency_ms: number
+}
+
+export interface AnomalyItem {
+  reading_id: number
+  device_id: number
+  asset_tag: string
+  device_type: string
+  vendor: string
+  model: string
+  site_name: string
+  region: string
+  recorded_at: string
+  telemetry: TelemetryFeatureValues
+  anomaly_score: number
+  is_outlier: boolean
+  known_injected_outlier?: boolean | null
+  rank: number
+}
+
+export interface AnomalyScanResponse {
+  model_version: string
+  algorithm: string
+  total_telemetry_scanned: number
+  anomalies_detected: number
+  disclaimer: string
+  scan_time_ms: number
+  top_anomalies: AnomalyItem[]
+}
+
+export interface ModelTrainResponse {
+  model_id: string
+  version: string
+  training_samples: number
+  fit_duration_seconds: number
+  metrics: Record<string, unknown>
+  message: string
+}
+
+export async function fetchAnomalySummary(): Promise<ModelMetadataResponse> {
+  const res = await authFetch(`${API_BASE}/anomalies/summary`)
+  if (!res.ok) {
+    throw new Error(`Failed to load anomaly model metadata: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function runAnomalyScan(
+  limit: number = 50,
+  threshold: number = 0.65
+): Promise<AnomalyScanResponse> {
+  const res = await authFetch(`${API_BASE}/anomalies/scan`, {
+    method: 'POST',
+    body: JSON.stringify({ limit, threshold }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Anomaly scan failed: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function trainAnomalyModel(contamination: number = 0.015): Promise<ModelTrainResponse> {
+  const res = await authFetch(`${API_BASE}/anomalies/train?contamination=${contamination}`, {
+    method: 'POST',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Model training failed: ${res.status}`)
+  }
+  return res.json()
+}
+
+// ==========================================
+// EVALUATION LAB API CLIENT
+// ==========================================
+
+export interface EvalCategoryMetric {
+  total: number
+  passed: number
+  failed: number
+  pass_rate: number
+}
+
+export interface EvalCaseResult {
+  case_id: string
+  category: string
+  question: string
+  expected_behavior: string
+  actual_behavior: string
+  passed: boolean
+  failure_reason?: string | null
+  interpreted_question?: string | null
+  generated_sql?: string | null
+  validation: Record<string, any>
+  latency_ms: number
+}
+
+export interface EvalFailureDetail {
+  case_id: string
+  category: string
+  question: string
+  expected_behavior: string
+  actual_behavior: string
+  failure_reason: string
+}
+
+export interface EvaluationRunResponse {
+  evaluation_run_id: string
+  benchmark_name: string
+  benchmark_version: string
+  dataset_version: string
+  provider: string
+  model: string
+  mode: string
+  is_demo_mode: boolean
+  prompt_version: string
+  status: string
+  total_cases: number
+  passed_cases: number
+  failed_cases: number
+  overall_pass_rate: number
+  safe_rejection_rate: number
+  forbidden_execution_count: number
+  clarification_accuracy: number
+  multi_turn_correctness: number
+  median_latency_ms: number
+  p95_latency_ms: number
+  category_metrics: Record<string, EvalCategoryMetric>
+  case_results: EvalCaseResult[]
+  failures_detail: EvalFailureDetail[]
+  started_at: string
+  completed_at: string
+}
+
+export interface EvaluationRunListItem {
+  id: string
+  benchmark_name: string
+  benchmark_version: string
+  provider: string
+  mode: string
+  status: string
+  total_cases: number
+  passed_cases: number
+  failed_cases: number
+  overall_pass_rate: number
+  category_metrics: Record<string, any>
+  started_at: string
+  completed_at?: string | null
+}
+
+export async function fetchEvaluationRuns(): Promise<EvaluationRunListItem[]> {
+  const res = await authFetch(`${API_BASE}/evaluations`)
+  if (!res.ok) {
+    throw new Error(`Failed to load evaluation runs: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function runEvaluation(mode: string = 'guarded'): Promise<EvaluationRunResponse> {
+  const res = await authFetch(`${API_BASE}/evaluations/run`, {
+    method: 'POST',
+    body: JSON.stringify({ mode }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Evaluation run failed: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function fetchEvaluationDetail(id: string): Promise<any> {
+  const res = await authFetch(`${API_BASE}/evaluations/${id}`)
+  if (!res.ok) {
+    throw new Error(`Failed to load evaluation detail: ${res.status}`)
+  }
+  return res.json()
+}
+

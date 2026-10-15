@@ -11,6 +11,9 @@ from app.api.v1.sites import router as sites_router
 from app.api.v1.admin import router as admin_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.chat import router as chat_router
+from app.api.v1.data_quality import router as data_quality_router
+from app.api.v1.anomalies import router as anomalies_router
+from app.api.v1.evaluations import router as evaluations_router
 
 settings = get_settings()
 
@@ -59,6 +62,9 @@ app.include_router(sites_router, prefix=settings.API_V1_PREFIX, tags=["Sites"])
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX, tags=["Administration"])
 app.include_router(analytics_router, prefix=settings.API_V1_PREFIX, tags=["Analytics"])
 app.include_router(chat_router, prefix=settings.API_V1_PREFIX, tags=["Chat"])
+app.include_router(data_quality_router, prefix=settings.API_V1_PREFIX, tags=["Data Quality"])
+app.include_router(anomalies_router, prefix=settings.API_V1_PREFIX, tags=["Anomalies"])
+app.include_router(evaluations_router, prefix=settings.API_V1_PREFIX, tags=["Evaluations"])
 
 
 @app.get("/", tags=["Root"])

@@ -134,53 +134,72 @@ querytrust-ai/
 │   ├── alembic/                    # Schema migration scripts
 │   ├── app/
 │   │   ├── main.py                 # FastAPI application factory, middleware, and router registration
+│   │   ├── config.py               # Typed environment settings (Pydantic BaseSettings)
+│   │   ├── database.py             # Dual engine setup: app_user (read/write) & analytics_reader (read-only)
 │   │   ├── core/                   # Security, settings, logging, SQL validator, semantic catalog, LLM provider
-│   │   │   ├── config.py           # Typed environment settings (Pydantic BaseSettings)
-│   │   │   ├── security.py         # Password hashing, JWT token creation, and auth dependencies
+│   │   │   ├── auth.py             # Password hashing, JWT token creation, and auth dependencies
 │   │   │   ├── sql_validator.py    # SQLGlot AST safety validator and row-clamp engine
 │   │   │   ├── semantic_catalog.py # Business metrics, table definitions, approved joins, ambiguity rules
-│   │   │   └── llm_provider.py     # BaseLLMProvider, DemoLLMProvider, GeminiLLMProvider, OpenAICompatible
-│   │   ├── db/                     # Database sessions, base, and models
-│   │   │   ├── session.py          # Dual engine setup: app_user (read/write) & analytics_reader (read-only)
-│   │   │   └── models.py           # SQLAlchemy declarative models (users, devices, sites, telemetry, etc.)
-│   │   ├── schemas/                # Pydantic request and response schemas
+│   │   │   ├── llm_provider.py     # BaseLLMProvider, DemoLLMProvider, GeminiLLMProvider, OpenAICompatible
+│   │   │   ├── data_quality.py     # 6-rule deterministic data profiling engine
+│   │   │   └── anomaly_detector.py # IsolationForest fitting, joblib serialization, and telemetry scoring
+│   │   ├── models/                 # SQLAlchemy declarative models
+│   │   │   ├── user.py             # User and RBAC model
+│   │   │   ├── device.py           # Device, Site, ServiceEvent models
+│   │   │   ├── telemetry.py        # TelemetryReading model
+│   │   │   ├── chat.py             # ChatSession, ChatMessage models
+│   │   │   ├── query.py            # QueryRun, QueryFeedback models
+│   │   │   ├── data_quality.py     # DataQualityRun, DataQualityFinding models
+│   │   │   ├── anomaly.py          # MLModelVersion model
+│   │   │   └── evaluation.py       # EvaluationRun model
+│   │   ├── schemas/                # Pydantic v2 request and response schemas
 │   │   │   ├── auth.py             # Login, Token, UserResponse schemas
 │   │   │   ├── analytics.py        # PreviewRequest, PreviewResponse, ExecuteRequest, ExecuteResponse
 │   │   │   ├── chat.py             # ChatSessionCreate, ChatMessageResponse schemas
+│   │   │   ├── devices.py          # DeviceSummary, DeviceDetail, SiteSummary schemas
 │   │   │   ├── data_quality.py     # DataQualityRunResponse, Finding schemas
-│   │   │   └── anomaly.py          # TelemetryScanRequest, AnomalyResult schemas
-│   │   ├── services/               # Core business and algorithmic logic
-│   │   │   ├── analytics_service.py# Preview generation, AST validation, execution, and history
-│   │   │   ├── data_quality.py     # Deterministic data profiling rules engine
-│   │   │   ├── anomaly_service.py  # IsolationForest fitting, serialization, and telemetry scoring
-│   │   │   └── evaluation_service.py# 30+ case benchmark runner and regression comparator
+│   │   │   ├── anomalies.py        # TelemetryScanRequest, AnomalyResult, ModelMetadata schemas
+│   │   │   └── evaluations.py      # EvaluationRunRequest, EvaluationRunResponse schemas
+│   │   ├── evaluation/             # Evaluation Lab & Regression Benchmark
+│   │   │   ├── benchmark_suite_v1.json # 37 versioned test cases across 9 categories
+│   │   │   ├── benchmark_runner.py # Deterministic offline & live benchmark runner
+│   │   │   └── run_cli.py          # CLI runner entrypoint
 │   │   ├── api/v1/                 # Versioned REST API endpoints
 │   │   │   ├── auth.py             # /api/v1/auth (login, me)
 │   │   │   ├── dashboard.py        # /api/v1/dashboard (summary KPI cards and distributions)
 │   │   │   ├── devices.py          # /api/v1/devices (paginated catalog, search, filters)
+│   │   │   ├── sites.py            # /api/v1/sites (site list and details)
 │   │   │   ├── analytics.py        # /api/v1/analytics (preview, execute, feedback, history)
 │   │   │   ├── chat.py             # /api/v1/chat/sessions (conversation management and message retrieval)
-│   │   │   ├── data_quality.py     # /api/v1/data-quality (run, summary)
-│   │   │   ├── anomalies.py        # /api/v1/anomalies (scan, summary)
-│   │   │   ├── evaluations.py      # /api/v1/evaluations (run, results)
+│   │   │   ├── data_quality.py     # /api/v1/data-quality (run, summary, findings)
+│   │   │   ├── anomalies.py        # /api/v1/anomalies (scan, summary, train)
+│   │   │   ├── evaluations.py      # /api/v1/evaluations (run, results, history)
 │   │   │   └── admin.py            # /api/v1/admin (users, audit logs)
 │   │   └── seed/                   # Deterministic synthetic data generation
-│   │       └── seed_database.py    # Generates 5,000 devices, 40 sites, service events, and telemetry
-│   └── tests/                      # Automated test suite (62+ tests)
+│   │       └── seed_data.py        # Generates 5,000 devices, 50 sites, 6,000 service events, 25k telemetry
+│   └── tests/                      # Automated test suite (95 tests across 15 files)
 │       ├── conftest.py             # Test database fixtures and mock clients
-│       ├── test_auth.py            # Authentication and RBAC tests
-│       ├── test_sql_validator.py   # SQLGlot AST validation and security injection tests
-│       ├── test_llm_provider.py    # LLM provider and demo rule engine tests
-│       ├── test_analytics_preview.py # Preview generation and clarification tests
-│       ├── test_analytics_execute.py # Read-only execution and preview ID enforcement tests
-│       ├── test_chat_sessions.py   # Session ownership isolation tests
-│       ├── test_data_quality.py    # Data profiling rule verification tests
-│       ├── test_anomalies.py       # IsolationForest inference and metadata tests
-│       └── test_database_security.py# Verification that analytics_reader cannot perform write operations
+│       ├── test_auth.py            # 13 tests: Authentication, JWT, and RBAC
+│       ├── test_dashboard.py       # 2 tests: Fleet KPI summary and distributions
+│       ├── test_devices.py         # 9 tests: Device pagination, search, filters
+│       ├── test_health.py          # 4 tests: Health and readiness probes
+│       ├── test_sql_validator.py   # 16 tests: SQLGlot AST validation and security injections
+│       ├── test_llm_provider.py    # 7 tests: LLM provider and demo rule engine
+│       ├── test_analytics_preview.py # 6 tests: Preview generation and clarification
+│       ├── test_analytics_execute.py # 6 tests: Read-only execution and preview ID enforcement
+│       ├── test_analytics_feedback.py# 3 tests: Query feedback submission
+│       ├── test_analytics_history.py # 3 tests: User query audit history
+│       ├── test_chat_sessions.py   # 4 tests: Session ownership isolation
+│       ├── test_data_quality.py    # 6 tests: 6-rule data profiling verification
+│       ├── test_anomaly_detector.py# 6 tests: IsolationForest inference and metadata
+│       ├── test_evaluation.py      # 9 tests: 37-case benchmark runner and API
+│       └── test_database_security.py# 1 test: Database kernel SELECT-only enforcement
 ├── frontend/
 │   ├── package.json                # React, Vite, TypeScript dependencies
 │   ├── tsconfig.json               # Strict TypeScript compiler options
 │   ├── vite.config.ts              # Vite dev server and proxy configuration
+│   ├── nginx.conf                  # Production reverse-proxy and SPA routing config
+│   ├── Dockerfile                  # Multi-stage production container build
 │   ├── index.html                  # HTML entry point with modern typography
 │   └── src/
 │       ├── main.tsx                # React DOM mount point
@@ -189,16 +208,20 @@ querytrust-ai/
 │       ├── api/
 │       │   └── client.ts           # Strictly-typed HTTP client wrapping all /api/v1 endpoints
 │       └── components/
-│           ├── OverviewDashboard.tsx # KPI summary cards, warranty horizons, incident distributions
-│           ├── DeviceCatalog.tsx   # Paginated device list, status filters, search, site mapping
+│           ├── OverviewView.tsx    # KPI summary cards, warranty horizons, incident distributions
+│           ├── DevicesView.tsx     # Paginated device list, status filters, search, modal details
 │           ├── AskDataView.tsx     # Natural-language workbench, AST checklist, SQL preview, execution
-│           ├── DataQualityView.tsx # Data hygiene findings table, severity filters, remediation notes
+│           ├── QueryHistoryView.tsx# User query audit trail, execution durations, feedback
+│           ├── DataQualityView.tsx # Data hygiene findings table, severity filters, sample inspector
 │           ├── AnomalyMonitorView.tsx # Telemetry anomaly scatter, outlier ranking, model metadata
 │           ├── EvaluationLabView.tsx # Benchmark test runner, regression comparator, pass-rate metrics
+│           ├── EvaluationLabView.css # Dedicated styles for Evaluation Lab component
 │           └── AdminView.tsx       # User management, role transitions, security audit logs
 └── scripts/
-    ├── seed.ps1 / seed.sh          # Database seeding helper
-    └── run_tests.ps1 / run_tests.sh# Test runner script
+    ├── setup_db.sql                # PostgreSQL database and dual-role setup
+    ├── seed.ps1 / seed.sh          # Database migration and seeding helpers
+    ├── run_evaluation.ps1 / .sh    # CLI regression benchmark runners
+    └── generate_prd_pdf.py         # PRD to PDF compiler with headless Chrome/Edge
 ```
 
 ---
@@ -405,8 +428,8 @@ CREATE TABLE evaluation_runs (
 ```
 
 ### 7.2 Deterministic Synthetic Data Generator
-Executed via `python -m app.seed.seed_database`, the generator populates realistic but strictly synthetic records using a fixed random seed (`seed=42`):
-- **Scale:** 50 sites across 5 regions, 5,000 devices, 8,500 service events, and 35,000 telemetry records.
+Executed via `python -m app.seed.seed_data`, the generator populates realistic but strictly synthetic records using a fixed random seed (`seed=42`):
+- **Scale:** 50 enterprise sites across 5 geographical regions (North, South, East, West, Central), 5,000 devices, 6,000 service events, and 25,000 multi-metric telemetry records.
 - **Injected Controlled Data Hygiene Issues:**
   - 120 devices with null `warranty_expiry`.
   - 45 devices with `warranty_expiry < installed_at` (invalid chronological sequence).
@@ -645,7 +668,7 @@ The system must successfully complete this verification scenario evaluated by an
 | **2. SQL AST Safety & Multi-Layer Defense** | SQLGlot PostgreSQL AST parsing, single-statement enforcement, blocked DDL/DML, prohibited functions/schemas, automatic row limit clamping, and dedicated `analytics_reader` read-only DB role. | **25%** |
 | **3. Full-Stack User Experience & Dashboard** | High-aesthetic React/TypeScript interface, live KPI cards, paginated device catalog, multi-turn conversation drawer, responsive mobile/desktop layout, loading/error states. | **20%** |
 | **4. Data Quality & Machine Learning** | Deterministic profiling rules engine (dates, nulls, duplicates) and scikit-learn `IsolationForest` telemetry outlier detection with model version metadata and honest labeling. | **15%** |
-| **5. Regression Benchmark & Verification** | Curated 30+ test suite, automated execution correctness measurement, baseline vs. guarded comparison, and 60+ passing automated backend unit/integration tests. | **10%** |
+| **5. Regression Benchmark & Verification** | Curated 37-case test suite across 9 categories, automated execution correctness measurement, baseline vs. guarded comparison, and 95 passing automated backend unit/integration tests. | **10%** |
 | **6. Documentation, Handoff & Architecture** | Clean README, complete API contracts, security threat model, honest build status, and reproducible Docker Compose startup. | **5%** |
 
 ---
@@ -659,7 +682,7 @@ The system must successfully complete this verification scenario evaluated by an
 4. **Milestone 3 — Natural-Language Preview & SQLGlot AST Safety Guard:** Implement `BaseLLMProvider`, `DemoLLMProvider`, semantic catalog, SQLGlot AST parser, and `POST /api/v1/analytics/preview`.
 5. **Milestone 4 — Governed Execution, Query Results & History:** Build `POST /api/v1/analytics/execute` via `analytics_reader` role, row clamping, query history, and feedback.
 6. **Milestone 5 — Data Quality Profiler & Telemetry Anomaly Detection:** Implement deterministic profiling engine and scikit-learn `IsolationForest` inference endpoint.
-7. **Milestone 6 — Automated Regression Benchmark & Evaluation Lab:** Implement 30+ case test suite and admin evaluation lab reporting correctness and latency.
+7. **Milestone 6 — Automated Regression Benchmark & Evaluation Lab:** Implement 37-case test suite across 9 categories and admin evaluation lab reporting correctness and latency.
 8. **Milestone 7 — Containerization, Final Verification & Documentation:** Build Docker Compose orchestration, run full test suite, verify clean startup, and complete documentation.
 
 ### Integration Handoff Checklist
@@ -670,7 +693,7 @@ The system must successfully complete this verification scenario evaluated by an
 - [x] Read-only database role (`analytics_reader`) verified to prevent table writes even if code fails.
 - [x] Deterministic `DemoLLMProvider` operates 100% offline with honest UI labeling.
 - [x] All demo passwords configurable via `.env.example`; no secrets committed to git.
-- [x] 62/62 automated backend tests passing in under 2 seconds.
+- [x] 95/95 automated backend tests passing in under 4 seconds with zero failures.
 - [x] Frontend builds cleanly with zero TypeScript errors.
 
 ---
@@ -721,25 +744,47 @@ REVOKE ALL ON query_feedback FROM analytics_reader;
 
 ## C. Public Evaluation Benchmark Cases
 
-The evaluation lab contains 30+ curated test cases spanning 5 core categories:
+The evaluation lab contains **37 manually reviewed test cases** spanning 9 functional categories per Section 14 of `PROJECT_SPEC.md`:
 
-| Test ID | Category | Natural Language Prompt | Expected Behavior |
+| Test ID | Category | Natural Language Prompt / Turn | Expected Behavior |
 |---|---|---|---|
-| `TC-01` | **Fleet Aggregation** | "How many total devices are there in the fleet?" | Validated preview; SQL: `SELECT COUNT(*) FROM devices;` |
-| `TC-02` | **Filtered Count** | "How many active routers are in the North region?" | Validated preview; SQL joining `devices` and `sites` with status and region filters. |
-| `TC-03` | **Warranty Horizon** | "Show devices with warranties expiring in the next 30 days." | Validated preview; SQL with `warranty_expiry BETWEEN '2026-10-14' AND '2026-11-13'`. |
-| `TC-04` | **Incident Triage** | "List open critical service events." | Validated preview; SQL on `service_events` with `severity = 'critical' AND status NOT IN ('closed', 'resolved')`. |
-| `TC-05` | **Ambiguity** | "Show me the high-risk devices." | Disambiguation prompt; `intent_status: clarification_needed`; `can_execute: false`. |
-| `TC-06` | **Ambiguity** | "Which hardware is currently unhealthy?" | Disambiguation prompt; `intent_status: clarification_needed`; `can_execute: false`. |
-| `TC-07` | **Out-of-Domain** | "What is our quarterly recurring revenue and profit?" | Domain rejection; `intent_status: unsupported`; explanation of schema boundary. |
-| `TC-08` | **Out-of-Domain** | "Calculate customer churn rate for last month." | Domain rejection; `intent_status: unsupported`; zero SQL generated. |
-| `TC-09` | **Security (DDL)** | "DROP TABLE devices; --" | AST security block; `Prohibited statement type 'Drop'`; `can_execute: false`. |
-| `TC-10` | **Security (DML)** | "DELETE FROM sites WHERE region = 'South';" | AST security block; `Prohibited statement type 'Delete'`; `can_execute: false`. |
-| `TC-11` | **Security (Multi-Stmt)**| "SELECT * FROM devices; DROP TABLE sites;" | AST security block; `Multiple SQL statements detected`; `can_execute: false`. |
-| `TC-12` | **Security (Catalog)** | "SELECT * FROM pg_catalog.pg_user;" | AST security block; `Prohibited system schema 'pg_catalog'`; `can_execute: false`. |
-| `TC-13` | **Security (Functions)**| "SELECT pg_sleep(10);" | AST security block; `Prohibited function 'pg_sleep'`; `can_execute: false`. |
-| `TC-14` | **Row Clamping** | "SELECT * FROM devices LIMIT 10000;" | AST modified; `LIMIT` automatically clamped to `500`. |
-| `TC-15` | **Missing Limit** | "SELECT * FROM devices;" | AST modified; `LIMIT 200` automatically appended. |
+| `SF-001` | **Simple Filter** | "Show all routers in the fleet." | Validated preview; `ready`; filtered to `device_type = 'Router'`. |
+| `SF-002` | **Simple Filter** | "List all switches sorted by asset tag." | Validated preview; `ready`; sorted by `asset_tag ASC`. |
+| `SF-003` | **Simple Filter** | "Show maintenance devices." | Validated preview; `ready`; filtered to `status = 'maintenance'`. |
+| `SF-004` | **Simple Filter** | "List firewalls in the East region." | Validated preview; `ready`; joined with sites on `region = 'East'`. |
+| `AGG-001` | **Aggregation** | "How many active devices are in each region?" | Validated preview; `ready`; `GROUP BY sites.region`. |
+| `AGG-002` | **Aggregation** | "Count total active devices." | Validated preview; `ready`; single aggregate `COUNT`. |
+| `AGG-003` | **Aggregation** | "Show device counts by status." | Validated preview; `ready`; `GROUP BY status`. |
+| `AGG-004` | **Aggregation** | "Show devices by type." | Validated preview; `ready`; `GROUP BY device_type`. |
+| `DR-001` | **Date Range** | "Show all routers with warranty expiring in the next 60 days." | Validated preview; `ready`; horizon evaluated from reference date `2026-10-14`. |
+| `DR-002` | **Date Range** | "List devices with warranties expiring within 30 days." | Validated preview; `ready`; 30-day window from `2026-10-14`. |
+| `DR-003` | **Date Range** | "Switches with warranty expiring in 90 days." | Validated preview; `ready`; 90-day window for `Switch`. |
+| `JN-001` | **Join** | "List critical open service events grouped by site." | Validated preview; `ready`; 3-table join grouped by `site_name`. |
+| `JN-002` | **Join** | "Show open critical incidents with device and site details." | Validated preview; `ready`; 3-table join on `severity IN ('Critical', 'High')`. |
+| `JN-003` | **Join** | "Show active devices with their site names in the North region." | Validated preview; `ready`; joined with sites on `region = 'North'`. |
+| `SEM-001` | **Semantic** | "How many active devices do we have?" | Validated preview; `ready`; uses definition `LOWER(TRIM(status)) = 'active'`. |
+| `SEM-002` | **Semantic** | "List open service events." | Validated preview; `ready`; uses definition `status NOT IN ('resolved', 'closed', 'cancelled')`. |
+| `SEM-003` | **Semantic** | "Show offline devices with their locations." | Validated preview; `ready`; uses definition `status = 'offline'`. |
+| `MT-001` | **Multi-Turn** (T1) | "Show active devices in the North region." | Validated preview; `ready`; base conversational step. |
+| `MT-002` | **Multi-Turn** (T2) | "Now group those by device type." | Validated preview; `ready`; preserves prior North region context. |
+| `MT-003` | **Multi-Turn** (T3) | "Only those with warranties expiring in November 2026." | Validated preview; `ready`; preserves North + type context. |
+| `MT-004` | **Multi-Turn** (T1) | "Count all devices by status." | Validated preview; `ready`; base status aggregation. |
+| `MT-005` | **Multi-Turn** (T2) | "Now filter to only routers." | Validated preview; `ready`; preserves status grouping for routers. |
+| `MT-006` | **Multi-Turn** (T1) | "Show devices with warranty expiring in 30 days." | Validated preview; `ready`; base warranty query. |
+| `MT-007` | **Multi-Turn** (T2) | "Now show which sites have the most of those." | Validated preview; `ready`; groups expiring devices by site. |
+| `MT-008` | **Multi-Turn** (T3) | "List the actual devices from the top site." | Validated preview; `ready`; filters to top site. |
+| `AMB-001` | **Ambiguity** | "Show all high-risk devices in New York." | Disambiguation prompt; `clarification_needed`; `can_execute: false`. |
+| `AMB-002` | **Ambiguity** | "Which devices are unhealthy?" | Disambiguation prompt; `clarification_needed`; `can_execute: false`. |
+| `AMB-003` | **Ambiguity** | "Show me the riskiest assets in our fleet." | Disambiguation prompt; `clarification_needed`; `can_execute: false`. |
+| `UNS-001` | **Unsupported** | "What is our total quarterly revenue and customer churn?" | Domain rejection; `unsupported`; explanation of inventory boundary. |
+| `UNS-002` | **Unsupported** | "Show employee salary data by department." | Domain rejection; `unsupported`; zero SQL generated. |
+| `UNS-003` | **Unsupported** | "What's our profit margin for Q3 2026?" | Domain rejection; `unsupported`; zero SQL generated. |
+| `SEC-001` | **Security** | "SELECT * FROM devices; DROP TABLE sites; --" | AST security block; `Prohibited statement type 'Drop'`; `blocked`. |
+| `SEC-002` | **Security** | "DELETE FROM devices WHERE id = 1" | AST security block; `Prohibited statement type 'Delete'`; `blocked`. |
+| `SEC-003` | **Security** | "UPDATE devices SET status = 'Active' WHERE id = 1" | AST security block; `Prohibited statement type 'Update'`; `blocked`. |
+| `SEC-004` | **Security** | "SELECT pg_sleep(10) FROM devices" | AST security block; `Prohibited function 'pg_sleep'`; `blocked`. |
+| `SEC-005` | **Security** | "SELECT tablename FROM pg_catalog.pg_tables" | AST security block; `Prohibited schema 'pg_catalog'`; `blocked`. |
+| `SEC-006` | **Security** | "SELECT * FROM information_schema.tables" | AST security block; `Prohibited schema 'information_schema'`; `blocked`. |
 
 ---
 

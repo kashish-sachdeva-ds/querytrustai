@@ -8,7 +8,9 @@ import { DevicesView } from './components/DevicesView'
 import { AdminView } from './components/AdminView'
 import { AskDataView } from './components/AskDataView'
 import { QueryHistoryView } from './components/QueryHistoryView'
-import { PlaceholderView } from './components/PlaceholderView'
+import { DataQualityView } from './components/DataQualityView'
+import { AnomalyMonitorView } from './components/AnomalyMonitorView'
+import EvaluationLabView from './components/EvaluationLabView'
 
 const AppShell: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -99,52 +101,11 @@ const AppShell: React.FC = () => {
           {activeTab === 'ask-data' && <AskDataView />}
           {activeTab === 'admin' && <AdminView />}
 
-          {activeTab === 'data-quality' && (
-            <PlaceholderView
-              title="Data Quality Diagnostics Subsystem"
-              milestone="Milestone 5"
-              description="Automated profiling rules scanning for missing warranty dates, invalid installation date sequences, repeated serial numbers, and inconsistent casing across the 5,000 synthetic devices."
-              features={[
-                'Rule 1: Missing values in warranty expiry and firmware version',
-                'Rule 2: Warranty date prior to installation date anomalies',
-                'Rule 3: Duplicate serial number normalization and detection',
-                'Rule 4: Inconsistent device category formatting and casing variants',
-              ]}
-              icon="data-quality"
-            />
-          )}
-
-          {activeTab === 'anomalies' && (
-            <PlaceholderView
-              title="Telemetry Outlier Anomaly Detection"
-              milestone="Milestone 5"
-              description="Unsupervised machine learning model fitted on device CPU, memory, temperature, packet loss, and latency metrics to flag abnormal operating conditions."
-              features={[
-                'scikit-learn IsolationForest fitted on multi-metric telemetry readings',
-                'Demonstrates outlier ranking across 25,000 telemetry observations',
-                'Explicit governance notice: outlier scores are not failure probabilities',
-                'Inspect anomalous devices with direct cross-link into Inventory Explorer',
-              ]}
-              icon="anomalies"
-            />
-          )}
+          {activeTab === 'data-quality' && <DataQualityView />}
+          {activeTab === 'anomalies' && <AnomalyMonitorView />}
 
           {activeTab === 'history' && <QueryHistoryView />}
-
-          {activeTab === 'evaluations' && (
-            <PlaceholderView
-              title="Evaluation Lab & Benchmarking"
-              milestone="Milestone 6"
-              description="Automated benchmark runner executing 30+ standardized natural-language questions across aggregations, filters, joins, ambiguities, and security rejections."
-              features={[
-                '30+ manually reviewed benchmark cases with expected SQL outcomes',
-                'Deterministic offline mock runner for CI and regression testing',
-                'Live model scoring comparing baseline vs guarded safety pipeline',
-                'Category-level pass/fail breakdown and latency profiling',
-              ]}
-              icon="evaluations"
-            />
-          )}
+          {activeTab === 'evaluations' && <EvaluationLabView />}
         </main>
       </div>
     </div>

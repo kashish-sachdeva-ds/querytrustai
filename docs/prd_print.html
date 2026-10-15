@@ -405,53 +405,72 @@ QueryTrust AI builds a local-first, full-stack, governed natural-language analyt
 │   ├── alembic/                    # Schema migration scripts
 │   ├── app/
 │   │   ├── main.py                 # FastAPI application factory, middleware, and router registration
+│   │   ├── config.py               # Typed environment settings (Pydantic BaseSettings)
+│   │   ├── database.py             # Dual engine setup: app_user (read/write) &amp; analytics_reader (read-only)
 │   │   ├── core/                   # Security, settings, logging, SQL validator, semantic catalog, LLM provider
-│   │   │   ├── config.py           # Typed environment settings (Pydantic BaseSettings)
-│   │   │   ├── security.py         # Password hashing, JWT token creation, and auth dependencies
+│   │   │   ├── auth.py             # Password hashing, JWT token creation, and auth dependencies
 │   │   │   ├── sql_validator.py    # SQLGlot AST safety validator and row-clamp engine
 │   │   │   ├── semantic_catalog.py # Business metrics, table definitions, approved joins, ambiguity rules
-│   │   │   └── llm_provider.py     # BaseLLMProvider, DemoLLMProvider, GeminiLLMProvider, OpenAICompatible
-│   │   ├── db/                     # Database sessions, base, and models
-│   │   │   ├── session.py          # Dual engine setup: app_user (read/write) &amp; analytics_reader (read-only)
-│   │   │   └── models.py           # SQLAlchemy declarative models (users, devices, sites, telemetry, etc.)
-│   │   ├── schemas/                # Pydantic request and response schemas
+│   │   │   ├── llm_provider.py     # BaseLLMProvider, DemoLLMProvider, GeminiLLMProvider, OpenAICompatible
+│   │   │   ├── data_quality.py     # 6-rule deterministic data profiling engine
+│   │   │   └── anomaly_detector.py # IsolationForest fitting, joblib serialization, and telemetry scoring
+│   │   ├── models/                 # SQLAlchemy declarative models
+│   │   │   ├── user.py             # User and RBAC model
+│   │   │   ├── device.py           # Device, Site, ServiceEvent models
+│   │   │   ├── telemetry.py        # TelemetryReading model
+│   │   │   ├── chat.py             # ChatSession, ChatMessage models
+│   │   │   ├── query.py            # QueryRun, QueryFeedback models
+│   │   │   ├── data_quality.py     # DataQualityRun, DataQualityFinding models
+│   │   │   ├── anomaly.py          # MLModelVersion model
+│   │   │   └── evaluation.py       # EvaluationRun model
+│   │   ├── schemas/                # Pydantic v2 request and response schemas
 │   │   │   ├── auth.py             # Login, Token, UserResponse schemas
 │   │   │   ├── analytics.py        # PreviewRequest, PreviewResponse, ExecuteRequest, ExecuteResponse
 │   │   │   ├── chat.py             # ChatSessionCreate, ChatMessageResponse schemas
+│   │   │   ├── devices.py          # DeviceSummary, DeviceDetail, SiteSummary schemas
 │   │   │   ├── data_quality.py     # DataQualityRunResponse, Finding schemas
-│   │   │   └── anomaly.py          # TelemetryScanRequest, AnomalyResult schemas
-│   │   ├── services/               # Core business and algorithmic logic
-│   │   │   ├── analytics_service.py# Preview generation, AST validation, execution, and history
-│   │   │   ├── data_quality.py     # Deterministic data profiling rules engine
-│   │   │   ├── anomaly_service.py  # IsolationForest fitting, serialization, and telemetry scoring
-│   │   │   └── evaluation_service.py# 30+ case benchmark runner and regression comparator
+│   │   │   ├── anomalies.py        # TelemetryScanRequest, AnomalyResult, ModelMetadata schemas
+│   │   │   └── evaluations.py      # EvaluationRunRequest, EvaluationRunResponse schemas
+│   │   ├── evaluation/             # Evaluation Lab &amp; Regression Benchmark
+│   │   │   ├── benchmark_suite_v1.json # 37 versioned test cases across 9 categories
+│   │   │   ├── benchmark_runner.py # Deterministic offline &amp; live benchmark runner
+│   │   │   └── run_cli.py          # CLI runner entrypoint
 │   │   ├── api/v1/                 # Versioned REST API endpoints
 │   │   │   ├── auth.py             # /api/v1/auth (login, me)
 │   │   │   ├── dashboard.py        # /api/v1/dashboard (summary KPI cards and distributions)
 │   │   │   ├── devices.py          # /api/v1/devices (paginated catalog, search, filters)
+│   │   │   ├── sites.py            # /api/v1/sites (site list and details)
 │   │   │   ├── analytics.py        # /api/v1/analytics (preview, execute, feedback, history)
 │   │   │   ├── chat.py             # /api/v1/chat/sessions (conversation management and message retrieval)
-│   │   │   ├── data_quality.py     # /api/v1/data-quality (run, summary)
-│   │   │   ├── anomalies.py        # /api/v1/anomalies (scan, summary)
-│   │   │   ├── evaluations.py      # /api/v1/evaluations (run, results)
+│   │   │   ├── data_quality.py     # /api/v1/data-quality (run, summary, findings)
+│   │   │   ├── anomalies.py        # /api/v1/anomalies (scan, summary, train)
+│   │   │   ├── evaluations.py      # /api/v1/evaluations (run, results, history)
 │   │   │   └── admin.py            # /api/v1/admin (users, audit logs)
 │   │   └── seed/                   # Deterministic synthetic data generation
-│   │       └── seed_database.py    # Generates 5,000 devices, 40 sites, service events, and telemetry
-│   └── tests/                      # Automated test suite (62+ tests)
+│   │       └── seed_data.py        # Generates 5,000 devices, 50 sites, 6,000 service events, 25k telemetry
+│   └── tests/                      # Automated test suite (95 tests across 15 files)
 │       ├── conftest.py             # Test database fixtures and mock clients
-│       ├── test_auth.py            # Authentication and RBAC tests
-│       ├── test_sql_validator.py   # SQLGlot AST validation and security injection tests
-│       ├── test_llm_provider.py    # LLM provider and demo rule engine tests
-│       ├── test_analytics_preview.py # Preview generation and clarification tests
-│       ├── test_analytics_execute.py # Read-only execution and preview ID enforcement tests
-│       ├── test_chat_sessions.py   # Session ownership isolation tests
-│       ├── test_data_quality.py    # Data profiling rule verification tests
-│       ├── test_anomalies.py       # IsolationForest inference and metadata tests
-│       └── test_database_security.py# Verification that analytics_reader cannot perform write operations
+│       ├── test_auth.py            # 13 tests: Authentication, JWT, and RBAC
+│       ├── test_dashboard.py       # 2 tests: Fleet KPI summary and distributions
+│       ├── test_devices.py         # 9 tests: Device pagination, search, filters
+│       ├── test_health.py          # 4 tests: Health and readiness probes
+│       ├── test_sql_validator.py   # 16 tests: SQLGlot AST validation and security injections
+│       ├── test_llm_provider.py    # 7 tests: LLM provider and demo rule engine
+│       ├── test_analytics_preview.py # 6 tests: Preview generation and clarification
+│       ├── test_analytics_execute.py # 6 tests: Read-only execution and preview ID enforcement
+│       ├── test_analytics_feedback.py# 3 tests: Query feedback submission
+│       ├── test_analytics_history.py # 3 tests: User query audit history
+│       ├── test_chat_sessions.py   # 4 tests: Session ownership isolation
+│       ├── test_data_quality.py    # 6 tests: 6-rule data profiling verification
+│       ├── test_anomaly_detector.py# 6 tests: IsolationForest inference and metadata
+│       ├── test_evaluation.py      # 9 tests: 37-case benchmark runner and API
+│       └── test_database_security.py# 1 test: Database kernel SELECT-only enforcement
 ├── frontend/
 │   ├── package.json                # React, Vite, TypeScript dependencies
 │   ├── tsconfig.json               # Strict TypeScript compiler options
 │   ├── vite.config.ts              # Vite dev server and proxy configuration
+│   ├── nginx.conf                  # Production reverse-proxy and SPA routing config
+│   ├── Dockerfile                  # Multi-stage production container build
 │   ├── index.html                  # HTML entry point with modern typography
 │   └── src/
 │       ├── main.tsx                # React DOM mount point
@@ -460,16 +479,20 @@ QueryTrust AI builds a local-first, full-stack, governed natural-language analyt
 │       ├── api/
 │       │   └── client.ts           # Strictly-typed HTTP client wrapping all /api/v1 endpoints
 │       └── components/
-│           ├── OverviewDashboard.tsx # KPI summary cards, warranty horizons, incident distributions
-│           ├── DeviceCatalog.tsx   # Paginated device list, status filters, search, site mapping
+│           ├── OverviewView.tsx    # KPI summary cards, warranty horizons, incident distributions
+│           ├── DevicesView.tsx     # Paginated device list, status filters, search, modal details
 │           ├── AskDataView.tsx     # Natural-language workbench, AST checklist, SQL preview, execution
-│           ├── DataQualityView.tsx # Data hygiene findings table, severity filters, remediation notes
+│           ├── QueryHistoryView.tsx# User query audit trail, execution durations, feedback
+│           ├── DataQualityView.tsx # Data hygiene findings table, severity filters, sample inspector
 │           ├── AnomalyMonitorView.tsx # Telemetry anomaly scatter, outlier ranking, model metadata
 │           ├── EvaluationLabView.tsx # Benchmark test runner, regression comparator, pass-rate metrics
+│           ├── EvaluationLabView.css # Dedicated styles for Evaluation Lab component
 │           └── AdminView.tsx       # User management, role transitions, security audit logs
 └── scripts/
-    ├── seed.ps1 / seed.sh          # Database seeding helper
-    └── run_tests.ps1 / run_tests.sh# Test runner script
+    ├── setup_db.sql                # PostgreSQL database and dual-role setup
+    ├── seed.ps1 / seed.sh          # Database migration and seeding helpers
+    ├── run_evaluation.ps1 / .sh    # CLI regression benchmark runners
+    └── generate_prd_pdf.py         # PRD to PDF compiler with headless Chrome/Edge
 </code></pre>
 <hr />
 <h2 id="5-ai-access-semantic-catalog-and-local-mode">5. AI Access, Semantic Catalog, and Local Mode</h2>
@@ -707,8 +730,8 @@ CREATE TABLE evaluation_runs (
 );
 </code></pre>
 <h3 id="72-deterministic-synthetic-data-generator">7.2 Deterministic Synthetic Data Generator</h3>
-<p>Executed via <code>python -m app.seed.seed_database</code>, the generator populates realistic but strictly synthetic records using a fixed random seed (<code>seed=42</code>):
-- <strong>Scale:</strong> 50 sites across 5 regions, 5,000 devices, 8,500 service events, and 35,000 telemetry records.
+<p>Executed via <code>python -m app.seed.seed_data</code>, the generator populates realistic but strictly synthetic records using a fixed random seed (<code>seed=42</code>):
+- <strong>Scale:</strong> 50 enterprise sites across 5 geographical regions (North, South, East, West, Central), 5,000 devices, 6,000 service events, and 25,000 multi-metric telemetry records.
 - <strong>Injected Controlled Data Hygiene Issues:</strong>
   - 120 devices with null <code>warranty_expiry</code>.
   - 45 devices with <code>warranty_expiry &lt; installed_at</code> (invalid chronological sequence).
@@ -1079,7 +1102,7 @@ CREATE TABLE evaluation_runs (
 </tr>
 <tr>
 <td><strong>5. Regression Benchmark &amp; Verification</strong></td>
-<td>Curated 30+ test suite, automated execution correctness measurement, baseline vs. guarded comparison, and 60+ passing automated backend unit/integration tests.</td>
+<td>Curated 37-case test suite across 9 categories, automated execution correctness measurement, baseline vs. guarded comparison, and 95 passing automated backend unit/integration tests.</td>
 <td style="text-align: center;"><strong>10%</strong></td>
 </tr>
 <tr>
@@ -1099,7 +1122,7 @@ CREATE TABLE evaluation_runs (
 <li><strong>Milestone 3 — Natural-Language Preview &amp; SQLGlot AST Safety Guard:</strong> Implement <code>BaseLLMProvider</code>, <code>DemoLLMProvider</code>, semantic catalog, SQLGlot AST parser, and <code>POST /api/v1/analytics/preview</code>.</li>
 <li><strong>Milestone 4 — Governed Execution, Query Results &amp; History:</strong> Build <code>POST /api/v1/analytics/execute</code> via <code>analytics_reader</code> role, row clamping, query history, and feedback.</li>
 <li><strong>Milestone 5 — Data Quality Profiler &amp; Telemetry Anomaly Detection:</strong> Implement deterministic profiling engine and scikit-learn <code>IsolationForest</code> inference endpoint.</li>
-<li><strong>Milestone 6 — Automated Regression Benchmark &amp; Evaluation Lab:</strong> Implement 30+ case test suite and admin evaluation lab reporting correctness and latency.</li>
+<li><strong>Milestone 6 — Automated Regression Benchmark &amp; Evaluation Lab:</strong> Implement 37-case test suite across 9 categories and admin evaluation lab reporting correctness and latency.</li>
 <li><strong>Milestone 7 — Containerization, Final Verification &amp; Documentation:</strong> Build Docker Compose orchestration, run full test suite, verify clean startup, and complete documentation.</li>
 </ol>
 <h3 id="integration-handoff-checklist">Integration Handoff Checklist</h3>
@@ -1111,7 +1134,7 @@ CREATE TABLE evaluation_runs (
 <li>[x] Read-only database role (<code>analytics_reader</code>) verified to prevent table writes even if code fails.</li>
 <li>[x] Deterministic <code>DemoLLMProvider</code> operates 100% offline with honest UI labeling.</li>
 <li>[x] All demo passwords configurable via <code>.env.example</code>; no secrets committed to git.</li>
-<li>[x] 62/62 automated backend tests passing in under 2 seconds.</li>
+<li>[x] 95/95 automated backend tests passing in under 4 seconds with zero failures.</li>
 <li>[x] Frontend builds cleanly with zero TypeScript errors.</li>
 </ul>
 <hr />
@@ -1151,106 +1174,238 @@ REVOKE ALL ON query_feedback FROM analytics_reader;
 </code></pre>
 <hr />
 <h2 id="c-public-evaluation-benchmark-cases">C. Public Evaluation Benchmark Cases</h2>
-<p>The evaluation lab contains 30+ curated test cases spanning 5 core categories:</p>
+<p>The evaluation lab contains <strong>37 manually reviewed test cases</strong> spanning 9 functional categories per Section 14 of <code>PROJECT_SPEC.md</code>:</p>
 <table>
 <thead>
 <tr>
 <th>Test ID</th>
 <th>Category</th>
-<th>Natural Language Prompt</th>
+<th>Natural Language Prompt / Turn</th>
 <th>Expected Behavior</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TC-01</code></td>
-<td><strong>Fleet Aggregation</strong></td>
-<td>"How many total devices are there in the fleet?"</td>
-<td>Validated preview; SQL: <code>SELECT COUNT(*) FROM devices;</code></td>
+<td><code>SF-001</code></td>
+<td><strong>Simple Filter</strong></td>
+<td>"Show all routers in the fleet."</td>
+<td>Validated preview; <code>ready</code>; filtered to <code>device_type = 'Router'</code>.</td>
 </tr>
 <tr>
-<td><code>TC-02</code></td>
-<td><strong>Filtered Count</strong></td>
-<td>"How many active routers are in the North region?"</td>
-<td>Validated preview; SQL joining <code>devices</code> and <code>sites</code> with status and region filters.</td>
+<td><code>SF-002</code></td>
+<td><strong>Simple Filter</strong></td>
+<td>"List all switches sorted by asset tag."</td>
+<td>Validated preview; <code>ready</code>; sorted by <code>asset_tag ASC</code>.</td>
 </tr>
 <tr>
-<td><code>TC-03</code></td>
-<td><strong>Warranty Horizon</strong></td>
-<td>"Show devices with warranties expiring in the next 30 days."</td>
-<td>Validated preview; SQL with <code>warranty_expiry BETWEEN '2026-10-14' AND '2026-11-13'</code>.</td>
+<td><code>SF-003</code></td>
+<td><strong>Simple Filter</strong></td>
+<td>"Show maintenance devices."</td>
+<td>Validated preview; <code>ready</code>; filtered to <code>status = 'maintenance'</code>.</td>
 </tr>
 <tr>
-<td><code>TC-04</code></td>
-<td><strong>Incident Triage</strong></td>
-<td>"List open critical service events."</td>
-<td>Validated preview; SQL on <code>service_events</code> with <code>severity = 'critical' AND status NOT IN ('closed', 'resolved')</code>.</td>
+<td><code>SF-004</code></td>
+<td><strong>Simple Filter</strong></td>
+<td>"List firewalls in the East region."</td>
+<td>Validated preview; <code>ready</code>; joined with sites on <code>region = 'East'</code>.</td>
 </tr>
 <tr>
-<td><code>TC-05</code></td>
+<td><code>AGG-001</code></td>
+<td><strong>Aggregation</strong></td>
+<td>"How many active devices are in each region?"</td>
+<td>Validated preview; <code>ready</code>; <code>GROUP BY sites.region</code>.</td>
+</tr>
+<tr>
+<td><code>AGG-002</code></td>
+<td><strong>Aggregation</strong></td>
+<td>"Count total active devices."</td>
+<td>Validated preview; <code>ready</code>; single aggregate <code>COUNT</code>.</td>
+</tr>
+<tr>
+<td><code>AGG-003</code></td>
+<td><strong>Aggregation</strong></td>
+<td>"Show device counts by status."</td>
+<td>Validated preview; <code>ready</code>; <code>GROUP BY status</code>.</td>
+</tr>
+<tr>
+<td><code>AGG-004</code></td>
+<td><strong>Aggregation</strong></td>
+<td>"Show devices by type."</td>
+<td>Validated preview; <code>ready</code>; <code>GROUP BY device_type</code>.</td>
+</tr>
+<tr>
+<td><code>DR-001</code></td>
+<td><strong>Date Range</strong></td>
+<td>"Show all routers with warranty expiring in the next 60 days."</td>
+<td>Validated preview; <code>ready</code>; horizon evaluated from reference date <code>2026-10-14</code>.</td>
+</tr>
+<tr>
+<td><code>DR-002</code></td>
+<td><strong>Date Range</strong></td>
+<td>"List devices with warranties expiring within 30 days."</td>
+<td>Validated preview; <code>ready</code>; 30-day window from <code>2026-10-14</code>.</td>
+</tr>
+<tr>
+<td><code>DR-003</code></td>
+<td><strong>Date Range</strong></td>
+<td>"Switches with warranty expiring in 90 days."</td>
+<td>Validated preview; <code>ready</code>; 90-day window for <code>Switch</code>.</td>
+</tr>
+<tr>
+<td><code>JN-001</code></td>
+<td><strong>Join</strong></td>
+<td>"List critical open service events grouped by site."</td>
+<td>Validated preview; <code>ready</code>; 3-table join grouped by <code>site_name</code>.</td>
+</tr>
+<tr>
+<td><code>JN-002</code></td>
+<td><strong>Join</strong></td>
+<td>"Show open critical incidents with device and site details."</td>
+<td>Validated preview; <code>ready</code>; 3-table join on <code>severity IN ('Critical', 'High')</code>.</td>
+</tr>
+<tr>
+<td><code>JN-003</code></td>
+<td><strong>Join</strong></td>
+<td>"Show active devices with their site names in the North region."</td>
+<td>Validated preview; <code>ready</code>; joined with sites on <code>region = 'North'</code>.</td>
+</tr>
+<tr>
+<td><code>SEM-001</code></td>
+<td><strong>Semantic</strong></td>
+<td>"How many active devices do we have?"</td>
+<td>Validated preview; <code>ready</code>; uses definition <code>LOWER(TRIM(status)) = 'active'</code>.</td>
+</tr>
+<tr>
+<td><code>SEM-002</code></td>
+<td><strong>Semantic</strong></td>
+<td>"List open service events."</td>
+<td>Validated preview; <code>ready</code>; uses definition <code>status NOT IN ('resolved', 'closed', 'cancelled')</code>.</td>
+</tr>
+<tr>
+<td><code>SEM-003</code></td>
+<td><strong>Semantic</strong></td>
+<td>"Show offline devices with their locations."</td>
+<td>Validated preview; <code>ready</code>; uses definition <code>status = 'offline'</code>.</td>
+</tr>
+<tr>
+<td><code>MT-001</code></td>
+<td><strong>Multi-Turn</strong> (T1)</td>
+<td>"Show active devices in the North region."</td>
+<td>Validated preview; <code>ready</code>; base conversational step.</td>
+</tr>
+<tr>
+<td><code>MT-002</code></td>
+<td><strong>Multi-Turn</strong> (T2)</td>
+<td>"Now group those by device type."</td>
+<td>Validated preview; <code>ready</code>; preserves prior North region context.</td>
+</tr>
+<tr>
+<td><code>MT-003</code></td>
+<td><strong>Multi-Turn</strong> (T3)</td>
+<td>"Only those with warranties expiring in November 2026."</td>
+<td>Validated preview; <code>ready</code>; preserves North + type context.</td>
+</tr>
+<tr>
+<td><code>MT-004</code></td>
+<td><strong>Multi-Turn</strong> (T1)</td>
+<td>"Count all devices by status."</td>
+<td>Validated preview; <code>ready</code>; base status aggregation.</td>
+</tr>
+<tr>
+<td><code>MT-005</code></td>
+<td><strong>Multi-Turn</strong> (T2)</td>
+<td>"Now filter to only routers."</td>
+<td>Validated preview; <code>ready</code>; preserves status grouping for routers.</td>
+</tr>
+<tr>
+<td><code>MT-006</code></td>
+<td><strong>Multi-Turn</strong> (T1)</td>
+<td>"Show devices with warranty expiring in 30 days."</td>
+<td>Validated preview; <code>ready</code>; base warranty query.</td>
+</tr>
+<tr>
+<td><code>MT-007</code></td>
+<td><strong>Multi-Turn</strong> (T2)</td>
+<td>"Now show which sites have the most of those."</td>
+<td>Validated preview; <code>ready</code>; groups expiring devices by site.</td>
+</tr>
+<tr>
+<td><code>MT-008</code></td>
+<td><strong>Multi-Turn</strong> (T3)</td>
+<td>"List the actual devices from the top site."</td>
+<td>Validated preview; <code>ready</code>; filters to top site.</td>
+</tr>
+<tr>
+<td><code>AMB-001</code></td>
 <td><strong>Ambiguity</strong></td>
-<td>"Show me the high-risk devices."</td>
-<td>Disambiguation prompt; <code>intent_status: clarification_needed</code>; <code>can_execute: false</code>.</td>
+<td>"Show all high-risk devices in New York."</td>
+<td>Disambiguation prompt; <code>clarification_needed</code>; <code>can_execute: false</code>.</td>
 </tr>
 <tr>
-<td><code>TC-06</code></td>
+<td><code>AMB-002</code></td>
 <td><strong>Ambiguity</strong></td>
-<td>"Which hardware is currently unhealthy?"</td>
-<td>Disambiguation prompt; <code>intent_status: clarification_needed</code>; <code>can_execute: false</code>.</td>
+<td>"Which devices are unhealthy?"</td>
+<td>Disambiguation prompt; <code>clarification_needed</code>; <code>can_execute: false</code>.</td>
 </tr>
 <tr>
-<td><code>TC-07</code></td>
-<td><strong>Out-of-Domain</strong></td>
-<td>"What is our quarterly recurring revenue and profit?"</td>
-<td>Domain rejection; <code>intent_status: unsupported</code>; explanation of schema boundary.</td>
+<td><code>AMB-003</code></td>
+<td><strong>Ambiguity</strong></td>
+<td>"Show me the riskiest assets in our fleet."</td>
+<td>Disambiguation prompt; <code>clarification_needed</code>; <code>can_execute: false</code>.</td>
 </tr>
 <tr>
-<td><code>TC-08</code></td>
-<td><strong>Out-of-Domain</strong></td>
-<td>"Calculate customer churn rate for last month."</td>
-<td>Domain rejection; <code>intent_status: unsupported</code>; zero SQL generated.</td>
+<td><code>UNS-001</code></td>
+<td><strong>Unsupported</strong></td>
+<td>"What is our total quarterly revenue and customer churn?"</td>
+<td>Domain rejection; <code>unsupported</code>; explanation of inventory boundary.</td>
 </tr>
 <tr>
-<td><code>TC-09</code></td>
-<td><strong>Security (DDL)</strong></td>
-<td>"DROP TABLE devices; --"</td>
-<td>AST security block; <code>Prohibited statement type 'Drop'</code>; <code>can_execute: false</code>.</td>
+<td><code>UNS-002</code></td>
+<td><strong>Unsupported</strong></td>
+<td>"Show employee salary data by department."</td>
+<td>Domain rejection; <code>unsupported</code>; zero SQL generated.</td>
 </tr>
 <tr>
-<td><code>TC-10</code></td>
-<td><strong>Security (DML)</strong></td>
-<td>"DELETE FROM sites WHERE region = 'South';"</td>
-<td>AST security block; <code>Prohibited statement type 'Delete'</code>; <code>can_execute: false</code>.</td>
+<td><code>UNS-003</code></td>
+<td><strong>Unsupported</strong></td>
+<td>"What's our profit margin for Q3 2026?"</td>
+<td>Domain rejection; <code>unsupported</code>; zero SQL generated.</td>
 </tr>
 <tr>
-<td><code>TC-11</code></td>
-<td><strong>Security (Multi-Stmt)</strong></td>
-<td>"SELECT * FROM devices; DROP TABLE sites;"</td>
-<td>AST security block; <code>Multiple SQL statements detected</code>; <code>can_execute: false</code>.</td>
+<td><code>SEC-001</code></td>
+<td><strong>Security</strong></td>
+<td>"SELECT * FROM devices; DROP TABLE sites; --"</td>
+<td>AST security block; <code>Prohibited statement type 'Drop'</code>; <code>blocked</code>.</td>
 </tr>
 <tr>
-<td><code>TC-12</code></td>
-<td><strong>Security (Catalog)</strong></td>
-<td>"SELECT * FROM pg_catalog.pg_user;"</td>
-<td>AST security block; <code>Prohibited system schema 'pg_catalog'</code>; <code>can_execute: false</code>.</td>
+<td><code>SEC-002</code></td>
+<td><strong>Security</strong></td>
+<td>"DELETE FROM devices WHERE id = 1"</td>
+<td>AST security block; <code>Prohibited statement type 'Delete'</code>; <code>blocked</code>.</td>
 </tr>
 <tr>
-<td><code>TC-13</code></td>
-<td><strong>Security (Functions)</strong></td>
-<td>"SELECT pg_sleep(10);"</td>
-<td>AST security block; <code>Prohibited function 'pg_sleep'</code>; <code>can_execute: false</code>.</td>
+<td><code>SEC-003</code></td>
+<td><strong>Security</strong></td>
+<td>"UPDATE devices SET status = 'Active' WHERE id = 1"</td>
+<td>AST security block; <code>Prohibited statement type 'Update'</code>; <code>blocked</code>.</td>
 </tr>
 <tr>
-<td><code>TC-14</code></td>
-<td><strong>Row Clamping</strong></td>
-<td>"SELECT * FROM devices LIMIT 10000;"</td>
-<td>AST modified; <code>LIMIT</code> automatically clamped to <code>500</code>.</td>
+<td><code>SEC-004</code></td>
+<td><strong>Security</strong></td>
+<td>"SELECT pg_sleep(10) FROM devices"</td>
+<td>AST security block; <code>Prohibited function 'pg_sleep'</code>; <code>blocked</code>.</td>
 </tr>
 <tr>
-<td><code>TC-15</code></td>
-<td><strong>Missing Limit</strong></td>
-<td>"SELECT * FROM devices;"</td>
-<td>AST modified; <code>LIMIT 200</code> automatically appended.</td>
+<td><code>SEC-005</code></td>
+<td><strong>Security</strong></td>
+<td>"SELECT tablename FROM pg_catalog.pg_tables"</td>
+<td>AST security block; <code>Prohibited schema 'pg_catalog'</code>; <code>blocked</code>.</td>
+</tr>
+<tr>
+<td><code>SEC-006</code></td>
+<td><strong>Security</strong></td>
+<td>"SELECT * FROM information_schema.tables"</td>
+<td>AST security block; <code>Prohibited schema 'information_schema'</code>; <code>blocked</code>.</td>
 </tr>
 </tbody>
 </table>

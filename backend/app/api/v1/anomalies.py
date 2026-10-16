@@ -14,6 +14,7 @@ import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.database import get_db
 from app.models.user import User
@@ -134,6 +135,19 @@ def train_anomaly_model(
             detail="Only Analyst and Admin users are authorized to train ML models.",
         )
 
+    # A PostgreSQL advisory lock protects the expensive retrain operation
+    # across multiple FastAPI workers. The client-side button is only a UX
+    # safeguard; direct callers receive a deterministic conflict response.
+    lock_key = 906_031
+    lock_acquired = db.execute(
+        text("SELECT pg_try_advisory_lock(:lock_key)"), {"lock_key": lock_key}
+    ).scalar()
+    if not lock_acquired:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A model retraining job is already in progress. Refresh shortly for its result.",
+        )
+
     try:
         result = anomaly_detector.train_model(db=db, contamination=contamination)
         meta = anomaly_detector.get_metadata(db)
@@ -152,3 +166,5 @@ def train_anomaly_model(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Model training failed: {str(e)}",
         )
+    finally:
+        db.execute(text("SELECT pg_advisory_unlock(:lock_key)"), {"lock_key": lock_key})

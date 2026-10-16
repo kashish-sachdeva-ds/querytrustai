@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey
+from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey, Index, text
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -8,6 +8,16 @@ from app.database import Base
 
 class DataQualityRun(Base):
     __tablename__ = "data_quality_runs"
+    __table_args__ = (
+        # A diagnostic run persists findings, so two concurrent runs are not
+        # harmless duplicates. PostgreSQL enforces this across web workers.
+        Index(
+            "uq_data_quality_single_running_run",
+            "status",
+            unique=True,
+            postgresql_where=text("status = 'running'"),
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     triggered_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)

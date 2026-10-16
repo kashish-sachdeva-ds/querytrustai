@@ -10,9 +10,10 @@ Implements:
 
 import uuid
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
 from app.core.auth import get_current_user
@@ -26,16 +27,42 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 @router.post("/sessions", response_model=ChatSessionSummary, status_code=status.HTTP_201_CREATED)
 def create_session(
     payload: ChatSessionCreate,
+    idempotency_key: str = Header(..., alias="Idempotency-Key", min_length=16, max_length=64),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Creates a new conversation session for the current user."""
+    existing = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == current_user.id, ChatSession.request_key == idempotency_key)
+        .first()
+    )
+    if existing:
+        return ChatSessionSummary(
+            id=existing.id,
+            title=existing.title,
+            created_at=existing.created_at,
+            updated_at=existing.updated_at,
+            message_count=len(existing.messages),
+        )
+
     session = ChatSession(
         user_id=current_user.id,
         title=payload.title or "New Conversation",
+        request_key=idempotency_key,
     )
     db.add(session)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        session = (
+            db.query(ChatSession)
+            .filter(ChatSession.user_id == current_user.id, ChatSession.request_key == idempotency_key)
+            .first()
+        )
+        if not session:
+            raise exc
     db.refresh(session)
 
     return ChatSessionSummary(
@@ -94,7 +121,8 @@ def get_session_messages(
 ):
     """Retrieves all messages for a specific session.
 
-    Enforces ownership isolation: non-admin users cannot access other users' sessions.
+    Enforces ownership isolation for every role. Administrators audit query
+    metadata through the dedicated audit route, not private conversations.
     """
     session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
     if not session:
@@ -103,8 +131,7 @@ def get_session_messages(
             detail=f"Chat session '{session_id}' not found.",
         )
 
-    # Ownership / Admin check
-    if session.user_id != current_user.id and current_user.role != "admin":
+    if session.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access this chat session.",
@@ -134,7 +161,7 @@ def delete_session(
             detail=f"Chat session '{session_id}' not found.",
         )
 
-    if session.user_id != current_user.id and current_user.role != "admin":
+    if session.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to delete this chat session.",

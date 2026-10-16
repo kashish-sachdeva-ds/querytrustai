@@ -1,11 +1,19 @@
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from app.schemas.common import StrictRequestModel
 
 
-class ChatSessionCreate(BaseModel):
-    title: Optional[str] = Field("New Conversation", max_length=255)
+class ChatSessionCreate(StrictRequestModel):
+    title: Optional[str] = Field("New Conversation", min_length=1, max_length=255)
+
+    @field_validator("title")
+    @classmethod
+    def title_must_not_be_blank(cls, value: Optional[str]) -> Optional[str]:
+        if value is not None and not value:
+            raise ValueError("Title must not be blank")
+        return value
 
 
 class ChatSessionSummary(BaseModel):
@@ -31,7 +39,7 @@ class ChatMessageResponse(BaseModel):
         from_attributes = True
 
 
-class ChatMessageCreate(BaseModel):
+class ChatMessageCreate(StrictRequestModel):
     content: str = Field(..., min_length=1)
     role: str = Field("user", pattern="^(user|assistant|system)$")
     metadata_json: Optional[Dict[str, Any]] = None

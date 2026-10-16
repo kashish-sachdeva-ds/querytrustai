@@ -18,6 +18,24 @@ def test_login_success_admin(client):
     assert "password_hash" not in data["user"]
 
 
+def test_login_sets_httponly_cookie_for_browser_session(client):
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "viewer@querytrust.local", "password": "ViewerPass123!"},
+    )
+    assert response.status_code == 200
+    cookie = response.headers["set-cookie"].lower()
+    assert "querytrust_access_token=" in cookie
+    assert "httponly" in cookie
+    assert "samesite=strict" in cookie
+
+    # The TestClient cookie jar simulates a browser navigation without an
+    # Authorization header; the protected route must authenticate via cookie.
+    me = client.get("/api/v1/auth/me")
+    assert me.status_code == 200
+    assert me.json()["email"] == "viewer@querytrust.local"
+
+
 def test_login_success_analyst(client):
     """Analyst user can log in successfully."""
     response = client.post(
@@ -58,6 +76,20 @@ def test_login_nonexistent_user(client):
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email or password"
+
+
+def test_login_rejects_invalid_email_and_unknown_fields(client):
+    invalid_email = client.post(
+        "/api/v1/auth/login",
+        json={"email": "not-an-email", "password": "safe-password"},
+    )
+    assert invalid_email.status_code == 422
+
+    extra_field = client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@querytrust.local", "password": "AdminPass123!", "role": "admin"},
+    )
+    assert extra_field.status_code == 422
 
 
 def test_auth_me_endpoint(client, viewer_headers):

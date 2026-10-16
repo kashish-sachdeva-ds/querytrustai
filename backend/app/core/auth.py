@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -23,7 +23,10 @@ from app.config import get_settings, Settings
 from app.database import get_db
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+# Header support remains for API clients and tests. Browser sessions use the
+# HttpOnly cookie issued at login so a script injection cannot read a bearer
+# token from Web Storage.
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 def create_access_token(
@@ -66,7 +69,8 @@ def decode_access_token(token: str, settings: Optional[Settings] = None) -> dict
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> User:
@@ -75,6 +79,13 @@ def get_current_user(
     Validates the token, loads the user from the database, and checks that
     the account is active. This runs on every request to a protected endpoint.
     """
+    token = token or request.cookies.get("querytrust_access_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     payload = decode_access_token(token, settings)
     raw_user_id = payload.get("sub")
     if not raw_user_id:

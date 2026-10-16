@@ -6,7 +6,7 @@ from app.models.user import User
 from app.core.auth import create_access_token
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def client():
     with TestClient(app) as test_client:
         yield test_client

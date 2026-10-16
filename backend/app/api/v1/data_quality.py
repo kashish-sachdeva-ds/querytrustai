@@ -12,6 +12,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
 from app.models.user import User
@@ -109,8 +110,24 @@ def trigger_data_quality_run(
             detail="Only Analyst and Admin users are authorized to trigger data quality profiling.",
         )
 
+    # The partial unique index on status='running' is the server-side race
+    # guard. It protects direct API callers in addition to disabled UI buttons.
+    if db.query(DataQualityRun).filter(DataQualityRun.status == "running").first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A data quality profiling run is already in progress. Refresh shortly for its result.",
+        )
+
     profiler = DataQualityProfiler(db)
-    run = profiler.run_all_checks(triggered_by_user_id=current_user.id)
+    try:
+        run = profiler.run_all_checks(triggered_by_user_id=current_user.id)
+    except IntegrityError as exc:
+        db.rollback()
+        logger.info("Rejected concurrent data quality profiling request")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A data quality profiling run is already in progress. Refresh shortly for its result.",
+        ) from exc
 
     findings = (
         db.query(DataQualityFinding)

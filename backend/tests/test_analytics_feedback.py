@@ -60,3 +60,17 @@ def test_feedback_ownership_isolation(client, analyst_headers, viewer_headers):
         headers=viewer_headers,
     )
     assert fb_resp.status_code == 403
+
+
+def test_admin_cannot_overwrite_another_users_feedback(client, analyst_headers, admin_headers):
+    prev_resp = client.post(
+        "/api/v1/analytics/preview",
+        json={"question": "Count active devices"},
+        headers=analyst_headers,
+    )
+    fb_resp = client.post(
+        "/api/v1/analytics/feedback",
+        json={"query_run_id": prev_resp.json()["query_run_id"], "is_helpful": True},
+        headers=admin_headers,
+    )
+    assert fb_resp.status_code == 403

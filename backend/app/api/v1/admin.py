@@ -36,7 +36,7 @@ def update_user(
 
     Admin access only. Enforces valid role transitions and active status flags.
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == user_id).with_for_update().first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

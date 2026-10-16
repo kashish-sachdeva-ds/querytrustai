@@ -3,8 +3,9 @@ Evaluation API schemas.
 Defines request and response models for evaluation benchmark runs.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
+from app.schemas.common import StrictRequestModel
 from datetime import datetime
 from uuid import UUID
 
@@ -83,5 +84,5 @@ class EvaluationRunSummary(BaseModel):
     completed_at: Optional[datetime] = None
 
 
-class EvaluationRunRequest(BaseModel):
-    mode: str = Field(default="guarded", description="Pipeline mode: 'guarded' or 'baseline'")
+class EvaluationRunRequest(StrictRequestModel):
+    mode: Literal["guarded", "baseline"] = Field(default="guarded", description="Pipeline mode: 'guarded' or 'baseline'")

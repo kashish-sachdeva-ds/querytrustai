@@ -171,8 +171,7 @@ def test_evaluations_api_invalid_mode(client, admin_headers):
         headers=admin_headers,
         json={"mode": "unsupported_mode"},
     )
-    assert resp.status_code == 400
-    assert "Invalid mode" in resp.json()["detail"]
+    assert resp.status_code == 422
 
 
 def test_evaluations_api_not_found(client, admin_headers):

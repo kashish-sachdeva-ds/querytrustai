@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -15,6 +15,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/login", response_model=LoginResponse)
 def login(
     request: LoginRequest,
+    response: Response,
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ):
@@ -49,6 +50,18 @@ def login(
         settings=settings,
     )
 
+    # Browser auth is cookie-based. The access token remains in the response
+    # for documented non-browser API clients, but the shipped frontend never
+    # persists or reads it from Web Storage.
+    response.set_cookie(
+        key="querytrust_access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.ENVIRONMENT != "development",
+        samesite="strict",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/api/v1",
+    )
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
@@ -74,6 +87,7 @@ def get_current_user_profile(
 
 
 @router.post("/logout")
-def logout():
+def logout(response: Response):
     """Client-side token disposal endpoint."""
+    response.delete_cookie(key="querytrust_access_token", path="/api/v1", samesite="strict")
     return {"message": "Logged out successfully"}

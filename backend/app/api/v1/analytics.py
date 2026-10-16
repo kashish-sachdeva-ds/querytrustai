@@ -290,15 +290,23 @@ def execute_previewed_query(
     5. Executes exclusively via 'analytics_reader' SELECT-only role in a read-only transaction.
     6. Enforces statement timeout and clamps output rows to MAX_QUERY_ROWS.
     """
-    query_run = db.query(QueryRun).filter(QueryRun.id == payload.query_run_id).first()
+    # Lock the preview row before transitioning it to executing. This makes
+    # duplicate requests deterministic even when they land on separate workers.
+    query_run = (
+        db.query(QueryRun)
+        .filter(QueryRun.id == payload.query_run_id)
+        .with_for_update()
+        .first()
+    )
     if not query_run:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Preview record '{payload.query_run_id}' not found.",
         )
 
-    # Ownership check
-    if query_run.user_id != current_user.id and current_user.role != "admin":
+    # Query previews are private artifacts. An administrator may audit metadata,
+    # but must not execute or mutate a different user's preview by guessing its ID.
+    if query_run.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to execute this preview.",
@@ -315,6 +323,16 @@ def execute_previewed_query(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot execute query: query requests unsupported domain metrics.",
         )
+    if query_run.status in {"executing", "executed", "failed"}:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This preview has already been submitted for execution. Refresh its history before retrying.",
+        )
+    if query_run.status != "previewed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only a validated, ready preview can be executed.",
+        )
 
     # Re-validate stored SQL at execution time
     val_res = validate_and_sanitize_sql(query_run.generated_sql)
@@ -329,6 +347,12 @@ def execute_previewed_query(
         )
 
     sanitized_sql = val_res.sanitized_sql or query_run.generated_sql
+
+    # Persist the in-flight state before releasing the row lock for the
+    # read-only database call. A second submit now receives 409, not a second
+    # execution attempt.
+    query_run.status = "executing"
+    db.commit()
 
     # Execute via dedicated analytics_reader role in read-only transaction
     start_time = time.perf_counter()
@@ -407,15 +431,21 @@ def submit_query_feedback(
     db: Session = Depends(get_db),
 ):
     """Submits or updates helpfulness feedback for a query run."""
-    query_run = db.query(QueryRun).filter(QueryRun.id == payload.query_run_id).first()
+    query_run = (
+        db.query(QueryRun)
+        .filter(QueryRun.id == payload.query_run_id)
+        .with_for_update()
+        .first()
+    )
     if not query_run:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Query run '{payload.query_run_id}' not found.",
         )
 
-    # Ownership check
-    if query_run.user_id != current_user.id and current_user.role != "admin":
+    # Feedback is owned by the person who issued the query. This prevents an
+    # administrator account from overwriting another user's response by ID.
+    if query_run.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only submit feedback for your own queries.",

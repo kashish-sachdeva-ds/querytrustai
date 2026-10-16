@@ -4,7 +4,8 @@ Defines models for telemetry outlier detection, model metadata, and scan results
 """
 
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictFloat, StrictInt
+from app.schemas.common import StrictRequestModel
 from datetime import datetime
 from uuid import UUID
 
@@ -48,9 +49,9 @@ class AnomalyItem(BaseModel):
     rank: int
 
 
-class AnomalyScanRequest(BaseModel):
-    limit: int = Field(default=50, ge=1, le=500, description="Max number of top outliers to return")
-    threshold: Optional[float] = Field(default=0.65, ge=0.0, le=1.0, description="Minimum anomaly score threshold")
+class AnomalyScanRequest(StrictRequestModel):
+    limit: StrictInt = Field(default=50, ge=1, le=500, description="Max number of top outliers to return")
+    threshold: Optional[StrictFloat] = Field(default=0.65, ge=0.0, le=1.0, description="Minimum anomaly score threshold")
 
 
 class AnomalyScanResponse(BaseModel):

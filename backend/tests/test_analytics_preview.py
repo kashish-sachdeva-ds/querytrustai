@@ -91,7 +91,11 @@ def test_preview_blocks_malicious_query(client, admin_headers, db_session):
 
 def test_preview_with_session_preserves_messages(client, analyst_headers):
     # 1. Create a session first
-    sess_resp = client.post("/api/v1/chat/sessions", json={"title": "Test Session"}, headers=analyst_headers)
+    sess_resp = client.post(
+        "/api/v1/chat/sessions",
+        json={"title": "Test Session"},
+        headers={**analyst_headers, "Idempotency-Key": "create-session-preview-test"},
+    )
     assert sess_resp.status_code == 201
     session_id = sess_resp.json()["id"]
 

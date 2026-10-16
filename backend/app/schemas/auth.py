@@ -1,11 +1,28 @@
 import uuid
-from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+import re
+from typing import Literal, Optional
+from pydantic import BaseModel, Field, field_validator
+from app.schemas.common import StrictRequestModel
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(StrictRequestModel):
     email: str = Field(..., min_length=3, max_length=255, description="User email address")
     password: str = Field(..., min_length=1, max_length=255, description="User password")
+
+    @field_validator("password")
+    @classmethod
+    def password_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Password must not be blank")
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def email_must_be_well_formed(cls, value: str) -> str:
+        normalized = value.lower()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
+            raise ValueError("Email address is invalid")
+        return normalized
 
 
 class UserPublic(BaseModel):
@@ -40,8 +57,8 @@ class UserMeResponse(BaseModel):
         from_attributes = True
 
 
-class UserUpdateRequest(BaseModel):
+class UserUpdateRequest(StrictRequestModel):
     """Request for admin user role / status updates."""
-    role: Optional[str] = Field(None, pattern="^(admin|analyst|viewer)$", description="Role: admin, analyst, or viewer")
+    role: Optional[Literal["admin", "analyst", "viewer"]] = Field(None, description="Role: admin, analyst, or viewer")
     is_active: Optional[bool] = Field(None, description="Active status flag")
     display_name: Optional[str] = Field(None, min_length=1, max_length=255)

@@ -12,6 +12,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
 from app.models.user import User
@@ -85,10 +86,13 @@ async def execute_evaluation_run(
     """
     _require_admin(current_user)
 
-    if payload.mode not in ("guarded", "baseline"):
+    if db.query(EvaluationRun).filter(
+        EvaluationRun.mode == payload.mode,
+        EvaluationRun.status == "running",
+    ).first():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid mode '{payload.mode}'. Must be 'guarded' or 'baseline'.",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An evaluation for this mode is already running. Refresh shortly for its result.",
         )
 
     try:
@@ -98,6 +102,13 @@ async def execute_evaluation_run(
             mode=payload.mode,
         )
         return result
+    except IntegrityError as e:
+        db.rollback()
+        logger.info("Rejected concurrent evaluation request for mode=%s", payload.mode)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An evaluation for this mode is already running. Refresh shortly for its result.",
+        ) from e
     except Exception as e:
         logger.error(f"Evaluation run failed: {e}", exc_info=True)
         raise HTTPException(

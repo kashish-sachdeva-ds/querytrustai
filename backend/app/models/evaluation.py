@@ -1,12 +1,21 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Index, text
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from app.database import Base
 
 
 class EvaluationRun(Base):
     __tablename__ = "evaluation_runs"
+    __table_args__ = (
+        # Do not let a repeated click launch the same benchmark mode twice.
+        Index(
+            "uq_evaluation_single_running_mode",
+            "mode",
+            unique=True,
+            postgresql_where=text("status = 'running'"),
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     triggered_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)

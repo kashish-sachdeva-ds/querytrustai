@@ -1,12 +1,20 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool, field_validator
+from app.schemas.common import StrictRequestModel
 
 
-class PreviewRequest(BaseModel):
+class PreviewRequest(StrictRequestModel):
     question: str = Field(..., min_length=2, max_length=1000, description="Natural language question to translate to SQL")
     session_id: Optional[uuid.UUID] = Field(None, description="Optional chat session UUID to preserve conversation history")
+
+    @field_validator("question")
+    @classmethod
+    def question_must_not_be_blank(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Question must not be blank")
+        return value
 
 
 class ValidationDetail(BaseModel):
@@ -35,7 +43,7 @@ class PreviewResponse(BaseModel):
     created_at: datetime
 
 
-class ExecuteRequest(BaseModel):
+class ExecuteRequest(StrictRequestModel):
     query_run_id: uuid.UUID = Field(..., description="Server-stored opaque preview ID. Arbitrary SQL text is not accepted.")
 
 
@@ -59,9 +67,9 @@ class ExecuteResponse(BaseModel):
     result_summary: str
 
 
-class FeedbackRequest(BaseModel):
+class FeedbackRequest(StrictRequestModel):
     query_run_id: uuid.UUID
-    is_helpful: bool
+    is_helpful: StrictBool
     explanation: Optional[str] = Field(None, max_length=1000)
 
 

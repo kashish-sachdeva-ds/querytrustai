@@ -48,6 +48,21 @@ def test_execute_ownership_isolation(client, analyst_headers, viewer_headers):
     assert "permission" in exec_resp.json()["detail"].lower()
 
 
+def test_admin_cannot_execute_another_users_preview(client, analyst_headers, admin_headers):
+    """Audit access must not grant execution authority over a user's preview."""
+    preview = client.post(
+        "/api/v1/analytics/preview",
+        json={"question": "Count active devices"},
+        headers=analyst_headers,
+    )
+    response = client.post(
+        "/api/v1/analytics/execute",
+        json={"query_run_id": preview.json()["query_run_id"]},
+        headers=admin_headers,
+    )
+    assert response.status_code == 403
+
+
 def test_execute_blocked_query_rejected(client, admin_headers, db_session):
     # Preview a blocked query
     prev_resp = client.post(
@@ -105,6 +120,18 @@ def test_execute_valid_query_success(client, analyst_headers, db_session):
     assert query_run.row_count == data["row_count"]
     assert query_run.executed_at is not None
     assert query_run.execution_duration_ms > 0
+
+
+def test_execute_preview_is_single_use(client, analyst_headers):
+    preview = client.post(
+        "/api/v1/analytics/preview",
+        json={"question": "Count active devices"},
+        headers=analyst_headers,
+    )
+    run_id = preview.json()["query_run_id"]
+    assert client.post("/api/v1/analytics/execute", json={"query_run_id": run_id}, headers=analyst_headers).status_code == 200
+    second = client.post("/api/v1/analytics/execute", json={"query_run_id": run_id}, headers=analyst_headers)
+    assert second.status_code == 409
 
 
 def test_execute_revalidates_and_blocks_tampered_query(client, admin_headers, db_session):

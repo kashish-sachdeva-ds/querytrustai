@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import {
   AlertTriangle,
+  ArrowRight,
   RefreshCw,
   Clock,
   Database,
+  MessageSquareText,
+  Search,
   ShieldCheck,
   Server,
 } from 'lucide-react'
@@ -13,7 +16,11 @@ import {
 } from '../api/client'
 import './OverviewView.css'
 
-export const OverviewView: React.FC = () => {
+interface OverviewViewProps {
+  onNavigate: (destination: 'devices' | 'ask-data' | 'data-quality') => void
+}
+
+export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
   const [data, setData] = useState<DashboardSummaryResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [refreshing, setRefreshing] = useState<boolean>(false)
@@ -88,19 +95,18 @@ export const OverviewView: React.FC = () => {
 
   return (
     <div className="overview-command-center">
-      {/* 1. CONSOLIDATED TOP HERO */}
       <section className="overview-hero" aria-labelledby="operations-heading">
         <div>
           <div className="overview-eyebrow">
-            <span style={{ color: '#EA580C' }}>●</span>
-            OPERATIONAL INTELLIGENCE / FLEET CONTROL ROOM
+            <span className="overview-eyebrow-marker" aria-hidden="true" />
+            EQUIPMENT OVERVIEW
           </div>
           <h2 className="overview-heading" id="operations-heading">
-            Fleet control room
+            Your equipment, at a glance
           </h2>
           <p className="overview-copy">
-            Inventory, lifecycle, and service signals sourced from the synthetic PostgreSQL dataset.
-            Real-time read-only monitoring and operational distributions.
+            Start with a question, find a specific device, or review the items that may need attention.
+            This workspace uses synthetic practice data.
           </p>
         </div>
 
@@ -117,10 +123,10 @@ export const OverviewView: React.FC = () => {
             onClick={() => loadData(true)}
             disabled={loading || refreshing}
             id="refresh-dashboard-btn"
-            title="Refresh fleet operations (Press R)"
+            title="Refresh this overview (Press R)"
           >
             <RefreshCw size={13} className={refreshing ? 'spin-icon' : ''} />
-            <span>{refreshing ? 'Updating...' : 'Refresh data'}</span>
+            <span>{refreshing ? 'Updating…' : 'Refresh'}</span>
             <kbd className="hero-kbd-badge">R</kbd>
           </button>
         </div>
@@ -152,60 +158,88 @@ export const OverviewView: React.FC = () => {
 
       {data && (
         <>
-          {/* 2. OVERVIEW CONTROL STRIP (Consolidated Single Toolbar) */}
-          <section className="overview-control-strip" aria-label="Key Fleet Metrics">
-            {/* Metric 1: Total Fleet */}
+          <section className="overview-control-strip" aria-label="At-a-glance equipment summary">
             <div className="strip-metric-item">
-              <span className="strip-metric-label">TOTAL FLEET</span>
+              <span className="strip-metric-label">EQUIPMENT</span>
               <div className="strip-metric-value">
                 {data.total_devices.toLocaleString()}
               </div>
               <div className="strip-metric-subtext">
                 <Server size={11} />
-                <span>{data.total_sites.toLocaleString()} monitored sites</span>
+                <span>Across {data.total_sites.toLocaleString()} locations</span>
               </div>
             </div>
 
-            {/* Metric 2: Active Status */}
             <div className="strip-metric-item">
-              <span className="strip-metric-label">ACTIVE STATUS</span>
+              <span className="strip-metric-label">ACTIVE</span>
               <div className="strip-metric-value">
                 {data.active_devices.toLocaleString()}
               </div>
               <div className="strip-metric-subtext operational-subtext-pill">
                 <span className="status-pulse-dot" />
-                <span>{activeShare}% operational</span>
+                <span>{activeShare}% currently active</span>
               </div>
             </div>
 
-            {/* Metric 3: Open Service Queue */}
             <div className="strip-metric-item">
-              <span className="strip-metric-label">OPEN SERVICE QUEUE</span>
+              <span className="strip-metric-label">SERVICE TO REVIEW</span>
               <div className="strip-metric-value">
                 {data.open_service_events.toLocaleString()}
               </div>
               <div className="strip-metric-subtext warning-subtext-pill">
                 <AlertTriangle size={12} />
-                <span>Pending maintenance</span>
+                <span>Open service requests</span>
               </div>
             </div>
 
-            {/* Metric 4: Expiring Warranties (30D) */}
             <div className="strip-metric-item">
-              <span className="strip-metric-label">EXPIRING WARRANTIES (30D)</span>
+              <span className="strip-metric-label">COVERAGE ENDING SOON</span>
               <div className="strip-metric-value">
                 {data.expiring_warranties_30d.toLocaleString()}
               </div>
               <div className="strip-metric-subtext">
                 <Clock size={11} />
-                <span>Next 30-day lifecycle window</span>
+                <span>Within the next 30 days</span>
               </div>
+            </div>
+          </section>
+
+          <section className="overview-start-here" aria-labelledby="start-here-heading">
+            <div className="start-here-intro">
+              <span className="start-here-kicker">START HERE</span>
+              <h3 id="start-here-heading">Choose your next step</h3>
+              <p>Each path keeps the data read-only and explains what happens before anything is run.</p>
+            </div>
+            <div className="start-here-actions">
+              <button type="button" className="start-here-action" onClick={() => onNavigate('ask-data')}>
+                <span className="start-here-icon"><MessageSquareText size={18} aria-hidden="true" /></span>
+                <span className="start-here-copy">
+                  <strong>Ask a question</strong>
+                  <small>Use everyday language. Review a safe preview before it reads data.</small>
+                </span>
+                <ArrowRight size={17} aria-hidden="true" />
+              </button>
+              <button type="button" className="start-here-action" onClick={() => onNavigate('devices')}>
+                <span className="start-here-icon"><Search size={18} aria-hidden="true" /></span>
+                <span className="start-here-copy">
+                  <strong>Find equipment</strong>
+                  <small>Search by asset tag, location, model, or operational status.</small>
+                </span>
+                <ArrowRight size={17} aria-hidden="true" />
+              </button>
+              <button type="button" className="start-here-action" onClick={() => onNavigate('data-quality')}>
+                <span className="start-here-icon"><ShieldCheck size={18} aria-hidden="true" /></span>
+                <span className="start-here-copy">
+                  <strong>Check data health</strong>
+                  <small>Review missing or inconsistent records without changing source data.</small>
+                </span>
+                <ArrowRight size={17} aria-hidden="true" />
+              </button>
             </div>
           </section>
 
           {/* 3. 2-COLUMN SPLIT BENTO GRID */}
           <section className="overview-bento-grid" aria-label="Fleet Distributions">
-            {/* Left Column: Device Fleet Breakdown (Inventory Composition) */}
             <article className="bento-card">
               <div>
                 <div className="bento-card-header">
@@ -213,14 +247,14 @@ export const OverviewView: React.FC = () => {
                     <span className="bento-card-icon">
                       <Database size={16} />
                     </span>
-                    <h3 className="bento-card-title">Inventory Composition</h3>
+                    <h3 className="bento-card-title">Equipment by type</h3>
                   </div>
                   <span className="bento-card-meta-badge">
                     {data.devices_by_type.length} Categories
                   </span>
                 </div>
                 <div className="bento-card-desc">
-                  Device distribution across synthetic networking hardware models
+                  A simple breakdown of the equipment in this practice dataset.
                 </div>
 
                 <div className="bento-distribution-list">
@@ -250,7 +284,6 @@ export const OverviewView: React.FC = () => {
               </div>
             </article>
 
-            {/* Right Column: Severity & Lifecycle Distribution */}
             <article className="bento-card">
               <div>
                 <div className="bento-card-header">
@@ -258,7 +291,7 @@ export const OverviewView: React.FC = () => {
                     <span className="bento-card-icon">
                       <ShieldCheck size={16} />
                     </span>
-                    <h3 className="bento-card-title">Lifecycle & Service Severity</h3>
+                    <h3 className="bento-card-title">Coverage and service</h3>
                   </div>
 
                   {/* Segmented Sub-Tabs */}
@@ -268,22 +301,22 @@ export const OverviewView: React.FC = () => {
                       className={`bento-tab-btn ${activeBentoTab === 'warranty' ? 'active' : ''}`}
                       onClick={() => setActiveBentoTab('warranty')}
                     >
-                      Warranty Horizon
+                      Coverage dates
                     </button>
                     <button
                       type="button"
                       className={`bento-tab-btn ${activeBentoTab === 'severity' ? 'active' : ''}`}
                       onClick={() => setActiveBentoTab('severity')}
                     >
-                      Service Severity
+                      Service urgency
                     </button>
                   </div>
                 </div>
 
                 <div className="bento-card-desc">
                   {activeBentoTab === 'warranty'
-                    ? `Horizon analysis referenced to anchor date ${data.reference_date}`
-                    : 'Active service incident distribution ranked by operational urgency'}
+                    ? `Coverage grouped using the dataset date: ${data.reference_date}`
+                    : 'Open service requests grouped by their recorded urgency'}
                 </div>
 
                 {/* Tab 1: Warranty Horizon */}
@@ -346,19 +379,18 @@ export const OverviewView: React.FC = () => {
             </article>
           </section>
 
-          {/* 4. RECENT SERVICE INCIDENTS TABLE */}
           <section className="overview-table-card" aria-labelledby="incidents-heading">
             <div className="overview-table-header-bar">
               <div>
                 <h3 className="overview-table-title" id="incidents-heading">
-                  Recent service incidents
+                  Recent service requests
                 </h3>
                 <div className="overview-table-sub">
-                  Live database event feed from synthetic telemetry & fault records
+                  The latest service records available in the synthetic practice dataset.
                 </div>
               </div>
               <span className="overview-table-badge">
-                LATEST {data.recent_service_events.length} RECORDS
+                {data.recent_service_events.length} LATEST RECORDS
               </span>
             </div>
 

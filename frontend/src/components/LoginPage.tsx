@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Shield, Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, Sparkles } from 'lucide-react'
+import { Shield, Eye, EyeOff, Lock, Mail, AlertCircle, ArrowRight, KeyRound } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export const LoginPage: React.FC = () => {
@@ -9,6 +9,7 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const showLocalDemoAccounts = import.meta.env.DEV
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +52,7 @@ export const LoginPage: React.FC = () => {
           </div>
           <h1 className="login-title">QueryTrust AI</h1>
           <p className="login-subtitle">
-            Enterprise Natural Language Analytics Workbench
+            A clearer way to understand your equipment data
           </p>
         </div>
 
@@ -59,10 +60,10 @@ export const LoginPage: React.FC = () => {
         <div className="login-synthetic-banner">
           <div className="synthetic-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <span className="badge-dot"></span>
-            SYNTHETIC DEMO ENVIRONMENT
+            SYNTHETIC PRACTICE ENVIRONMENT
           </div>
           <p className="banner-note">
-            Pre-loaded with 5,000 networking devices across 50 sites for security validation.
+            This local workspace uses educational synthetic records. It does not contain customer or production device data.
           </p>
         </div>
 
@@ -135,7 +136,7 @@ export const LoginPage: React.FC = () => {
               <span className="loading-spinner-inline" />
             ) : (
               <>
-                <span>Sign In to Workbench</span>
+                <span>Sign in to your workspace</span>
                 <ArrowRight size={16} />
               </>
             )}
@@ -143,10 +144,10 @@ export const LoginPage: React.FC = () => {
         </form>
 
         {/* Demo Credentials Section */}
-        <div className="demo-credentials-section">
+        {showLocalDemoAccounts && <div className="demo-credentials-section">
           <div className="demo-credentials-header">
-            <Sparkles size={14} style={{ color: 'var(--qt-accent)' }} />
-            <span>Development Quick-Fill Credentials</span>
+            <KeyRound size={14} style={{ color: 'var(--qt-accent)' }} />
+            <span>Local development sign-in</span>
           </div>
           <div className="demo-chips-grid">
             <button
@@ -158,7 +159,7 @@ export const LoginPage: React.FC = () => {
                 <span className="role-tag role-admin">Admin</span>
                 <span className="demo-chip-email">admin@querytrust.local</span>
               </div>
-              <span className="demo-chip-desc">Full governance, evaluations, user management</span>
+              <span className="demo-chip-desc">Access to governance, evaluations, and people settings</span>
             </button>
 
             <button
@@ -170,7 +171,7 @@ export const LoginPage: React.FC = () => {
                 <span className="role-tag role-analyst">Analyst</span>
                 <span className="demo-chip-email">analyst@querytrust.local</span>
               </div>
-              <span className="demo-chip-desc">Data quality profiling, ML anomalies, queries</span>
+              <span className="demo-chip-desc">Ask questions, review data health, and inspect unusual activity</span>
             </button>
 
             <button
@@ -182,15 +183,15 @@ export const LoginPage: React.FC = () => {
                 <span className="role-tag role-viewer">Viewer</span>
                 <span className="demo-chip-email">viewer@querytrust.local</span>
               </div>
-              <span className="demo-chip-desc">Read-only dashboard, device explorer, own history</span>
+              <span className="demo-chip-desc">View equipment, ask questions, and see your own history</span>
             </button>
           </div>
-        </div>
+        </div>}
 
         {/* Footer */}
         <div className="login-footer">
           <Shield size={14} className="text-secondary" />
-          <span>PostgreSQL Governed Security &bull; Select-Only Analytics Guard</span>
+          <span>Read-only analytics with server-side safety checks</span>
         </div>
       </div>
     </div>

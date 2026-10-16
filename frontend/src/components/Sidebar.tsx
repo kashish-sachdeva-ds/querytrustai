@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         <div className="brand-logo">QT</div>
         <div>
           <h2 className="brand-title">QueryTrust AI</h2>
-          <span className="brand-badge">Governance Workbench</span>
+          <span className="brand-badge">Equipment insights</span>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
             transform: `translateY(${indicator.top}px)`,
           }}
         />
-        <div className="nav-section-title">ANALYTICS & INVENTORY</div>
+        <div className="nav-section-title">YOUR WORKSPACE</div>
 
         <button
           type="button"
@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           {...activeItemProps('overview')}
         >
           <LayoutDashboard size={18} />
-          <span>Overview</span>
+          <span>Start here</span>
         </button>
 
         <button
@@ -97,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           {...activeItemProps('devices')}
         >
           <Server size={18} />
-          <span>Device Explorer</span>
+          <span>Find equipment</span>
         </button>
 
         <button
@@ -107,11 +107,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           {...activeItemProps('ask-data')}
         >
           <MessageSquareText size={18} />
-          <span>Ask Data</span>
+          <span>Ask a question</span>
         </button>
 
         <div className="nav-section-title" style={{ marginTop: '1.25rem' }}>
-          ASSURANCE & MONITORING
+          DATA CONFIDENCE
         </div>
 
         <button
@@ -121,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           {...activeItemProps('data-quality')}
         >
           <ShieldCheck size={18} />
-          <span>Data Quality</span>
+          <span>Data health</span>
         </button>
 
         <button
@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           {...activeItemProps('anomalies')}
         >
           <Activity size={18} />
-          <span>Anomaly Monitor</span>
+          <span>Unusual activity</span>
         </button>
 
         <button
@@ -141,14 +141,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           {...activeItemProps('history')}
         >
           <History size={18} />
-          <span>Query History</span>
+          <span>My questions</span>
         </button>
 
         {/* Admin Only Section */}
         {isAdmin && (
           <>
             <div className="nav-section-title" style={{ marginTop: '1.25rem' }}>
-              GOVERNANCE (ADMIN)
+              ADMINISTRATION
             </div>
 
             <button
@@ -158,7 +158,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
               {...activeItemProps('evaluations')}
             >
               <FlaskConical size={18} />
-              <span>Evaluation Lab</span>
+              <span>Reliability checks</span>
             </button>
 
             <button
@@ -168,7 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
               {...activeItemProps('admin')}
             >
               <Users size={18} />
-              <span>User Administration</span>
+              <span>People & access</span>
             </button>
           </>
         )}
@@ -179,8 +179,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         <div className="sidebar-security-badge">
           <Shield size={14} style={{ color: 'var(--qt-accent)' }} />
           <div>
-            <div className="security-title">SELECT-Only Guard</div>
-            <div className="security-subtitle">Role: {user?.role}</div>
+            <div className="security-title">Read-only data access</div>
+            <div className="security-subtitle">Signed in as {user?.role}</div>
           </div>
         </div>
       </div>

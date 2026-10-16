@@ -652,12 +652,13 @@ export const DevicesView: React.FC = () => {
                   <div className="asset-drawer-badges">
                     <button
                       className="asset-id-pill"
-                      onClick={() =>
-                        handleCopyAssetId(deviceDetail?.asset_tag || `ASSET-${selectedDeviceId}`)
-                      }
+                      onClick={() => {
+                        if (deviceDetail?.asset_tag) handleCopyAssetId(deviceDetail.asset_tag)
+                      }}
                       title="Click to copy Asset Tag"
+                      disabled={!deviceDetail?.asset_tag}
                     >
-                      <span>{deviceDetail?.asset_tag || `ASSET-#${selectedDeviceId}`}</span>
+                      <span>{deviceDetail?.asset_tag || 'Asset identifier loading'}</span>
                       {copiedAssetId ? <Check size={12} color="var(--qt-accent, #FF4F00)" /> : <Copy size={12} />}
                     </button>
 
@@ -820,7 +821,7 @@ export const DevicesView: React.FC = () => {
                               </span>
                             </div>
                             <p className="incident-desc-text">
-                              {ev.description || 'System-generated operational fault record.'}
+                              {ev.description || 'No event description recorded.'}
                             </p>
                             <div className="incident-footer-meta">
                               <span>Opened: {new Date(ev.opened_at).toLocaleDateString()}</span>

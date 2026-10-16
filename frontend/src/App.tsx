@@ -27,6 +27,7 @@ import { withLayoutTransition } from './motion'
 import { pushUrlParams, readUrlParam } from './urlState'
 import { NotFoundPage } from './components/NotFoundPage'
 import { ApiFailureToast } from './components/ApiFailureToast'
+import './ProductExperience.css'
 
 const tabs: ActiveTab[] = [
   'overview',
@@ -125,7 +126,7 @@ const AppShell: React.FC = () => {
 
         <main className="content-area">
           <div className="page-transition" key={activeTab}>
-            {activeTab === 'overview' && <OverviewView />}
+            {activeTab === 'overview' && <OverviewView onNavigate={selectTab} />}
             {activeTab === 'devices' && <DevicesView />}
             {activeTab === 'ask-data' && <AskDataView />}
             {activeTab === 'admin' && <AdminView />}

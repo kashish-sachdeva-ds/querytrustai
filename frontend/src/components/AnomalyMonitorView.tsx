@@ -149,7 +149,7 @@ export const AnomalyMonitorView: React.FC = () => {
                     {modelMeta?.algorithm || 'IsolationForest'}
                   </span>
               <span className="status-tag status-success">
-                <span className="live-dot" /> Version {modelMeta?.version || '1.0.0'}
+                <span className="live-dot" /> Version {modelMeta?.version || 'Unavailable'}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                 Fitted on {modelMeta?.dataset_identifier || 'synthetic training data'}

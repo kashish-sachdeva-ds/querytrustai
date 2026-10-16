@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-17  
-**Current milestone:** 6 — Frontend Enterprise Design & Truthful Governance Alignment (Completed)  
-**Overall status:** 🟢 Production Frontend Overhaul & Design Invariants Verified
+**Current milestone:** 6 — Product Clarity & Guided User Journey Pass (Frontend Complete; live stack check pending)
+**Overall status:** Frontend production build verified; live full-stack validation is blocked because the local Docker engine is stopped.
 
 ---
 
@@ -13,11 +13,11 @@
 | Python | 3.13.9 (Anaconda) | ✅ Operational |
 | Node.js | 24.14.1 | ✅ Operational |
 | npm | 11.11.0 | ✅ Operational |
-| PostgreSQL (local) | Port 5432 | ✅ Operational (`querytrust` db active) |
-| Roles | `app_user` (CRUD), `analytics_reader` (SELECT-only) | ✅ Configured and security verified |
-| Frontend Dev Server | Vite 6.4.4 | ✅ Running on `http://127.0.0.1:5173` |
-| Backend Dev Server | FastAPI / Uvicorn | ✅ Running on `http://127.0.0.1:8000` (`--reload`) |
-| Docker | 29.7.2 | ⚠️ Installed; daemon deferred to Milestone 7 |
+| PostgreSQL (local) | Port 5432 | Not observed during the 2026-10-17 product-clarity pass |
+| Roles | `app_user` (CRUD), `analytics_reader` (SELECT-only) | Defined by project configuration; not re-validated against a running database in this pass |
+| Frontend Dev Server | Vite 6.4.4 | Not started for this pass; production build completed |
+| Backend Dev Server | FastAPI / Uvicorn | Not running during this pass |
+| Docker | Docker Desktop engine | Installed but unavailable: the local Docker daemon did not accept connections |
 
 ### Python Packages Installed
 
@@ -603,7 +603,7 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 
 ## Corrective Design System Audit & Accessible Drawer Pass
 
-**Status:** Completed and fully verified  
+**Status:** Implemented — frontend build verified; live-service checks unavailable in the corrective pass
 **Date:** 2026-10-17
 
 ### Changes Executed
@@ -630,7 +630,46 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 
 4. **Query History System Policy Clarification:**
    - Renamed runtime policy section to **Documented System Policy (SQLGlot Engine)** with explicit "Global Architecture" badge, distinguishing static security policies (Single SELECT, Prohibited Mutation Nodes, Catalog Table Allowlist, 5s timeout cap, 1,000-row clamp) from individual query telemetry.
-   - Updated dark code panel SQL syntax highlighting to restrained warm tokens (`var(--qt-accent)` for keywords, `#D7D2CA` for strings, `#FFFFFF` for numbers, `#E6E4E0` for code text).
+   - Rebuilt the Query History record drawer as a warm technical surface with structural borders, token-backed SQL highlighting, and no dark secondary application theme.
+
+### Corrective pass verification — 2026-10-17
+
+| Command / Check | Observed result |
+|---|---|
+| `npm.cmd run build` (frontend) | Passed — `tsc -b && vite build` completed in **2.04s**; 1,958 modules transformed. |
+| Frontend design-token scan | No prohibited legacy indigo/cyan/purple/pink hex values, raw AST shield emoji, fixed warranty anchor, or fabricated anomaly-count fallbacks found in `frontend/src`. The only `9999px` radii remaining are status dots, which are explicitly allowed by `DESIGN.md`. |
+| Local service availability | PostgreSQL (5432), FastAPI (8000), and Vite (5173) had no listener during this pass. Backend tests and browser interaction inspection were therefore not run or claimed. |
+
+### Current limitation
+
+- Start the local PostgreSQL, FastAPI, and Vite services before performing a live desktop/mobile interaction pass. The production frontend build is the only runtime verification completed in this corrective pass.
+
+---
+
+## Product Clarity & Guided User Journey Pass
+
+**Status:** Implemented — production frontend build verified; no live API/browser claim is made
+**Date:** 2026-10-17
+
+### Changes executed
+
+- **A first-run path on the overview:** The API-backed equipment metrics are followed by three direct, plain-language actions: ask a question, find equipment, or check data health. Each takes the user to the real existing workflow; no synthetic result or static metric was introduced.
+- **Plain-language primary navigation:** The visible labels now describe an operator's intent (for example, *Find equipment*, *Ask a question*, and *My questions*) while retaining the existing routes, RBAC visibility, and API flows.
+- **A guided question experience:** Ask Data now explains the real three-stage interaction—ask, review, then see approved read-only results—and supplies relevant, safe starter questions. Deliberate SQL-injection and unrelated finance prompts are no longer presented as first-run examples. The page still explicitly discloses demo mode, synthetic data, preview-before-run behavior, and read-only enforcement.
+- **Truthful, friendlier shell and sign-in:** Technical labels were rewritten for clarity without hiding security guarantees. The synthetic-data disclosure remains visible. Development quick-fill accounts are now rendered only in Vite development mode, avoiding their display in a production build.
+- **Visual-system cleanup:** The Ask Data bar chart now uses the single accent token rather than a decorative gradient. The new experience layer uses the existing warm-alabaster, dark-sidebar token system, responsive layouts, real button focus rings, and no added dependencies.
+
+### Verification — 2026-10-17
+
+| Command / Check | Observed result |
+|---|---|
+| `npm.cmd run build` in `frontend` | Passed — `tsc -b && vite build` completed in **2.07s**; 1,959 modules transformed. |
+| `git diff --check` | Passed — no whitespace errors reported. |
+| Docker Compose startup | Not completed — Docker Desktop's engine was unavailable on its local named pipe, so the backend, PostgreSQL, and browser-based authenticated pass were not run. |
+
+### Next live-validation step
+
+- Start Docker Desktop (or run the documented local PostgreSQL/FastAPI services), then perform an authenticated desktop and mobile walkthrough of sign-in, Overview actions, Ask Data preview/execute/clarification states, Device Explorer, and the accessible slide-over drawers.
 
 
 

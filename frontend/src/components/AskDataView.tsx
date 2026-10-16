@@ -36,46 +36,32 @@ interface MessageItem {
 
 const STARTER_PROMPTS = [
   {
-    category: 'Fleet Aggregations',
-    label: 'Active devices by region',
+    category: 'Everyday overview',
+    label: 'See active equipment by region',
     prompt: 'How many active devices are in each region?',
-    badge: 'Standard Query',
+    badge: 'Good first question',
     badgeClass: 'badge-success',
   },
   {
-    category: 'Warranty Horizon',
-    label: 'Routers expiring in 60 days',
+    category: 'Coverage planning',
+    label: 'Find routers with coverage ending soon',
     prompt: 'Show all routers with warranty expiring in the next 60 days.',
-    badge: 'Time Horizon',
+    badge: 'Warranty review',
     badgeClass: 'badge-info',
   },
   {
-    category: 'Incident Triage',
-    label: 'Open incidents by facility site',
+    category: 'Service follow-up',
+    label: 'See urgent open service requests by site',
     prompt: 'List critical open service events grouped by site.',
-    badge: 'Multi-table Join',
+    badge: 'Service review',
     badgeClass: 'badge-primary',
   },
   {
-    category: 'Ambiguity Disambiguation',
-    label: 'High-risk devices (Requires clarification)',
+    category: 'Get a clear definition',
+    label: 'Ask about “high-risk” equipment',
     prompt: 'Show all high-risk devices in New York.',
-    badge: 'Clarification Needed',
+    badge: 'May need a follow-up',
     badgeClass: 'badge-warning',
-  },
-  {
-    category: 'Out of Domain',
-    label: 'Quarterly financial revenue (Unsupported)',
-    prompt: 'What is our total quarterly revenue and customer churn?',
-    badge: 'Unsupported Intent',
-    badgeClass: 'badge-neutral',
-  },
-  {
-    category: 'Security Injection Test',
-    label: 'Multi-statement DROP TABLE (Safety blocked)',
-    prompt: 'SELECT * FROM devices; DROP TABLE sites; --',
-    badge: 'SQLGlot Block',
-    badgeClass: 'badge-danger',
   },
 ]
 
@@ -128,7 +114,7 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
                     width={barWidth}
                     height={barHeight}
                     rx={4}
-                    fill="url(#barGradient)"
+                    fill="var(--qt-accent, #FF4F00)"
                     className="svg-bar"
                   />
                   <text x={x + barWidth / 2} y={y - 8} textAnchor="middle" className="bar-value-label">
@@ -145,12 +131,6 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
                 </g>
               )
             })}
-            <defs>
-              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--qt-accent, #FF4F00)" />
-                <stop offset="100%" stopColor="var(--qt-accent-hover, #DF4500)" />
-              </linearGradient>
-            </defs>
           </svg>
         </div>
       </div>
@@ -464,6 +444,17 @@ export const AskDataView: React.FC = () => {
                 key={s.id}
                 className={`session-item ${activeSessionId === s.id ? 'active' : ''}`}
                 onClick={() => selectSession(s.id)}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    selectSession(s.id)
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-current={activeSessionId === s.id ? 'page' : undefined}
+                aria-label={`Open conversation: ${s.title}`}
               >
                 <div className="session-item-content">
                   <div className="session-item-title" title={s.title}>
@@ -500,14 +491,14 @@ export const AskDataView: React.FC = () => {
           <div className="governance-badge-group">
             <span className="badge badge-warning">
               <span className="live-dot" style={{ backgroundColor: 'var(--qt-accent, #FF4F00)' }} />
-              LLM Mode: Demo (Deterministic Rule Engine)
+              Guided demo mode
             </span>
-            <span className="badge badge-neutral">Synthetic Data Only (5,000 Assets)</span>
-            <span className="badge badge-success">SQLGlot AST Guard Active</span>
-            <span className="badge badge-primary">SELECT-Only Reader Enforced</span>
+            <span className="badge badge-neutral">Synthetic practice data</span>
+            <span className="badge badge-success">Safety checks enabled</span>
+            <span className="badge badge-primary">Read-only access</span>
           </div>
           <div className="governance-notice-text">
-            Natural-language requests generate read-only SQL previews. SQL is never executed directly from the prompt.
+            You will see a preview before any approved data request is run. Your typed question never executes SQL directly.
           </div>
         </div>
 
@@ -530,15 +521,21 @@ export const AskDataView: React.FC = () => {
                   <line x1="12" y1="7" x2="12" y2="13" />
                 </svg>
               </div>
-              <h2 className="hero-title">Governed Natural-Language Analytics</h2>
+              <h2 className="hero-title">Ask about your equipment in plain language</h2>
               <p className="hero-subtitle">
-                Ask analytical questions about networking devices, warranty horizons, site distributions, and service events.
-                Every candidate query undergoes multi-layer SQLGlot AST validation before an opaque preview ID is issued.
+                Ask about devices, warranty coverage, locations, or open service requests. We translate your question,
+                explain what will be checked, and let you review a read-only preview before data is returned.
               </p>
+
+              <ol className="ask-data-steps" aria-label="How asking a question works">
+                <li><span>1</span><strong>Ask</strong><small>Use everyday wording.</small></li>
+                <li><span>2</span><strong>Review</strong><small>Check the safe preview.</small></li>
+                <li><span>3</span><strong>See results</strong><small>Read only approved data.</small></li>
+              </ol>
 
               {/* Starter Prompt Chips */}
               <div className="starter-prompts-matrix">
-                <div className="starter-prompts-label">Try an example inquiry:</div>
+                <div className="starter-prompts-label">Not sure where to begin? Try one of these:</div>
                 <div className="starter-chips-grid">
                   {STARTER_PROMPTS.map((item, idx) => (
                     <button
@@ -702,7 +699,7 @@ export const AskDataView: React.FC = () => {
                             <div className="checklist-item">
                               <span className="check-icon"><CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} /></span>
                               <span className="check-label">
-                                Table Allowlist ({msg.previewData.validation.tables_referenced.join(', ') || 'verified'})
+                                Table Allowlist ({msg.previewData.validation.tables_referenced.join(', ') || 'none reported'})
                               </span>
                             </div>
                             <div className="checklist-item">
@@ -899,7 +896,7 @@ export const AskDataView: React.FC = () => {
                   <div className="assistant-preview-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
                     <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
                     <div style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 500 }}>
-                      Translating question & parsing PostgreSQL AST safety invariants...
+                      Checking your question and preparing a safe preview…
                     </div>
                   </div>
                 </div>
@@ -921,7 +918,7 @@ export const AskDataView: React.FC = () => {
           >
             <textarea
               className="query-textarea"
-              placeholder="Ask an analytical question in plain English (e.g. 'How many active devices are in each region?')..."
+              placeholder="Ask a question, such as “How many active devices are in each region?”"
               rows={2}
               value={inputQuestion}
               onChange={(e) => setInputQuestion(e.target.value)}

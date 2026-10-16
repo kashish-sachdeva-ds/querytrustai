@@ -27,14 +27,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
   return (
     <header className="app-header">
       <div className="header-left">
-        <div className="header-system-tag" title="QueryTrust AI Governed Analytics Console">
+        <div className="header-system-tag" title="QueryTrust AI equipment insights workspace">
           <span className="environment-dot" style={{ width: 6, height: 6 }} />
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--qt-ink)' }}>
             QUERYTRUST AI
           </span>
           <span style={{ color: 'var(--qt-border-strong)', fontSize: '12px' }}>/</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--qt-muted)', letterSpacing: '0.04em' }}>
-            GOVERNANCE CONSOLE
+            EQUIPMENT INSIGHTS
           </span>
         </div>
       </div>
@@ -42,20 +42,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
       <div className="header-right">
         <button type="button" className="command-trigger" onClick={onOpenCommandPalette} aria-label="Open quick actions">
           <Command size={15} aria-hidden="true" />
-          <span>Quick actions</span>
+          <span>Search & actions</span>
           <kbd>{commandShortcut}</kbd>
         </button>
         {/* Synthetic Data Badge */}
         <div className="badge-synthetic" title="Synthetic educational data - no customer or real device records">
           <Database size={13} style={{ color: 'var(--qt-muted)' }} />
-          <span>SYNTHETIC DEMO DATA</span>
+          <span>SYNTHETIC PRACTICE DATA</span>
         </div>
 
         {/* LLM Environment Badge */}
         <div className="badge-environment" title={`LLM Provider: ${user?.llm_provider || 'demo'}`}>
           <span className="environment-dot"></span>
           <span>
-            {user?.llm_provider === 'demo' ? 'MODE: DETERMINISTIC DEMO' : `LLM: ${user?.llm_provider?.toUpperCase()}`}
+            {user?.llm_provider === 'demo' ? 'GUIDED DEMO MODE' : `AI PROVIDER: ${user?.llm_provider?.toUpperCase()}`}
           </span>
         </div>
 
@@ -95,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
 
               <div className="dropdown-info-item">
                 <Shield size={14} className="text-secondary" />
-                <span>Backend Role Guard Active</span>
+                <span>Your access is checked by the server</span>
               </div>
 
               <div className="dropdown-divider" />

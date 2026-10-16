@@ -403,11 +403,11 @@ export const QueryHistoryView: React.FC = () => {
           <div className="telemetry-card-subtitle">Intercepted by SQLGlot guard</div>
         </div>
 
-        {/* Card 4: Average DB Latency */}
+        {/* Card 4: Average execution latency */}
         <div className="telemetry-card">
           <div className="telemetry-card-header">
-            <span className="telemetry-card-title">Average DB Latency</span>
-            <span className="telemetry-badge-p95">p95</span>
+            <span className="telemetry-card-title">Average execution latency</span>
+            <span className="telemetry-badge-p95">CURRENT PAGE</span>
           </div>
           <div className="telemetry-card-value">
             {avgDuration}
@@ -541,11 +541,7 @@ export const QueryHistoryView: React.FC = () => {
                 filteredItems.map((item) => {
                   const ts = formatTimestamp(item.created_at)
                   return (
-                    <tr
-                      key={item.id}
-                      className="audit-table-row group"
-                      onClick={() => handleOpenDrawer(item)}
-                    >
+                    <tr key={item.id} className="audit-table-row group">
                       {/* Timestamp Column */}
                       <td>
                         <div className="timestamp-wrap">
@@ -593,33 +589,37 @@ export const QueryHistoryView: React.FC = () => {
                       {/* Helpful Rating Column */}
                       <td>
                         {item.is_helpful === true ? (
-                          <span
+                          <button
+                            type="button"
                             className="rated-pill helpful"
                             onClick={(e) => handleInlineFeedback(item.id, false, e)}
-                            title="Click to toggle unhelpful"
+                            aria-label="Change query rating to needs improvement"
                           >
                             <ThumbsUp size={11} /> Helpful
-                          </span>
+                          </button>
                         ) : item.is_helpful === false ? (
-                          <span
+                          <button
+                            type="button"
                             className="rated-pill unhelpful"
                             onClick={(e) => handleInlineFeedback(item.id, true, e)}
-                            title="Click to toggle helpful"
+                            aria-label="Change query rating to helpful"
                           >
                             <ThumbsDown size={11} /> Unhelpful
-                          </span>
+                          </button>
                         ) : (
                           <div className="rating-buttons-wrap">
                             <button
+                              type="button"
                               className="rate-micro-btn unrated thumbs-up"
-                              title="Mark as helpful"
+                              aria-label="Mark query as helpful"
                               onClick={(e) => handleInlineFeedback(item.id, true, e)}
                             >
                               <ThumbsUp size={12} />
                             </button>
                             <button
+                              type="button"
                               className="rate-micro-btn unrated thumbs-down"
-                              title="Mark as needs improvement"
+                              aria-label="Mark query as needs improvement"
                               onClick={(e) => handleInlineFeedback(item.id, false, e)}
                             >
                               <ThumbsDown size={12} />

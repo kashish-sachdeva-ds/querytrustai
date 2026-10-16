@@ -946,3 +946,87 @@
   font-size: 13px;
   color: var(--qt-muted, #766F68);
 }
+
+/* Executive Trust Proof Card */
+.executive-trust-card {
+  background: var(--qt-surface);
+  border: 1px solid rgba(46, 160, 85, 0.35);
+  background: linear-gradient(180deg, rgba(46, 160, 85, 0.05) 0%, var(--qt-surface) 100%);
+  border-radius: var(--qt-radius-inner);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.executive-trust-main {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.executive-trust-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--qt-success-soft);
+  color: var(--qt-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.executive-trust-number {
+  font-family: var(--font-mono);
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--qt-success);
+  line-height: 1;
+}
+
+.executive-trust-heading {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--qt-ink);
+  margin: 0 0 0.25rem 0;
+}
+
+.executive-trust-sub {
+  font-size: 0.8rem;
+  color: var(--qt-text);
+  margin: 0;
+  max-width: 540px;
+  line-height: 1.45;
+}
+
+.executive-trust-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.trust-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.trust-stat-num {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--qt-ink);
+}
+
+.trust-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--qt-muted);
+}

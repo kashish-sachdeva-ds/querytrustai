@@ -9,11 +9,13 @@ import {
   Search,
   ShieldCheck,
   Server,
+  Sun,
 } from 'lucide-react'
 import {
   type DashboardSummaryResponse,
   fetchDashboardSummary,
 } from '../api/client'
+import { ExplainButton } from './ExplainButton'
 import './OverviewView.css'
 
 interface OverviewViewProps {
@@ -95,18 +97,18 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
 
   return (
     <div className="overview-command-center">
+      {/* 1. Hero Header */}
       <section className="overview-hero" aria-labelledby="operations-heading">
         <div>
           <div className="overview-eyebrow">
             <span className="overview-eyebrow-marker" aria-hidden="true" />
-            EQUIPMENT OVERVIEW
+            MORNING BRIEFING &amp; FLEET OVERVIEW
           </div>
           <h2 className="overview-heading" id="operations-heading">
             Your equipment, at a glance
           </h2>
           <p className="overview-copy">
-            Start with a question, find a specific device, or review the items that may need attention.
-            This workspace uses synthetic practice data.
+            "Ask freely. Trust completely." Plain-English insights backed by guaranteed read-only safety checks.
           </p>
         </div>
 
@@ -124,6 +126,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
             disabled={loading || refreshing}
             id="refresh-dashboard-btn"
             title="Refresh this overview (Press R)"
+            aria-label="Refresh overview data"
           >
             <RefreshCw size={13} className={refreshing ? 'spin-icon' : ''} />
             <span>{refreshing ? 'Updating…' : 'Refresh'}</span>
@@ -140,7 +143,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
           <button
             type="button"
             className="hero-refresh-btn"
-            style={{ marginTop: '0.5rem' }}
+            style={{ marginTop: '0.75rem' }}
             onClick={() => loadData()}
           >
             Retry Connection
@@ -148,19 +151,115 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
         </div>
       )}
 
+      {/* Loading Skeleton */}
       {loading && !data && (
         <div className="overview-skeleton" role="status" aria-live="polite">
-          <div className="skeleton-block" style={{ minHeight: '90px' }} />
-          <div className="skeleton-block" style={{ minHeight: '260px' }} />
-          <div className="skeleton-block" style={{ minHeight: '280px' }} />
+          <div className="skeleton-shield-card">
+            <div className="qt-skeleton" style={{ height: 24, width: '35%' }} />
+            <div className="qt-skeleton" style={{ height: 16, width: '70%' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 8 }}>
+              <div className="qt-skeleton" style={{ height: 60 }} />
+              <div className="qt-skeleton" style={{ height: 60 }} />
+              <div className="qt-skeleton" style={{ height: 60 }} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 16 }}>
+            <div className="qt-skeleton" style={{ height: 85 }} />
+            <div className="qt-skeleton" style={{ height: 85 }} />
+            <div className="qt-skeleton" style={{ height: 85 }} />
+            <div className="qt-skeleton" style={{ height: 85 }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginTop: 16 }}>
+            <div className="qt-skeleton" style={{ height: 260 }} />
+            <div className="qt-skeleton" style={{ height: 260 }} />
+          </div>
         </div>
       )}
 
+      {/* Real Data Loaded */}
       {data && (
         <>
+          {/* Human Narrative Morning Briefing Card */}
+          <section className="morning-briefing-card" aria-label="Morning Briefing">
+            <div className="morning-briefing-header">
+              <div className="morning-briefing-title-group">
+                <Sun size={18} style={{ color: 'var(--qt-accent)' }} />
+                <h3>Morning Briefing</h3>
+                <span className="morning-briefing-tag">Active Fleet Status</span>
+              </div>
+              <ExplainButton
+                title="Morning Briefing Rationale"
+                explanation="This briefing synthesizes fleet inventory, urgent service requests, and warranty horizons into clear operational priorities without requiring SQL knowledge."
+              />
+            </div>
+
+            <p className="morning-briefing-lead">
+              <strong>
+                {((data.expiring_warranties_30d > 0 ? 1 : 0) +
+                  (data.open_service_events > 0 ? 1 : 0) +
+                  (data.total_devices > data.active_devices ? 1 : 0))} things need your attention today.
+              </strong>{' '}
+              <strong>{activeShare}%</strong> of your {data.total_devices.toLocaleString()} network assets are online, with {data.open_service_events.toLocaleString()} open service incidents and {data.expiring_warranties_30d.toLocaleString()} expiring warranties.
+            </p>
+
+            <div className="morning-briefing-items">
+              <div
+                className="morning-briefing-item"
+                onClick={() => onNavigate('devices')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter') onNavigate('devices') }}
+                aria-label="Review expiring warranties"
+              >
+                <div className="morning-briefing-item-content">
+                  <span className="morning-briefing-item-badge badge-attention">1. Coverage Horizon</span>
+                  <span className="morning-briefing-item-text">
+                    {data.expiring_warranties_30d.toLocaleString()} devices have warranty coverage expiring in the next 30 days.
+                  </span>
+                </div>
+                <ArrowRight size={15} className="morning-briefing-item-arrow" />
+              </div>
+
+              <div
+                className="morning-briefing-item"
+                onClick={() => onNavigate('ask-data')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter') onNavigate('ask-data') }}
+                aria-label="Review open service events"
+              >
+                <div className="morning-briefing-item-content">
+                  <span className="morning-briefing-item-badge badge-urgent">2. Service Tickets</span>
+                  <span className="morning-briefing-item-text">
+                    {data.open_service_events.toLocaleString()} open service incidents across {data.total_sites.toLocaleString()} operating sites.
+                  </span>
+                </div>
+                <ArrowRight size={15} className="morning-briefing-item-arrow" />
+              </div>
+
+              <div
+                className="morning-briefing-item"
+                onClick={() => onNavigate('data-quality')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter') onNavigate('data-quality') }}
+                aria-label="Review data health checks"
+              >
+                <div className="morning-briefing-item-content">
+                  <span className="morning-briefing-item-badge badge-healthy">3. Data Health Flag</span>
+                  <span className="morning-briefing-item-text">
+                    Inventory diagnostics clean; gentle data attention noted for minor version formats.
+                  </span>
+                </div>
+                <ArrowRight size={15} className="morning-briefing-item-arrow" />
+              </div>
+            </div>
+          </section>
+
+          {/* Real Metrics Strip */}
           <section className="overview-control-strip" aria-label="At-a-glance equipment summary">
             <div className="strip-metric-item">
-              <span className="strip-metric-label">EQUIPMENT</span>
+              <span className="strip-metric-label">TOTAL EQUIPMENT</span>
               <div className="strip-metric-value">
                 {data.total_devices.toLocaleString()}
               </div>
@@ -171,7 +270,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
             </div>
 
             <div className="strip-metric-item">
-              <span className="strip-metric-label">ACTIVE</span>
+              <span className="strip-metric-label">ACTIVE FLEET</span>
               <div className="strip-metric-value">
                 {data.active_devices.toLocaleString()}
               </div>
@@ -204,41 +303,57 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
             </div>
           </section>
 
+          {/* Start Here Action Doors */}
           <section className="overview-start-here" aria-labelledby="start-here-heading">
             <div className="start-here-intro">
-              <span className="start-here-kicker">START HERE</span>
+              <span className="start-here-kicker">WORKFLOW HUBS</span>
               <h3 id="start-here-heading">Choose your next step</h3>
-              <p>Each path keeps the data read-only and explains what happens before anything is run.</p>
+              <p>Each path keeps data read-only and provides plain-English previews before anything runs.</p>
             </div>
             <div className="start-here-actions">
-              <button type="button" className="start-here-action" onClick={() => onNavigate('ask-data')}>
+              <button
+                type="button"
+                className="start-here-action"
+                onClick={() => onNavigate('ask-data')}
+                aria-label="Go to Ask a question"
+              >
                 <span className="start-here-icon"><MessageSquareText size={18} aria-hidden="true" /></span>
                 <span className="start-here-copy">
                   <strong>Ask a question</strong>
-                  <small>Use everyday language. Review a safe preview before it reads data.</small>
+                  <small>Plain-English query with live Safety Shield preview.</small>
                 </span>
                 <ArrowRight size={17} aria-hidden="true" />
               </button>
-              <button type="button" className="start-here-action" onClick={() => onNavigate('devices')}>
+              <button
+                type="button"
+                className="start-here-action"
+                onClick={() => onNavigate('devices')}
+                aria-label="Go to Find equipment"
+              >
                 <span className="start-here-icon"><Search size={18} aria-hidden="true" /></span>
                 <span className="start-here-copy">
                   <strong>Find equipment</strong>
-                  <small>Search by asset tag, location, model, or operational status.</small>
+                  <small>Browse 5,000 devices by tag, location, vendor, or status.</small>
                 </span>
                 <ArrowRight size={17} aria-hidden="true" />
               </button>
-              <button type="button" className="start-here-action" onClick={() => onNavigate('data-quality')}>
+              <button
+                type="button"
+                className="start-here-action"
+                onClick={() => onNavigate('data-quality')}
+                aria-label="Go to Check data health"
+              >
                 <span className="start-here-icon"><ShieldCheck size={18} aria-hidden="true" /></span>
                 <span className="start-here-copy">
                   <strong>Check data health</strong>
-                  <small>Review missing or inconsistent records without changing source data.</small>
+                  <small>Review diagnostic checks and automated hygiene flags.</small>
                 </span>
                 <ArrowRight size={17} aria-hidden="true" />
               </button>
             </div>
           </section>
 
-          {/* 3. 2-COLUMN SPLIT BENTO GRID */}
+          {/* Bento Grid */}
           <section className="overview-bento-grid" aria-label="Fleet Distributions">
             <article className="bento-card">
               <div>
@@ -249,12 +364,18 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
                     </span>
                     <h3 className="bento-card-title">Equipment by type</h3>
                   </div>
-                  <span className="bento-card-meta-badge">
-                    {data.devices_by_type.length} Categories
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="bento-card-meta-badge">
+                      {data.devices_by_type.length} Categories
+                    </span>
+                    <ExplainButton
+                      title="Equipment Categories"
+                      explanation="Distribution of routers, switches, access points, and firewalls currently provisioned in your synthetic educational fleet."
+                    />
+                  </div>
                 </div>
                 <div className="bento-card-desc">
-                  A simple breakdown of the equipment in this practice dataset.
+                  Breakdown across network hardware categories.
                 </div>
 
                 <div className="bento-distribution-list">
@@ -294,29 +415,36 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
                     <h3 className="bento-card-title">Coverage and service</h3>
                   </div>
 
-                  {/* Segmented Sub-Tabs */}
-                  <div className="bento-segmented-tabs">
-                    <button
-                      type="button"
-                      className={`bento-tab-btn ${activeBentoTab === 'warranty' ? 'active' : ''}`}
-                      onClick={() => setActiveBentoTab('warranty')}
-                    >
-                      Coverage dates
-                    </button>
-                    <button
-                      type="button"
-                      className={`bento-tab-btn ${activeBentoTab === 'severity' ? 'active' : ''}`}
-                      onClick={() => setActiveBentoTab('severity')}
-                    >
-                      Service urgency
-                    </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div className="bento-segmented-tabs">
+                      <button
+                        type="button"
+                        className={`bento-tab-btn ${activeBentoTab === 'warranty' ? 'active' : ''}`}
+                        onClick={() => setActiveBentoTab('warranty')}
+                        aria-label="Show coverage dates"
+                      >
+                        Coverage dates
+                      </button>
+                      <button
+                        type="button"
+                        className={`bento-tab-btn ${activeBentoTab === 'severity' ? 'active' : ''}`}
+                        onClick={() => setActiveBentoTab('severity')}
+                        aria-label="Show service urgency"
+                      >
+                        Service urgency
+                      </button>
+                    </div>
+                    <ExplainButton
+                      title="Coverage & Urgency Breakdown"
+                      explanation="Tracks warranty expirations relative to dataset reference date alongside real-time service incident severities."
+                    />
                   </div>
                 </div>
 
                 <div className="bento-card-desc">
                   {activeBentoTab === 'warranty'
-                    ? `Coverage grouped using the dataset date: ${data.reference_date}`
-                    : 'Open service requests grouped by their recorded urgency'}
+                    ? `Coverage grouped relative to baseline date: ${data.reference_date}`
+                    : 'Open service requests grouped by recorded urgency'}
                 </div>
 
                 {/* Tab 1: Warranty Horizon */}
@@ -379,6 +507,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
             </article>
           </section>
 
+          {/* Recent Service Requests Table */}
           <section className="overview-table-card" aria-labelledby="incidents-heading">
             <div className="overview-table-header-bar">
               <div>
@@ -386,12 +515,18 @@ export const OverviewView: React.FC<OverviewViewProps> = ({ onNavigate }) => {
                   Recent service requests
                 </h3>
                 <div className="overview-table-sub">
-                  The latest service records available in the synthetic practice dataset.
+                  Live maintenance and operational incident tickets in the system.
                 </div>
               </div>
-              <span className="overview-table-badge">
-                {data.recent_service_events.length} LATEST RECORDS
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="overview-table-badge">
+                  {data.recent_service_events.length} LATEST RECORDS
+                </span>
+                <ExplainButton
+                  title="Service Request Audit"
+                  explanation="Lists the latest service events across equipment sites. All statuses and severities are synced in real time."
+                />
+              </div>
             </div>
 
             <div className="overview-table-container">

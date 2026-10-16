@@ -1,17 +1,48 @@
-import React, { useState } from 'react'
-import { LogOut, User as UserIcon, Shield, Database, ChevronDown, Command } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import {
+  LogOut,
+  User as UserIcon,
+  Shield,
+  Database,
+  ChevronDown,
+  Search,
+  Sun,
+  Moon,
+  Eye,
+  Code2,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 interface HeaderProps {
-  title?: string
-  subtitle?: string
   onOpenCommandPalette: () => void
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
   const { user, logout } = useAuth()
+  const { theme, mode, toggleTheme, toggleMode } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const commandShortcut = navigator.userAgent.toLowerCase().includes('mac') ? '⌘K' : 'Ctrl K'
+
+  // Close menu on outside click or Escape
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuOpen])
 
   const getRoleBadgeClass = (role?: string) => {
     switch (role) {
@@ -26,61 +57,54 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
 
   return (
     <header className="app-header">
+      {/* Left: Ctrl+K search trigger (no duplicate brand text) */}
       <div className="header-left">
-        <div className="header-system-tag" title="QueryTrust AI equipment insights workspace">
-          <span className="environment-dot" style={{ width: 6, height: 6 }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--qt-ink)' }}>
-            QUERYTRUST AI
-          </span>
-          <span style={{ color: 'var(--qt-border-strong)', fontSize: '12px' }}>/</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--qt-muted)', letterSpacing: '0.04em' }}>
-            EQUIPMENT INSIGHTS
-          </span>
-        </div>
-      </div>
-
-      <div className="header-right">
-        <button type="button" className="command-trigger" onClick={onOpenCommandPalette} aria-label="Open quick actions">
-          <Command size={15} aria-hidden="true" />
+        <button
+          type="button"
+          className="command-trigger"
+          onClick={onOpenCommandPalette}
+          aria-label="Open quick actions"
+          title={`Quick actions & search (${commandShortcut})`}
+        >
+          <Search size={14} aria-hidden="true" />
           <span>Search & actions</span>
           <kbd>{commandShortcut}</kbd>
         </button>
-        {/* Synthetic Data Badge */}
-        <div className="badge-synthetic" title="Synthetic educational data - no customer or real device records">
-          <Database size={13} style={{ color: 'var(--qt-muted)' }} />
-          <span>SYNTHETIC PRACTICE DATA</span>
+      </div>
+
+      {/* Right: One small Demo data pill + User Menu */}
+      <div className="header-right">
+        {/* Single small "Demo data" pill */}
+        <div
+          className="topbar-demo-pill"
+          title="Synthetic educational data — no customer records or real network credentials"
+        >
+          <Database size={12} className="topbar-demo-icon" aria-hidden="true" />
+          <span>Demo data</span>
         </div>
 
-        {/* LLM Environment Badge */}
-        <div className="badge-environment" title={`LLM Provider: ${user?.llm_provider || 'demo'}`}>
-          <span className="environment-dot"></span>
-          <span>
-            {user?.llm_provider === 'demo' ? 'GUIDED DEMO MODE' : `AI PROVIDER: ${user?.llm_provider?.toUpperCase()}`}
-          </span>
-        </div>
-
-        {/* User Profile Menu */}
-        <div className="user-profile-container">
+        {/* User Profile Menu with Theme & View Mode toggles inside */}
+        <div className="user-profile-container" ref={menuRef}>
           <button
             type="button"
             className="user-profile-button"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-expanded={menuOpen}
+            aria-haspopup="true"
+            aria-label="User settings and account menu"
           >
-            <div className="user-avatar">
-              <UserIcon size={16} />
+            <div className="user-avatar" aria-hidden="true">
+              <UserIcon size={14} />
             </div>
             <div className="user-info-text">
               <span className="user-name">{user?.display_name || 'User'}</span>
-              <span className={getRoleBadgeClass(user?.role)}>
-                {user?.role?.toUpperCase()}
-              </span>
+              <span className={getRoleBadgeClass(user?.role)}>{user?.role?.toUpperCase()}</span>
             </div>
-            <ChevronDown size={14} className="text-secondary" />
+            <ChevronDown size={13} className="text-secondary" aria-hidden="true" />
           </button>
 
           {menuOpen && (
-            <div className="user-dropdown-menu">
+            <div className="user-dropdown-menu" role="menu">
               <div className="dropdown-user-header">
                 <p className="dropdown-name">{user?.display_name}</p>
                 <p className="dropdown-email">{user?.email}</p>
@@ -93,9 +117,72 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
 
               <div className="dropdown-divider" />
 
+              {/* View Mode switcher inside User Menu */}
+              <div className="dropdown-menu-row">
+                <div className="dropdown-menu-row-label">
+                  <Eye size={13} aria-hidden="true" />
+                  <span>View mode</span>
+                </div>
+                <div className="menu-segmented-toggle" role="group" aria-label="View mode">
+                  <button
+                    type="button"
+                    className={`menu-toggle-btn ${mode === 'simple' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (mode !== 'simple') toggleMode()
+                    }}
+                    title="Simple view: friendly English, hides raw SQL"
+                  >
+                    Simple
+                  </button>
+                  <button
+                    type="button"
+                    className={`menu-toggle-btn ${mode === 'expert' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (mode !== 'expert') toggleMode()
+                    }}
+                    title="Expert view: shows SQL AST and execution telemetry"
+                  >
+                    <Code2 size={12} style={{ marginRight: 3, verticalAlign: 'middle' }} />
+                    Expert
+                  </button>
+                </div>
+              </div>
+
+              {/* Theme switcher inside User Menu */}
+              <div className="dropdown-menu-row">
+                <div className="dropdown-menu-row-label">
+                  {theme === 'dark' ? <Moon size={13} aria-hidden="true" /> : <Sun size={13} aria-hidden="true" />}
+                  <span>Theme</span>
+                </div>
+                <div className="menu-segmented-toggle" role="group" aria-label="Theme mode">
+                  <button
+                    type="button"
+                    className={`menu-toggle-btn ${theme === 'light' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (theme !== 'light') toggleTheme()
+                    }}
+                    title="Light theme"
+                  >
+                    Light
+                  </button>
+                  <button
+                    type="button"
+                    className={`menu-toggle-btn ${theme === 'dark' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (theme !== 'dark') toggleTheme()
+                    }}
+                    title="Dark theme"
+                  >
+                    Dark
+                  </button>
+                </div>
+              </div>
+
+              <div className="dropdown-divider" />
+
               <div className="dropdown-info-item">
-                <Shield size={14} className="text-secondary" />
-                <span>Your access is checked by the server</span>
+                <Shield size={13} className="text-secondary" aria-hidden="true" />
+                <span>Checked by server &bull; Read-only</span>
               </div>
 
               <div className="dropdown-divider" />
@@ -108,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
                   logout()
                 }}
               >
-                <LogOut size={15} />
+                <LogOut size={14} aria-hidden="true" />
                 <span>Sign Out</span>
               </button>
             </div>

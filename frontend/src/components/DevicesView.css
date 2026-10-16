@@ -76,9 +76,9 @@
 .devices-refresh-btn {
   font-size: 12px;
   font-weight: 600;
-  color: #141413;
-  background: #ffffff;
-  border: 1px solid #E6E4DD;
+  color: var(--qt-ink, #141413);
+  background: var(--qt-surface, #ffffff);
+  border: 1px solid var(--qt-border, #E6E4DD);
   border-radius: 6px;
   padding: 6px 12px;
   display: inline-flex;
@@ -204,7 +204,7 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   height: 34px;
-  background: #ffffff;
+  background: var(--qt-surface, #ffffff);
   border: 1px solid var(--qt-border, #E6E4DD);
   border-radius: var(--qt-radius-control, 6px);
   padding: 0 32px 0 12px;
@@ -241,8 +241,8 @@
    ========================================================================== */
 
 .devices-table-card {
-  background: #ffffff;
-  border: 1px solid #E6E4DD;
+  background: var(--qt-surface, #ffffff);
+  border: 1px solid var(--qt-border, #E6E4DD);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -275,8 +275,8 @@
 }
 
 .devices-table-row {
-  background: #ffffff;
-  border-bottom: 1px solid #EFECE6;
+  background: var(--qt-surface, #ffffff);
+  border-bottom: 1px solid var(--qt-border, #EFECE6);
   cursor: pointer;
   transition: background-color 0.12s ease;
 }
@@ -719,4 +719,43 @@
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
   font-size: 11px;
   color: #71706B;
+}
+
+/* Gentle Data Attention Flag */
+.data-attention-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--qt-warning-soft);
+  color: var(--qt-warning);
+  border: 1px solid rgba(178, 94, 2, 0.25);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  cursor: help;
+}
+
+.data-hygiene-note {
+  background: var(--qt-warning-soft);
+  border: 1px solid rgba(178, 94, 2, 0.25);
+  border-radius: var(--qt-radius-control);
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.75rem;
+  color: var(--qt-ink);
+  line-height: 1.45;
+  margin-bottom: 1rem;
+}
+
+.data-hygiene-note strong {
+  color: var(--qt-warning);
+  display: block;
+  margin-bottom: 2px;
 }

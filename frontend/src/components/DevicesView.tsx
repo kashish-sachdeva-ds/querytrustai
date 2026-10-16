@@ -15,6 +15,7 @@ import {
   Calendar,
   Cpu,
   Activity,
+  AlertTriangle,
 } from 'lucide-react'
 import {
   type DeviceSummary,
@@ -26,6 +27,7 @@ import {
 } from '../api/client'
 import { withLayoutTransition } from '../motion'
 import { readUrlParam, replaceUrlParams } from '../urlState'
+import { ExplainButton } from './ExplainButton'
 import './DevicesView.css'
 
 const readPositiveInteger = (value: string | null, fallback: number) => {
@@ -48,6 +50,31 @@ const readDeviceUrlState = () => {
     sortBy,
     sortDir: sortDirection === 'desc' ? ('desc' as const) : ('asc' as const),
   }
+}
+
+export const checkDataGlitch = (dev: DeviceSummary | DeviceDetail): { hasGlitch: boolean; message: string } => {
+  const isDoubleV = dev.firmware_version?.startsWith('vv') || dev.firmware_version?.includes('vv')
+  const isInvertedWarranty =
+    dev.warranty_expiry &&
+    dev.installed_at &&
+    new Date(dev.warranty_expiry) < new Date(dev.installed_at)
+
+  if (isDoubleV && isInvertedWarranty) {
+    return { hasGlitch: true, message: 'Double "v" firmware format & warranty date precedes installation' }
+  }
+  if (isDoubleV) {
+    return { hasGlitch: true, message: 'Double "v" firmware prefix format (e.g. vv1.8.1)' }
+  }
+  if (isInvertedWarranty) {
+    return { hasGlitch: true, message: 'Recorded warranty expiry date precedes installation date' }
+  }
+  return { hasGlitch: false, message: '' }
+}
+
+export const formatFirmwareVersion = (version?: string | null): string => {
+  if (!version) return '—'
+  const cleaned = version.replace(/^v+/i, '')
+  return `v${cleaned}`
 }
 
 export const DevicesView: React.FC = () => {
@@ -309,6 +336,10 @@ export const DevicesView: React.FC = () => {
             <RefreshCw size={13} className={loading ? 'spin-icon' : ''} />
             <span>Refresh</span>
           </button>
+          <ExplainButton
+            title="Hardware Inventory"
+            explanation="A read-only catalog of all network devices across all operating sites, with live status and maintenance history."
+          />
         </div>
       </div>
 
@@ -490,16 +521,29 @@ export const DevicesView: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                devices.map((dev) => (
-                  <tr
-                    key={dev.id}
-                    className="devices-table-row group"
-                    onClick={() => openDeviceModal(dev.id)}
-                  >
-                    {/* Asset Tag Token */}
-                    <td>
-                      <span className="asset-tag-token">{dev.asset_tag}</span>
-                    </td>
+                devices.map((dev) => {
+                  const glitch = checkDataGlitch(dev)
+                  return (
+                    <tr
+                      key={dev.id}
+                      className="devices-table-row group"
+                      onClick={() => openDeviceModal(dev.id)}
+                    >
+                      {/* Asset Tag Token */}
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                          <span className="asset-tag-token">{dev.asset_tag}</span>
+                          {glitch.hasGlitch && (
+                            <span
+                              className="data-attention-pill"
+                              title={`Data needs attention: ${glitch.message}`}
+                            >
+                              <AlertTriangle size={10} />
+                              Needs attention
+                            </span>
+                          )}
+                        </div>
+                      </td>
 
                     {/* Device Type */}
                     <td>
@@ -514,9 +558,9 @@ export const DevicesView: React.FC = () => {
                         </span>
                         <span
                           className="vendor-subtle-text"
-                          title={`${dev.vendor} • v${dev.firmware_version}`}
+                          title={`${dev.vendor} • ${formatFirmwareVersion(dev.firmware_version)}`}
                         >
-                          {dev.vendor} &bull; v{dev.firmware_version}
+                          {dev.vendor} &bull; {formatFirmwareVersion(dev.firmware_version)}
                         </span>
                       </div>
                     </td>
@@ -570,9 +614,10 @@ export const DevicesView: React.FC = () => {
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
+                )
+              })
+            )}
+          </tbody>
           </table>
         </div>
 
@@ -682,12 +727,18 @@ export const DevicesView: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="asset-drawer-meta-sub">
-                  <h3 id="asset-drawer-title" className="sr-only">
-                    Hardware Inventory Specification {deviceDetail?.asset_tag || `#${selectedDeviceId}`}
-                  </h3>
-                  <span>Hardware Inventory Specification</span>
-                  <span>ID #{selectedDeviceId}</span>
+                <div className="asset-drawer-meta-sub" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h3 id="asset-drawer-title" className="sr-only">
+                      Hardware Inventory Specification {deviceDetail?.asset_tag || `#${selectedDeviceId}`}
+                    </h3>
+                    <span>Hardware Inventory Specification</span>
+                    <span>ID #{selectedDeviceId}</span>
+                  </div>
+                  <ExplainButton
+                    title="Hardware Specification Drawer"
+                    explanation="Detailed network device telemetry, site location, warranty dates, and recent service incidents."
+                  />
                 </div>
               </div>
 
@@ -701,6 +752,16 @@ export const DevicesView: React.FC = () => {
                 </div>
               ) : deviceDetail ? (
                 <div className="asset-drawer-body">
+                  {/* Data hygiene note if glitch detected */}
+                  {deviceDetail && checkDataGlitch(deviceDetail).hasGlitch && (
+                    <div className="data-hygiene-note">
+                      <AlertTriangle size={15} style={{ color: 'var(--qt-warning)', flexShrink: 0, marginTop: 2 }} />
+                      <div>
+                        <strong>Gentle Data Hygiene Note</strong>
+                        <span>{checkDataGlitch(deviceDetail).message}. Because QueryTrust AI maintains strictly read-only access, source records are preserved as-is.</span>
+                      </div>
+                    </div>
+                  )}
                   {/* Section 1: Hardware & Firmware Specs */}
                   <div>
                     <div className="asset-section-label">
@@ -719,7 +780,7 @@ export const DevicesView: React.FC = () => {
                         </div>
                         <div className="asset-spec-item">
                           <span className="asset-spec-name">Firmware Version</span>
-                          <span className="asset-spec-val mono">v{deviceDetail.firmware_version}</span>
+                          <span className="asset-spec-val mono">{formatFirmwareVersion(deviceDetail.firmware_version)}</span>
                         </div>
                         <div className="asset-spec-item">
                           <span className="asset-spec-name">Serial Number</span>

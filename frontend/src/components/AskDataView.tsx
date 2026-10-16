@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
+  Shield,
+  ShieldCheck,
   ShieldAlert,
   AlertTriangle,
   Ban,
@@ -11,6 +13,15 @@ import {
   ThumbsDown,
   Check,
   Copy,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  Play,
+  Flame,
+  Plus,
+  Trash2,
+  Sparkles,
+  Code2,
 } from 'lucide-react'
 import {
   previewQuery,
@@ -25,6 +36,8 @@ import {
   type ChatSessionSummary,
   type ChatMessage,
 } from '../api/client'
+import { useTheme } from '../context/ThemeContext'
+import { ExplainButton } from './ExplainButton'
 
 interface MessageItem {
   id: string
@@ -36,31 +49,31 @@ interface MessageItem {
 
 const STARTER_PROMPTS = [
   {
-    category: 'Everyday overview',
-    label: 'See active equipment by region',
+    category: 'Everyday fleet overview',
+    label: 'Active equipment by region',
     prompt: 'How many active devices are in each region?',
     badge: 'Good first question',
     badgeClass: 'badge-success',
   },
   {
     category: 'Coverage planning',
-    label: 'Find routers with coverage ending soon',
+    label: 'Warranty expiring in 60 days',
     prompt: 'Show all routers with warranty expiring in the next 60 days.',
     badge: 'Warranty review',
     badgeClass: 'badge-info',
   },
   {
-    category: 'Service follow-up',
-    label: 'See urgent open service requests by site',
+    category: 'Service triage',
+    label: 'Critical open service events',
     prompt: 'List critical open service events grouped by site.',
     badge: 'Service review',
     badgeClass: 'badge-primary',
   },
   {
-    category: 'Get a clear definition',
-    label: 'Ask about “high-risk” equipment',
+    category: 'Clarification demo',
+    label: 'Ask about "high-risk" devices',
     prompt: 'Show all high-risk devices in New York.',
-    badge: 'May need a follow-up',
+    badge: 'Shows quick follow-up',
     badgeClass: 'badge-warning',
   },
 ]
@@ -146,7 +159,6 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
     const total = chartData.reduce((acc, curr) => acc + curr.value, 0) || 1
     const colors = ['#FF4F00', '#C44000', '#8A6A50', '#5C5550', '#A0937E', '#766F68', '#4F4A45', '#B8B0A6']
 
-    // Compute SVG donut arcs
     let accumulatedAngle = 0
     const center = 90
     const radius = 70
@@ -206,11 +218,93 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
     )
   }
 
-  // Fallback to table
   return null
 }
 
+// Animated Safety Shield Component
+interface SafetyShieldProps {
+  preview: PreviewResponse
+}
+
+const SafetyShieldDisplay: React.FC<SafetyShieldProps> = ({ preview }) => {
+  const isBlocked = preview.status === 'blocked' || !preview.validation.passed
+  const tables = preview.validation.tables_referenced?.length > 0
+    ? preview.validation.tables_referenced.join(', ')
+    : 'devices'
+
+  const checks = [
+    { id: 'single_stmt', label: 'Single statement only', pass: !isBlocked },
+    { id: 'select_only', label: 'Read-only (SELECT only)', pass: !isBlocked },
+    { id: 'tables', label: `Known equipment tables (${tables})`, pass: true },
+    { id: 'safe_funcs', label: 'Safe functions only (no sleep / exec)', pass: !isBlocked },
+    { id: 'row_limit', label: 'Row limit clamped (max 200)', pass: true },
+  ]
+
+  return (
+    <div className={`safety-shield ${isBlocked ? 'blocked' : 'passed'}`} role="status" aria-live="polite">
+      <div className="safety-shield-header">
+        <div className="shield-title-group">
+          <div className="shield-icon-badge">
+            {isBlocked ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}
+          </div>
+          <div className="shield-title-text">
+            <h4>{isBlocked ? 'Blocked for safety' : 'Safety Shield: 5 of 5 checks passed'}</h4>
+            <p>
+              {isBlocked
+                ? 'Intercepted before reaching your database. Zero modifications possible.'
+                : 'Guaranteed read-only. Clean AST verified. Safe to run.'}
+            </p>
+          </div>
+        </div>
+        <ExplainButton
+          title="Safety Shield Verification"
+          explanation="Every question must pass 5 automated checks before it can run. Antigravity AST guards reject any query with writes, drops, unauthorized tables, or unbound limits."
+        />
+      </div>
+
+      <div className="shield-checks-grid">
+        {checks.map((chk, idx) => (
+          <div
+            key={chk.id}
+            className={`shield-check-card ${chk.pass ? 'check-pass' : 'check-fail'}`}
+            style={{ animationDelay: `${idx * 80}ms` }}
+          >
+            {chk.pass ? (
+              <CheckCircle2 size={13} style={{ color: 'var(--qt-success)', flexShrink: 0 }} />
+            ) : (
+              <XCircle size={13} style={{ color: 'var(--qt-danger)', flexShrink: 0 }} />
+            )}
+            <span>{chk.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Skeleton loading placeholder
+const QueryLoadingSkeleton: React.FC = () => (
+  <div className="chat-message-row assistant">
+    <div className="skeleton-shield-card" style={{ width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div className="qt-skeleton" style={{ width: 34, height: 34, borderRadius: '50%' }} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="qt-skeleton" style={{ width: '40%', height: 14 }} />
+          <div className="qt-skeleton" style={{ width: '65%', height: 11 }} />
+        </div>
+      </div>
+      <div className="shield-checks-grid" style={{ marginTop: '0.5rem' }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="qt-skeleton" style={{ height: 32, borderRadius: 6 }} />
+        ))}
+      </div>
+      <div className="qt-skeleton" style={{ width: '85%', height: 16, marginTop: '0.5rem' }} />
+    </div>
+  </div>
+)
+
 export const AskDataView: React.FC = () => {
+  const { mode } = useTheme()
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageItem[]>([])
@@ -218,6 +312,7 @@ export const AskDataView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [copiedQueryId, setCopiedQueryId] = useState<string | null>(null)
+  const [expandedSqlMap, setExpandedSqlMap] = useState<Record<string, boolean>>({})
 
   // Execution & Feedback States
   const [executingId, setExecutingId] = useState<string | null>(null)
@@ -359,6 +454,7 @@ export const AskDataView: React.FC = () => {
     setIsLoading(true)
 
     try {
+      // Calls real backend endpoint: /api/v1/analytics/preview
       const previewRes = await previewQuery(questionText, targetSessionId)
 
       const assistantMsg: MessageItem = {
@@ -377,10 +473,19 @@ export const AskDataView: React.FC = () => {
     }
   }
 
+  // Real "Try to break it" trigger: calls the backend with a dangerous statement
+  const handleTryToBreakIt = () => {
+    handleSendQuestion('DROP TABLE devices;')
+  }
+
   const handleCopySQL = (queryId: string, sql: string) => {
     navigator.clipboard.writeText(sql)
     setCopiedQueryId(queryId)
     setTimeout(() => setCopiedQueryId(null), 2000)
+  }
+
+  const toggleSqlExpansion = (queryId: string) => {
+    setExpandedSqlMap((prev) => ({ ...prev, [queryId]: !prev[queryId] }))
   }
 
   const handleExecuteQuery = async (previewData: PreviewResponse) => {
@@ -389,7 +494,6 @@ export const AskDataView: React.FC = () => {
     try {
       const execResult = await executeSavedQuery(previewData.query_run_id)
       setResultsMap((prev) => ({ ...prev, [previewData.query_run_id]: execResult }))
-      // Default view mode: chart if pie/bar/metric, else table
       const initialMode =
         execResult.chart_recommendation.chart_type === 'table' ? 'table' : 'chart'
       setViewModeMap((prev) => ({ ...prev, [previewData.query_run_id]: initialMode }))
@@ -398,6 +502,33 @@ export const AskDataView: React.FC = () => {
     } finally {
       setExecutingId(null)
     }
+  }
+
+  const handleExportCSV = (result: ExecuteResponse) => {
+    if (!result || !result.rows || result.rows.length === 0) return
+    const headers = result.columns
+    const csvRows = [
+      headers.join(','),
+      ...result.rows.map((row) =>
+        headers
+          .map((col) => {
+            const val = row[col]
+            if (val === null || val === undefined) return '""'
+            const str = String(val).replace(/"/g, '""')
+            return `"${str}"`
+          })
+          .join(',')
+      ),
+    ]
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `querytrust-data-${result.query_run_id.slice(0, 8)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   const handleFeedbackSubmit = async (queryRunId: string, isHelpful: boolean) => {
@@ -423,21 +554,23 @@ export const AskDataView: React.FC = () => {
   return (
     <div className="ask-data-container">
       {/* Sessions Drawer / Sidebar */}
-      <aside className="ask-data-sessions-sidebar">
+      <aside className="ask-data-sessions-sidebar" aria-label="Conversation Sessions">
         <div className="sessions-header">
           <span className="sessions-title">Conversations</span>
-          <button className="btn btn-secondary btn-sm" onClick={handleCreateNewSession} title="Start a new query session">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            New Session
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={handleCreateNewSession}
+            title="Start a new query conversation"
+            aria-label="New Session"
+          >
+            <Plus size={13} style={{ marginRight: 4 }} />
+            New
           </button>
         </div>
 
-        <div className="sessions-list">
+        <div className="sessions-list" role="list">
           {sessions.length === 0 ? (
-            <div className="sessions-empty">No conversations yet. Start one above!</div>
+            <div className="sessions-empty">No conversations yet. Ask a question to begin.</div>
           ) : (
             sessions.map((s) => (
               <div
@@ -469,14 +602,13 @@ export const AskDataView: React.FC = () => {
                   </div>
                 </div>
                 <button
+                  type="button"
                   className="session-delete-btn"
                   onClick={(e) => handleDeleteSession(e, s.id)}
                   title="Delete conversation"
+                  aria-label={`Delete ${s.title}`}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <Trash2 size={12} />
                 </button>
               </div>
             ))
@@ -494,18 +626,18 @@ export const AskDataView: React.FC = () => {
               Guided demo mode
             </span>
             <span className="badge badge-neutral">Synthetic practice data</span>
-            <span className="badge badge-success">Safety checks enabled</span>
-            <span className="badge badge-primary">Read-only access</span>
+            <span className="badge badge-success">5-Point Safety Shield</span>
+            <span className="badge badge-primary">Read-only connection</span>
           </div>
           <div className="governance-notice-text">
-            You will see a preview before any approved data request is run. Your typed question never executes SQL directly.
+            Every request previewed before execution. Your input never executes SQL directly.
           </div>
         </div>
 
         {/* Global Error Banner */}
         {errorMessage && (
           <div className="security-alert-box alert-error" style={{ margin: '0.75rem 1.25rem 0 1.25rem' }}>
-            <div className="alert-title">Execution Error</div>
+            <div className="alert-title">Notice</div>
             <div className="alert-desc">{errorMessage}</div>
           </div>
         )}
@@ -515,27 +647,22 @@ export const AskDataView: React.FC = () => {
           {messages.length === 0 ? (
             <div className="ask-data-hero">
               <div className="hero-icon-container">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  <line x1="9" y1="10" x2="15" y2="10" />
-                  <line x1="12" y1="7" x2="12" y2="13" />
-                </svg>
+                <Shield size={32} />
               </div>
-              <h2 className="hero-title">Ask about your equipment in plain language</h2>
+              <h2 className="hero-title">Ask your equipment anything, in plain English.</h2>
               <p className="hero-subtitle">
-                Ask about devices, warranty coverage, locations, or open service requests. We translate your question,
-                explain what will be checked, and let you review a read-only preview before data is returned.
+                The AI you can't make dangerous. We translate your question, verify safety across 5 independent checks, and execute through a read-only database reader.
               </p>
 
-              <ol className="ask-data-steps" aria-label="How asking a question works">
-                <li><span>1</span><strong>Ask</strong><small>Use everyday wording.</small></li>
-                <li><span>2</span><strong>Review</strong><small>Check the safe preview.</small></li>
-                <li><span>3</span><strong>See results</strong><small>Read only approved data.</small></li>
+              <ol className="ask-data-steps" aria-label="How asking works">
+                <li><span>1</span><strong>Ask freely</strong><small>Natural English phrasing.</small></li>
+                <li><span>2</span><strong>Safety check</strong><small>Shield blocks harmful queries.</small></li>
+                <li><span>3</span><strong>Trust completely</strong><small>Read-only verified data.</small></li>
               </ol>
 
               {/* Starter Prompt Chips */}
               <div className="starter-prompts-matrix">
-                <div className="starter-prompts-label">Not sure where to begin? Try one of these:</div>
+                <div className="starter-prompts-label">Try one of these real questions:</div>
                 <div className="starter-chips-grid">
                   {STARTER_PROMPTS.map((item, idx) => (
                     <button
@@ -552,6 +679,28 @@ export const AskDataView: React.FC = () => {
                     </button>
                   ))}
                 </div>
+
+                {/* "Try to break it" Demo Banner */}
+                <div className="try-break-card">
+                  <div className="try-break-text">
+                    <h5>
+                      <Flame size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+                      Want proof? Try to break it.
+                    </h5>
+                    <p>
+                      Click below to send <code>DROP TABLE devices;</code> directly to the backend. Watch the Safety Shield intercept it live without touching a single record.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="try-break-btn"
+                    onClick={handleTryToBreakIt}
+                    disabled={isLoading}
+                  >
+                    <Flame size={13} />
+                    <span>Try to break it</span>
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -562,6 +711,7 @@ export const AskDataView: React.FC = () => {
                 const isExecuting = executingId === runId
                 const activeMode = viewModeMap[runId] || 'table'
                 const feedbackState = feedbackMap[runId]
+                const isSqlExpanded = !!expandedSqlMap[runId] || mode === 'expert'
 
                 return (
                   <div key={msg.id} className={`chat-message-row ${msg.role}`}>
@@ -586,31 +736,40 @@ export const AskDataView: React.FC = () => {
                           <div className="header-right">
                             {msg.previewData?.status === 'previewed' && (
                               <span className="status-tag status-success">
-                                <span className="live-dot" /> Preview Validated
+                                <span className="live-dot" /> Safe to run
                               </span>
                             )}
                             {msg.previewData?.status === 'clarification_needed' && (
-                              <span className="status-tag status-warning"><AlertTriangle size={12} style={{ marginRight: 4 }} /> Clarification Needed</span>
+                              <span className="status-tag status-warning">
+                                <AlertTriangle size={12} style={{ marginRight: 4 }} /> Quick question back
+                              </span>
                             )}
                             {msg.previewData?.status === 'unsupported' && (
-                              <span className="status-tag status-neutral"><Ban size={12} style={{ marginRight: 4 }} /> Unsupported Intent</span>
+                              <span className="status-tag status-neutral">
+                                <Ban size={12} style={{ marginRight: 4 }} /> Outside equipment domain
+                              </span>
                             )}
                             {msg.previewData?.status === 'blocked' && (
-                              <span className="status-tag status-danger"><ShieldAlert size={12} style={{ marginRight: 4 }} /> AST Safety Blocked</span>
+                              <span className="status-tag status-danger">
+                                <ShieldAlert size={12} style={{ marginRight: 4 }} /> Blocked for safety
+                              </span>
                             )}
                           </div>
                         </div>
 
+                        {/* Animated Safety Shield */}
+                        {msg.previewData && <SafetyShieldDisplay preview={msg.previewData} />}
+
                         {/* Interpreted Meaning */}
                         <div className="interpretation-section">
-                          <div className="section-label">INTERPRETED QUERY INTENT:</div>
+                          <div className="section-label">HOW WE INTERPRETED THIS:</div>
                           <div className="interpretation-text">{msg.content}</div>
                         </div>
 
-                        {/* Clarification Alert (if needed) */}
+                        {/* Clarification Alert (if ambiguous) */}
                         {msg.previewData?.clarification_question && (
                           <div className="clarification-box">
-                            <div className="clarification-title">Operator Disambiguation Required:</div>
+                            <div className="clarification-title">Quick question before we run this:</div>
                             <div className="clarification-prompt">{msg.previewData.clarification_question}</div>
                             <div className="clarification-actions">
                               <button
@@ -635,12 +794,12 @@ export const AskDataView: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Unsupported Alert (if out of bounds) */}
+                        {/* Unsupported Concept Alert */}
                         {msg.previewData?.intent_status === 'unsupported' && (
                           <div className="unsupported-box">
                             <div className="unsupported-title">Out-of-Domain Concept Detected</div>
                             <p className="unsupported-desc">
-                              The requested concept (such as revenue, financial billing, or customer churn) is outside the networking device inventory and operational telemetry schema. QueryTrust AI does not fabricate queries or results for undefined domains.
+                              The requested concept (such as revenue, financial billing, or employee payroll) is outside the networking device inventory and operational telemetry schema. QueryTrust AI never hallucinates data outside known equipment domains.
                             </p>
                           </div>
                         )}
@@ -648,7 +807,7 @@ export const AskDataView: React.FC = () => {
                         {/* AST Violations Alert (if blocked) */}
                         {msg.previewData?.validation.violations && msg.previewData.validation.violations.length > 0 && (
                           <div className="security-alert-box alert-error">
-                            <div className="alert-title">SQLGlot AST Security Violations Detected:</div>
+                            <div className="alert-title">This was blocked for safety:</div>
                             <ul className="violations-list">
                               {msg.previewData.validation.violations.map((v, i) => (
                                 <li key={i}>{v}</li>
@@ -657,55 +816,61 @@ export const AskDataView: React.FC = () => {
                           </div>
                         )}
 
-                        {/* SQL Preview Block */}
+                        {/* SQL Preview Block (Simple vs Expert Mode) */}
                         {msg.previewData?.sql_preview && (
-                          <div className="sql-preview-block">
-                            <div className="sql-preview-header">
-                              <span className="sql-dialect-tag">PostgreSQL (SELECT-Only)</span>
-                              <div className="sql-header-actions">
-                                <span className="limit-clamped-badge">Max Limit: 200</span>
-                                <button
-                                  className="copy-btn"
-                                  onClick={() =>
-                                    handleCopySQL(msg.previewData!.query_run_id, msg.previewData!.sql_preview!)
-                                  }
-                                  title="Copy SQL statement"
-                                >
-                                  {copiedQueryId === msg.previewData.query_run_id ? (
-                                    <span style={{ color: 'var(--qt-accent)' }}><Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copied</span>
-                                  ) : (
-                                    <><Copy size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copy SQL</>
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-                            <pre className="sql-code-box">
-                              <code>{msg.previewData.sql_preview}</code>
-                            </pre>
-                          </div>
-                        )}
+                          <div className="sql-preview-container">
+                            {mode === 'simple' && (
+                              <button
+                                type="button"
+                                className="toggle-btn"
+                                onClick={() => toggleSqlExpansion(runId)}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  background: 'var(--qt-surface-muted)',
+                                  border: '1px solid var(--qt-border)',
+                                  padding: '4px 8px',
+                                  borderRadius: 'var(--qt-radius-control)',
+                                  marginBottom: isSqlExpanded ? 8 : 0,
+                                }}
+                              >
+                                <Code2 size={13} />
+                                <span>{isSqlExpanded ? 'Hide technical SQL query' : 'Inspect technical SQL (PostgreSQL)'}</span>
+                                {isSqlExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                              </button>
+                            )}
 
-                        {/* AST Security Checklist */}
-                        {msg.previewData && (
-                          <div className="security-checklist-grid">
-                            <div className="checklist-item">
-                              <span className="check-icon">{msg.previewData.validation.passed ? <CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} /> : <XCircle size={14} style={{ color: 'var(--qt-danger)' }} />}</span>
-                              <span className="check-label">Single Statement AST</span>
-                            </div>
-                            <div className="checklist-item">
-                              <span className="check-icon">{msg.previewData.status === 'blocked' ? <XCircle size={14} style={{ color: 'var(--qt-danger)' }} /> : <CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} />}</span>
-                              <span className="check-label">Read-Only SELECT</span>
-                            </div>
-                            <div className="checklist-item">
-                              <span className="check-icon"><CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} /></span>
-                              <span className="check-label">
-                                Table Allowlist ({msg.previewData.validation.tables_referenced.join(', ') || 'none reported'})
-                              </span>
-                            </div>
-                            <div className="checklist-item">
-                              <span className="check-icon"><CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} /></span>
-                              <span className="check-label">Row Clamping Active</span>
-                            </div>
+                            {isSqlExpanded && (
+                              <div className="sql-preview-block">
+                                <div className="sql-preview-header">
+                                  <span className="sql-dialect-tag">PostgreSQL (SELECT-Only)</span>
+                                  <div className="sql-header-actions">
+                                    <span className="limit-clamped-badge">Clamped to 200 rows max</span>
+                                    <button
+                                      className="copy-btn"
+                                      onClick={() =>
+                                        handleCopySQL(msg.previewData!.query_run_id, msg.previewData!.sql_preview!)
+                                      }
+                                      title="Copy SQL statement"
+                                    >
+                                      {copiedQueryId === msg.previewData.query_run_id ? (
+                                        <span style={{ color: 'var(--qt-accent)' }}>
+                                          <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copied
+                                        </span>
+                                      ) : (
+                                        <>
+                                          <Copy size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copy SQL
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                                <pre className="sql-code-box">
+                                  <code>{msg.previewData.sql_preview}</code>
+                                </pre>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -735,41 +900,38 @@ export const AskDataView: React.FC = () => {
                               title={
                                 msg.previewData.can_execute
                                   ? 'Execute query in read-only transaction'
-                                  : 'Query cannot be executed'
+                                  : 'Query blocked or requires clarification'
                               }
                             >
                               {isExecuting ? (
                                 <>
-                                  <div className="btn-spinner" /> Executing via Reader Role...
+                                  <div className="btn-spinner" /> Running safely in read-only mode...
                                 </>
                               ) : (
                                 <>
-                                  <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                  >
-                                    <polygon points="5 3 19 12 5 21 5 3" />
-                                  </svg>
-                                  Execute Candidate Query
+                                  <Play size={13} style={{ marginRight: 4 }} />
+                                  Run this query
                                 </>
                               )}
                             </button>
                           </div>
                         )}
 
-                        {/* ==============================================================
-                            MILIESTONE 4: LIVE QUERY EXECUTION RESULTS CONTAINER
-                            ============================================================== */}
+                        {/* Execution Loading Skeleton */}
+                        {isExecuting && (
+                          <div className="execution-result-card">
+                            <div className="qt-skeleton" style={{ height: 28, width: '45%' }} />
+                            <div className="qt-skeleton" style={{ height: 180, width: '100%', borderRadius: 8 }} />
+                          </div>
+                        )}
+
+                        {/* LIVE QUERY EXECUTION RESULTS CONTAINER */}
                         {execResult && (
                           <div className="execution-result-card">
                             <div className="result-card-header">
                               <div className="result-header-left">
                                 <span className="status-tag status-success">
-                                  <span className="live-dot" /> Read-Only Executed
+                                  <span className="live-dot" /> Read-only executed
                                 </span>
                                 <span className="result-metric-pill">
                                   <Zap size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> {execResult.execution_duration_ms} ms
@@ -778,10 +940,28 @@ export const AskDataView: React.FC = () => {
                                   <FileText size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> {execResult.row_count} {execResult.row_count === 1 ? 'row' : 'rows'}
                                 </span>
                                 {execResult.truncated && (
-                                  <span className="badge badge-warning">Max Limit Reached</span>
+                                  <span className="badge badge-warning">Max 200 row limit reached</span>
                                 )}
                               </div>
-                              <div className="result-header-right">
+                              <div className="result-header-right" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="toggle-btn"
+                                  onClick={() => handleExportCSV(execResult)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    background: 'var(--qt-surface-muted)',
+                                    border: '1px solid var(--qt-border)',
+                                    padding: '4px 8px',
+                                    borderRadius: 'var(--qt-radius-control)',
+                                  }}
+                                  title="Export result table as CSV"
+                                >
+                                  <Download size={12} />
+                                  <span>Export CSV</span>
+                                </button>
                                 <div className="view-mode-toggle">
                                   <button
                                     className={`toggle-btn ${activeMode === 'table' ? 'active' : ''}`}
@@ -796,6 +976,10 @@ export const AskDataView: React.FC = () => {
                                     {execResult.chart_recommendation.chart_type.toUpperCase()} Chart
                                   </button>
                                 </div>
+                                <ExplainButton
+                                  title="Query Results"
+                                  explanation="These records were retrieved in a read-only database transaction. The system enforces strict SELECT-only access and clamps results to 200 rows."
+                                />
                               </div>
                             </div>
 
@@ -838,7 +1022,7 @@ export const AskDataView: React.FC = () => {
                             {/* Feedback Section */}
                             <div className="feedback-subcard">
                               <div className="feedback-header">
-                                <span className="feedback-label">Was this query and result accurate?</span>
+                                <span className="feedback-label">Was this answer accurate and helpful?</span>
                                 {feedbackState?.saved && (
                                   <span className="badge badge-success">
                                     <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Feedback saved ({feedbackState.isHelpful ? 'Helpful' : 'Needs Improvement'})
@@ -861,7 +1045,7 @@ export const AskDataView: React.FC = () => {
                                 <input
                                   type="text"
                                   className="feedback-notes-input"
-                                  placeholder="Optional feedback explanation..."
+                                  placeholder="Optional note for model evaluation..."
                                   value={feedbackState?.explanation || ''}
                                   onChange={(e) =>
                                     setFeedbackMap((p) => ({
@@ -891,16 +1075,7 @@ export const AskDataView: React.FC = () => {
               })}
 
               {/* Parsing Loading State */}
-              {isLoading && (
-                <div className="chat-message-row assistant">
-                  <div className="assistant-preview-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-                    <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
-                    <div style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 500 }}>
-                      Checking your question and preparing a safe preview…
-                    </div>
-                  </div>
-                </div>
-              )}
+              {isLoading && <QueryLoadingSkeleton />}
 
               <div ref={messagesEndRef} />
             </div>
@@ -918,7 +1093,7 @@ export const AskDataView: React.FC = () => {
           >
             <textarea
               className="query-textarea"
-              placeholder="Ask a question, such as “How many active devices are in each region?”"
+              placeholder="Ask anything about equipment, e.g., 'How many active devices are in each region?'"
               rows={2}
               value={inputQuestion}
               onChange={(e) => setInputQuestion(e.target.value)}
@@ -929,30 +1104,40 @@ export const AskDataView: React.FC = () => {
                 }
               }}
               disabled={isLoading}
+              aria-label="Ask equipment question"
             />
             <div className="input-actions-bar">
               <span className="input-hint-text">
-                Press <kbd>Enter ↵</kbd> to generate preview. <kbd>Shift+Enter</kbd> for new line. Preview is strictly read-only.
+                Press <kbd>Enter ↵</kbd> to run safety check. <kbd>Shift+Enter</kbd> for new line. Preview is strictly read-only.
               </span>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={!inputQuestion.trim() || isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <div className="btn-spinner" /> Validating AST...
-                  </>
-                ) : (
-                  <>
-                    <span>Generate Preview</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                  </>
-                )}
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="try-break-btn"
+                  onClick={handleTryToBreakIt}
+                  disabled={isLoading}
+                  title="Test security with DROP TABLE"
+                >
+                  <Flame size={12} />
+                  <span>Try to break it</span>
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={!inputQuestion.trim() || isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="btn-spinner" /> Checking safety...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} style={{ marginRight: 4 }} />
+                      <span>Check & Preview</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>

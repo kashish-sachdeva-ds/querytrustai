@@ -9,8 +9,11 @@ import {
   Server,
   ShieldCheck,
   Users,
+  Moon,
+  Sparkles,
 } from 'lucide-react'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { useTheme } from './context/ThemeContext'
 import { LoginPage } from './components/LoginPage'
 import { Sidebar, type ActiveTab } from './components/Sidebar'
 import { Header } from './components/Header'
@@ -47,6 +50,7 @@ const getTabFromUrl = (): ActiveTab => {
 
 const AppShell: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth()
+  const { theme, mode, toggleTheme, toggleMode } = useTheme()
   const [activeTab, setActiveTab] = useState<ActiveTab>(getTabFromUrl)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
 
@@ -81,6 +85,9 @@ const AppShell: React.FC = () => {
       { id: 'data-quality', label: 'Open data quality', description: 'Review read-only diagnostic findings', icon: ShieldCheck, keywords: ['diagnostics', 'findings'], run: () => selectTab('data-quality') },
       { id: 'anomalies', label: 'Open anomaly monitor', description: 'Review synthetic telemetry outliers', icon: Activity, keywords: ['telemetry', 'isolation forest'], run: () => selectTab('anomalies') },
       { id: 'history', label: 'Open query history', description: 'Review your governed query activity', icon: History, keywords: ['audit', 'queries'], run: () => selectTab('history') },
+      { id: 'evaluations', label: 'Open safety proof', description: 'Review benchmark safety metrics and regression proof', icon: FlaskConical, keywords: ['benchmark', 'regression', 'safety', 'proof'], run: () => selectTab('evaluations') },
+      { id: 'toggle-mode', label: `Switch to ${mode === 'simple' ? 'Expert' : 'Simple'} view`, description: mode === 'simple' ? 'Show SQL, AST inspector, and execution times' : 'Friendly plain English, hide raw SQL', icon: Sparkles, keywords: ['expert', 'simple', 'developer', 'viewer', 'mode'], run: toggleMode },
+      { id: 'toggle-theme', label: `Switch to ${theme === 'light' ? 'Dark' : 'Light'} theme`, description: 'Toggle between clean light and deep obsidian dark themes', icon: Moon, keywords: ['theme', 'dark', 'light', 'mode'], run: toggleTheme },
       { id: 'refresh-overview', label: 'Refresh fleet overview', description: 'Fetch the latest live inventory snapshot', icon: RefreshCw, keywords: ['reload', 'live'], run: () => {
         selectTab('overview')
         window.requestAnimationFrame(() => window.dispatchEvent(new Event('querytrust:refresh-overview')))
@@ -89,13 +96,12 @@ const AppShell: React.FC = () => {
 
     if (user?.role === 'admin') {
       pageActions.push(
-        { id: 'evaluations', label: 'Open evaluation lab', description: 'Run the governed benchmark suite', icon: FlaskConical, keywords: ['benchmark', 'regression'], run: () => selectTab('evaluations') },
-        { id: 'admin', label: 'Open administration', description: 'Manage roles and authorization states', icon: Users, keywords: ['users', 'governance'], run: () => selectTab('admin') },
+        { id: 'admin', label: 'Open people & access', description: 'Manage roles and authorization states', icon: Users, keywords: ['users', 'governance', 'roles', 'people'], run: () => selectTab('admin') },
       )
     }
 
     return pageActions
-  }, [user?.role])
+  }, [user?.role, mode, theme, toggleMode, toggleTheme])
 
   if (isLoading) {
     return (

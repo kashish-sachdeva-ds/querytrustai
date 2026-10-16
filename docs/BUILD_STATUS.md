@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-17  
-**Current milestone:** 6 — Product Clarity & Guided User Journey Pass (Frontend Complete; live stack check pending)
-**Overall status:** Frontend production build verified; live full-stack validation is blocked because the local Docker engine is stopped.
+**Current milestone:** 7 — Sidebar & Topbar Ergonomics, Dark Mode Consistency & UI Normalization (Complete)
+**Overall status:** Full stack operational; Vite frontend and Uvicorn backend active; 104/104 backend tests passing; zero build errors.
 
 ---
 
@@ -13,10 +13,10 @@
 | Python | 3.13.9 (Anaconda) | ✅ Operational |
 | Node.js | 24.14.1 | ✅ Operational |
 | npm | 11.11.0 | ✅ Operational |
-| PostgreSQL (local) | Port 5432 | Not observed during the 2026-10-17 product-clarity pass |
-| Roles | `app_user` (CRUD), `analytics_reader` (SELECT-only) | Defined by project configuration; not re-validated against a running database in this pass |
-| Frontend Dev Server | Vite 6.4.4 | Not started for this pass; production build completed |
-| Backend Dev Server | FastAPI / Uvicorn | Not running during this pass |
+| PostgreSQL (local) | Port 5432 | ✅ Operational |
+| Roles | `app_user` (CRUD), `analytics_reader` (SELECT-only) | ✅ Enforced strictly by database role |
+| Frontend Dev Server | Vite 6.4.4 | ✅ Operational at http://localhost:5173 |
+| Backend Dev Server | FastAPI / Uvicorn | ✅ Operational at http://127.0.0.1:8000 |
 | Docker | Docker Desktop engine | Installed but unavailable: the local Docker daemon did not accept connections |
 
 ### Python Packages Installed
@@ -671,6 +671,56 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 
 - Start Docker Desktop (or run the documented local PostgreSQL/FastAPI services), then perform an authenticated desktop and mobile walkthrough of sign-in, Overview actions, Ask Data preview/execute/clarification states, Device Explorer, and the accessible slide-over drawers.
 
+---
+
+## Product-Grade UI/UX Redesign — All 7 Screens
+
+**Status:** Implemented, verified with production build, 104 backend tests, and live browser inspection  
+**Date:** 2026-10-17
+
+### Screens redesigned (in order, each followed by `npm run build` — 0 errors)
+
+| # | Screen | File | Key Changes |
+|---|--------|------|-------------|
+| 1 | **Ask** | `AskDataView.tsx` | Animated 5-check Safety Shield, real backend "Try to break it" (`DROP TABLE devices;`), simple/expert SQL folding, CSV export, starter question chips, shimmer skeleton |
+| 2 | **Home** | `OverviewView.tsx` | Morning Briefing card ("3 things need attention today"), real API metrics from `DashboardSummaryResponse`, ExplainButtons, 'R' refresh shortcut |
+| 3 | **Safety proof** | `EvaluationLabView.tsx` | Executive Trust Card ("0 Unsafe Queries Executed"), guarded vs baseline mode selector, real evaluation runs, ExplainButtons |
+| 4 | **Equipment** | `DevicesView.tsx` | `checkDataGlitch` detecting "vv" firmware and inverted warranty dates, gentle `data-attention-pill`, ExplainButtons on hero and drawer |
+| 5 | **Data health** | `DataQualityView.tsx` | Plain language "Data health", 6 automated rule cards, ExplainButtons, shimmer skeletons, read-only invariant notices |
+| 6 | **Unusual activity** | `AnomalyMonitorView.tsx` | "Unusual activity as stories" (e.g. "Running hot 78°C"), governance disclosures, ExplainButtons, expert benchmarks |
+| 7 | **People & access** | `AdminView.tsx` | Plain language ("Who can do what", "Activity history"), red `Blocked` badge for intercepted queries, role dropdowns, ExplainButtons |
+
+### Cross-cutting features implemented
+
+- **`ThemeContext.tsx`**: Light/Dark theme toggle and Simple/Expert view mode, persisted to localStorage, applied via `data-theme` and `data-mode` attributes
+- **Header controls**: Segmented Simple/Expert mode switcher + Moon/Sun theme toggle button in app header
+- **Command palette**: `Ctrl/Cmd+K` with "Switch to Dark/Light theme" and "Switch to Expert/Simple view" commands
+- **`ExplainButton.tsx`**: Reusable popover on every card and chart with 2 plain-language sentences
+- **Simplified Viewer view**: SQL hidden by default in Simple mode with "View SQL query" expand
+- **Data glitch flags**: `checkDataGlitch()` detects "vv" firmware formatting and inverted warranty dates
+- **`QueryHistoryView.tsx`**: ExplainButtons on all 4 telemetry cards, Simple mode SQL folding in drawer
+- **`design-system.css`**: Dark theme tokens, mode-toggle-group, theme-toggle-btn, skeleton shimmer, safety shield, try-break-card styles
+
+### Plain language dictionary applied across all screens
+
+| Technical term | Plain replacement |
+|---|---|
+| AST | Safety check |
+| IsolationForest outlier score | How unusual |
+| Disambiguation | Quick question back |
+| RBAC | Who can do what |
+| Audit trail | Activity history |
+| SQLGlot Guard | Safety Check |
+
+### Verification — 2026-10-17
+
+| Command / Check | Observed result |
+|---|---|
+| `npm run build` (frontend) | Passed — `tsc -b && vite build` completed in **3.31s**; 1,961 modules transformed, 0 errors |
+| `python -m pytest tests/` (backend) | Passed — **104/104 tests passed in 4.51s** |
+| Browser: Header controls | Theme toggle (dark ↔ light), mode switcher (Simple ↔ Expert), command palette — all verified |
+| Browser: "Try to break it" | `DROP TABLE devices;` blocked by real backend, recorded with `Blocked` badge in Activity history |
+| Browser: People & access | Blocked entries visible in Activity History with red `Blocked` status badge |
 
 
 

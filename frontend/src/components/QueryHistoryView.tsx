@@ -22,12 +22,16 @@ import {
 } from '../api/client'
 import { withLayoutTransition } from '../motion'
 import { readUrlParam, replaceUrlParams } from '../urlState'
+import { ExplainButton } from './ExplainButton'
+import { useTheme } from '../context/ThemeContext'
 import './QueryHistoryView.css'
 
 export const QueryHistoryView: React.FC = () => {
+  const { mode } = useTheme()
   const [data, setData] = useState<QueryHistoryResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [showSqlInSimple, setShowSqlInSimple] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState<string>(() => readUrlParam('status') || '')
   const [searchQuery, setSearchQuery] = useState('')
@@ -369,9 +373,15 @@ export const QueryHistoryView: React.FC = () => {
       <div className="telemetry-grid">
         {/* Card 1: Recorded Query Runs */}
         <div className="telemetry-card">
-          <div className="telemetry-card-header">
+          <div className="telemetry-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span className="telemetry-card-title">Recorded Query Runs</span>
-            <span className="telemetry-badge-mono">pg_query_runs</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="telemetry-badge-mono">pg_query_runs</span>
+              <ExplainButton
+                title="Recorded Query Runs"
+                explanation="Every single question and query is permanently logged to an audit table. Nothing runs without an immutable record."
+              />
+            </div>
           </div>
           <div className="telemetry-card-value">{totalQueries}</div>
           <div className="telemetry-card-subtitle">Audited in PostgreSQL query_runs</div>
@@ -379,12 +389,18 @@ export const QueryHistoryView: React.FC = () => {
 
         {/* Card 2: Executed (SELECT-Only) */}
         <div className="telemetry-card">
-          <div className="telemetry-card-header">
+          <div className="telemetry-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span className="telemetry-card-title">Executed (SELECT-Only)</span>
-            <span className="telemetry-badge-emerald">
-              <span className="telemetry-status-dot" />
-              READ-ONLY
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="telemetry-badge-emerald">
+                <span className="telemetry-status-dot" />
+                READ-ONLY
+              </span>
+              <ExplainButton
+                title="SELECT-Only Execution"
+                explanation="These queries passed all safety checks and executed successfully. They use a dedicated read-only role that cannot modify tables."
+              />
+            </div>
           </div>
           <div className="telemetry-card-value">{executedCount}</div>
           <div className="telemetry-card-subtitle">Completed read-only transactions</div>
@@ -392,12 +408,18 @@ export const QueryHistoryView: React.FC = () => {
 
         {/* Card 3: AST Safety Blocks */}
         <div className="telemetry-card">
-          <div className="telemetry-card-header">
+          <div className="telemetry-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span className="telemetry-card-title">AST Safety Blocks</span>
-            <span className={`telemetry-badge-shield ${blockedCount > 0 ? 'blocked' : 'clear'}`}>
-              <Shield size={11} />
-              SQLGlot Guard
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className={`telemetry-badge-shield ${blockedCount > 0 ? 'blocked' : 'clear'}`}>
+                <Shield size={11} />
+                Safety Check
+              </span>
+              <ExplainButton
+                title="Safety Blocks"
+                explanation="Queries with harmful keywords like DROP or unauthorized tables are blocked before reaching the database. Your data is always protected."
+              />
+            </div>
           </div>
           <div className="telemetry-card-value">{blockedCount}</div>
           <div className="telemetry-card-subtitle">Intercepted by SQLGlot guard</div>
@@ -405,9 +427,15 @@ export const QueryHistoryView: React.FC = () => {
 
         {/* Card 4: Average execution latency */}
         <div className="telemetry-card">
-          <div className="telemetry-card-header">
+          <div className="telemetry-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span className="telemetry-card-title">Average execution latency</span>
-            <span className="telemetry-badge-p95">CURRENT PAGE</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="telemetry-badge-p95">CURRENT PAGE</span>
+              <ExplainButton
+                title="Average Execution Latency"
+                explanation="The time from submitting a question to receiving safe results. Ensures quick answers for plant and operations teams."
+              />
+            </div>
           </div>
           <div className="telemetry-card-value">
             {avgDuration}
@@ -768,25 +796,61 @@ export const QueryHistoryView: React.FC = () => {
                 {selectedItem.generated_sql && (
                   <div>
                     <div className="drawer-section-label">
-                      <span>Validated Candidate SQL</span>
-                      <button
-                        className="copy-code-btn"
-                        onClick={() => handleCopySql(selectedItem.generated_sql)}
-                      >
-                        {copiedSql ? (
-                          <>
-                            <Check size={12} color="var(--qt-accent, #FF4F00)" /> Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={12} /> Copy SQL
-                          </>
+                      <span>{mode === 'simple' ? 'Generated Query' : 'Validated Candidate SQL'}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {mode === 'simple' && (
+                          <button
+                            type="button"
+                            className="copy-code-btn"
+                            onClick={() => setShowSqlInSimple(!showSqlInSimple)}
+                          >
+                            {showSqlInSimple ? 'Hide SQL' : 'View SQL query'}
+                          </button>
                         )}
-                      </button>
+                        <button
+                          className="copy-code-btn"
+                          onClick={() => handleCopySql(selectedItem.generated_sql)}
+                        >
+                          {copiedSql ? (
+                            <>
+                              <Check size={12} color="var(--qt-accent, #FF4F00)" /> Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={12} /> Copy SQL
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                    <pre className="sql-code-panel">
-                      <code>{renderSyntaxHighlightedSql(selectedItem.generated_sql)}</code>
-                    </pre>
+                    {(mode === 'expert' || showSqlInSimple) ? (
+                      <pre className="sql-code-panel">
+                        <code>{renderSyntaxHighlightedSql(selectedItem.generated_sql)}</code>
+                      </pre>
+                    ) : (
+                      <div
+                        style={{
+                          background: 'var(--qt-surface-muted)',
+                          border: '1px solid var(--qt-border)',
+                          borderRadius: 'var(--qt-radius-inner)',
+                          padding: '0.75rem 1rem',
+                          fontSize: '0.8rem',
+                          color: 'var(--qt-muted)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <span>Raw SQL is tucked away in Simple view</span>
+                        <button
+                          type="button"
+                          className="copy-code-btn"
+                          onClick={() => setShowSqlInSimple(true)}
+                        >
+                          Inspect SQL
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 

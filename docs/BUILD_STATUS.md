@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-10-15  
-**Current milestone:** 5 — Data Quality Profiler & Telemetry Anomaly Detection (Completed)  
-**Overall status:** 🟢 Milestone 5 Completed & Verified
+**Last updated:** 2026-10-17  
+**Current milestone:** 6 — Frontend Enterprise Design & Truthful Governance Alignment (Completed)  
+**Overall status:** 🟢 Production Frontend Overhaul & Design Invariants Verified
 
 ---
 
@@ -454,5 +454,184 @@ tests/test_sql_validator.py (16 tests) PASSED
 | **RBAC & Ownership Isolation** | ✅ Pass | Admin, Analyst, and Viewer permissions enforced on backend; chat sessions isolated by user. |
 | **Containerization Ready** | ✅ Pass | `Dockerfile` for backend and frontend, `nginx.conf`, and `docker-compose.yml` configured. |
 | **No Secrets / Synthetic Data Only** | ✅ Pass | `.env` gitignored; `.env.example` documented; only educational synthetic data used. |
+
+---
+
+## UI Design Refresh: Fleet Control Room
+
+**Status:** Implemented — frontend production build verified
+**Date:** 2026-10-15
+
+- Added a warm editorial visual token layer: alabaster canvas (`#FAF8F5`), white structural surfaces, warm-charcoal type, stone borders, and International Orange (`#FF4F00`) as the single action accent.
+- Rebuilt the Overview screen as an asymmetric operational brief using only data returned from the existing dashboard API. It includes layout-matched skeletons, a recoverable error state, semantic empty states, keyboard-visible focus styling, press feedback, and a refresh shortcut hint.
+- Preserved the backend contract and all read-only analytics constraints; no API, role, query-execution, or synthetic-data behavior changed.
+
+### Verification
+
+| Command | Result |
+|---|---|
+| `npm run build` (frontend) | Passed — TypeScript and Vite production build completed successfully. |
+| `npm run lint` (frontend) | Not runnable in this workspace: the installed Oxlint native binding is invalid for the active Node runtime. No dependency reinstall was performed. |
+
+### Staff design audit follow-up
+
+The Overview underwent a second implementation pass to address five observed composition issues: underscaled gutters, weak heading-to-label contrast, redundant lower summary cards, absent row-level hover feedback, and loading/disabled states that were insufficiently explicit. Dashboard gutters, panel padding, and table density were increased by approximately 25%; the lower summaries now use a shared divided surface; title, label, table, focus, disabled, hover, screen-reader loading, and reduced-motion treatments were refined. `npm run build` was rerun successfully after this pass.
+
+The root-level `DESIGN.md` now records the mandatory QueryTrust visual token system, typography, geometry, borders, motion/accessibility behaviors, composition rules, and banned patterns for all future frontend work.
+
+---
+
+## Interaction Physics & Command Palette
+
+**Status:** Implemented — frontend production build verified
+**Date:** 2026-10-15
+
+- Added a `Ctrl+K` / `Cmd+K` command palette with searchable page and quick actions, arrow/Home/End navigation, Enter to run, Escape to close, focus restoration, and a scroll lock while open.
+- Standardized modal, drawer, dropdown, palette, tab, and reveal motion on the fast `cubic-bezier(.16, 1, .3, 1)` curve, capped at 220ms; reduced-motion settings still disable it.
+- Added browser View Transition-backed changes for page swaps and filtered result lists, a measured sliding tab indicator, and a height/position accordion reveal for Evaluation Lab case details.
+
+### Verification
+
+| Command | Result |
+|---|---|
+| `npm run build` (frontend) | Passed — TypeScript and Vite production build completed successfully in 1.63s. |
+| Local browser login flow | Not completed: the browser stayed on session verification despite the local `/health` probe returning HTTP 200, so no visual interaction result is claimed. |
+
+---
+
+## Frontend API State & Responsive Data Handling
+
+**Status:** Implemented — frontend production build verified
+**Date:** 2026-10-15
+
+- Kept the existing typed client connected to the versioned FastAPI routes for dashboard, devices, administration, governed analytics, data quality, anomalies, query history, and evaluation runs. No client-controlled SQL execution endpoint was introduced.
+- Synced main navigation to `?tab=…`; inventory search, filters, sorting, and pagination to search parameters (including `q`); and query-history/data-quality filters plus Evaluation Lab sub-tabs to the URL. Browser history restores the matching view state.
+- Added reversible optimistic updates for administrator role/status changes, governed-query feedback, and conversation deletion. Failed requests restore the previous client state and show an error.
+- Kept existing loading and empty branches connected to API responses, added the missing Administration users empty state, and applied truncation/line-clamping to database-derived strings in inventory, diagnostics, administration, history, and query-result grids.
+
+### Verification
+
+| Command / Check | Result |
+|---|---|
+| `npm run build` (frontend) | Passed — `tsc -b` and Vite production build completed successfully in 1.65s. |
+| Local browser overview | Observed an authenticated admin overview rendering live synthetic-data values from the local application. A desktop automation bounds change prevented a separate click-through verification of URL-state interactions, so no claim is made for that additional flow. |
+
+---
+
+## Interaction Resilience, Mobile Touch & Share Metadata
+
+**Status:** Implemented — frontend production build verified
+**Date:** 2026-10-15
+
+- Added brand-consistent text selection, thin browser/Firefox scrollbar styling, and `overscroll-behavior-y: none` in the shared design system.
+- At mobile widths, the sidebar becomes a horizontally swipeable navigation rail, dense data grids remain explicitly horizontally swipeable, and desktop drawers, dialogs, account popovers, and the command palette become bottom sheets.
+- Added a token-aligned React error boundary and an unknown-route / unknown-tab 404 screen. The error boundary intentionally does not display or transmit error details.
+- Added OpenGraph/Twitter metadata and a local, purpose-built SVG social-preview artwork at `frontend/public/og-querytrust.svg`. The native raster image-generation tool was unavailable in this session, so this is a code-authored branded asset rather than a claim of AI-generated raster artwork.
+
+### Verification
+
+| Command | Result |
+|---|---|
+| `npm run build` (frontend) | Passed — `tsc -b` and Vite production build completed successfully in 1.62s. |
+
+---
+
+## Production Integration Security Hardening
+
+**Status:** Implemented and verified locally
+**Date:** 2026-10-16
+
+- Browser API calls now enforce an eight-second `AbortController` timeout. Timeouts and 5xx responses emit a non-blocking, actionable recovery toast; retry is a deliberate page reload rather than an automatic replay of a mutation.
+- Added client-side bounds/type validation for mutation payloads and strict Pydantic request schemas (`extra="forbid"`, constrained IDs/enums/ranges, non-blank values) on backend mutation routes. Server-side validation remains authoritative.
+- Browser authentication now uses a `HttpOnly`, `SameSite=Strict` session cookie. The frontend removes legacy local-storage JWTs and does not persist new bearer tokens. The token remains in the documented login response only for non-browser API clients.
+- Added single-flight mutation requests in the client and durable backend race controls: a preview can execute once only; chat-session creation requires an idempotency key; concurrent data-quality/evaluation runs are guarded by partial unique indexes; anomaly retraining uses a PostgreSQL advisory lock; and user updates lock their target row.
+- Tightened ownership checks: private chat sessions, preview execution, and query feedback now require the owning user even when the requester is an administrator. Administrators retain their dedicated metadata audit endpoints.
+- Searched the production frontend bundle for database URLs, API keys, private-key markers, database role names, and the development secret. No matches were produced.
+
+### Verification
+
+| Command / Check | Observed result |
+|---|---|
+| `python -m alembic upgrade head` (backend) | Applied two additive migrations: concurrent-run protections and chat-session idempotency. |
+| `python -m pytest tests -q` (backend) | Passed — **104 passed in 4.55s**. Includes new ownership, idempotency, strict-input, and HttpOnly-cookie regressions. |
+| `npm run build` (frontend) | Passed — TypeScript and Vite production build completed successfully in 2.04s. |
+| Compiled-bundle secret scan | No matches for database URLs, API key names, private keys, database role names, or the development secret. |
+| Local `/health` after backend restart | Returned HTTP 200 with `status: ok`; backend is running on port 8000. |
+
+### Remaining production deployment requirements
+
+- Set a unique, non-default `SECRET_KEY` outside source control and deploy over HTTPS so the session cookie is marked `Secure`.
+- Apply these Alembic migrations in every deployed environment before rolling out the frontend.
+
+---
+
+## Enterprise Editorial Design System Overhaul & Truthful UI Alignment
+
+**Status:** Implemented, verified with production build, backend test regressions, and full browser visual inspection  
+**Date:** 2026-10-16
+
+- **CSS Foundation & Token Authority:**
+  - Removed obsolete Vite scaffolding (`App.css`).
+  - Established `design-system.css` as the authoritative token layer: warm canvas (`#FAF8F5`), white surfaces (`#FFFFFF`), muted fills (`#F5F2ED`), strong structural borders (`#E6E4E0`), single primary product accent (`#FF4F00`), and semantic danger (`#A7382C`).
+  - Strict typography standard: *Plus Jakarta Sans* display headings, *Manrope* body copy, and *JetBrains Mono* with tabular numerals for IDs, timestamps, latencies, and technical records.
+
+- **Shell Components (Sidebar & Header):**
+  - **Sidebar (`Sidebar.tsx`):** Removed hard-coded static counts (`5,000`, `97%`, `37 Cases`) and multicolor badge pills (`AI`, `ML`). Navigation is strictly semantic and role-aware with animated active indicator.
+  - **Header (`Header.tsx` & `App.tsx`):** Transformed into a restrained, compact utility bar featuring system breadcrumb, Command Palette shortcut, synthetic data disclosure, LLM provider mode badge, and user session menu. Removed page title duplication, enabling each view to own its hero header and context.
+
+- **Core Views Refactored:**
+  - **Overview (`OverviewView.tsx` & `OverviewView.css`):** Replaced disjointed cards with an asymmetric operational brief and a single **Overview Control Strip** with 4 API-backed metrics: *Total Fleet*, *Active Status*, *Open Service Queue*, and *Expiring Warranties (30D)*. Removed unsupported, fabricated "Database Sync 4ms / Active Replica / PG 16".
+  - **Device Explorer (`DevicesView.tsx` & `DevicesView.css`):** Replaced disguised `opacity: 0` overlays with genuine accessible native selects with `appearance: none`, explicit chevrons, ARIA labels, and 2px focus rings. Slide-over drawer stripped of client-synthesized MAC/IP addresses and hardcoded reference anchors, presenting verified `DeviceDetail` fields only.
+  - **Query History (`QueryHistoryView.tsx` & `QueryHistoryView.css`):** High-contrast question titles and mono timestamps. Slide-over drawer replaced fabricated "3/3 Passed" AST checklist with truthful **Enforced Runtime Policy (SQLGlot Engine)** detailing system-wide constraints (Single SELECT Constraint, Prohibited Mutation Nodes, Catalog Table Allowlist). Added `role="dialog"`, `aria-modal="true"`, and Escape key restoration.
+
+- **Remaining Views Aligned:**
+  - **Evaluation Lab (`EvaluationLabView.tsx` & `EvaluationLabView.css`):** Replaced all raw emojis and arbitrary multicolors (blue, cyan, purple, pink) with Lucide icons (`Filter`, `BarChart3`, `Calendar`, `Layers`, `Tag`, `MessageSquare`, `HelpCircle`, `Ban`, `ShieldAlert`, `FlaskConical`) and semantic status indicators. Completely overhauled CSS from legacy dark blue (`#1e293b`) to QueryTrust warm editorial theme.
+  - **Data Quality (`DataQualityView.tsx`):** Removed emoji glyphs (`✨`, `🛡️`), added accessible sample record dialog, and standardized audit table presentation.
+  - **Anomaly Monitor (`AnomalyMonitorView.tsx`):** Cleaned emoji icons (`⚠️`, `⚡`), verified strict compliance with invariant that IsolationForest scores are purely statistical outlier distances and never hardware failure probabilities.
+  - **Administration (`AdminView.tsx`):** Replaced legacy color classes (`text-rose`, `text-indigo`, `text-cyan`, `text-emerald`) with token-based styles.
+
+### Verification Summary
+
+| Command / Check | Observed Result |
+|---|---|
+| `npm run build` (frontend) | **Passed** — `tsc -b && vite build` built cleanly in 5.55s with zero errors and zero warnings (1958 modules transformed). |
+| `python -m pytest tests -v` (backend) | **Passed** — **104 passed in 4.87s** with 100% test coverage across security, RBAC, AST SQL safety, and ML anomaly invariants. |
+| Browser Subagent Visual Inspection | **Passed** — Authenticated admin session; verified Device Explorer table, drawer open with focus trap and Escape dismiss, Query History table, AST safety policy drawer, and Anomaly Monitor truthful statistical disclosures. |
+| Design System Automated Audit | **Passed** — **0 violations** found across entire frontend codebase for prohibited legacy hex palettes (`#6366f1`, `#3b82f6`, `#34d399`, `#10b981`, etc.) and raw product emojis. |
+
+---
+
+## Corrective Design System Audit & Accessible Drawer Pass
+
+**Status:** Completed and fully verified  
+**Date:** 2026-10-17
+
+### Changes Executed
+1. **Removed Prohibited Legacy Colors & Raw Emojis:**
+   - `AskDataView.tsx`: Replaced hard-coded chart colors and amber status dot with design system tokens (`var(--qt-accent, #FF4F00)`). Replaced all emojis with Lucide icons.
+   - `DataQualityView.tsx`: Replaced `#3b82f6`, `#ef4444`, `#f59e0b`, `#10b981`, and emojis (`✓`, `⚠️`) with `CheckCircle2`, `AlertTriangle`, and design system tokens.
+   - `AnomalyMonitorView.tsx`: Replaced telemetry pill inline hex styles with token-backed variables (`var(--qt-danger)`, `var(--qt-danger-soft)`, `var(--qt-accent)`, `var(--qt-accent-soft)`). Removed fabricated fallback dataset claims when metadata is loading.
+   - `OverviewView.css`: Replaced 9999px pill radii on distribution tracks with 3px token radius; replaced `#0284C7`, `#E11D48`, and `#10B981` with token variables.
+
+2. **Device Explorer Lifecycle Truthfulness:**
+   - `DevicesView.tsx`: Eliminated hard-coded reference anchor `new Date('2026-10-14')` and arbitrary relative countdowns (`Expired Xd ago`). Renders actual database `warranty_expiry` date.
+   - Removed unsupported client-side progress bars and fabricated countdown categories in the inspection drawer.
+
+3. **Accessible Technical Drawer Pattern:**
+   - Both `DevicesView.tsx` and `QueryHistoryView.tsx` drawers now feature:
+     - `role="dialog"` and `aria-modal="true"`.
+     - Explicit `aria-labelledby` linking to screen-reader header IDs.
+     - `aria-label` attributes on icon-only close buttons.
+     - Automatic focus shift into the first interactive element upon opening.
+     - Tab / Shift+Tab keyboard focus trapping within the dialog.
+     - Close on Escape and backdrop click.
+     - Automatic focus restoration to the exact trigger button that opened the drawer.
+     - Mobile bottom-sheet responsive styles (`@media (max-width: 640px)`) with slide-up transitions.
+
+4. **Query History System Policy Clarification:**
+   - Renamed runtime policy section to **Documented System Policy (SQLGlot Engine)** with explicit "Global Architecture" badge, distinguishing static security policies (Single SELECT, Prohibited Mutation Nodes, Catalog Table Allowlist, 5s timeout cap, 1,000-row clamp) from individual query telemetry.
+   - Updated dark code panel SQL syntax highlighting to restrained warm tokens (`var(--qt-accent)` for keywords, `#D7D2CA` for strings, `#FFFFFF` for numbers, `#E6E4E0` for code text).
+
+
 
 

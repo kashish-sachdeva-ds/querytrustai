@@ -145,7 +145,7 @@ export const LoginPage: React.FC = () => {
         {/* Demo Credentials Section */}
         <div className="demo-credentials-section">
           <div className="demo-credentials-header">
-            <Sparkles size={14} className="text-indigo" />
+            <Sparkles size={14} style={{ color: 'var(--qt-accent)' }} />
             <span>Development Quick-Fill Credentials</span>
           </div>
           <div className="demo-chips-grid">

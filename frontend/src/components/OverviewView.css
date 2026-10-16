@@ -1,0 +1,632 @@
+/* OverviewView.css - Vercel / Datadog style Fleet Control Room command center */
+
+.overview-command-center {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ==========================================================================
+   1. HERO HEADER SECTION
+   ========================================================================== */
+
+.overview-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.overview-eyebrow {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8A8884;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.overview-heading {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #141413;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.overview-copy {
+  font-size: 13px;
+  color: #71706B;
+  line-height: 1.45;
+  margin-top: 0.35rem;
+  max-width: 680px;
+}
+
+.overview-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.snapshot-pill {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  color: #71706B;
+  background: #F4F3EF;
+  border: 1px solid #E6E4DD;
+  border-radius: 6px;
+  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.hero-refresh-btn {
+  font-size: 12px;
+  font-weight: 600;
+  color: #141413;
+  background: #ffffff;
+  border: 1px solid #E6E4DD;
+  border-radius: 6px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.hero-refresh-btn:hover:not(:disabled) {
+  background: #FAF8F5;
+  border-color: #D7D5CC;
+}
+
+.hero-refresh-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.hero-refresh-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.hero-kbd-badge {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px;
+  color: #8A8884;
+  background: #F4F3EF;
+  border: 1px solid #E6E4DD;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+/* ==========================================================================
+   2. OVERVIEW CONTROL STRIP (Consolidated Single Toolbar)
+   ========================================================================== */
+
+.overview-control-strip {
+  background: #ffffff;
+  border: 1px solid #E6E4DD;
+  border-radius: 12px;
+  padding: 1.125rem 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  position: relative;
+}
+
+@media (max-width: 1024px) {
+  .overview-control-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .overview-control-strip {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.strip-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  position: relative;
+}
+
+/* Vertical divider between metrics */
+.strip-metric-item:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  left: -0.75rem;
+  top: 15%;
+  height: 70%;
+  width: 1px;
+  background: #E6E4DD;
+}
+
+@media (max-width: 1024px) {
+  .strip-metric-item:nth-child(2n + 1)::before {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .strip-metric-item::before {
+    display: none !important;
+  }
+}
+
+.strip-metric-label {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #71706B;
+}
+
+.strip-metric-value {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #141413;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+}
+
+.strip-metric-unit {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #8A8884;
+  margin-left: 4px;
+}
+
+.strip-metric-subtext {
+  font-size: 11.5px;
+  color: #8A8884;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.3;
+}
+
+.status-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--qt-accent, #FF4F00);
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(255, 79, 0, 0.2);
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.75;
+  }
+}
+
+.warning-subtext-pill {
+  color: #B45309;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.operational-subtext-pill {
+  color: #047857;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================================================
+   3. 2-COLUMN SPLIT BENTO GRID (INVENTORY & LIFECYCLE)
+   ========================================================================== */
+
+.overview-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .overview-bento-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bento-card {
+  background: #ffffff;
+  border: 1px solid #E6E4DD;
+  border-radius: 12px;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bento-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.bento-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bento-card-icon {
+  color: #EA580C;
+  display: flex;
+  align-items: center;
+}
+
+.bento-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #141413;
+  letter-spacing: -0.01em;
+}
+
+.bento-card-meta-badge {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  font-weight: 500;
+  color: #71706B;
+  background: #F4F3EF;
+  border: 1px solid #E6E4DD;
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.bento-card-desc {
+  font-size: 12px;
+  color: #8A8884;
+  margin-bottom: 1.15rem;
+}
+
+/* Segmented Sub-Tabs for Right Column */
+.bento-segmented-tabs {
+  background: #EFECE6;
+  padding: 3px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid #E5E2DC;
+}
+
+.bento-tab-btn {
+  background: transparent;
+  color: #575653;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 3.5px 9px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  user-select: none;
+}
+
+.bento-tab-btn:hover:not(.active) {
+  color: #141413;
+  background: #E6E2DA;
+}
+
+.bento-tab-btn.active {
+  background: #18181B;
+  color: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Clean Scannable Distribution Rows */
+.bento-distribution-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.bento-distribution-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) 1.5fr minmax(105px, auto);
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.15rem 0;
+  transition: transform 0.12s ease;
+}
+
+.bento-distribution-row:hover {
+  transform: translateX(2px);
+}
+
+.distribution-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.distribution-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  background: #71706B;
+}
+
+.distribution-dot.high {
+  background: var(--qt-danger, #A7382C);
+}
+
+.distribution-dot.medium {
+  background: #D97706;
+}
+
+.distribution-dot.low {
+  background: #71706B;
+}
+
+.distribution-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #141413;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Slim Refined Progress Track */
+.distribution-track {
+  width: 100%;
+  height: 6px;
+  background: #F4F3EF;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.distribution-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--qt-accent, #FF4F00);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.distribution-fill.warranty {
+  background: var(--qt-muted, #766F68);
+}
+
+.distribution-fill.critical {
+  background: var(--qt-danger, #A7382C);
+}
+
+.distribution-fill.high {
+  background: var(--qt-danger, #A7382C);
+}
+
+.distribution-fill.medium {
+  background: #F59E0B;
+}
+
+.distribution-fill.low {
+  background: #71717A;
+}
+
+.distribution-value {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+  color: #575653;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   4. RECENT SERVICE INCIDENTS TABLE
+   ========================================================================== */
+
+.overview-table-card {
+  background: #ffffff;
+  border: 1px solid #E6E4DD;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.overview-table-header-bar {
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid #E6E4DD;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.overview-table-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #141413;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.overview-table-sub {
+  font-size: 12px;
+  color: #8A8884;
+  margin-top: 0.2rem;
+}
+
+.overview-table-badge {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #71706B;
+  background: #F4F3EF;
+  border: 1px solid #E6E4DD;
+  border-radius: 4px;
+  padding: 2.5px 8px;
+}
+
+.overview-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.overview-table th {
+  background: #F9F8F6;
+  border-bottom: 1px solid #E6E4DD;
+  color: #71706B;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 20px;
+  white-space: nowrap;
+}
+
+.overview-table td {
+  padding: 12px 20px;
+  border-bottom: 1px solid #EFECE6;
+  vertical-align: middle;
+}
+
+.overview-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.overview-table tbody tr:hover {
+  background-color: #FAF8F5;
+}
+
+/* Event Cells */
+.event-id-cell {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+  color: #575653;
+  white-space: nowrap;
+}
+
+.asset-tag-cell {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #141413;
+  white-space: nowrap;
+}
+
+.event-type-cell {
+  font-size: 13px;
+  font-weight: 500;
+  color: #141413;
+}
+
+/* Severity Miniature Pills */
+.severity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.severity-pill.high,
+.severity-pill.critical {
+  background: #FEF2F2;
+  color: #B91C1C;
+  border-color: #FECACA;
+}
+
+.severity-pill.medium {
+  background: #FFFBEB;
+  color: #B45309;
+  border-color: #FDE68A;
+}
+
+.severity-pill.low {
+  background: #F4F4F5;
+  color: #52525B;
+  border-color: #E4E4E7;
+}
+
+/* Status Pill */
+.status-tag-cell {
+  font-size: 11.5px;
+  color: #52525B;
+  background: #F4F4F5;
+  border: 1px solid #E4E4E7;
+  border-radius: 5px;
+  padding: 2px 7px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.date-opened-cell {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+  color: #575653;
+  white-space: nowrap;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

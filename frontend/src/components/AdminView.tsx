@@ -50,8 +50,10 @@ export const AdminView: React.FC = () => {
   }, [])
 
   const handleRoleChange = async (userId: string, newRole: string) => {
+    const previousUsers = users
     setUpdatingId(userId)
     setNotification(null)
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: newRole as UserPublic['role'] } : u)))
     try {
       const updated = await updateAdminUser(userId, { role: newRole })
       setUsers((prev) =>
@@ -62,6 +64,7 @@ export const AdminView: React.FC = () => {
         message: `Updated role for user to '${newRole}'.`,
       })
     } catch (err) {
+      setUsers(previousUsers)
       setNotification({
         type: 'error',
         message: err instanceof Error ? err.message : 'Role change failed.',
@@ -72,10 +75,13 @@ export const AdminView: React.FC = () => {
   }
 
   const handleStatusToggle = async (userId: string, currentStatus: boolean) => {
+    const previousUsers = users
+    const nextStatus = !currentStatus
     setUpdatingId(userId)
     setNotification(null)
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_active: nextStatus } : u)))
     try {
-      const updated = await updateAdminUser(userId, { is_active: !currentStatus })
+      const updated = await updateAdminUser(userId, { is_active: nextStatus })
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, is_active: updated.is_active } : u))
       )
@@ -84,6 +90,7 @@ export const AdminView: React.FC = () => {
         message: `Account status updated to ${!currentStatus ? 'Active' : 'Deactivated'}.`,
       })
     } catch (err) {
+      setUsers(previousUsers)
       setNotification({
         type: 'error',
         message: err instanceof Error ? err.message : 'Status update failed.',
@@ -96,7 +103,7 @@ export const AdminView: React.FC = () => {
   if (currentUser?.role !== 'admin') {
     return (
       <div className="error-card" role="alert">
-        <AlertTriangle size={24} className="text-rose" />
+        <AlertTriangle size={24} style={{ color: 'var(--qt-danger)' }} />
         <div className="error-content">
           <h3>Access Restricted: Administrator Privileges Required</h3>
           <p>
@@ -139,9 +146,9 @@ export const AdminView: React.FC = () => {
           role="status"
         >
           {notification.type === 'success' ? (
-            <CheckCircle2 size={16} className="text-emerald" />
+            <CheckCircle2 size={16} style={{ color: '#15803D' }} />
           ) : (
-            <AlertTriangle size={16} className="text-rose" />
+            <AlertTriangle size={16} style={{ color: 'var(--qt-danger)' }} />
           )}
           <span>{notification.message}</span>
         </div>
@@ -151,7 +158,7 @@ export const AdminView: React.FC = () => {
       <div className="content-card full-width-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="card-header" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="card-header-title">
-            <Users size={18} className="text-indigo" />
+            <Users size={18} style={{ color: 'var(--qt-accent)' }} />
             <h3>Authorized Accounts ({users.length})</h3>
           </div>
           <span className="badge-pill">Backend Enforced RBAC</span>
@@ -178,6 +185,12 @@ export const AdminView: React.FC = () => {
                     </p>
                   </td>
                 </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem' }}>
+                    <p className="text-muted">No user records were returned by the administration API.</p>
+                  </td>
+                </tr>
               ) : (
                 users.map((u) => {
                   const isCurrent = u.id === currentUser?.id
@@ -185,11 +198,11 @@ export const AdminView: React.FC = () => {
                     <tr key={u.id}>
                       <td>
                         <div className="user-table-cell">
-                          <span className="font-semibold text-primary">{u.display_name}</span>
+                          <span className="font-semibold text-primary cell-truncate" title={u.display_name}>{u.display_name}</span>
                           {isCurrent && <span className="badge-self">You</span>}
                         </div>
                       </td>
-                      <td className="font-mono text-sm text-secondary">{u.email}</td>
+                      <td className="font-mono text-sm text-secondary"><span className="cell-truncate" title={u.email}>{u.email}</span></td>
                       <td>
                         <select
                           value={u.role}
@@ -244,7 +257,7 @@ export const AdminView: React.FC = () => {
       <div className="content-card full-width-card" style={{ marginTop: '1.5rem', padding: 0, overflow: 'hidden' }}>
         <div className="card-header" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="card-header-title">
-            <History size={18} className="text-cyan" />
+            <History size={18} style={{ color: 'var(--qt-accent)' }} />
             <h3>Security &amp; Query Audit Trail</h3>
           </div>
           <span className="badge-pill">Governance Metadata Only</span>
@@ -273,7 +286,7 @@ export const AdminView: React.FC = () => {
                 auditLogs.map((log) => (
                   <tr key={log.id}>
                     <td className="font-mono text-muted text-xs">{log.id.slice(0, 8)}...</td>
-                    <td className="font-medium text-primary">{log.question || 'N/A'}</td>
+                    <td className="font-medium text-primary"><span className="cell-truncate" title={log.question || 'N/A'}>{log.question || 'N/A'}</span></td>
                     <td>
                       <span className="badge-status-subtle">{log.status}</span>
                     </td>

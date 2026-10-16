@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import {
+  AlertTriangle,
+  CheckCircle2,
+  Zap,
+} from 'lucide-react'
+import {
   fetchAnomalySummary,
   runAnomalyScan,
   trainAnomalyModel,
@@ -87,21 +92,19 @@ export const AnomalyMonitorView: React.FC = () => {
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.85) return '#ef4444' // Critical outlier
-    if (score >= 0.70) return '#f59e0b' // High outlier
-    return '#3b82f6' // Moderate outlier
+    if (score >= 0.85) return 'var(--qt-danger, #A7382C)' // Critical outlier
+    if (score >= 0.70) return 'var(--qt-accent, #FF4F00)' // High outlier
+    return 'var(--qt-text, #4F4A45)' // Moderate outlier
   }
 
   return (
     <div className="view-container">
       {/* Non-Negotiable Governance Disclaimer Banner */}
-      <div className="governance-banner" style={{ marginBottom: '1.25rem', borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+      <div className="governance-banner" style={{ marginBottom: '1.25rem', borderColor: 'rgba(167, 56, 44, 0.3)' }}>
         <div className="banner-left">
-          <span className="shield-icon" style={{ color: '#ef4444' }}>
-            ⚠️
-          </span>
+          <AlertTriangle size={18} style={{ color: 'var(--qt-danger)', flexShrink: 0, marginTop: 2 }} />
           <div>
-            <div className="banner-title" style={{ color: '#ef4444' }}>
+            <div className="banner-title" style={{ color: 'var(--qt-danger)' }}>
               Governance Disclosure: Statistical Outlier Monitor
             </div>
             <div className="banner-desc">
@@ -119,14 +122,14 @@ export const AnomalyMonitorView: React.FC = () => {
       </div>
 
       {successMessage && (
-        <div className="alert alert-success" style={{ marginBottom: '1.25rem' }}>
-          ✓ {successMessage}
+        <div className="alert alert-success" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <CheckCircle2 size={14} /> <span>{successMessage}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="alert alert-danger" style={{ marginBottom: '1.25rem' }}>
-          ⚠️ {errorMessage}
+        <div className="alert alert-danger" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <AlertTriangle size={14} /> <span>{errorMessage}</span>
         </div>
       )}
 
@@ -149,7 +152,7 @@ export const AnomalyMonitorView: React.FC = () => {
                 <span className="live-dot" /> Version {modelMeta?.version || '1.0.0'}
               </span>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Fitted on {modelMeta?.dataset_identifier || '25,000 synthetic observations'}
+                Fitted on {modelMeta?.dataset_identifier || 'synthetic training data'}
               </span>
             </div>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -204,7 +207,7 @@ export const AnomalyMonitorView: React.FC = () => {
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                 Benchmark F1-Score
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#10b981' }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--qt-accent)' }}>
                 {modelMeta.metrics.synthetic_benchmark_metrics.f1_score.toFixed(3)}
               </div>
             </div>
@@ -275,7 +278,7 @@ export const AnomalyMonitorView: React.FC = () => {
             {isScanning ? (
               <>
                 <div className="table-loading-spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                Scoring 25,000 Readings...
+                Scanning telemetry readings...
               </>
             ) : (
               <>
@@ -302,8 +305,8 @@ export const AnomalyMonitorView: React.FC = () => {
             </p>
           </div>
           {scanResult && (
-            <span className="badge badge-neutral" style={{ fontSize: '0.75rem' }}>
-              ⚡ Scanned in {scanResult.scan_time_ms} ms
+            <span className="badge badge-neutral" style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center' }}>
+              <Zap size={11} style={{ marginRight: 4 }} /> Scanned in {scanResult.scan_time_ms} ms
             </span>
           )}
         </div>
@@ -401,9 +404,9 @@ export const AnomalyMonitorView: React.FC = () => {
                         <span
                           className="badge"
                           style={{
-                            background: item.telemetry.cpu_percent > 85 ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-card-secondary)',
-                            color: item.telemetry.cpu_percent > 85 ? '#ef4444' : 'var(--text-secondary)',
-                            border: `1px solid ${item.telemetry.cpu_percent > 85 ? '#ef4444' : 'var(--border-color)'}`,
+                            background: item.telemetry.cpu_percent > 85 ? 'var(--qt-danger-soft, #FFF1EE)' : 'var(--bg-card-secondary)',
+                            color: item.telemetry.cpu_percent > 85 ? 'var(--qt-danger, #A7382C)' : 'var(--text-secondary)',
+                            border: `1px solid ${item.telemetry.cpu_percent > 85 ? 'var(--qt-danger, #A7382C)' : 'var(--border-color)'}`,
                           }}
                         >
                           CPU: {item.telemetry.cpu_percent}%
@@ -411,9 +414,9 @@ export const AnomalyMonitorView: React.FC = () => {
                         <span
                           className="badge"
                           style={{
-                            background: item.telemetry.memory_percent > 85 ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-card-secondary)',
-                            color: item.telemetry.memory_percent > 85 ? '#ef4444' : 'var(--text-secondary)',
-                            border: `1px solid ${item.telemetry.memory_percent > 85 ? '#ef4444' : 'var(--border-color)'}`,
+                            background: item.telemetry.memory_percent > 85 ? 'var(--qt-danger-soft, #FFF1EE)' : 'var(--bg-card-secondary)',
+                            color: item.telemetry.memory_percent > 85 ? 'var(--qt-danger, #A7382C)' : 'var(--text-secondary)',
+                            border: `1px solid ${item.telemetry.memory_percent > 85 ? 'var(--qt-danger, #A7382C)' : 'var(--border-color)'}`,
                           }}
                         >
                           Mem: {item.telemetry.memory_percent}%
@@ -421,9 +424,9 @@ export const AnomalyMonitorView: React.FC = () => {
                         <span
                           className="badge"
                           style={{
-                            background: item.telemetry.temperature_c > 75 ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-card-secondary)',
-                            color: item.telemetry.temperature_c > 75 ? '#f59e0b' : 'var(--text-secondary)',
-                            border: `1px solid ${item.telemetry.temperature_c > 75 ? '#f59e0b' : 'var(--border-color)'}`,
+                            background: item.telemetry.temperature_c > 75 ? 'var(--qt-accent-soft, #FFF0E8)' : 'var(--bg-card-secondary)',
+                            color: item.telemetry.temperature_c > 75 ? 'var(--qt-accent, #FF4F00)' : 'var(--text-secondary)',
+                            border: `1px solid ${item.telemetry.temperature_c > 75 ? 'var(--qt-accent, #FF4F00)' : 'var(--border-color)'}`,
                           }}
                         >
                           {item.telemetry.temperature_c}°C
@@ -431,9 +434,9 @@ export const AnomalyMonitorView: React.FC = () => {
                         <span
                           className="badge"
                           style={{
-                            background: item.telemetry.packet_loss_percent > 5 ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-card-secondary)',
-                            color: item.telemetry.packet_loss_percent > 5 ? '#ef4444' : 'var(--text-secondary)',
-                            border: `1px solid ${item.telemetry.packet_loss_percent > 5 ? '#ef4444' : 'var(--border-color)'}`,
+                            background: item.telemetry.packet_loss_percent > 5 ? 'var(--qt-danger-soft, #FFF1EE)' : 'var(--bg-card-secondary)',
+                            color: item.telemetry.packet_loss_percent > 5 ? 'var(--qt-danger, #A7382C)' : 'var(--text-secondary)',
+                            border: `1px solid ${item.telemetry.packet_loss_percent > 5 ? 'var(--qt-danger, #A7382C)' : 'var(--border-color)'}`,
                           }}
                         >
                           Loss: {item.telemetry.packet_loss_percent}%
@@ -441,9 +444,9 @@ export const AnomalyMonitorView: React.FC = () => {
                         <span
                           className="badge"
                           style={{
-                            background: item.telemetry.latency_ms > 100 ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-card-secondary)',
-                            color: item.telemetry.latency_ms > 100 ? '#f59e0b' : 'var(--text-secondary)',
-                            border: `1px solid ${item.telemetry.latency_ms > 100 ? '#f59e0b' : 'var(--border-color)'}`,
+                            background: item.telemetry.latency_ms > 100 ? 'var(--qt-accent-soft, #FFF0E8)' : 'var(--bg-card-secondary)',
+                            color: item.telemetry.latency_ms > 100 ? 'var(--qt-accent, #FF4F00)' : 'var(--text-secondary)',
+                            border: `1px solid ${item.telemetry.latency_ms > 100 ? 'var(--qt-accent, #FF4F00)' : 'var(--border-color)'}`,
                           }}
                         >
                           {item.telemetry.latency_ms}ms

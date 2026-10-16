@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import {
+  ShieldCheck,
+  CheckCircle2,
+  AlertTriangle,
+  X,
+} from 'lucide-react'
+import {
   fetchDataQualitySummary,
   runDataQualityProfile,
   fetchDataQualityFindings,
@@ -7,6 +13,8 @@ import {
   type DataQualityFindingItem,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { withLayoutTransition } from '../motion'
+import { readUrlParam, replaceUrlParams } from '../urlState'
 
 export const DataQualityView: React.FC = () => {
   const { user } = useAuth()
@@ -17,8 +25,8 @@ export const DataQualityView: React.FC = () => {
   const [isRunningProfile, setIsRunningProfile] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [severityFilter, setSeverityFilter] = useState<string>('all')
-  const [tableFilter, setTableFilter] = useState<string>('all')
+  const [severityFilter, setSeverityFilter] = useState<string>(() => readUrlParam('severity') || 'all')
+  const [tableFilter, setTableFilter] = useState<string>(() => readUrlParam('table') || 'all')
   const [selectedExamples, setSelectedExamples] = useState<{
     ruleName: string
     identifiers: string[]
@@ -31,25 +39,45 @@ export const DataQualityView: React.FC = () => {
     setErrorMessage(null)
     try {
       const sum = await fetchDataQualitySummary()
-      setSummary(sum)
+      withLayoutTransition(() => setSummary(sum))
       const res = await fetchDataQualityFindings(
         severityFilter === 'all' ? undefined : severityFilter,
         tableFilter === 'all' ? undefined : tableFilter,
         1,
         50
       )
-      setFindings(res.findings)
-      setTotalFindings(res.total)
+      withLayoutTransition(() => {
+        setFindings(res.findings)
+        setTotalFindings(res.total)
+      })
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to load data quality findings.')
     } finally {
-      setIsLoading(false)
+      withLayoutTransition(() => setIsLoading(false))
     }
   }
 
   useEffect(() => {
     loadData()
   }, [severityFilter, tableFilter])
+
+  useEffect(() => {
+    replaceUrlParams({
+      severity: severityFilter === 'all' ? null : severityFilter,
+      table: tableFilter === 'all' ? null : tableFilter,
+    })
+  }, [severityFilter, tableFilter])
+
+  useEffect(() => {
+    const syncFiltersFromBrowserHistory = () => {
+      withLayoutTransition(() => {
+        setSeverityFilter(readUrlParam('severity') || 'all')
+        setTableFilter(readUrlParam('table') || 'all')
+      })
+    }
+    window.addEventListener('popstate', syncFiltersFromBrowserHistory)
+    return () => window.removeEventListener('popstate', syncFiltersFromBrowserHistory)
+  }, [])
 
   const handleRunProfile = async () => {
     if (!canRunProfile) return
@@ -58,9 +86,11 @@ export const DataQualityView: React.FC = () => {
     setSuccessMessage(null)
     try {
       const res = await runDataQualityProfile()
-      setSummary(res.summary)
-      setFindings(res.findings)
-      setTotalFindings(res.findings.length)
+      withLayoutTransition(() => {
+        setSummary(res.summary)
+        setFindings(res.findings)
+        setTotalFindings(res.findings.length)
+      })
       setSuccessMessage(
         `Diagnostics run completed at ${new Date().toLocaleTimeString()} with ${res.findings.length} findings.`
       )
@@ -89,7 +119,7 @@ export const DataQualityView: React.FC = () => {
       {/* Governance & Read-Only Disclaimer Banner */}
       <div className="governance-banner" style={{ marginBottom: '1.25rem' }}>
         <div className="banner-left">
-          <span className="shield-icon">🛡️</span>
+          <ShieldCheck size={18} style={{ color: 'var(--qt-accent)', flexShrink: 0, marginTop: 2 }} />
           <div>
             <div className="banner-title">Data Quality Diagnostics Subsystem</div>
             <div className="banner-desc">
@@ -145,14 +175,14 @@ export const DataQualityView: React.FC = () => {
       </div>
 
       {successMessage && (
-        <div className="alert alert-success" style={{ marginBottom: '1.25rem' }}>
-          ✓ {successMessage}
+        <div className="alert alert-success" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <CheckCircle2 size={14} /> <span>{successMessage}</span>
         </div>
       )}
 
       {errorMessage && (
-        <div className="alert alert-danger" style={{ marginBottom: '1.25rem' }}>
-          ⚠️ {errorMessage}
+        <div className="alert alert-danger" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <AlertTriangle size={14} /> <span>{errorMessage}</span>
         </div>
       )}
 
@@ -163,7 +193,7 @@ export const DataQualityView: React.FC = () => {
             <span className="kpi-title">Overall Data Health</span>
             <span className="badge badge-success">Weighted Score</span>
           </div>
-          <div className="kpi-value" style={{ color: (summary?.overall_health_score || 0) > 85 ? '#10b981' : '#f59e0b' }}>
+          <div className="kpi-value" style={{ color: (summary?.overall_health_score || 0) > 85 ? 'var(--qt-text-primary, #141413)' : 'var(--qt-accent, #FF4F00)' }}>
             {summary?.overall_health_score ?? '—'}%
           </div>
           <div className="kpi-footer">Clean records across 30,000 assets & telemetry</div>
@@ -183,7 +213,7 @@ export const DataQualityView: React.FC = () => {
             <span className="kpi-title">Critical Severity</span>
             <span className="badge badge-danger">Immediate Action</span>
           </div>
-          <div className="kpi-value" style={{ color: '#ef4444' }}>
+          <div className="kpi-value" style={{ color: 'var(--qt-danger, #A7382C)' }}>
             {summary?.critical_count ?? '—'}
           </div>
           <div className="kpi-footer">Duplicate serials & inverted warranty dates</div>
@@ -194,7 +224,7 @@ export const DataQualityView: React.FC = () => {
             <span className="kpi-title">High / Medium Severity</span>
             <span className="badge badge-warning">Advisory</span>
           </div>
-          <div className="kpi-value" style={{ color: '#f59e0b' }}>
+          <div className="kpi-value" style={{ color: 'var(--qt-accent, #FF4F00)' }}>
             {(summary?.high_count ?? 0) + (summary?.medium_count ?? 0)}
           </div>
           <div className="kpi-footer">Missing attributes & category casing variants</div>
@@ -212,7 +242,7 @@ export const DataQualityView: React.FC = () => {
               <button
                 key={sev}
                 className={`filter-btn ${severityFilter === sev ? 'active' : ''}`}
-                onClick={() => setSeverityFilter(sev)}
+                onClick={() => withLayoutTransition(() => setSeverityFilter(sev))}
                 style={{ textTransform: 'capitalize', padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
               >
                 {sev}
@@ -228,7 +258,7 @@ export const DataQualityView: React.FC = () => {
               <button
                 key={tbl}
                 className={`filter-btn ${tableFilter === tbl ? 'active' : ''}`}
-                onClick={() => setTableFilter(tbl)}
+                onClick={() => withLayoutTransition(() => setTableFilter(tbl))}
                 style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
               >
                 {tbl === 'all' ? 'All Tables' : tbl}
@@ -239,7 +269,7 @@ export const DataQualityView: React.FC = () => {
       </div>
 
       {/* Findings Table Card */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card layout-transition-target" style={{ overflow: 'hidden' }}>
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3 className="card-title" style={{ fontSize: '1rem', margin: 0 }}>
             Diagnostic Findings Register ({totalFindings})
@@ -258,7 +288,7 @@ export const DataQualityView: React.FC = () => {
           </div>
         ) : findings.length === 0 ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✨</div>
+            <CheckCircle2 size={32} style={{ color: '#15803D', margin: '0 auto 0.5rem auto' }} />
             <p>No data quality findings match the selected filter criteria.</p>
           </div>
         ) : (
@@ -287,7 +317,7 @@ export const DataQualityView: React.FC = () => {
                       {finding.rule_id}
                     </td>
                     <td>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{finding.rule_name}</div>
+                      <div className="cell-truncate" title={finding.rule_name} style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{finding.rule_name}</div>
                       {finding.column_name && (
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                           Column: <code>{finding.column_name}</code>
@@ -295,7 +325,7 @@ export const DataQualityView: React.FC = () => {
                       )}
                     </td>
                     <td>
-                      <code style={{ fontSize: '0.8rem' }}>{finding.table_name}</code>
+                      <code className="cell-truncate" title={finding.table_name} style={{ fontSize: '0.8rem' }}>{finding.table_name}</code>
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -320,16 +350,16 @@ export const DataQualityView: React.FC = () => {
                             height: '100%',
                             background:
                               finding.severity === 'critical'
-                                ? '#ef4444'
+                                ? 'var(--qt-danger, #A7382C)'
                                 : finding.severity === 'high'
-                                ? '#f59e0b'
-                                : '#3b82f6',
+                                ? 'var(--qt-accent, #FF4F00)'
+                                : 'var(--qt-muted, #766F68)',
                           }}
                         />
                       </div>
                     </td>
                     <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                      {finding.suggested_action}
+                      <span className="cell-line-clamp-2" title={finding.suggested_action}>{finding.suggested_action}</span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       {finding.example_identifiers && finding.example_identifiers.length > 0 ? (
@@ -360,13 +390,25 @@ export const DataQualityView: React.FC = () => {
       {/* Example Identifiers Modal */}
       {selectedExamples && (
         <div className="modal-backdrop" onClick={() => setSelectedExamples(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+          <div
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="examples-modal-title"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 480 }}
+          >
             <div className="modal-header">
-              <h3 className="modal-title" style={{ fontSize: '1rem' }}>
+              <h3 id="examples-modal-title" className="modal-title" style={{ fontSize: '1rem' }}>
                 Sample Affected Records
               </h3>
-              <button className="modal-close-btn" onClick={() => setSelectedExamples(null)}>
-                ×
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setSelectedExamples(null)}
+                aria-label="Close dialog"
+              >
+                <X size={16} />
               </button>
             </div>
             <div className="modal-body">

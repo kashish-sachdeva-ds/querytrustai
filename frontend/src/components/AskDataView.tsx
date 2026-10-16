@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
+  ShieldAlert,
+  AlertTriangle,
+  Ban,
+  CheckCircle2,
+  XCircle,
+  Zap,
+  FileText,
+  ThumbsUp,
+  ThumbsDown,
+  Check,
+  Copy,
+} from 'lucide-react'
+import {
   previewQuery,
   executeSavedQuery,
   submitQueryFeedback,
@@ -134,8 +147,8 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
             })}
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#818cf8" />
-                <stop offset="100%" stopColor="#4f46e5" />
+                <stop offset="0%" stopColor="var(--qt-accent, #FF4F00)" />
+                <stop offset="100%" stopColor="var(--qt-accent-hover, #DF4500)" />
               </linearGradient>
             </defs>
           </svg>
@@ -151,7 +164,7 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
       value: Number(r[yKey] ?? 0),
     }))
     const total = chartData.reduce((acc, curr) => acc + curr.value, 0) || 1
-    const colors = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#64748b']
+    const colors = ['#FF4F00', '#C44000', '#8A6A50', '#5C5550', '#A0937E', '#766F68', '#4F4A45', '#B8B0A6']
 
     // Compute SVG donut arcs
     let accumulatedAngle = 0
@@ -312,19 +325,26 @@ export const AskDataView: React.FC = () => {
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation()
+    const previousSessions = sessions
+    const previousActiveSessionId = activeSessionId
+    const previousMessages = messages
+    const remaining = sessions.filter((s) => s.id !== sessionId)
+    setSessions(remaining)
+    if (activeSessionId === sessionId) {
+      setActiveSessionId(remaining[0]?.id || null)
+      setMessages([])
+    }
     try {
       await deleteChatSession(sessionId)
-      const remaining = sessions.filter((s) => s.id !== sessionId)
-      setSessions(remaining)
       if (activeSessionId === sessionId) {
         if (remaining.length > 0) {
           selectSession(remaining[0].id)
-        } else {
-          setActiveSessionId(null)
-          setMessages([])
         }
       }
     } catch (err: any) {
+      setSessions(previousSessions)
+      setActiveSessionId(previousActiveSessionId)
+      setMessages(previousMessages)
       setErrorMessage(`Failed to delete session: ${err.message}`)
     }
   }
@@ -402,14 +422,21 @@ export const AskDataView: React.FC = () => {
 
   const handleFeedbackSubmit = async (queryRunId: string, isHelpful: boolean) => {
     const currentExplanation = feedbackMap[queryRunId]?.explanation || ''
+    const previousFeedback = feedbackMap[queryRunId]
+    setFeedbackMap((prev) => ({
+      ...prev,
+      [queryRunId]: { isHelpful, explanation: currentExplanation, saved: true },
+    }))
     try {
       await submitQueryFeedback(queryRunId, isHelpful, currentExplanation)
-      setFeedbackMap((prev) => ({
-        ...prev,
-        [queryRunId]: { isHelpful, explanation: currentExplanation, saved: true },
-      }))
     } catch (err: any) {
-      alert(`Feedback submission failed: ${err.message}`)
+      setFeedbackMap((prev) => {
+        const next = { ...prev }
+        if (previousFeedback) next[queryRunId] = previousFeedback
+        else delete next[queryRunId]
+        return next
+      })
+      setErrorMessage(`Feedback submission failed: ${err.message}`)
     }
   }
 
@@ -472,7 +499,7 @@ export const AskDataView: React.FC = () => {
         <div className="ask-data-governance-banner">
           <div className="governance-badge-group">
             <span className="badge badge-warning">
-              <span className="live-dot" style={{ backgroundColor: '#f59e0b' }} />
+              <span className="live-dot" style={{ backgroundColor: 'var(--qt-accent, #FF4F00)' }} />
               LLM Mode: Demo (Deterministic Rule Engine)
             </span>
             <span className="badge badge-neutral">Synthetic Data Only (5,000 Assets)</span>
@@ -566,13 +593,13 @@ export const AskDataView: React.FC = () => {
                               </span>
                             )}
                             {msg.previewData?.status === 'clarification_needed' && (
-                              <span className="status-tag status-warning">⚠️ Clarification Needed</span>
+                              <span className="status-tag status-warning"><AlertTriangle size={12} style={{ marginRight: 4 }} /> Clarification Needed</span>
                             )}
                             {msg.previewData?.status === 'unsupported' && (
-                              <span className="status-tag status-neutral">⛔ Unsupported Intent</span>
+                              <span className="status-tag status-neutral"><Ban size={12} style={{ marginRight: 4 }} /> Unsupported Intent</span>
                             )}
                             {msg.previewData?.status === 'blocked' && (
-                              <span className="status-tag status-danger">🛡️ AST Safety Blocked</span>
+                              <span className="status-tag status-danger"><ShieldAlert size={12} style={{ marginRight: 4 }} /> AST Safety Blocked</span>
                             )}
                           </div>
                         </div>
@@ -648,9 +675,9 @@ export const AskDataView: React.FC = () => {
                                   title="Copy SQL statement"
                                 >
                                   {copiedQueryId === msg.previewData.query_run_id ? (
-                                    <span style={{ color: '#10b981' }}>✓ Copied</span>
+                                    <span style={{ color: 'var(--qt-accent)' }}><Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copied</span>
                                   ) : (
-                                    'Copy SQL'
+                                    <><Copy size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copy SQL</>
                                   )}
                                 </button>
                               </div>
@@ -665,21 +692,21 @@ export const AskDataView: React.FC = () => {
                         {msg.previewData && (
                           <div className="security-checklist-grid">
                             <div className="checklist-item">
-                              <span className="check-icon">{msg.previewData.validation.passed ? '✅' : '❌'}</span>
+                              <span className="check-icon">{msg.previewData.validation.passed ? <CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} /> : <XCircle size={14} style={{ color: 'var(--qt-danger)' }} />}</span>
                               <span className="check-label">Single Statement AST</span>
                             </div>
                             <div className="checklist-item">
-                              <span className="check-icon">{msg.previewData.status === 'blocked' ? '❌' : '✅'}</span>
+                              <span className="check-icon">{msg.previewData.status === 'blocked' ? <XCircle size={14} style={{ color: 'var(--qt-danger)' }} /> : <CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} />}</span>
                               <span className="check-label">Read-Only SELECT</span>
                             </div>
                             <div className="checklist-item">
-                              <span className="check-icon">✅</span>
+                              <span className="check-icon"><CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} /></span>
                               <span className="check-label">
                                 Table Allowlist ({msg.previewData.validation.tables_referenced.join(', ') || 'verified'})
                               </span>
                             </div>
                             <div className="checklist-item">
-                              <span className="check-icon">✅</span>
+                              <span className="check-icon"><CheckCircle2 size={14} style={{ color: 'var(--qt-accent)' }} /></span>
                               <span className="check-label">Row Clamping Active</span>
                             </div>
                           </div>
@@ -748,10 +775,10 @@ export const AskDataView: React.FC = () => {
                                   <span className="live-dot" /> Read-Only Executed
                                 </span>
                                 <span className="result-metric-pill">
-                                  ⚡ {execResult.execution_duration_ms} ms
+                                  <Zap size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> {execResult.execution_duration_ms} ms
                                 </span>
                                 <span className="result-metric-pill">
-                                  📋 {execResult.row_count} {execResult.row_count === 1 ? 'row' : 'rows'}
+                                  <FileText size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> {execResult.row_count} {execResult.row_count === 1 ? 'row' : 'rows'}
                                 </span>
                                 {execResult.truncated && (
                                   <span className="badge badge-warning">Max Limit Reached</span>
@@ -800,7 +827,9 @@ export const AskDataView: React.FC = () => {
                                     {execResult.rows.map((row, rIdx) => (
                                       <tr key={rIdx}>
                                         {execResult.columns.map((col) => (
-                                          <td key={col}>{row[col] !== null ? String(row[col]) : '—'}</td>
+                                          <td key={col} title={row[col] !== null ? String(row[col]) : undefined}>
+                                            <span className="cell-truncate">{row[col] !== null ? String(row[col]) : '—'}</span>
+                                          </td>
                                         ))}
                                       </tr>
                                     ))}
@@ -815,7 +844,7 @@ export const AskDataView: React.FC = () => {
                                 <span className="feedback-label">Was this query and result accurate?</span>
                                 {feedbackState?.saved && (
                                   <span className="badge badge-success">
-                                    ✓ Feedback saved ({feedbackState.isHelpful ? 'Helpful' : 'Needs Improvement'})
+                                    <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Feedback saved ({feedbackState.isHelpful ? 'Helpful' : 'Needs Improvement'})
                                   </span>
                                 )}
                               </div>
@@ -824,13 +853,13 @@ export const AskDataView: React.FC = () => {
                                   className={`feedback-btn ${feedbackState?.isHelpful === true ? 'active-helpful' : ''}`}
                                   onClick={() => handleFeedbackSubmit(runId, true)}
                                 >
-                                  👍 Helpful
+                                  <ThumbsUp size={12} style={{ marginRight: 3 }} /> Helpful
                                 </button>
                                 <button
                                   className={`feedback-btn ${feedbackState?.isHelpful === false ? 'active-unhelpful' : ''}`}
                                   onClick={() => handleFeedbackSubmit(runId, false)}
                                 >
-                                  👎 Needs Improvement
+                                  <ThumbsDown size={12} style={{ marginRight: 3 }} /> Needs Improvement
                                 </button>
                                 <input
                                   type="text"

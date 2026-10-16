@@ -1,15 +1,17 @@
 import React, { useState } from 'react'
-import { LogOut, User as UserIcon, Shield, Database, ChevronDown } from 'lucide-react'
+import { LogOut, User as UserIcon, Shield, Database, ChevronDown, Command } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 interface HeaderProps {
-  title: string
+  title?: string
   subtitle?: string
+  onOpenCommandPalette: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
   const { user, logout } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const commandShortcut = navigator.userAgent.toLowerCase().includes('mac') ? '⌘K' : 'Ctrl K'
 
   const getRoleBadgeClass = (role?: string) => {
     switch (role) {
@@ -25,14 +27,27 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle }) => {
   return (
     <header className="app-header">
       <div className="header-left">
-        <h1 className="header-title">{title}</h1>
-        {subtitle && <p className="header-subtitle">{subtitle}</p>}
+        <div className="header-system-tag" title="QueryTrust AI Governed Analytics Console">
+          <span className="environment-dot" style={{ width: 6, height: 6 }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--qt-ink)' }}>
+            QUERYTRUST AI
+          </span>
+          <span style={{ color: 'var(--qt-border-strong)', fontSize: '12px' }}>/</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--qt-muted)', letterSpacing: '0.04em' }}>
+            GOVERNANCE CONSOLE
+          </span>
+        </div>
       </div>
 
       <div className="header-right">
+        <button type="button" className="command-trigger" onClick={onOpenCommandPalette} aria-label="Open quick actions">
+          <Command size={15} aria-hidden="true" />
+          <span>Quick actions</span>
+          <kbd>{commandShortcut}</kbd>
+        </button>
         {/* Synthetic Data Badge */}
         <div className="badge-synthetic" title="Synthetic educational data - no customer or real device records">
-          <Database size={13} className="text-cyan" />
+          <Database size={13} style={{ color: 'var(--qt-muted)' }} />
           <span>SYNTHETIC DEMO DATA</span>
         </div>
 

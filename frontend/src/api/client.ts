@@ -224,13 +224,82 @@ export interface QueryHistoryResponse {
 }
 
 const TOKEN_KEY = 'querytrust_jwt_token'
+const API_TIMEOUT_MS = 8_000
+const inFlightRequests = new Map<string, Promise<unknown>>()
+
+export class ApiRequestError extends Error {
+  constructor(message: string, readonly status?: number, readonly retryable = false) {
+    super(message)
+    this.name = 'ApiRequestError'
+  }
+}
+
+function notifyRetryableApiFailure(message: string): void {
+  window.dispatchEvent(new CustomEvent('querytrust:api-failure', { detail: { message } }))
+}
+
+async function requestWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal })
+    if (response.status >= 500) {
+      notifyRetryableApiFailure('The service had a temporary problem. Reload this view and try again.')
+    }
+    return response
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      const message = 'The request took longer than 8 seconds. Check the service and try again.'
+      notifyRetryableApiFailure(message)
+      throw new ApiRequestError(message, undefined, true)
+    }
+    throw error
+  } finally {
+    window.clearTimeout(timeout)
+  }
+}
+
+function singleFlight<T>(key: string, request: () => Promise<T>): Promise<T> {
+  const existing = inFlightRequests.get(key) as Promise<T> | undefined
+  if (existing) return existing
+
+  const pending = request().finally(() => inFlightRequests.delete(key))
+  inFlightRequests.set(key, pending)
+  return pending
+}
+
+function requireText(value: string, label: string, min: number, max: number): string {
+  const normalized = value.trim()
+  if (normalized.length < min || normalized.length > max) {
+    throw new ApiRequestError(`${label} must be between ${min} and ${max} characters.`)
+  }
+  return normalized
+}
+
+function requireUuid(value: string, label: string): string {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+    throw new ApiRequestError(`${label} is invalid. Refresh and try again.`)
+  }
+  return value
+}
+
+function requireFiniteNumber(value: number, label: string, min: number, max: number, integer = false): number {
+  if (!Number.isFinite(value) || value < min || value > max || (integer && !Number.isInteger(value))) {
+    throw new ApiRequestError(`${label} is invalid.`)
+  }
+  return value
+}
 
 export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+  // One-time cleanup for sessions created before the HttpOnly-cookie upgrade.
+  localStorage.removeItem(TOKEN_KEY)
+  return null
 }
 
 export function setStoredToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token)
+  // Intentionally a no-op. Browser sessions use an HttpOnly SameSite cookie.
+  void token
 }
 
 export function clearStoredToken(): void {
@@ -238,18 +307,15 @@ export function clearStoredToken(): void {
 }
 
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const token = getStoredToken()
   const headers = new Headers(options.headers || {})
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
-  }
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
   }
 
-  const response = await fetch(url, {
+  const response = await requestWithTimeout(url, {
     ...options,
     headers,
+    credentials: 'same-origin',
   })
 
   if (response.status === 401) {
@@ -263,7 +329,7 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
 const API_BASE = '/api/v1'
 
 export async function fetchHealth(): Promise<HealthResponse> {
-  const res = await fetch('/health')
+  const res = await requestWithTimeout('/health')
   if (!res.ok) {
     throw new Error(`Health probe failed: ${res.statusText}`)
   }
@@ -271,7 +337,7 @@ export async function fetchHealth(): Promise<HealthResponse> {
 }
 
 export async function fetchReady(): Promise<HealthResponse> {
-  const res = await fetch('/ready')
+  const res = await requestWithTimeout('/ready')
   if (!res.ok) {
     throw new Error(`Readiness probe failed: ${res.statusText}`)
   }
@@ -279,20 +345,28 @@ export async function fetchReady(): Promise<HealthResponse> {
 }
 
 export async function apiLogin(email: string, password: string): Promise<LoginResponse> {
-  const res = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  })
-
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}))
-    throw new Error(errorData.detail || 'Authentication failed. Please verify credentials.')
+  const cleanEmail = requireText(email, 'Email', 3, 255).toLowerCase()
+  const cleanPassword = requireText(password, 'Password', 1, 255)
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    throw new ApiRequestError('Enter a valid work email address.')
   }
 
-  const data: LoginResponse = await res.json()
-  setStoredToken(data.access_token)
-  return data
+  return singleFlight(`login:${cleanEmail}`, async () => {
+    const res = await requestWithTimeout(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: cleanEmail, password: cleanPassword }),
+      credentials: 'same-origin',
+    })
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}))
+      throw new ApiRequestError(errorData.detail || 'Authentication failed. Please verify credentials.', res.status, res.status >= 500)
+    }
+
+    const data: LoginResponse = await res.json()
+    return data
+  })
 }
 
 export async function apiGetMe(): Promise<UserMeResponse> {
@@ -306,7 +380,7 @@ export async function apiGetMe(): Promise<UserMeResponse> {
 export async function apiLogout(): Promise<void> {
   clearStoredToken()
   try {
-    await fetch(`${API_BASE}/auth/logout`, { method: 'POST' })
+    await requestWithTimeout(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'same-origin' })
   } catch {
     // Ignore network errors on logout
   }
@@ -381,14 +455,22 @@ export async function updateAdminUser(
   id: string,
   payload: { role?: string; is_active?: boolean; display_name?: string }
 ): Promise<UserPublic> {
-  const res = await authFetch(`${API_BASE}/admin/users/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  })
-  if (!res.ok) {
-    throw new Error(`Failed to update user: ${res.status}`)
+  requireUuid(id, 'User ID')
+  if (payload.role && !['admin', 'analyst', 'viewer'].includes(payload.role)) {
+    throw new ApiRequestError('Role is invalid.')
   }
-  return res.json()
+  if (payload.display_name !== undefined) requireText(payload.display_name, 'Display name', 1, 255)
+  if (payload.is_active !== undefined && typeof payload.is_active !== 'boolean') {
+    throw new ApiRequestError('Account status is invalid.')
+  }
+  return singleFlight(`admin-user:${id}`, async () => {
+    const res = await authFetch(`${API_BASE}/admin/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) throw new ApiRequestError(`Failed to update user: ${res.status}`, res.status, res.status >= 500)
+    return res.json()
+  })
 }
 
 export async function fetchAdminAuditLogs(): Promise<AuditLogItem[]> {
@@ -400,15 +482,19 @@ export async function fetchAdminAuditLogs(): Promise<AuditLogItem[]> {
 }
 
 export async function previewQuery(question: string, sessionId?: string | null): Promise<PreviewResponse> {
-  const res = await authFetch(`${API_BASE}/analytics/preview`, {
-    method: 'POST',
-    body: JSON.stringify({ question, session_id: sessionId || null }),
+  const cleanQuestion = requireText(question, 'Question', 2, 1000)
+  if (sessionId) requireUuid(sessionId, 'Chat session ID')
+  return singleFlight(`preview:${sessionId || 'new'}:${cleanQuestion}`, async () => {
+    const res = await authFetch(`${API_BASE}/analytics/preview`, {
+      method: 'POST',
+      body: JSON.stringify({ question: cleanQuestion, session_id: sessionId || null }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new ApiRequestError(err.detail || `Query preview failed: ${res.status}`, res.status, res.status >= 500)
+    }
+    return res.json()
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Query preview failed: ${res.status}`)
-  }
-  return res.json()
 }
 
 export async function fetchChatSessions(): Promise<ChatSessionSummary[]> {
@@ -419,15 +505,17 @@ export async function fetchChatSessions(): Promise<ChatSessionSummary[]> {
   return res.json()
 }
 
-export async function createChatSession(title?: string): Promise<ChatSessionSummary> {
-  const res = await authFetch(`${API_BASE}/chat/sessions`, {
-    method: 'POST',
-    body: JSON.stringify({ title: title || 'New Conversation' }),
+export async function createChatSession(title?: string, idempotencyKey: string = crypto.randomUUID()): Promise<ChatSessionSummary> {
+  const cleanTitle = requireText(title || 'New Conversation', 'Session title', 1, 255)
+  return singleFlight(`chat-create:${idempotencyKey}`, async () => {
+    const res = await authFetch(`${API_BASE}/chat/sessions`, {
+      method: 'POST',
+      headers: { 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify({ title: cleanTitle }),
+    })
+    if (!res.ok) throw new ApiRequestError(`Failed to create chat session: ${res.status}`, res.status, res.status >= 500)
+    return res.json()
   })
-  if (!res.ok) {
-    throw new Error(`Failed to create chat session: ${res.status}`)
-  }
-  return res.json()
 }
 
 export async function fetchSessionMessages(sessionId: string): Promise<ChatMessage[]> {
@@ -439,24 +527,28 @@ export async function fetchSessionMessages(sessionId: string): Promise<ChatMessa
 }
 
 export async function deleteChatSession(sessionId: string): Promise<void> {
-  const res = await authFetch(`${API_BASE}/chat/sessions/${sessionId}`, {
-    method: 'DELETE',
+  requireUuid(sessionId, 'Chat session ID')
+  return singleFlight(`chat-delete:${sessionId}`, async () => {
+    const res = await authFetch(`${API_BASE}/chat/sessions/${sessionId}`, {
+      method: 'DELETE',
+    })
+    if (!res.ok) throw new ApiRequestError(`Failed to delete session: ${res.status}`, res.status, res.status >= 500)
   })
-  if (!res.ok) {
-    throw new Error(`Failed to delete session: ${res.status}`)
-  }
 }
 
 export async function executeSavedQuery(queryRunId: string): Promise<ExecuteResponse> {
-  const res = await authFetch(`${API_BASE}/analytics/execute`, {
-    method: 'POST',
-    body: JSON.stringify({ query_run_id: queryRunId }),
+  requireUuid(queryRunId, 'Query preview ID')
+  return singleFlight(`query-execute:${queryRunId}`, async () => {
+    const res = await authFetch(`${API_BASE}/analytics/execute`, {
+      method: 'POST',
+      body: JSON.stringify({ query_run_id: queryRunId }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new ApiRequestError(err.detail || `Query execution failed: ${res.status}`, res.status, res.status >= 500)
+    }
+    return res.json()
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Query execution failed: ${res.status}`)
-  }
-  return res.json()
 }
 
 export async function submitQueryFeedback(
@@ -464,19 +556,20 @@ export async function submitQueryFeedback(
   isHelpful: boolean,
   explanation?: string
 ): Promise<FeedbackResponse> {
-  const res = await authFetch(`${API_BASE}/analytics/feedback`, {
-    method: 'POST',
-    body: JSON.stringify({
-      query_run_id: queryRunId,
-      is_helpful: isHelpful,
-      explanation: explanation || null,
-    }),
+  requireUuid(queryRunId, 'Query preview ID')
+  if (typeof isHelpful !== 'boolean') throw new ApiRequestError('Feedback selection is invalid.')
+  const cleanExplanation = explanation ? requireText(explanation, 'Feedback explanation', 1, 1000) : null
+  return singleFlight(`query-feedback:${queryRunId}`, async () => {
+    const res = await authFetch(`${API_BASE}/analytics/feedback`, {
+      method: 'POST',
+      body: JSON.stringify({ query_run_id: queryRunId, is_helpful: isHelpful, explanation: cleanExplanation }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new ApiRequestError(err.detail || `Feedback submission failed: ${res.status}`, res.status, res.status >= 500)
+    }
+    return res.json()
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Feedback submission failed: ${res.status}`)
-  }
-  return res.json()
 }
 
 export async function fetchQueryHistory(
@@ -552,14 +645,14 @@ export async function fetchDataQualitySummary(): Promise<DataQualityRunSummary> 
 }
 
 export async function runDataQualityProfile(): Promise<DataQualityRunResponse> {
-  const res = await authFetch(`${API_BASE}/data-quality/run`, {
-    method: 'POST',
+  return singleFlight('data-quality-profile', async () => {
+    const res = await authFetch(`${API_BASE}/data-quality/run`, { method: 'POST' })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new ApiRequestError(err.detail || `Data quality profiling failed: ${res.status}`, res.status, res.status >= 500)
+    }
+    return res.json()
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Data quality profiling failed: ${res.status}`)
-  }
-  return res.json()
 }
 
 export async function fetchDataQualityFindings(
@@ -668,26 +761,33 @@ export async function runAnomalyScan(
   limit: number = 50,
   threshold: number = 0.65
 ): Promise<AnomalyScanResponse> {
-  const res = await authFetch(`${API_BASE}/anomalies/scan`, {
-    method: 'POST',
-    body: JSON.stringify({ limit, threshold }),
+  requireFiniteNumber(limit, 'Scan limit', 1, 500, true)
+  requireFiniteNumber(threshold, 'Score threshold', 0, 1)
+  return singleFlight(`anomaly-scan:${limit}:${threshold}`, async () => {
+    const res = await authFetch(`${API_BASE}/anomalies/scan`, {
+      method: 'POST',
+      body: JSON.stringify({ limit, threshold }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new ApiRequestError(err.detail || `Anomaly scan failed: ${res.status}`, res.status, res.status >= 500)
+    }
+    return res.json()
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Anomaly scan failed: ${res.status}`)
-  }
-  return res.json()
 }
 
 export async function trainAnomalyModel(contamination: number = 0.015): Promise<ModelTrainResponse> {
-  const res = await authFetch(`${API_BASE}/anomalies/train?contamination=${contamination}`, {
-    method: 'POST',
+  requireFiniteNumber(contamination, 'Contamination', 0.001, 0.1)
+  return singleFlight(`anomaly-train:${contamination}`, async () => {
+    const res = await authFetch(`${API_BASE}/anomalies/train?contamination=${contamination}`, {
+      method: 'POST',
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new ApiRequestError(err.detail || `Model training failed: ${res.status}`, res.status, res.status >= 500)
+    }
+    return res.json()
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Model training failed: ${res.status}`)
-  }
-  return res.json()
 }
 
 // ==========================================
@@ -777,15 +877,18 @@ export async function fetchEvaluationRuns(): Promise<EvaluationRunListItem[]> {
 }
 
 export async function runEvaluation(mode: string = 'guarded'): Promise<EvaluationRunResponse> {
-  const res = await authFetch(`${API_BASE}/evaluations/run`, {
-    method: 'POST',
-    body: JSON.stringify({ mode }),
+  if (mode !== 'guarded' && mode !== 'baseline') throw new ApiRequestError('Evaluation mode is invalid.')
+  return singleFlight(`evaluation:${mode}`, async () => {
+    const res = await authFetch(`${API_BASE}/evaluations/run`, {
+      method: 'POST',
+      body: JSON.stringify({ mode }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new ApiRequestError(err.detail || `Evaluation run failed: ${res.status}`, res.status, res.status >= 500)
+    }
+    return res.json()
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Evaluation run failed: ${res.status}`)
-  }
-  return res.json()
 }
 
 export async function fetchEvaluationDetail(id: string): Promise<any> {

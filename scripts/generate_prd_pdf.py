@@ -248,5 +248,12 @@ result = subprocess.run(cmd, capture_output=True, text=True)
 if os.path.exists(PDF_FILE):
     size_bytes = os.path.getsize(PDF_FILE)
     print(f"SUCCESS: PDF regenerated at: {PDF_FILE} ({size_bytes} bytes)")
+    
+    # Also copy to root workspace directory for immediate access
+    import shutil
+    ROOT_PDF = os.path.join(WORKSPACE_DIR, "QueryTrust_AI_PRD.pdf")
+    shutil.copy2(PDF_FILE, ROOT_PDF)
+    root_size = os.path.getsize(ROOT_PDF)
+    print(f"SUCCESS: Copied PDF to root: {ROOT_PDF} ({root_size} bytes)")
 else:
     print(f"ERROR: PDF file not found at {PDF_FILE}")

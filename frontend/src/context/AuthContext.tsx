@@ -4,7 +4,6 @@ import {
   apiGetMe,
   apiLogin,
   apiLogout,
-  getStoredToken,
 } from '../api/client'
 
 interface AuthContextType {
@@ -36,14 +35,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = getStoredToken()
-      if (token) {
-        try {
-          const me = await apiGetMe()
-          setUser(me)
-        } catch {
-          setUser(null)
-        }
+      try {
+        const me = await apiGetMe()
+        setUser(me)
+      } catch {
+        setUser(null)
       }
       setIsLoading(false)
     }

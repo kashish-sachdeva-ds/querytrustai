@@ -1,0 +1,722 @@
+/* DevicesView.css - Vercel / Supabase styled Hardware Inventory Explorer */
+
+.devices-view-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ==========================================================================
+   1. VIEW HEADER
+   ========================================================================== */
+
+.devices-hero-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-bottom: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.devices-eyebrow {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8A8884;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.devices-heading {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #141413;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.devices-copy {
+  font-size: 13px;
+  color: #71706B;
+  line-height: 1.45;
+  margin-top: 0.35rem;
+  max-width: 680px;
+}
+
+.devices-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.devices-count-pill {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11.5px;
+  color: #575653;
+  background: #F4F3EF;
+  border: 1px solid #E6E4DD;
+  border-radius: 6px;
+  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.devices-refresh-btn {
+  font-size: 12px;
+  font-weight: 600;
+  color: #141413;
+  background: #ffffff;
+  border: 1px solid #E6E4DD;
+  border-radius: 6px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.devices-refresh-btn:hover:not(:disabled) {
+  background: #FAF8F5;
+  border-color: #D7D5CC;
+}
+
+.devices-refresh-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.devices-refresh-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   2. UPGRADED FILTER TOOLBAR (Unified Trigger Buttons)
+   ========================================================================== */
+
+.devices-filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0;
+}
+
+.devices-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 260px;
+  max-width: 380px;
+}
+
+.devices-search-icon {
+  position: absolute;
+  left: 10px;
+  color: #8A8884;
+  pointer-events: none;
+}
+
+.devices-search-input {
+  height: 34px;
+  width: 100%;
+  padding-left: 32px;
+  padding-right: 54px;
+  font-size: 12.5px;
+  background: #ffffff;
+  border: 1px solid #E6E4DD;
+  border-radius: 8px;
+  color: #141413;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: var(--font-sans);
+}
+
+.devices-search-input::placeholder {
+  color: #8A8884;
+}
+
+.devices-search-input:focus {
+  border-color: #18181B;
+  box-shadow: 0 0 0 1px #18181B;
+}
+
+.devices-search-badges {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.devices-clear-btn {
+  background: transparent;
+  border: none;
+  color: #8A8884;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.devices-clear-btn:hover {
+  color: #141413;
+  background: #EFECE6;
+}
+
+.devices-search-kbd {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10.5px;
+  color: #8A8884;
+  background: #F4F3EF;
+  border: 1px solid #E6E4DD;
+  border-radius: 3px;
+  padding: 1px 5px;
+  pointer-events: none;
+  line-height: 1.2;
+}
+
+/* Accessible Native Selects */
+.select-control-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.accessible-native-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  height: 34px;
+  background: #ffffff;
+  border: 1px solid var(--qt-border, #E6E4DD);
+  border-radius: var(--qt-radius-control, 6px);
+  padding: 0 32px 0 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--qt-ink, #141413);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  font-family: var(--font-sans);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.accessible-native-select:hover {
+  background: var(--qt-surface-muted, #FAF8F5);
+  border-color: var(--qt-border-strong, #D7D5CC);
+}
+
+.accessible-native-select:focus-visible {
+  border-color: var(--qt-accent, #FF4F00);
+  box-shadow: 0 0 0 2px var(--qt-accent-soft, #FFF0E8);
+}
+
+.select-dropdown-icon {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: var(--qt-muted, #71706B);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   3. ENTERPRISE DEVICE TABLE (Editorial Header & Monospace Tokens)
+   ========================================================================== */
+
+.devices-table-card {
+  background: #ffffff;
+  border: 1px solid #E6E4DD;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.devices-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.devices-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+/* Editorial Header */
+.devices-table-header th {
+  background: #F5F3EE;
+  border-top: 1px solid #E6E4DD;
+  border-bottom: 1px solid #E6E4DD;
+  color: #6E6D68;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 18px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.devices-table-row {
+  background: #ffffff;
+  border-bottom: 1px solid #EFECE6;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.devices-table-row:hover {
+  background-color: #FAF8F4;
+}
+
+.devices-table-row td {
+  padding: 12px 18px;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+/* Asset Tag Token */
+.asset-tag-token {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+  font-weight: 500;
+  background: #F2EFE9;
+  color: #141413;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  border: 1px solid #E6E4DD;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Device Type Pill */
+.device-type-token {
+  font-size: 11px;
+  font-weight: 600;
+  color: #575653;
+  background: #F4F3EF;
+  border: 1px solid #E6E4DD;
+  padding: 2px 7px;
+  border-radius: 5px;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Model & Vendor Cell */
+.model-vendor-cell {
+  display: flex;
+  flex-direction: column;
+  max-width: 240px;
+}
+
+.model-name-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #141413;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vendor-subtle-text {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11.5px;
+  color: #71706B;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+/* Site & Region Cell */
+.site-cell-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 200px;
+}
+
+.site-name-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #141413;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.region-code-badge {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10.5px;
+  color: #71706B;
+  background: #F4F3EF;
+  border: 1px solid #E6E4DD;
+  padding: 1px 5px;
+  border-radius: 3px;
+  align-self: flex-start;
+}
+
+/* Status Semantic Pill */
+.status-semantic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.status-dot-mini {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.status-semantic-pill.active {
+  background: #ECFDF5;
+  color: #047857;
+  border-color: #A7F3D0;
+}
+.status-semantic-pill.active .status-dot-mini {
+  background: var(--qt-accent, #FF4F00);
+}
+
+.status-semantic-pill.maintenance {
+  background: #FFFBEB;
+  color: #B45309;
+  border-color: #FDE68A;
+}
+.status-semantic-pill.maintenance .status-dot-mini {
+  background: var(--qt-accent, #FF4F00);
+}
+
+.status-semantic-pill.decommissioned,
+.status-semantic-pill.offline {
+  background: #F4F4F5;
+  color: #52525B;
+  border-color: #E4E4E7;
+}
+.status-semantic-pill.decommissioned .status-dot-mini,
+.status-semantic-pill.offline .status-dot-mini {
+  background: #71717A;
+}
+
+/* Monospace Dates */
+.mono-date-text {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+  color: #575653;
+  white-space: nowrap;
+}
+
+.mono-date-text.expired {
+  color: #DC2626;
+  font-weight: 600;
+}
+
+/* Inspect Action Button */
+.device-inspect-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: #262523;
+  background: #ffffff;
+  border: 1px solid #E6E4DD;
+  border-radius: 6px;
+  padding: 5px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.devices-table-row:hover .device-inspect-btn {
+  background: #141413 !important;
+  color: #ffffff !important;
+  border-color: #141413 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+  transform: translateY(-1px);
+}
+
+.device-inspect-btn:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   4. ASSET INSPECT SLIDE-OVER DRAWER (Dark Console Theme)
+   ========================================================================== */
+
+.asset-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2.5px);
+  z-index: 9999;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.16s ease-out;
+}
+
+.asset-drawer-panel {
+  width: 540px;
+  max-width: 100vw;
+  height: 100%;
+  background: #121211;
+  color: #F4F3EF;
+  border-left: 1px solid #262624;
+  box-shadow: -14px 0 40px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  animation: slideLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .asset-drawer-backdrop {
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .asset-drawer-panel {
+    width: 100%;
+    max-width: 100vw;
+    height: 85vh;
+    border-left: none;
+    border-top: 1px solid #262624;
+    border-radius: 12px 12px 0 0;
+    animation: slideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+.asset-drawer-header {
+  padding: 1.15rem 1.4rem;
+  border-bottom: 1px solid #262624;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: #171716;
+}
+
+.asset-drawer-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.asset-drawer-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.asset-id-pill {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+  font-weight: 500;
+  color: #F4F3EF;
+  background: #1D1D1C;
+  border: 1px solid #2E2E2B;
+  border-radius: 6px;
+  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.asset-id-pill:hover {
+  background: #242422;
+  border-color: #40403B;
+}
+
+.asset-category-pill {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  font-weight: 600;
+  color: #EA580C;
+  background: rgba(234, 88, 12, 0.12);
+  border: 1px solid rgba(234, 88, 12, 0.3);
+  padding: 2.5px 8px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.asset-close-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #A1A09A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.asset-close-btn:hover {
+  background: #262624;
+  color: #F4F3EF;
+}
+
+.asset-drawer-meta-sub {
+  font-size: 12px;
+  color: #71706B;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.asset-drawer-body {
+  padding: 1.4rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  flex: 1;
+}
+
+.asset-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8A8884;
+  margin-bottom: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.asset-spec-card {
+  background: #1A1A18;
+  border: 1px solid #2B2B28;
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.asset-spec-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+.asset-spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asset-spec-name {
+  font-size: 11px;
+  color: #8A8884;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.asset-spec-val {
+  font-size: 13px;
+  font-weight: 500;
+  color: #F4F3EF;
+}
+
+.asset-spec-val.mono {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+}
+
+/* Warranty Countdown Track */
+.warranty-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #282825;
+}
+
+.warranty-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+
+
+
+/* Associated Incident Items in Drawer */
+.incident-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.incident-history-item {
+  background: #141413;
+  border: 1px solid #242422;
+  border-radius: 6px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.incident-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.incident-type-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #F4F3EF;
+}
+
+.incident-desc-text {
+  font-size: 11.5px;
+  color: #8A8884;
+  line-height: 1.35;
+}
+
+.incident-footer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  color: #71706B;
+}

@@ -10,15 +10,17 @@ import {
   Moon,
   Eye,
   Code2,
+  Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
 interface HeaderProps {
   onOpenCommandPalette: () => void
+  onOpenOnboarding?: () => void
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnboarding }) => {
   const { user, logout } = useAuth()
   const { theme, mode, toggleTheme, toggleMode } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -63,12 +65,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
           type="button"
           className="command-trigger"
           onClick={onOpenCommandPalette}
-          aria-label="Open quick actions"
           title={`Quick actions & search (${commandShortcut})`}
         >
           <Search size={14} aria-hidden="true" />
           <span>Search & actions</span>
-          <kbd>{commandShortcut}</kbd>
+          <kbd aria-hidden="true">{commandShortcut}</kbd>
         </button>
       </div>
 
@@ -83,6 +84,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
           <span>Demo data</span>
         </div>
 
+        {onOpenOnboarding && (
+          <button
+            type="button"
+            className="btn btn-secondary btn-xs"
+            onClick={onOpenOnboarding}
+            title="Product guide, role tour, and database preview"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >
+            <Sparkles size={12} style={{ color: 'var(--qt-accent)' }} />
+            <span>Guide</span>
+          </button>
+        )}
+
         {/* User Profile Menu with Theme & View Mode toggles inside */}
         <div className="user-profile-container" ref={menuRef}>
           <button
@@ -91,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-expanded={menuOpen}
             aria-haspopup="true"
-            aria-label="User settings and account menu"
+            aria-label={`${user?.display_name || 'User'} account menu`}
           >
             <div className="user-avatar" aria-hidden="true">
               <UserIcon size={14} />
@@ -179,6 +193,21 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette }) => {
               </div>
 
               <div className="dropdown-divider" />
+
+              {onOpenOnboarding && (
+                <button
+                  type="button"
+                  className="dropdown-menu-item"
+                  style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 0, padding: '0.5rem 0.75rem', fontSize: '0.8rem', color: 'var(--qt-ink)', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    onOpenOnboarding()
+                  }}
+                >
+                  <Sparkles size={13} style={{ color: 'var(--qt-accent)' }} />
+                  <span>Welcome &amp; role tour</span>
+                </button>
+              )}
 
               <div className="dropdown-info-item">
                 <Shield size={13} className="text-secondary" aria-hidden="true" />

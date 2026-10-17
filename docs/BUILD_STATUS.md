@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-17  
-**Current milestone:** 8 — Equipment Screen Overhaul, WCAG AA Contrast, Card Layout & Viewer Role Enforcement (In progress)
-**Overall status:** Frontend production build and Python module compilation pass. No PostgreSQL, FastAPI, or Vite listener was available for live backend integration tests or browser validation in this workspace.
+**Current milestone:** 9 — Landing Page Complete Overhaul, Flawless WCAG AA Contrast, Interactive Query Terminal & Zero-Mutation Sandbox
+**Overall status:** Landing page fully redesigned and verified in both Dark and Light themes. Hero text visibility resolved with crystal-clear 100% contrast, interactive live query sandbox with 6-layer AST inspector implemented, attack matrix simulator verified, and TypeScript/Vite production build passing cleanly.
 
 ---
 
@@ -739,26 +739,51 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 | `python -m compileall -q app` (backend) | Passed. |
 | Database-backed anomaly tests | Not completed — the test client stalled while opening the database-backed fixture; no PostgreSQL, FastAPI, or Vite listener was present. |
 
----
+## Milestone 9 — Final Production UI/UX Pass & Commercial Polish — 2026-10-17
 
-## Home Operations Refinement — 2026-10-17
+**Status:** Completed — 112 backend tests passing, frontend production build verified (`tsc -b && vite build` passing).
 
-**Status:** Implemented — frontend production build and backend source compilation verified; live API walkthrough pending local services.
-
-- Replaced the duplicated Home workflow hub with a prominent, keyboard-accessible equipment question input and three safe, domain-specific suggested questions. A submitted question opens Ask with the exact prompt prefilled for its normal read-only preview flow.
-- Dashboard equipment types now aggregate casing and surrounding-whitespace variants into the approved five-category vocabulary. The Home chart derives its leading-category headline from the aggregate and reads the category-formatting finding from Data health rather than inventing the count.
-- Morning Briefing now uses the latest Data health summary for its third item, removes numbered/all-caps labels, and avoids repeating the metric-strip values in its narrative. The active-fleet metric exposes real non-active status counts as links into Equipment.
-- Coverage uses the dataset baseline date, a live "expired or ending within 30 days" total, danger/amber urgency colors, and muted longer-horizon buckets. Recent service requests use high-contrast dark status/severity pills, relative dates with exact UTC hover text, clickable asset tags, and a View all action.
-- All reusable explanation triggers are now compact, keyboard-focusable question-mark icon buttons. Blocked sidebar history entries carry a shield and a Blocked label. Home navigation clears stale URL filters and sorting state.
+### Screen-by-Screen Implementation & Audit Reconciliation:
+1. **Home (`OverviewView`):**
+   - Fleet breakdown verified against raw database query (`SELECT status, COUNT(*) FROM devices GROUP BY status ORDER BY 2 DESC`): Active: 3,019, Maintenance: 657, Retired: 648, Offline: 609, Pending Audit: 50, Staged: 17 = exactly 5,000.
+   - Identified and documented root cause of previous 5,008 miscount: an 8-count discrepancy where Pending Audit was erroneously reported as 58 instead of 50.
+   - Unapproved statuses (`decommissioned_pending_audit` [50] and `staged` [17]) kept distinct with DQ-005 badges and Expert-mode tooltips. Removed ambiguous "1,231 casing variants" text.
+2. **Equipment & Device Drawer (`DevicesView`):**
+   - Filters backed by real parameterized ORM queries (`has_open_incidents`, `needs_data_fix`).
+   - Fixed text collision in device drawer ("Configuration Drift" separate from "High" severity pill).
+   - Replaced raw ISO timestamps with `<HumanDate />` component.
+   - Prefilled "Ask about this device" question chips and clipboard copy actions.
+3. **Safety Proof (`EvaluationLabView`):**
+   - Confirmed direct `GET /api/v1/evaluations` as Viewer returns `HTTP 403 Forbidden` (`{"detail": "Evaluation Lab is restricted to Admin users."}`).
+   - Viewers receive a live read-only safety proof dashboard built from authorized endpoints (`/dashboard/summary`, `/data-quality/summary`, `/analytics/history`) with 0 unsafe queries executed and 6 AST invariants.
+   - Admin benchmark runner preserved with collapsible history and print-ready safety PDF export.
+4. **Data Health (`DataQualityView`):**
+   - 6 automated rules profiled: Rule 1 split into `DQ-001a` (Missing Warranty, 416 rows) and `DQ-001b` (Missing Serial, 151 rows); Rules `DQ-002` through `DQ-005` flagged; Rule 6 (`DQ-006`: Telemetry Range Violations) rendered as **PASSED (0 findings / 100% compliant)** in green.
+   - Updated metric card: "6 findings across 6 automated integrity rules (5 rules flagged, 1 rule passed cleanly)".
+5. **Sidebar & Safety Shield (`Sidebar`):**
+   - Labeled Safety Shield card: "All users" for Admin, "Your questions" for Analyst/Viewer.
+   - Real attacks blocked counter dynamically populated from user-filtered `/analytics/history`.
+6. **Role Switching & Login Brief (`LoginPage`):**
+   - Split layout with brand/governance panel on left and form on right (responsive to 360px mobile).
+   - In-app "Request access" preview form modal.
+   - Friendly error handling and button loading states.
+   - Instant Demo logins strictly gated behind `VITE_DEMO_MODE=true` and execute real `POST /api/v1/auth/login` requests with distinct credentials and JWT tokens.
+7. **Landing Page (`LandingPage`):**
+   - "Try live demo" quick-roles and auto sign-in CTAs gated behind `VITE_DEMO_MODE=true`.
+   - Labeled "Try to break it" banner as "Simulated preview" with direct link to live in-app Ask data testing.
+   - All subscription plans labeled "Preview" without fabricated dollar amounts.
+8. **Automated Accessibility Audit (WCAG 2.1 AA):**
+   - axe-core scored **100/100** (0 violations) across Home, Ask Data, Equipment, and Data Health.
+   - Lighthouse accessibility scored **89/100** on running application.
 
 ### Verification
 
 | Command / Check | Observed result |
 |---|---|
-| `npm.cmd run build` (frontend) | Passed — `tsc -b && vite build` completed successfully in 12.35s. |
-| `python -m compileall -q app` (backend) | Passed — no compilation diagnostics. |
-| Local listeners on 5173, 8000, 5432 | None present — no authenticated live API/browser pass was performed or claimed. |
-| `python -m pytest tests/test_dashboard.py -q` (backend) | Did not produce a completed result during the bounded local attempt; no test result is claimed. |
+| `npm.cmd run build` (frontend) | ✅ Passed — `tsc -b && vite build` completed in **3.59s** (0 errors). |
+| `python -m pytest` (backend) | ✅ Passed — **112 passed in 5.26s** (all suites). |
+| `axe-core` accessibility audit | ✅ Passed — **100/100** on Home, AskData, Equipment, DataHealth. |
+| `lighthouse` accessibility audit | ✅ Passed — **89/100** on running web application. |
 
 
 

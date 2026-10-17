@@ -96,8 +96,8 @@ Access the application at: `http://localhost:5173` (or `http://localhost:80`)
    - Click **Scan Telemetry Readings** to score 25,000 readings and view ranked outliers.
 
 ### Step 7: Evaluation Lab (Admin Only)
-1. Log out and log in as `admin@querytrust.local` / `AdminPass123!`.
-2. Click **Evaluation Lab** in the sidebar.
+1. Sign out (via User Profile menu in top-right) and log in as `admin@querytrust.local` / `AdminPass123!`.
+2. Click **Safety proof** (Evaluation Lab) in the sidebar.
 3. Select **Guarded** pipeline mode and click **Execute Benchmark Suite**.
 4. Observe all 37 test cases execute in ~1-2 seconds:
    - Overall Pass Rate: 100%
@@ -106,3 +106,12 @@ Access the application at: `http://localhost:5173` (or `http://localhost:80`)
    - Multi-Turn Correctness: 100%
    - Median Latency: <1.5 ms
 5. Switch to **Cases Tab**, filter by category, and expand `SF-001` to view generated SQL and AST validation pills.
+
+### Step 8: Role Gating & Read-Only Viewer Experience
+1. Click the User Profile Menu in the top right and select **Sign Out** (do NOT look for a role switcher in the menu; sessions are cleanly separated by design).
+2. On the sign-in screen, click the quick-login chip: **Try as Viewer** (`viewer@querytrust.local`).
+3. Observe governed role boundaries:
+   - **Safety Shield Card (Sidebar):** Displays **Protected: read-only** instead of execution counts.
+   - **Equipment Explorer:** Full hardware visibility and search remains accessible.
+   - **Safety Proof:** Displays plain wording: *"Detailed test runs are visible to administrators. Here is your read-only safety summary."*
+   - **People & Access:** Admin-only tab is completely hidden from the sidebar.

@@ -11,11 +11,25 @@ from app.models.service_event import ServiceEvent
 from app.models.user import User
 from app.core.auth import get_current_user
 from app.schemas.device import (
+    DeviceCountsResponse,
     DeviceDetail,
     DeviceEventSummary,
     DeviceListResponse,
     DeviceSummary,
 )
+
+STATUS_CANONICAL_TO_DB = {
+    "active": "active",
+    "offline": "inactive",
+    "inactive": "inactive",
+    "retired": "decommissioned",
+    "decommissioned": "decommissioned",
+    "maintenance": "maintenance",
+    "pending audit": "decommissioned_pending_audit",
+    "pending_audit": "decommissioned_pending_audit",
+    "decommissioned_pending_audit": "decommissioned_pending_audit",
+    "staged": "staged",
+}
 
 router = APIRouter(prefix="/devices", tags=["Devices"])
 
@@ -26,8 +40,10 @@ def list_devices(
     page_size: int = Query(20, ge=1, le=100, description="Page size (1-100)"),
     search: Optional[str] = Query(None, description="Search asset tag, model, serial, or vendor"),
     device_type: Optional[str] = Query(None, description="Filter by device type"),
-    status: Optional[str] = Query(None, description="Filter by device status"),
+    status: Optional[str] = Query(None, description="Filter by device status (case-insensitive canonical)"),
     site_id: Optional[int] = Query(None, description="Filter by site ID"),
+    has_open_incidents: Optional[bool] = Query(None, description="Filter by devices with open service incidents"),
+    needs_data_fix: Optional[bool] = Query(None, description="Filter devices needing data remediation (DQ-001..005)"),
     sort_by: str = Query("asset_tag", pattern="^(id|asset_tag|model|device_type|status|installed_at|warranty_expiry)$"),
     sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
     current_user: User = Depends(get_current_user),
@@ -63,13 +79,42 @@ def list_devices(
     if device_type:
         query = query.filter(func.lower(func.trim(Device.device_type)) == device_type.strip().lower())
 
-    # 3. Status filter
+    # 3. Status filter (case-insensitive with canonical mapping identical to Home)
     if status:
-        query = query.filter(func.lower(func.trim(Device.status)) == status.strip().lower())
+        norm_status = status.strip().lower()
+        target_status = STATUS_CANONICAL_TO_DB.get(norm_status, norm_status)
+        query = query.filter(func.lower(func.trim(Device.status)) == target_status)
 
     # 4. Site filter
     if site_id is not None:
         query = query.filter(Device.site_id == site_id)
+
+    # 5. Open incidents filter (uses EXISTS / NOT EXISTS for correctness)
+    if has_open_incidents is True:
+        open_exists = (
+            db.query(ServiceEvent.id)
+            .filter(
+                ServiceEvent.device_id == Device.id,
+                func.lower(func.trim(ServiceEvent.status)).notin_(["resolved", "closed", "cancelled"]),
+            )
+            .exists()
+        )
+        query = query.filter(open_exists)
+    elif has_open_incidents is False:
+        open_exists = (
+            db.query(ServiceEvent.id)
+            .filter(
+                ServiceEvent.device_id == Device.id,
+                func.lower(func.trim(ServiceEvent.status)).notin_(["resolved", "closed", "cancelled"]),
+            )
+            .exists()
+        )
+        query = query.filter(~open_exists)
+
+    # 6. Needs data fix filter — reuses exact DQ-001..DQ-005 rules from data_quality module
+    if needs_data_fix is True:
+        from app.core.data_quality import device_needs_data_fix_filter
+        query = query.filter(device_needs_data_fix_filter())
 
     # Total count before pagination
     total = query.with_entities(func.count(Device.id)).scalar() or 0
@@ -111,6 +156,51 @@ def list_devices(
         page=page,
         page_size=page_size,
         total_pages=total_pages,
+    )
+
+
+@router.get("/counts", response_model=DeviceCountsResponse)
+def get_device_counts(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Retrieve quick filter counts across the device inventory.
+
+    Reuses the exact canonical status mapping and data quality rules.
+    Available to all authenticated roles (Viewer, Analyst, Admin).
+    """
+    from app.core.data_quality import device_needs_data_fix_filter
+
+    total = db.query(func.count(Device.id)).scalar() or 0
+    active = db.query(func.count(Device.id)).filter(func.lower(func.trim(Device.status)) == "active").scalar() or 0
+    offline = db.query(func.count(Device.id)).filter(func.lower(func.trim(Device.status)) == "inactive").scalar() or 0
+    maintenance = db.query(func.count(Device.id)).filter(func.lower(func.trim(Device.status)) == "maintenance").scalar() or 0
+    retired = db.query(func.count(Device.id)).filter(func.lower(func.trim(Device.status)) == "decommissioned").scalar() or 0
+
+    open_incidents = (
+        db.query(func.count(Device.id))
+        .filter(
+            db.query(ServiceEvent.id)
+            .filter(
+                ServiceEvent.device_id == Device.id,
+                func.lower(func.trim(ServiceEvent.status)).notin_(["resolved", "closed", "cancelled"]),
+            )
+            .exists()
+        )
+        .scalar()
+        or 0
+    )
+
+    needs_data_fix = db.query(func.count(Device.id)).filter(device_needs_data_fix_filter()).scalar() or 0
+
+    return DeviceCountsResponse(
+        total=total,
+        active=active,
+        offline=offline,
+        maintenance=maintenance,
+        retired=retired,
+        open_incidents=open_incidents,
+        needs_data_fix=needs_data_fix,
     )
 
 

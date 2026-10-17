@@ -15,6 +15,9 @@ import {
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { useTheme } from './context/ThemeContext'
 import { LoginPage } from './components/LoginPage'
+import { LandingPage } from './components/LandingPage'
+import { QueryTrustLogo } from './components/QueryTrustLogo'
+import { OnboardingModal } from './components/OnboardingModal'
 import { Sidebar, type ActiveTab } from './components/Sidebar'
 import { Header } from './components/Header'
 import { OverviewView } from './components/OverviewView'
@@ -54,6 +57,22 @@ const AppShell: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>(getTabFromUrl)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [pendingAskQuestion, setPendingAskQuestion] = useState<string | null>(null)
+  const [unauthView, setUnauthView] = useState<'landing' | 'login'>(() =>
+    readUrlParam('tab') === 'login' ? 'login' : 'landing'
+  )
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      try {
+        if (localStorage.getItem('qt_onboarded') !== 'true') {
+          setIsOnboardingOpen(true)
+        }
+      } catch {
+        /* noop */
+      }
+    }
+  }, [isAuthenticated])
 
   const selectTab = (tab: ActiveTab) => {
     if (tab === 'overview') {
@@ -105,6 +124,7 @@ const AppShell: React.FC = () => {
       { id: 'evaluations', label: 'Open safety proof', description: 'Review benchmark safety metrics and regression proof', icon: FlaskConical, keywords: ['benchmark', 'regression', 'safety', 'proof'], run: () => selectTab('evaluations') },
       { id: 'toggle-mode', label: `Switch to ${mode === 'simple' ? 'Expert' : 'Simple'} view`, description: mode === 'simple' ? 'Show SQL, AST inspector, and execution times' : 'Friendly plain English, hide raw SQL', icon: Sparkles, keywords: ['expert', 'simple', 'developer', 'viewer', 'mode'], run: toggleMode },
       { id: 'toggle-theme', label: `Switch to ${theme === 'light' ? 'Dark' : 'Light'} theme`, description: 'Toggle between clean light and deep obsidian dark themes', icon: Moon, keywords: ['theme', 'dark', 'light', 'mode'], run: toggleTheme },
+      { id: 'onboarding-tour', label: 'Welcome & role tour', description: 'Explore roles, sample questions, and database preview', icon: Sparkles, keywords: ['onboarding', 'tour', 'guide', 'help', 'welcome'], run: () => setIsOnboardingOpen(true) },
       { id: 'refresh-overview', label: 'Refresh fleet overview', description: 'Fetch the latest live inventory snapshot', icon: RefreshCw, keywords: ['reload', 'live'], run: () => {
         selectTab('overview')
         window.requestAnimationFrame(() => window.dispatchEvent(new Event('querytrust:refresh-overview')))
@@ -124,8 +144,8 @@ const AppShell: React.FC = () => {
     return (
       <div className="login-wrapper">
         <div style={{ textAlign: 'center' }}>
-          <div className="brand-logo" style={{ width: 48, height: 48, margin: '0 auto 1rem auto' }}>
-            QT
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <QueryTrustLogo size={52} />
           </div>
           <div className="table-loading-spinner" />
           <p className="text-muted" style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
@@ -137,7 +157,10 @@ const AppShell: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <LoginPage />
+    if (unauthView === 'login') {
+      return <LoginPage onBackToLanding={() => setUnauthView('landing')} />
+    }
+    return <LandingPage onGoToLogin={() => setUnauthView('login')} />
   }
 
   return (
@@ -145,7 +168,10 @@ const AppShell: React.FC = () => {
       <Sidebar activeTab={activeTab} onSelectTab={selectTab} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
-        <Header onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
+        <Header
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+          onOpenOnboarding={() => setIsOnboardingOpen(true)}
+        />
 
         <main className="content-area">
           <div className="page-transition" key={activeTab}>
@@ -156,7 +182,7 @@ const AppShell: React.FC = () => {
                 onOpenDevice={openDevice}
               />
             )}
-            {activeTab === 'devices' && <DevicesView />}
+            {activeTab === 'devices' && <DevicesView onAskQuestion={openAskQuestion} />}
             {activeTab === 'ask-data' && <AskDataView initialQuestion={pendingAskQuestion} />}
             {activeTab === 'admin' && <AdminView />}
 
@@ -167,12 +193,17 @@ const AppShell: React.FC = () => {
               />
             )}
 
-            {activeTab === 'history' && <QueryHistoryView />}
+            {activeTab === 'history' && <QueryHistoryView onAskQuestion={openAskQuestion} />}
             {activeTab === 'evaluations' && <EvaluationLabView />}
           </div>
         </main>
       </div>
       {isCommandPaletteOpen && <CommandPalette actions={commandActions} onClose={() => setIsCommandPaletteOpen(false)} />}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onSelectQuestion={openAskQuestion}
+      />
       <ApiFailureToast />
     </div>
   )
@@ -180,7 +211,9 @@ const AppShell: React.FC = () => {
 
 export default function App() {
   const requestedTab = readUrlParam('tab')
-  const isKnownRoute = window.location.pathname === '/' && (!requestedTab || tabs.includes(requestedTab as ActiveTab))
+  const isKnownRoute =
+    window.location.pathname === '/' &&
+    (!requestedTab || tabs.includes(requestedTab as ActiveTab) || requestedTab === 'login')
 
   if (!isKnownRoute) {
     return <NotFoundPage />

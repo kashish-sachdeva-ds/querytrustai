@@ -23,10 +23,16 @@ import {
 import { withLayoutTransition } from '../motion'
 import { readUrlParam, replaceUrlParams } from '../urlState'
 import { ExplainButton } from './ExplainButton'
+import { PageHeader } from './PageHeader'
+import { HumanDate } from './HumanDate'
 import { useTheme } from '../context/ThemeContext'
 import './QueryHistoryView.css'
 
-export const QueryHistoryView: React.FC = () => {
+interface QueryHistoryViewProps {
+  onAskQuestion?: (question: string) => void
+}
+
+export const QueryHistoryView: React.FC<QueryHistoryViewProps> = ({ onAskQuestion }) => {
   const { mode } = useTheme()
   const [data, setData] = useState<QueryHistoryResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -273,23 +279,7 @@ export const QueryHistoryView: React.FC = () => {
     }
   }, [data])
 
-  const formatTimestamp = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr)
-      const dateFormatted = d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      })
-      const timeFormatted = d.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      })
-      return { date: dateFormatted, time: timeFormatted }
-    } catch {
-      return { date: '—', time: '—' }
-    }
-  }
+
 
   const renderStatusBadge = (status: string) => {
     switch (status) {
@@ -369,51 +359,57 @@ export const QueryHistoryView: React.FC = () => {
 
   return (
     <div className="query-history-view">
+      <PageHeader
+        title="My questions"
+        description="Review all questions asked, safety outcomes, row counts, and performance."
+        helpText="Every query is permanently logged to an audit table. Nothing executes without passing the 6-point Safety Shield."
+      />
+
       {/* 1. HIGH-DENSITY TELEMETRY STRIP */}
       <div className="telemetry-grid">
         {/* Card 1: Recorded Query Runs */}
         <div className="telemetry-card">
           <div className="telemetry-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span className="telemetry-card-title">Recorded Query Runs</span>
+            <span className="telemetry-card-title">Questions asked</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span className="telemetry-badge-mono">pg_query_runs</span>
+              <span className="telemetry-badge-mono">Activity history</span>
               <ExplainButton
-                title="Recorded Query Runs"
+                title="Questions Asked"
                 explanation="Every single question and query is permanently logged to an audit table. Nothing runs without an immutable record."
               />
             </div>
           </div>
           <div className="telemetry-card-value">{totalQueries}</div>
-          <div className="telemetry-card-subtitle">Audited in PostgreSQL query_runs</div>
+          <div className="telemetry-card-subtitle">Recorded in activity log</div>
         </div>
 
         {/* Card 2: Executed (SELECT-Only) */}
         <div className="telemetry-card">
           <div className="telemetry-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span className="telemetry-card-title">Executed (SELECT-Only)</span>
+            <span className="telemetry-card-title">Executed safely</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span className="telemetry-badge-emerald">
                 <span className="telemetry-status-dot" />
-                READ-ONLY
+                Read-only
               </span>
               <ExplainButton
-                title="SELECT-Only Execution"
+                title="Safe Execution"
                 explanation="These queries passed all safety checks and executed successfully. They use a dedicated read-only role that cannot modify tables."
               />
             </div>
           </div>
           <div className="telemetry-card-value">{executedCount}</div>
-          <div className="telemetry-card-subtitle">Completed read-only transactions</div>
+          <div className="telemetry-card-subtitle">Safe read-only answers</div>
         </div>
 
         {/* Card 3: AST Safety Blocks */}
         <div className="telemetry-card">
           <div className="telemetry-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span className="telemetry-card-title">AST Safety Blocks</span>
+            <span className="telemetry-card-title">Safety blocks</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span className={`telemetry-badge-shield ${blockedCount > 0 ? 'blocked' : 'clear'}`}>
                 <Shield size={11} />
-                Safety Check
+                Safety check
               </span>
               <ExplainButton
                 title="Safety Blocks"
@@ -422,15 +418,15 @@ export const QueryHistoryView: React.FC = () => {
             </div>
           </div>
           <div className="telemetry-card-value">{blockedCount}</div>
-          <div className="telemetry-card-subtitle">Intercepted by SQLGlot guard</div>
+          <div className="telemetry-card-subtitle">Stopped before touching equipment</div>
         </div>
 
         {/* Card 4: Average execution latency */}
         <div className="telemetry-card">
           <div className="telemetry-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span className="telemetry-card-title">Average execution latency</span>
+            <span className="telemetry-card-title">Average speed</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span className="telemetry-badge-p95">CURRENT PAGE</span>
+              <span className="telemetry-badge-p95">This page</span>
               <ExplainButton
                 title="Average Execution Latency"
                 explanation="The time from submitting a question to receiving safe results. Ensures quick answers for plant and operations teams."
@@ -441,7 +437,7 @@ export const QueryHistoryView: React.FC = () => {
             {avgDuration}
             <span className="telemetry-card-unit">ms</span>
           </div>
-          <div className="telemetry-card-subtitle">Execution duration</div>
+          <div className="telemetry-card-subtitle">Fast read-only responses</div>
         </div>
       </div>
 
@@ -533,13 +529,13 @@ export const QueryHistoryView: React.FC = () => {
           <table className="audit-table">
             <thead>
               <tr className="audit-table-header">
-                <th style={{ width: '140px' }}>TIMESTAMP</th>
-                <th>QUESTION INTENT</th>
-                <th style={{ width: '140px' }}>STATUS</th>
-                <th style={{ width: '120px' }}>ROW COUNT</th>
-                <th style={{ width: '150px' }}>EXECUTION LATENCY</th>
-                <th style={{ width: '140px' }}>HELPFUL RATING</th>
-                <th style={{ width: '110px', textAlign: 'right' }}>ACTIONS</th>
+                <th style={{ width: '130px' }}>When</th>
+                <th>Question asked</th>
+                <th style={{ width: '130px' }}>Status</th>
+                <th style={{ width: '110px' }}>Rows</th>
+                <th style={{ width: '140px' }}>Execution time</th>
+                <th style={{ width: '140px' }}>Rating</th>
+                <th style={{ width: '160px', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -547,7 +543,7 @@ export const QueryHistoryView: React.FC = () => {
                 <tr>
                   <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
                     <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
-                    <span style={{ fontSize: '12.5px', color: '#71706B' }}>
+                    <span style={{ fontSize: '12.5px', color: 'var(--qt-muted)' }}>
                       Loading verified audit records...
                     </span>
                   </td>
@@ -555,10 +551,10 @@ export const QueryHistoryView: React.FC = () => {
               ) : filteredItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
-                    <div style={{ fontSize: '13.5px', fontWeight: 500, color: '#141413' }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: 500, color: 'var(--qt-ink)' }}>
                       No queries found
                     </div>
-                    <div style={{ fontSize: '12px', color: '#71706B', marginTop: '0.25rem' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--qt-muted)', marginTop: '0.25rem' }}>
                       {searchQuery
                         ? `No results matching "${searchQuery}"`
                         : 'No queries recorded for the selected status filter.'}
@@ -567,15 +563,11 @@ export const QueryHistoryView: React.FC = () => {
                 </tr>
               ) : (
                 filteredItems.map((item) => {
-                  const ts = formatTimestamp(item.created_at)
                   return (
                     <tr key={item.id} className="audit-table-row group">
                       {/* Timestamp Column */}
                       <td>
-                        <div className="timestamp-wrap">
-                          <span className="timestamp-date">{ts.date}</span>
-                          <span className="timestamp-time">{ts.time}</span>
-                        </div>
+                        <HumanDate iso={item.created_at} />
                       </td>
 
                       {/* Question Intent Column (Legible Charcoal & High Contrast Subtitle) */}
@@ -656,18 +648,33 @@ export const QueryHistoryView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* Actions Column (Inspect Button with refined physics) */}
+                      {/* Actions Column (Ask again + Inspect) */}
                       <td style={{ textAlign: 'right' }}>
-                        <button
-                          className="inspect-action-btn"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleOpenDrawer(item)
-                          }}
-                        >
-                          Inspect
-                          <ChevronRight size={13} />
-                        </button>
+                        <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                          {onAskQuestion && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-xs"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onAskQuestion(item.question)
+                              }}
+                              title="Re-run this question in Ask"
+                            >
+                              Ask again
+                            </button>
+                          )}
+                          <button
+                            className="inspect-action-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenDrawer(item)
+                            }}
+                          >
+                            Inspect
+                            <ChevronRight size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -788,6 +795,19 @@ export const QueryHistoryView: React.FC = () => {
                         <span>↳</span>
                         <span>{selectedItem.interpreted_question}</span>
                       </div>
+                    )}
+                    {onAskQuestion && (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        style={{ marginTop: '0.75rem', width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                        onClick={() => {
+                          onAskQuestion(selectedItem.question)
+                          handleCloseDrawer()
+                        }}
+                      >
+                        Ask again with this question
+                      </button>
                     )}
                   </div>
                 </div>

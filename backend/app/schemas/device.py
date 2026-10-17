@@ -46,3 +46,14 @@ class DeviceListResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+class DeviceCountsResponse(BaseModel):
+    total: int
+    active: int
+    offline: int
+    maintenance: int
+    retired: int
+    open_incidents: int
+    needs_data_fix: int
+

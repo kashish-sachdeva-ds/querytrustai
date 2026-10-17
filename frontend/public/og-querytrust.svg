@@ -4,9 +4,13 @@
   <rect width="1200" height="630" fill="#FAF8F5"/>
   <rect x="50" y="48" width="1100" height="534" rx="24" fill="#FFFFFF" stroke="#E6E4E0" stroke-width="2"/>
   <rect x="50" y="48" width="1100" height="86" rx="24" fill="#25221F"/>
-  <rect x="50" y="110" width="1100" height="24" fill="#25221F"/>
-  <rect x="88" y="73" width="38" height="38" rx="8" fill="#FF4F00"/>
-  <text x="107" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#FFFFFF">QT</text>
+  <g transform="translate(88, 73)">
+    <path d="M19 3 L5 10 C5 21 11 30 19 35 C19 30 19 24 19 19 L10 14 L19 9 Z" fill="#FF7A00"/>
+    <path d="M19 3 L33 10 C33 21 27 30 19 35 C19 30 19 24 19 19 L28 14 L19 9 Z" fill="#E04400"/>
+    <path d="M19 9 L28 14 L19 19 L10 14 Z" fill="#FFFFFF"/>
+    <path d="M20 21 L33 33 C34 34 36 33 35 32 L32 24 L25 20 Z" fill="#FFA000"/>
+    <circle cx="19" cy="19" r="2" fill="#FFFFFF"/>
+  </g>
   <text x="146" y="91" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#FFFAF5">QueryTrust AI</text>
   <text x="146" y="112" font-family="Arial, sans-serif" font-size="12" letter-spacing="2" fill="#C6BDB3">GOVERNANCE WORKBENCH</text>
   <text x="100" y="208" font-family="Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="2" fill="#FF4F00">GOVERNED ANALYTICS / SYNTHETIC DATA</text>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -20,6 +20,8 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ExplainButton } from './ExplainButton'
+import { PageHeader } from './PageHeader'
+import { HumanDate } from './HumanDate'
 
 interface AnomalyMonitorViewProps {
   onOpenDevice: (deviceId: number) => void
@@ -130,17 +132,34 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
     return stories
   }
 
+  // Group anomalies by device (collapse repeated identical-looking rows)
+  const groupedAnomalies = useMemo(() => {
+    if (anomalies.length === 0) return []
+    const deviceMap = new Map<number, { primary: AnomalyItem; count: number }>()
+    for (const item of anomalies) {
+      const existing = deviceMap.get(item.device_id)
+      if (!existing || item.anomaly_score > existing.primary.anomaly_score) {
+        deviceMap.set(item.device_id, {
+          primary: item,
+          count: (existing?.count ?? 0) + 1,
+        })
+      } else {
+        deviceMap.set(item.device_id, { ...existing, count: existing.count + 1 })
+      }
+    }
+    return Array.from(deviceMap.values()).sort(
+      (a, b) => b.primary.anomaly_score - a.primary.anomaly_score
+    )
+  }, [anomalies])
+
   return (
     <div className="view-container">
-      <div className="unusual-activity-hero">
-        <h2>Unusual activity</h2>
-        <p>Equipment that is behaving differently from normal right now.</p>
-      </div>
-
-      <div className="unusual-activity-note" role="note">
-        <Info size={18} aria-hidden="true" />
-        <p>Unusual does not mean it will fail. This flags readings that look different from normal so you can take a look.</p>
-      </div>
+      <PageHeader
+        title="Unusual activity"
+        description="Equipment that is behaving differently from normal right now. Unusual does not mean it will fail — this flags readings that look different from normal so you can take a look."
+        eyebrow="Telemetry monitor · Demo data"
+        helpText="Scores reflect statistical distance from typical readings using an IsolationForest model. They are NOT calibrated probabilities of hardware failure."
+      />
 
       {viewMode === 'expert' && (
       <div className="governance-banner unusual-activity-technical-note" style={{ marginBottom: '1.25rem' }}>
@@ -358,13 +377,13 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
             </div>
             <p style={{ fontSize: '0.78rem', color: 'var(--qt-muted)', margin: '0.2rem 0 0 0' }}>
               {scanResult
-                ? `Showing the ${anomalies.length} most unusual of ${scanResult.anomalies_detected.toLocaleString()}.`
+                ? `Showing ${groupedAnomalies.length} devices (${anomalies.length} readings) of ${scanResult.anomalies_detected.toLocaleString()} detected.`
                 : 'Loading unusual activity.'}
             </p>
           </div>
           {scanResult && (
             <span className="badge badge-neutral" style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center' }}>
-              <Zap size={12} style={{ marginRight: 4 }} /> Scanned in {scanResult.scan_time_ms} ms
+              <Zap size={12} style={{ marginRight: 4 }} /> Checked {scanResult.total_telemetry_scanned.toLocaleString()} readings
             </span>
           )}
         </div>
@@ -397,7 +416,7 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                 </tr>
               </thead>
               <tbody>
-                {anomalies.map((item) => {
+                {groupedAnomalies.map(({ primary: item, count }) => {
                   const stories = getOutlierStory(item.telemetry)
                   return (
                     <tr
@@ -468,6 +487,11 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                               {st}
                             </span>
                           ))}
+                          {count > 1 && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', marginTop: 2 }}>
+                              +{count - 1} more unusual reading{count > 2 ? 's' : ''} from this device
+                            </span>
+                          )}
                           {viewMode === 'simple' && (
                             <div>
                               <button
@@ -559,13 +583,8 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                           </span>
                         </div>
                       </td>}
-                      <td style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', fontFamily: 'var(--font-mono)' }}>
-                        {new Date(item.recorded_at).toLocaleDateString([], {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <td>
+                        <HumanDate iso={item.recorded_at} />
                       </td>
                       <td>
                         <button

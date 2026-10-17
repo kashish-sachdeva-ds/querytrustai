@@ -93,3 +93,22 @@ def test_sites_listing(client, viewer_headers):
     assert "site_code" in first_site
     assert "region" in first_site
     assert first_site["device_count"] is not None
+
+
+def test_devices_filter_by_open_incidents(client, viewer_headers):
+    """Filter by has_open_incidents returns only devices with active incidents."""
+    response = client.get("/api/v1/devices?has_open_incidents=true", headers=viewer_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] > 0
+    assert len(data["items"]) > 0
+
+
+def test_devices_filter_by_needs_data_fix(client, viewer_headers):
+    """Filter by needs_data_fix returns devices with firmware or date glitches."""
+    response = client.get("/api/v1/devices?needs_data_fix=true", headers=viewer_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] > 0
+    assert len(data["items"]) > 0
+

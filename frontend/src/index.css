@@ -22,6 +22,7 @@
   flex-direction: column;
   padding: 1.25rem 0.85rem;
   flex-shrink: 0;
+  overflow-x: hidden !important;
 }
 
 .brand-section {
@@ -348,14 +349,16 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 240px;
+  width: 295px;
+  min-width: 290px;
   background: var(--qt-surface);
   border: 1px solid var(--qt-border);
   border-radius: var(--qt-radius-inner);
-  box-shadow: 0 8px 24px rgba(25,24,23,.08);
-  padding: 0.75rem;
+  box-shadow: 0 12px 32px rgba(25,24,23,.18);
+  padding: 0.75rem 0.65rem;
   z-index: 100;
   animation: dropdown-fade 180ms cubic-bezier(.16,1,.3,1);
+  box-sizing: border-box;
 }
 
 @keyframes dropdown-fade {
@@ -478,7 +481,8 @@
 
 .btn-primary {
   background-color: var(--qt-accent);
-  color: #fff;
+  color: #111110;
+  font-weight: 700;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.2);
 }
 
@@ -1898,12 +1902,11 @@
 }
 
 .sessions-title {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--qt-muted);
+  letter-spacing: 0.01em;
+  color: var(--qt-ink);
 }
 
 .sessions-list {
@@ -2063,12 +2066,11 @@
 .starter-prompts-matrix { text-align: left; }
 
 .starter-prompts-label {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
   font-weight: 700;
-  color: var(--qt-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  color: var(--qt-ink);
+  letter-spacing: 0.01em;
   margin-bottom: 0.75rem;
 }
 
@@ -2145,24 +2147,22 @@
 }
 
 .message-sender {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
   font-weight: 700;
-  text-transform: uppercase;
   color: var(--qt-accent);
-  letter-spacing: 0.06em;
   margin-bottom: 0.25rem;
 }
 
 .message-text {
-  font-size: 0.84rem;
+  font-size: 0.88rem;
   line-height: 1.5;
   color: var(--qt-ink);
 }
 
 .message-time {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
   color: var(--qt-muted);
   text-align: right;
   margin-top: 0.35rem;
@@ -2190,30 +2190,28 @@
 }
 
 .brand-pill {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   color: var(--qt-accent);
   margin-right: 0.5rem;
 }
 
 .preview-time {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
   color: var(--qt-muted);
 }
 
 .interpretation-section { display: flex; flex-direction: column; gap: 0.25rem; }
 
 .section-label {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.02em;
   color: var(--qt-muted);
-  text-transform: uppercase;
 }
 
 .interpretation-text {
@@ -2601,12 +2599,11 @@
   position: sticky;
   top: 0;
   background: var(--qt-surface-muted);
-  color: var(--qt-muted);
-  font-family: var(--font-mono);
+  color: var(--qt-ink);
+  font-family: var(--font-sans);
   font-weight: 600;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
   padding: 0.6rem 0.85rem;
   border-bottom: 1px solid var(--qt-border);
   z-index: 2;

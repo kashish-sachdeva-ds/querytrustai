@@ -15,19 +15,28 @@ import {
   Cpu,
   Activity,
   AlertTriangle,
+  MessageSquareText,
 } from 'lucide-react'
 import {
   type DeviceSummary,
   type DeviceDetail,
   type SiteSummary,
+  type DeviceCountsResponse,
   fetchDevices,
   fetchDeviceDetail,
+  fetchDeviceCounts,
   fetchSites,
 } from '../api/client'
 import { withLayoutTransition } from '../motion'
 import { readUrlParam, replaceUrlParams } from '../urlState'
 import { ExplainButton } from './ExplainButton'
+import { PageHeader } from './PageHeader'
+import { HumanDate } from './HumanDate'
 import './DevicesView.css'
+
+interface DevicesViewProps {
+  onAskQuestion?: (question: string) => void
+}
 
 const readPositiveInteger = (value: string | null, fallback: number) => {
   const parsed = Number(value)
@@ -51,21 +60,43 @@ const readDeviceUrlState = () => {
   }
 }
 
-export const checkDataGlitch = (dev: DeviceSummary | DeviceDetail): { hasGlitch: boolean; message: string } => {
-  const isDoubleV = dev.firmware_version?.startsWith('vv') || dev.firmware_version?.includes('vv')
-  const isInvertedWarranty =
+const APPROVED_DEVICE_TYPES = new Set(['Switch', 'Router', 'Firewall', 'Access Point', 'Gateway'])
+const APPROVED_STATUSES = new Set(['active', 'inactive', 'maintenance', 'decommissioned'])
+
+export const checkDataGlitch = (
+  dev: DeviceSummary | DeviceDetail
+): { hasGlitch: boolean; message: string; ruleId?: string } => {
+  const issues: string[] = []
+  let ruleId = ''
+
+  if (!dev.warranty_expiry) {
+    issues.push('Missing warranty expiration date')
+    ruleId = 'DQ-001a'
+  }
+  if (!dev.serial_number || dev.serial_number.trim() === '') {
+    issues.push('Missing hardware chassis serial number')
+    ruleId = ruleId || 'DQ-001b'
+  }
+  if (
     dev.warranty_expiry &&
     dev.installed_at &&
     new Date(dev.warranty_expiry) < new Date(dev.installed_at)
+  ) {
+    issues.push('Warranty expiry date precedes installation date')
+    ruleId = ruleId || 'DQ-002'
+  }
+  if (dev.device_type && !APPROVED_DEVICE_TYPES.has(dev.device_type)) {
+    issues.push(`Inconsistent category format: "${dev.device_type}"`)
+    ruleId = ruleId || 'DQ-004'
+  }
+  const normStatus = dev.status ? dev.status.trim().toLowerCase() : ''
+  if (normStatus && !APPROVED_STATUSES.has(normStatus)) {
+    issues.push(`Unapproved lifecycle status: "${dev.status}"`)
+    ruleId = ruleId || 'DQ-005'
+  }
 
-  if (isDoubleV && isInvertedWarranty) {
-    return { hasGlitch: true, message: 'Double "v" firmware format & warranty date precedes installation' }
-  }
-  if (isDoubleV) {
-    return { hasGlitch: true, message: 'Double "v" firmware prefix format (e.g. vv1.8.1)' }
-  }
-  if (isInvertedWarranty) {
-    return { hasGlitch: true, message: 'Recorded warranty expiry date precedes installation date' }
+  if (issues.length > 0) {
+    return { hasGlitch: true, message: issues.join('; '), ruleId }
   }
   return { hasGlitch: false, message: '' }
 }
@@ -82,7 +113,7 @@ export interface WarrantyStatusInfo {
 }
 
 export const getWarrantyStatus = (expiryDateStr?: string | null): WarrantyStatusInfo => {
-  if (!expiryDateStr) return { label: '—', variant: 'unknown' }
+  if (!expiryDateStr) return { label: 'No warranty on record', variant: 'unknown' }
   const expiry = new Date(expiryDateStr)
   if (isNaN(expiry.getTime())) return { label: expiryDateStr, variant: 'unknown' }
 
@@ -99,9 +130,9 @@ export const getWarrantyStatus = (expiryDateStr?: string | null): WarrantyStatus
   }
 }
 
-type QuickFilterKey = 'all' | 'warranty_soon' | 'offline' | 'open_incidents' | 'glitch'
+type QuickFilterKey = 'all' | 'active' | 'offline' | 'warranty_soon' | 'open_incidents' | 'needs_data_fix'
 
-export const DevicesView: React.FC = () => {
+export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
   const initialUrlState = readDeviceUrlState()
   const [devices, setDevices] = useState<DeviceSummary[]>([])
   const [sites, setSites] = useState<SiteSummary[]>([])
@@ -117,6 +148,7 @@ export const DevicesView: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>(initialUrlState.sortBy)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(initialUrlState.sortDir)
   const [quickFilter, setQuickFilter] = useState<QuickFilterKey>('all')
+  const [deviceCounts, setDeviceCounts] = useState<DeviceCountsResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [copiedAssetId, setCopiedAssetId] = useState(false)
@@ -130,10 +162,13 @@ export const DevicesView: React.FC = () => {
   const lastFocusedElementRef = useRef<HTMLElement | null>(null)
   const drawerPanelRef = useRef<HTMLDivElement>(null)
 
-  // Load sites once for filter dropdown
+  // Load sites and quick counts once on mount
   useEffect(() => {
     fetchSites()
       .then((res) => setSites(res.items))
+      .catch(() => {})
+    fetchDeviceCounts()
+      .then((counts) => setDeviceCounts(counts))
       .catch(() => {})
   }, [])
 
@@ -221,6 +256,8 @@ export const DevicesView: React.FC = () => {
         device_type: deviceType || undefined,
         status: status || undefined,
         site_id: siteId,
+        has_open_incidents: quickFilter === 'open_incidents' ? true : undefined,
+        needs_data_fix: quickFilter === 'needs_data_fix' ? true : undefined,
         sort_by: sortBy,
         sort_dir: sortDir,
       })
@@ -236,7 +273,7 @@ export const DevicesView: React.FC = () => {
 
   useEffect(() => {
     loadDevices()
-  }, [page, pageSize, debouncedSearch, deviceType, status, siteId, sortBy, sortDir])
+  }, [page, pageSize, debouncedSearch, deviceType, status, siteId, sortBy, sortDir, quickFilter])
 
   useEffect(() => {
     replaceUrlParams({
@@ -316,22 +353,18 @@ export const DevicesView: React.FC = () => {
       setStatus('')
       setSortBy('asset_tag')
       setSortDir('asc')
+    } else if (qf === 'active') {
+      setStatus('active')
+    } else if (qf === 'offline') {
+      setStatus('offline')
     } else if (qf === 'warranty_soon') {
       setStatus('')
       setSortBy('warranty_expiry')
       setSortDir('asc')
-    } else if (qf === 'offline') {
-      setStatus('inactive')
-    } else if (qf === 'open_incidents') {
-      setStatus('maintenance')
-    } else if (qf === 'glitch') {
+    } else {
       setStatus('')
     }
   }
-
-  const displayedDevices = quickFilter === 'glitch'
-    ? devices.filter((d) => checkDataGlitch(d).hasGlitch)
-    : devices
 
   const renderStatusPill = (devStatus: string) => {
     const s = devStatus.toLowerCase()
@@ -345,7 +378,7 @@ export const DevicesView: React.FC = () => {
       label = 'Maintenance'
     } else if (s.includes('decom')) {
       className += 'decommissioned'
-      label = 'Decommissioned'
+      label = 'Retired'
     } else {
       className += 'offline'
       label = 'Offline'
@@ -361,45 +394,59 @@ export const DevicesView: React.FC = () => {
 
   return (
     <div className="devices-view-container">
-      {/* 1. VIEW HERO ROW */}
-      <div className="devices-hero-row">
-        <div>
-          <h2 className="devices-heading">Find equipment</h2>
-          <p className="devices-copy">
-            Search 5,000 devices by name, place or status.
-          </p>
-        </div>
+      {/* 1. Standard Unified Header */}
+      <PageHeader
+        title="Equipment explorer"
+        description="Search and inspect 5,000 synthetic network devices across all operating sites."
+        helpText="Filter devices by model, vendor, location, status, or warranty. Click any row to view full hardware specs, location details, warranty horizon, and maintenance events."
+        actions={
+          <div className="devices-hero-actions">
+            <span className="devices-count-pill">
+              <Server size={12} />
+              <span>{total.toLocaleString()} assets</span>
+            </span>
+            <button
+              type="button"
+              className="devices-refresh-btn"
+              onClick={() => loadDevices()}
+              disabled={loading}
+              title="Refresh device inventory"
+            >
+              <RefreshCw size={13} className={loading ? 'spin-icon' : ''} />
+              <span>Refresh</span>
+            </button>
+            <ExplainButton
+              title="Hardware Inventory"
+              explanation="A read-only catalog of all network devices across all operating sites, with live status and maintenance history."
+            />
+          </div>
+        }
+      />
 
-        <div className="devices-hero-actions">
-          <span className="devices-count-pill">
-            <Server size={12} />
-            <span>{total.toLocaleString()} Assets</span>
-          </span>
-          <button
-            type="button"
-            className="devices-refresh-btn"
-            onClick={() => loadDevices()}
-            disabled={loading}
-            title="Refresh device inventory"
-          >
-            <RefreshCw size={13} className={loading ? 'spin-icon' : ''} />
-            <span>Refresh</span>
-          </button>
-          <ExplainButton
-            title="Hardware Inventory"
-            explanation="A read-only catalog of all network devices across all operating sites, with live status and maintenance history."
-          />
-        </div>
-      </div>
-
-      {/* 2. QUICK FILTER CHIPS */}
+      {/* 2. QUICK FILTER CHIPS with server-sourced counts */}
       <div className="devices-quick-chips" role="group" aria-label="Quick filters">
         <button
           type="button"
           className={`quick-chip ${quickFilter === 'all' ? 'active' : ''}`}
           onClick={() => handleSelectQuickFilter('all')}
         >
-          All
+          All{deviceCounts ? ` · ${deviceCounts.total.toLocaleString()}` : ''}
+        </button>
+        <button
+          type="button"
+          className={`quick-chip ${quickFilter === 'active' ? 'active' : ''}`}
+          onClick={() => handleSelectQuickFilter('active')}
+          title="Standard operational equipment (groups casing variants)"
+        >
+          Active{deviceCounts ? ` · ${deviceCounts.active.toLocaleString()}` : ''}
+        </button>
+        <button
+          type="button"
+          className={`quick-chip ${quickFilter === 'offline' ? 'active' : ''}`}
+          onClick={() => handleSelectQuickFilter('offline')}
+          title="Powered off or awaiting link activation"
+        >
+          Offline{deviceCounts ? ` · ${deviceCounts.offline.toLocaleString()}` : ''}
         </button>
         <button
           type="button"
@@ -411,29 +458,19 @@ export const DevicesView: React.FC = () => {
         </button>
         <button
           type="button"
-          className={`quick-chip ${quickFilter === 'offline' ? 'active' : ''}`}
-          onClick={() => handleSelectQuickFilter('offline')}
-          title="Filtered to inactive/offline equipment (Real API)"
-        >
-          Offline
-        </button>
-        <button
-          type="button"
           className={`quick-chip ${quickFilter === 'open_incidents' ? 'active' : ''}`}
           onClick={() => handleSelectQuickFilter('open_incidents')}
-          title="Equipment with active maintenance events (Mocked filter)"
+          title="Equipment with active maintenance incidents"
         >
-          <span>Has open incidents</span>
-          <span className="chip-mock-pill">Mocked filter</span>
+          Has open incidents{deviceCounts ? ` · ${deviceCounts.open_incidents.toLocaleString()}` : ''}
         </button>
         <button
           type="button"
-          className={`quick-chip ${quickFilter === 'glitch' ? 'active' : ''}`}
-          onClick={() => handleSelectQuickFilter('glitch')}
-          title="Equipment with version format anomalies or inverted warranty records"
+          className={`quick-chip ${quickFilter === 'needs_data_fix' ? 'active' : ''}`}
+          onClick={() => handleSelectQuickFilter('needs_data_fix')}
+          title="Equipment flagged by DQ-001..DQ-005 (missing serial/warranty, inverted dates, duplicate serials, category formatting, unapproved status)"
         >
-          <span>Needs data fix</span>
-          <span className="chip-mock-pill">Glitch filter</span>
+          Needs data fix{deviceCounts ? ` · ${deviceCounts.needs_data_fix.toLocaleString()}` : ''}
         </button>
       </div>
 
@@ -483,11 +520,12 @@ export const DevicesView: React.FC = () => {
             className="accessible-native-select"
             aria-label="Filter by Device Type"
           >
-            <option value="">All Device Types</option>
-            <option value="router">Router</option>
+            <option value="">All types</option>
             <option value="switch">Switch</option>
+            <option value="router">Router</option>
+            <option value="access point">Access Point</option>
+            <option value="gateway">Gateway</option>
             <option value="firewall">Firewall</option>
-            <option value="access_point">Access Point</option>
           </select>
           <ChevronDown size={14} className="select-dropdown-icon" aria-hidden="true" />
         </div>
@@ -507,11 +545,11 @@ export const DevicesView: React.FC = () => {
             className="accessible-native-select"
             aria-label="Filter by Status"
           >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="decommissioned">Decommissioned</option>
-            <option value="inactive">Inactive / Offline</option>
+            <option value="">All statuses</option>
+            <option value="active">Active ({deviceCounts?.active.toLocaleString() ?? '…'})</option>
+            <option value="offline">Offline ({deviceCounts?.offline.toLocaleString() ?? '…'})</option>
+            <option value="maintenance">Maintenance ({deviceCounts?.maintenance.toLocaleString() ?? '…'})</option>
+            <option value="retired">Retired ({deviceCounts?.retired.toLocaleString() ?? '…'})</option>
           </select>
           <ChevronDown size={14} className="select-dropdown-icon" aria-hidden="true" />
         </div>
@@ -532,7 +570,7 @@ export const DevicesView: React.FC = () => {
             className="accessible-native-select"
             aria-label="Filter by Site"
           >
-            <option value="">All Sites ({sites.length || 50})</option>
+            <option value="">All sites ({sites.length || 50})</option>
             {sites.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.site_name} ({s.region})
@@ -584,17 +622,17 @@ export const DevicesView: React.FC = () => {
           <table className="devices-table">
             <thead>
               <tr className="devices-table-header">
-                <th style={{ width: '160px' }}>ASSET TAG</th>
-                <th style={{ width: '120px' }}>TYPE</th>
-                <th>MODEL / VENDOR</th>
-                <th style={{ width: '180px' }}>SITE &amp; REGION</th>
-                <th style={{ width: '130px' }}>STATUS</th>
-                <th style={{ width: '120px' }}>INSTALLED</th>
-                <th style={{ width: '160px' }}>WARRANTY</th>
+                <th style={{ width: '160px' }}>Asset tag</th>
+                <th style={{ width: '120px' }}>Type</th>
+                <th>Model / vendor</th>
+                <th style={{ width: '180px' }}>Site &amp; region</th>
+                <th style={{ width: '130px' }}>Status</th>
+                <th style={{ width: '130px' }}>Installed</th>
+                <th style={{ width: '170px' }}>Warranty</th>
               </tr>
             </thead>
             <tbody>
-              {loading && displayedDevices.length === 0 ? (
+              {loading && devices.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
                     <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
@@ -603,7 +641,7 @@ export const DevicesView: React.FC = () => {
                     </span>
                   </td>
                 </tr>
-              ) : displayedDevices.length === 0 ? (
+              ) : devices.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
                     <Server size={30} style={{ color: 'var(--qt-muted)', margin: '0 auto 0.5rem auto' }} />
@@ -616,9 +654,14 @@ export const DevicesView: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                displayedDevices.map((dev) => {
+                devices.map((dev) => {
                   const glitch = checkDataGlitch(dev)
+                  const isInverted =
+                    dev.warranty_expiry &&
+                    dev.installed_at &&
+                    new Date(dev.warranty_expiry) < new Date(dev.installed_at)
                   const warrantyInfo = getWarrantyStatus(dev.warranty_expiry)
+
                   return (
                     <tr
                       key={dev.id}
@@ -688,22 +731,36 @@ export const DevicesView: React.FC = () => {
                       {/* Status Semantic Pill */}
                       <td data-label="Status">{renderStatusPill(dev.status)}</td>
 
-                      {/* Installed Date (WCAG AA High Contrast) */}
+                      {/* Installed Date */}
                       <td data-label="Installed">
-                        <span className="mono-date-text">{dev.installed_at || '—'}</span>
+                        <span className="mono-date-text">
+                          <HumanDate iso={dev.installed_at} fallback="—" />
+                        </span>
                       </td>
 
-                      {/* Warranty Column (Plain status with exact date on hover) */}
-                      <td
-                        data-label="Warranty"
-                        title={dev.warranty_expiry ? `Exact warranty expiration date: ${dev.warranty_expiry}` : 'No warranty record'}
-                      >
-                        {dev.warranty_expiry ? (
-                          <span className={`warranty-status-pill ${warrantyInfo.variant}`}>
-                            {warrantyInfo.label}
+                      {/* Warranty Column: Inverted -> 'Date error', Missing -> 'No warranty on record', else relative */}
+                      <td data-label="Warranty">
+                        {isInverted ? (
+                          <span
+                            className="warranty-status-pill warning"
+                            title="Date error: Recorded warranty expiration precedes installation date. See Data health."
+                          >
+                            Date error
+                          </span>
+                        ) : !dev.warranty_expiry ? (
+                          <span
+                            className="warranty-status-pill empty"
+                            title="No warranty expiration date on record for this hardware asset."
+                          >
+                            No warranty on record
                           </span>
                         ) : (
-                          <span className="empty-metric-dash">—</span>
+                          <span
+                            className={`warranty-status-pill ${warrantyInfo.variant}`}
+                            title={`Expiration date: ${dev.warranty_expiry}`}
+                          >
+                            {warrantyInfo.label}
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -721,18 +778,20 @@ export const DevicesView: React.FC = () => {
           </div>
 
           <div className="pagination-controls">
-            <div className="page-size-picker">
-              <span>Show</span>
+            <div className="page-size-wrap">
+              <label htmlFor="devices-page-size" className="page-size-label">Rows per page:</label>
               <select
+                id="devices-page-size"
                 value={pageSize}
                 onChange={(e) => {
-                  setPageSize(parseInt(e.target.value))
-                  setPage(1)
+                  withLayoutTransition(() => {
+                    setPageSize(Number(e.target.value))
+                    setPage(1)
+                  })
                 }}
-                className="page-select accessible-native-select"
-                aria-label="Items per page"
+                className="page-size-select"
+                aria-label="Rows per page"
               >
-                <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
@@ -788,10 +847,10 @@ export const DevicesView: React.FC = () => {
                       onClick={() => {
                         if (deviceDetail?.asset_tag) handleCopyAssetId(deviceDetail.asset_tag)
                       }}
-                      title="Click to copy Asset Tag"
+                      title="Click to copy asset tag"
                       disabled={!deviceDetail?.asset_tag}
                     >
-                      <span>{deviceDetail?.asset_tag || 'Asset identifier loading'}</span>
+                      <span>{deviceDetail?.asset_tag || 'Loading...'}</span>
                       {copiedAssetId ? <Check size={12} color="var(--qt-accent, #FF4F00)" /> : <Copy size={12} />}
                     </button>
 
@@ -815,19 +874,53 @@ export const DevicesView: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="asset-drawer-meta-sub" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div className="asset-drawer-meta-sub" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.4rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <h3 id="asset-drawer-title" className="sr-only">
-                      Hardware Inventory Specification {deviceDetail?.asset_tag || `#${selectedDeviceId}`}
+                    <h3 id="asset-drawer-title" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--qt-ink)', margin: 0 }}>
+                      {deviceDetail ? `${deviceDetail.asset_tag} — ${deviceDetail.model}` : `Device #${selectedDeviceId}`}
                     </h3>
-                    <span>Hardware Inventory Specification</span>
-                    <span>ID #{selectedDeviceId}</span>
                   </div>
                   <ExplainButton
                     title="Hardware Specification Drawer"
                     explanation="Detailed network device telemetry, site location, warranty dates, and recent service incidents."
                   />
                 </div>
+
+                {/* Drawer Quick Action Buttons */}
+                {deviceDetail && (
+                  <div className="drawer-action-buttons">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => {
+                        closeDeviceModal()
+                        onAskQuestion?.(`Show all telemetry and open events for device ${deviceDetail.asset_tag}`)
+                      }}
+                      title="Ask a governed question about this device"
+                    >
+                      <MessageSquareText size={13} style={{ marginRight: 5 }} />
+                      Ask about this device
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => handleCopyAssetId(deviceDetail.asset_tag)}
+                      title="Copy asset tag to clipboard"
+                    >
+                      {copiedAssetId ? (
+                        <>
+                          <Check size={13} style={{ marginRight: 5, color: 'var(--qt-accent)' }} />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} style={{ marginRight: 5 }} />
+                          Copy asset tag
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Body */}
@@ -845,15 +938,16 @@ export const DevicesView: React.FC = () => {
                     <div className="data-hygiene-note">
                       <AlertTriangle size={15} style={{ color: 'var(--qt-warning)', flexShrink: 0, marginTop: 2 }} />
                       <div>
-                        <strong>Gentle Data Hygiene Note</strong>
-                        <span>{checkDataGlitch(deviceDetail).message}. Because QueryTrust AI maintains strictly read-only access, source records are preserved as-is.</span>
+                        <strong>Data hygiene note</strong>
+                        <span>{checkDataGlitch(deviceDetail).message}. Preserved as-is in read-only mode.</span>
                       </div>
                     </div>
                   )}
-                  {/* Section 1: Hardware & Firmware Specs */}
+
+                  {/* Section 1: Hardware (Plain title) */}
                   <div>
                     <div className="asset-section-label">
-                      <span>Hardware &amp; Firmware Specs</span>
+                      <span>Hardware</span>
                       <Cpu size={13} />
                     </div>
                     <div className="asset-spec-card">
@@ -867,11 +961,11 @@ export const DevicesView: React.FC = () => {
                           <span className="asset-spec-val">{deviceDetail.vendor}</span>
                         </div>
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Firmware Version</span>
+                          <span className="asset-spec-name">Firmware version</span>
                           <span className="asset-spec-val mono">{formatFirmwareVersion(deviceDetail.firmware_version)}</span>
                         </div>
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Serial Number</span>
+                          <span className="asset-spec-name">Serial number</span>
                           <span className="asset-spec-val mono">
                             {deviceDetail.serial_number || '—'}
                           </span>
@@ -884,68 +978,70 @@ export const DevicesView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Section 2: Site & Deployment Details */}
+                  {/* Section 2: Location (Plain title) */}
                   <div>
                     <div className="asset-section-label">
-                      <span>Site &amp; Deployment Details</span>
+                      <span>Location</span>
                       <Building size={13} />
                     </div>
                     <div className="asset-spec-card">
                       <div className="asset-spec-grid-2">
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Facility Name</span>
+                          <span className="asset-spec-name">Facility name</span>
                           <span className="asset-spec-val">{deviceDetail.site_name}</span>
                         </div>
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Site Code</span>
+                          <span className="asset-spec-name">Site code</span>
                           <span className="asset-spec-val mono">{deviceDetail.site_code}</span>
                         </div>
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Geographic Region</span>
+                          <span className="asset-spec-name">Geographic region</span>
                           <span className="asset-spec-val">{deviceDetail.region}</span>
                         </div>
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Installation Date</span>
-                          <span className="asset-spec-val mono">{deviceDetail.installed_at}</span>
+                          <span className="asset-spec-name">Installation date</span>
+                          <span className="asset-spec-val mono">
+                            <HumanDate iso={deviceDetail.installed_at} />
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Section 3: Warranty Coverage Horizon */}
+                  {/* Section 3: Warranty (Plain title) */}
                   <div>
                     <div className="asset-section-label">
-                      <span>Warranty Horizon</span>
+                      <span>Warranty</span>
                       <Calendar size={13} />
                     </div>
                     <div className="asset-spec-card">
                       <div className="asset-spec-grid-2">
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Coverage Status</span>
+                          <span className="asset-spec-name">Coverage status</span>
                           <span className="asset-spec-val">
                             {deviceDetail.warranty_expiry ? (
                               <span className={`warranty-status-pill ${getWarrantyStatus(deviceDetail.warranty_expiry).variant}`}>
                                 {getWarrantyStatus(deviceDetail.warranty_expiry).label}
                               </span>
                             ) : (
-                              'No Warranty Record'
+                              'No warranty on record'
                             )}
                           </span>
                         </div>
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Exact Expiration</span>
+                          <span className="asset-spec-name">Exact expiration</span>
                           <span className="asset-spec-val mono">
-                            {deviceDetail.warranty_expiry || '—'}
+                            <HumanDate iso={deviceDetail.warranty_expiry} fallback="No warranty on record" />
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Section 4: Recent Service Incidents */}
+                  {/* Section 4: Recent repair requests (Plain title, fix Configuration Drift + High collision) */}
                   <div>
                     <div className="asset-section-label">
-                      <span>Recent Service Incidents</span>
+                      <span>Recent repair requests</span>
                       <Activity size={13} />
                     </div>
                     {deviceDetail.recent_events && deviceDetail.recent_events.length > 0 ? (
@@ -959,13 +1055,15 @@ export const DevicesView: React.FC = () => {
                               </span>
                             </div>
                             <div className="asset-event-desc">{evt.description}</div>
-                            <div className="asset-event-date">{evt.opened_at}</div>
+                            <div className="asset-event-date">
+                              <HumanDate iso={evt.opened_at} />
+                            </div>
                           </div>
                         ))}
                       </div>
                     ) : (
                       <div className="asset-events-empty">
-                        <span>No historical or open service incidents recorded.</span>
+                        <span>No historical or open repair requests recorded.</span>
                       </div>
                     )}
                   </div>

@@ -1,0 +1,189 @@
+/* DataQualityView.css - QueryTrust AI Data Health & Hygiene */
+
+.dq-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dq-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.dq-kpi-card {
+  background: var(--qt-surface);
+  border: 1px solid var(--qt-border);
+  border-radius: var(--qt-radius-inner, 8px);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dq-kpi-card:hover {
+  border-color: var(--qt-border-strong);
+}
+
+.dq-kpi-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--qt-muted);
+}
+
+.dq-kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--qt-ink);
+  line-height: 1.1;
+}
+
+.dq-kpi-sub {
+  font-size: 0.78rem;
+  color: var(--qt-text);
+  line-height: 1.4;
+  margin-top: auto;
+}
+
+/* Diagnostic Rule Notice Banner */
+.dq-rule-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0.85rem 1.1rem;
+  background: var(--qt-surface-muted);
+  border: 1px solid var(--qt-border);
+  border-radius: var(--qt-radius-control, 6px);
+  font-size: 0.8rem;
+  color: var(--qt-text);
+  line-height: 1.45;
+}
+
+.dq-rule-note strong {
+  color: var(--qt-ink);
+}
+
+/* Filter Controls Strip */
+.dq-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: var(--qt-surface);
+  border: 1px solid var(--qt-border);
+  border-radius: var(--qt-radius-inner, 8px);
+  padding: 0.75rem 1.25rem;
+}
+
+.dq-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.dq-filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--qt-muted);
+  margin-right: 0.25rem;
+}
+
+.dq-filter-chip {
+  background: var(--qt-surface-muted);
+  border: 1px solid var(--qt-border);
+  border-radius: var(--qt-radius-control, 6px);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--qt-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dq-filter-chip:hover {
+  background: var(--qt-surface);
+  border-color: var(--qt-border-strong);
+}
+
+.dq-filter-chip.active {
+  background: var(--qt-accent-soft, #FFF0E8);
+  border-color: var(--qt-accent, #FF4F00);
+  color: var(--qt-accent, #FF4F00);
+  font-weight: 600;
+}
+
+/* Findings Table */
+.dq-table-card {
+  background: var(--qt-surface);
+  border: 1px solid var(--qt-border);
+  border-radius: var(--qt-radius-inner, 8px);
+  overflow: hidden;
+}
+
+.dq-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--qt-border);
+}
+
+.dq-rule-id-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dq-rule-id {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--qt-accent);
+  font-size: 0.85rem;
+}
+
+.dq-rule-subtag {
+  font-size: 0.68rem;
+  color: var(--qt-muted);
+}
+
+/* Expandable Remediation Text */
+.dq-remediation-cell {
+  font-size: 0.82rem;
+  color: var(--qt-text);
+  line-height: 1.45;
+  max-width: 380px;
+}
+
+.dq-expand-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 6px;
+  color: var(--qt-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dq-expand-btn:hover {
+  filter: brightness(1.15);
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] .dq-filter-chip.active {
+  background: rgba(255, 79, 0, 0.16);
+  border-color: var(--qt-accent);
+  color: #ff7840;
+}
+
+[data-theme="dark"] .dq-rule-note {
+  background: rgba(255, 79, 0, 0.06);
+  border-color: rgba(255, 79, 0, 0.2);
+}

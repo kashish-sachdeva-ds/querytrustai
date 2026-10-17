@@ -29,6 +29,63 @@ APPROVED_DEVICE_TYPES = {"Switch", "Router", "Firewall", "Access Point", "Gatewa
 APPROVED_STATUSES = {"active", "inactive", "maintenance", "decommissioned"}
 
 
+def device_needs_data_fix_filter():
+    """Returns a SQLAlchemy OR filter matching devices flagged by DQ-001..DQ-005.
+
+    The same rules used by the DataQualityProfiler:
+      DQ-001a: warranty_expiry IS NULL
+      DQ-001b: serial_number IS NULL or blank
+      DQ-002:  warranty_expiry < installed_at (both non-null)
+      DQ-003:  duplicate serial numbers (uses EXISTS subquery)
+      DQ-004:  device_type not in APPROVED_DEVICE_TYPES (exact TitleCase match)
+      DQ-005:  status (normalized lower) not in APPROVED_STATUSES
+
+    NOTE: DQ-001a/DQ-001b are display-only split IDs in the UI; both map to rule DQ-001.
+    DQ-006 (telemetry range) is excluded because it applies to telemetry_readings, not devices.
+
+    Returns:
+        A SQLAlchemy BinaryExpression suitable for query.filter().
+    """
+    from sqlalchemy import or_, and_, exists, select, func as sa_func
+    from app.models.device import Device as DevModel
+
+    # DQ-003: Duplicate serial via subquery with GROUP BY ... HAVING COUNT > 1
+    # This evaluates as an efficient hash semi-join in PostgreSQL instead of a quadratic correlated loop
+    dup_sn_subquery = (
+        select(sa_func.lower(sa_func.trim(DevModel.serial_number)))
+        .where(
+            DevModel.serial_number.is_not(None),
+            sa_func.trim(DevModel.serial_number) != "",
+        )
+        .group_by(sa_func.lower(sa_func.trim(DevModel.serial_number)))
+        .having(sa_func.count(DevModel.id) > 1)
+    )
+
+    return or_(
+        # DQ-001a: Missing warranty
+        DevModel.warranty_expiry.is_(None),
+        # DQ-001b: Missing serial
+        DevModel.serial_number.is_(None),
+        sa_func.trim(DevModel.serial_number) == "",
+        # DQ-002: Inverted dates
+        and_(
+            DevModel.warranty_expiry.is_not(None),
+            DevModel.installed_at.is_not(None),
+            DevModel.warranty_expiry < DevModel.installed_at,
+        ),
+        # DQ-003: Duplicate serials
+        and_(
+            DevModel.serial_number.is_not(None),
+            sa_func.trim(DevModel.serial_number) != "",
+            sa_func.lower(sa_func.trim(DevModel.serial_number)).in_(dup_sn_subquery),
+        ),
+        # DQ-004: Non-approved device type
+        DevModel.device_type.notin_(list(APPROVED_DEVICE_TYPES)),
+        # DQ-005: Non-approved status
+        sa_func.lower(sa_func.trim(DevModel.status)).notin_(list(APPROVED_STATUSES)),
+    )
+
+
 class DataQualityProfiler:
     """Orchestrates deterministic diagnostic profiling runs across inventory and telemetry tables."""
 

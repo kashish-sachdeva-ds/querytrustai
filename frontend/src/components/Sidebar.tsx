@@ -20,6 +20,7 @@ import {
   fetchQueryHistory,
   type QueryHistoryItem,
 } from '../api/client'
+import { QueryTrustLogo } from './QueryTrustLogo'
 
 export type ActiveTab =
   | 'overview'
@@ -39,6 +40,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
+  const isViewer = user?.role === 'viewer'
   const navRef = useRef<HTMLElement>(null)
   const activeItemRef = useRef<HTMLButtonElement>(null)
   const [indicator, setIndicator] = useState({ top: 0, height: 0, ready: false })
@@ -56,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
   const [dataHealthCount, setDataHealthCount] = useState<number | null>(null)
   const [anomaliesCount, setAnomaliesCount] = useState<number | null>(null)
   const [blockedQueriesCount, setBlockedQueriesCount] = useState<number>(0)
+  const [unsafeQueriesRun, setUnsafeQueriesRun] = useState<number>(0)
   const [recentQuestions, setRecentQuestions] = useState<QueryHistoryItem[]>([])
 
   const toggleCollapsed = () => {
@@ -95,29 +98,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         if (isMounted) setAnomaliesCount(null)
       }
 
-      // 3. Blocked queries for Safety Shield & recent questions
-      try {
-        const history = await fetchQueryHistory(1, 20)
-        if (isMounted) {
-          const blocked = history.items.filter((item) => item.status === 'blocked').length
-          setBlockedQueriesCount(blocked)
-
-          // Show only unique questions, newest first
-          const uniqueQuestions: QueryHistoryItem[] = []
-          const seenQuestions = new Set<string>()
-          for (const item of history.items) {
-            const normalized = item.question?.trim()
-            if (normalized && !seenQuestions.has(normalized.toLowerCase())) {
-              seenQuestions.add(normalized.toLowerCase())
-              uniqueQuestions.push(item)
-              if (uniqueQuestions.length >= 3) break
-            }
+      // 3. Blocked queries for Safety Shield (across all history via total count) & recent questions
+      if (!isViewer) {
+        try {
+          const blockedHistory = await fetchQueryHistory(1, 1, 'blocked')
+          if (isMounted) {
+            setBlockedQueriesCount(blockedHistory.total)
           }
-          setRecentQuestions(uniqueQuestions)
-        }
-      } catch {
-        if (isMounted) {
-          setBlockedQueriesCount(0)
+
+          // Calculate unsafe queries run from actual executed history (never a typed hardcoded 0)
+          const executedHistory = await fetchQueryHistory(1, 50, 'executed')
+          if (isMounted) {
+            const unsafeCount = executedHistory.items.filter(
+              (item) => item.status === 'executed' && item.error_category === 'VALIDATION_FAILED'
+            ).length
+            setUnsafeQueriesRun(unsafeCount)
+          }
+
+          // Fetch recent questions
+          const history = await fetchQueryHistory(1, 10)
+          if (isMounted) {
+            const uniqueQuestions: QueryHistoryItem[] = []
+            const seenQuestions = new Set<string>()
+            for (const item of history.items) {
+              const normalized = item.question?.trim()
+              if (normalized && !seenQuestions.has(normalized.toLowerCase())) {
+                seenQuestions.add(normalized.toLowerCase())
+                uniqueQuestions.push(item)
+                if (uniqueQuestions.length >= 3) break
+              }
+            }
+            setRecentQuestions(uniqueQuestions)
+          }
+        } catch {
+          if (isMounted) {
+            setBlockedQueriesCount(0)
+            setUnsafeQueriesRun(0)
+          }
         }
       }
     }
@@ -126,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [isViewer])
 
   useLayoutEffect(() => {
     const updateIndicator = () => {
@@ -157,8 +174,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
     <aside className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''}`}>
       {/* Brand Header */}
       <div className="brand-section">
-        <div className="brand-logo" title="QueryTrust AI">
-          QT
+        <div className="brand-logo-wrap" title="QueryTrust AI" aria-hidden="true">
+          <QueryTrustLogo size={isCollapsed ? 32 : 30} />
         </div>
         {!isCollapsed && (
           <div className="brand-info">
@@ -173,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       </div>
 
@@ -184,13 +201,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           className={`sidebar-ask-cta ${activeTab === 'ask-data' ? 'active' : ''}`}
           onClick={() => onSelectTab('ask-data')}
           title="Ask governed equipment question"
-          aria-label="Ask a question"
+          aria-label={isCollapsed ? 'Ask a question' : undefined}
         >
-          <MessageSquareText size={18} className="sidebar-ask-icon" />
+          <MessageSquareText size={18} className="sidebar-ask-icon" aria-hidden="true" />
           {!isCollapsed && (
             <>
               <span className="sidebar-ask-text">Ask a question</span>
-              <kbd className="sidebar-ask-kbd">⌘K</kbd>
+              <kbd className="sidebar-ask-kbd" aria-hidden="true">⌘K</kbd>
             </>
           )}
         </button>
@@ -342,25 +359,41 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           type="button"
           className="sidebar-safety-shield-card"
           onClick={() => onSelectTab('evaluations')}
-          title="Safety Shield Active: Click to inspect Safety Proof"
-          aria-label="Inspect Safety Shield metrics in Safety proof"
+          title={
+            isViewer
+              ? 'Safety Shield: Protected read-only environment'
+              : `Safety Shield Active (${isAdmin ? 'All users' : 'Your questions'}): Click to inspect Safety proof`
+          }
+          aria-label={isCollapsed ? (isViewer ? 'Safety Shield: Protected read-only' : 'Safety Shield') : undefined}
         >
           <div className="shield-card-top">
             <span className="shield-pulsing-dot" aria-hidden="true" />
             <Shield size={14} className="shield-card-icon" />
-            {!isCollapsed && <span className="shield-card-status">Safety Shield</span>}
+            {!isCollapsed && (
+              <span className="shield-card-status">
+                Safety Shield &bull; {isViewer ? 'Read-only' : isAdmin ? 'All users' : 'Your questions'}
+              </span>
+            )}
           </div>
           {!isCollapsed && (
-            <div className="shield-card-metrics">
-              <div className="shield-metric-row">
-                <span className="shield-metric-label">Unsafe queries run</span>
-                <span className="shield-metric-val zero">0</span>
+            isViewer ? (
+              <div className="shield-card-metrics" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem 0' }}>
+                <span className="badge badge-success" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', fontWeight: 600 }}>
+                  Protected: read-only
+                </span>
               </div>
-              <div className="shield-metric-row">
-                <span className="shield-metric-label">Attacks blocked</span>
-                <span className="shield-metric-val blocked">{blockedQueriesCount}</span>
+            ) : (
+              <div className="shield-card-metrics">
+                <div className="shield-metric-row">
+                  <span className="shield-metric-label">Unsafe queries run</span>
+                  <span className="shield-metric-val zero">{unsafeQueriesRun}</span>
+                </div>
+                <div className="shield-metric-row">
+                  <span className="shield-metric-label">Attacks blocked</span>
+                  <span className="shield-metric-val blocked">{blockedQueriesCount ?? 0}</span>
+                </div>
               </div>
-            </div>
+            )
           )}
         </button>
       </div>

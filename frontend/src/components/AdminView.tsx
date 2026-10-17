@@ -18,6 +18,8 @@ import {
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
+import { PageHeader } from './PageHeader'
+import { HumanDate } from './HumanDate'
 
 export const AdminView: React.FC = () => {
   const { user: currentUser } = useAuth()
@@ -102,26 +104,36 @@ export const AdminView: React.FC = () => {
     }
   }
 
-  const getAuditStatusBadge = (status: string) => {
-    const s = status.toLowerCase()
+  const getAuditStatusPill = (log: AuditLogItem) => {
+    const s = log.status.toLowerCase()
     if (s.includes('block')) {
       return (
         <span className="badge badge-danger" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <ShieldAlert size={11} /> Blocked
+          <ShieldAlert size={11} /> Blocked for safety
         </span>
       )
     }
-    if (s.includes('exec') || s.includes('success') || s.includes('preview')) {
+    if (s.includes('exec') || s.includes('success')) {
+      const parts: string[] = []
+      if (log.execution_duration_ms) parts.push(`Ran in ${log.execution_duration_ms} ms`)
+      if (log.row_count !== undefined && log.row_count !== null) parts.push(`${log.row_count} rows`)
       return (
         <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <CheckCircle2 size={11} /> Safe
+          <CheckCircle2 size={11} /> {parts.length > 0 ? parts.join(', ') : 'Executed'}
+        </span>
+      )
+    }
+    if (s.includes('preview')) {
+      return (
+        <span className="badge badge-neutral" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          Checked, not run
         </span>
       )
     }
     if (s.includes('clarif')) {
       return <span className="badge badge-warning">Clarified</span>
     }
-    return <span className="badge badge-neutral">{status}</span>
+    return <span className="badge badge-neutral">{log.status}</span>
   }
 
   if (currentUser?.role !== 'admin') {
@@ -142,21 +154,11 @@ export const AdminView: React.FC = () => {
   return (
     <div className="admin-container">
       {/* Header */}
-      <div className="page-action-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div>
-          <div className="overview-eyebrow">
-            <span style={{ color: 'var(--qt-accent)' }}>●</span>
-            GOVERNANCE &amp; SECURITY SETTINGS
-          </div>
-          <h2 className="view-section-title" style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0.2rem 0' }}>
-            People &amp; Access Control
-          </h2>
-          <p className="view-section-desc" style={{ fontSize: '0.84rem', color: 'var(--qt-muted)', margin: 0 }}>
-            Who can do what in QueryTrust AI. Server-enforced roles and tamper-evident activity history.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <PageHeader
+        title="People & access"
+        description="Who can do what in QueryTrust AI. Permissions are enforced on every backend request."
+        helpText="Viewer accounts see a simplified view without SQL. Analysts inspect diagnostics. Admins manage accounts and activity history."
+        actions={
           <button
             type="button"
             className="btn btn-secondary btn-sm"
@@ -166,12 +168,8 @@ export const AdminView: React.FC = () => {
             <RefreshCw size={13} className={loading ? 'spin-icon' : ''} style={{ marginRight: 4 }} />
             <span>Refresh</span>
           </button>
-          <ExplainButton
-            title="People & Access Security"
-            explanation="Role-based permissions are validated on every backend API request. Viewer accounts see a simplified view without SQL; Analysts inspect diagnostics; Admins manage accounts and audit history."
-          />
-        </div>
-      </div>
+        }
+      />
 
       {/* Notifications */}
       {notification && (
@@ -196,10 +194,9 @@ export const AdminView: React.FC = () => {
         <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--qt-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Users size={18} style={{ color: 'var(--qt-accent)' }} />
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Authorized People ({users.length})</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Who can do what ({users.length})</h3>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="badge badge-success">Backend Enforced RBAC</span>
             <ExplainButton
               title="User Roles"
               explanation="Admin: Access to benchmarks, user permissions, and audit logs. Analyst: Query asking, model refitting, and diagnostics. Viewer: Simplified plain-English asking with SQL hidden."
@@ -317,17 +314,16 @@ export const AdminView: React.FC = () => {
           <div className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <History size={18} style={{ color: 'var(--qt-accent)' }} />
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Activity History &amp; Audit Trail</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Activity history</h3>
               <p style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', margin: 0 }}>
-                Includes all natural-language requests and security blocks.
+                All natural-language requests and safety blocks.
               </p>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="badge badge-neutral">Tamper-evident logs</span>
             <ExplainButton
-              title="Activity History Audit"
-              explanation="Every question asked is logged with its AST safety validation outcome and row count. When malicious queries like DROP TABLE are attempted, they are flagged as Blocked."
+              title="Activity History"
+              explanation="Every question asked is logged with its safety validation outcome and row count. Malicious queries like DROP TABLE are flagged as Blocked."
             />
           </div>
         </div>
@@ -336,18 +332,16 @@ export const AdminView: React.FC = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th style={{ width: '100px' }}>Audit ID</th>
-                <th>Question Asked</th>
-                <th style={{ width: '120px' }}>Status</th>
-                <th style={{ width: '120px' }}>Execution Time</th>
-                <th style={{ width: '110px' }}>Returned Rows</th>
-                <th style={{ width: '140px' }}>Recorded At</th>
+                <th style={{ width: '80px' }}>ID</th>
+                <th>Question asked</th>
+                <th style={{ width: '220px' }}>Result</th>
+                <th style={{ width: '140px' }}>When</th>
               </tr>
             </thead>
             <tbody>
               {auditLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem' }}>
+                  <td colSpan={4} style={{ textAlign: 'center', padding: '2.5rem' }}>
                     <p className="text-muted">No natural-language questions executed yet.</p>
                   </td>
                 </tr>
@@ -362,15 +356,9 @@ export const AdminView: React.FC = () => {
                         {log.question || 'N/A'}
                       </span>
                     </td>
-                    <td>{getAuditStatusBadge(log.status)}</td>
-                    <td style={{ color: 'var(--qt-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-                      {log.execution_duration_ms ? `${log.execution_duration_ms} ms` : '—'}
-                    </td>
-                    <td style={{ color: 'var(--qt-muted)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-                      {log.row_count ?? '—'}
-                    </td>
-                    <td style={{ color: 'var(--qt-muted)', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
+                    <td>{getAuditStatusPill(log)}</td>
+                    <td>
+                      <HumanDate iso={log.created_at} fallback="—" />
                     </td>
                   </tr>
                 ))

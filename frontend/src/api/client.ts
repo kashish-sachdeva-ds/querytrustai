@@ -101,6 +101,17 @@ export interface DeviceListResponse {
   total_pages: number
 }
 
+export interface DeviceCountsResponse {
+  total: number
+  active: number
+  offline: number
+  maintenance: number
+  retired: number
+  open_incidents: number
+  needs_data_fix: number
+}
+
+
 export interface SiteSummary {
   id: number
   site_code: string
@@ -404,6 +415,8 @@ export async function fetchDevices(params: {
   device_type?: string
   status?: string
   site_id?: number
+  has_open_incidents?: boolean
+  needs_data_fix?: boolean
   sort_by?: string
   sort_dir?: 'asc' | 'desc'
 }): Promise<DeviceListResponse> {
@@ -414,6 +427,8 @@ export async function fetchDevices(params: {
   if (params.device_type) query.set('device_type', params.device_type)
   if (params.status) query.set('status', params.status)
   if (params.site_id) query.set('site_id', params.site_id.toString())
+  if (params.has_open_incidents !== undefined) query.set('has_open_incidents', params.has_open_incidents.toString())
+  if (params.needs_data_fix !== undefined) query.set('needs_data_fix', params.needs_data_fix.toString())
   if (params.sort_by) query.set('sort_by', params.sort_by)
   if (params.sort_dir) query.set('sort_dir', params.sort_dir)
 
@@ -431,6 +446,15 @@ export async function fetchDeviceDetail(id: number): Promise<DeviceDetail> {
   }
   return res.json()
 }
+
+export async function fetchDeviceCounts(): Promise<DeviceCountsResponse> {
+  const res = await authFetch(`${API_BASE}/devices/counts`)
+  if (!res.ok) {
+    throw new Error(`Failed to fetch device counts: ${res.status}`)
+  }
+  return res.json()
+}
+
 
 export async function fetchSites(region?: string): Promise<SiteListResponse> {
   const query = new URLSearchParams()

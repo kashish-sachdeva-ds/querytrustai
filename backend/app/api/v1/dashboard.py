@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import re
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -64,20 +65,36 @@ def get_dashboard_summary(
     # 5. Total sites
     total_sites = db.query(func.count(Site.id)).scalar() or 0
 
-    # 6. Devices by type (normalized trim)
+    # 6. Devices by type. The source dataset deliberately includes casing and
+    # whitespace variants; the overview is an operational aggregate, so it
+    # presents the approved category vocabulary while Data health retains the
+    # finding that identifies the source-quality issue.
     type_rows = (
-        db.query(func.trim(Device.device_type).label("dtype"), func.count(Device.id))
+        db.query(func.lower(func.trim(Device.device_type)).label("dtype"), func.count(Device.id))
         .group_by("dtype")
         .order_by(func.count(Device.id).desc())
         .all()
     )
+    approved_type_names = {
+        "switch": "Switch",
+        "router": "Router",
+        "access point": "Access Point",
+        "gateway": "Gateway",
+        "firewall": "Firewall",
+    }
+    normalized_type_counts: dict[str, int] = {}
+    for raw_type, count in type_rows:
+        normalized_key = re.sub(r"\s+", " ", (raw_type or "").strip().lower())
+        display_name = approved_type_names.get(normalized_key, normalized_key.title() or "Unknown")
+        normalized_type_counts[display_name] = normalized_type_counts.get(display_name, 0) + count
+
     devices_by_type = [
         MetricItem(
-            name=row[0].title(),
-            value=row[1],
-            percentage=round((row[1] / total_devices * 100), 1) if total_devices > 0 else 0,
+            name=name,
+            value=count,
+            percentage=round((count / total_devices * 100), 1) if total_devices > 0 else 0,
         )
-        for row in type_rows
+        for name, count in sorted(normalized_type_counts.items(), key=lambda item: item[1], reverse=True)
     ]
 
     # 7. Devices by status

@@ -3,7 +3,7 @@ Unit and integration tests for Telemetry Anomaly Detection Subsystem.
 
 Verifies:
 - Unauthenticated requests are rejected (401).
-- Viewers can view model summary and run anomaly scans (200).
+- Viewers can view model summary and the fixed current unusual-activity view (200).
 - Viewers cannot trigger model training/re-fitting (403).
 - Analysts and Admins can trigger model training (200).
 - Scan returns top ranked statistical outliers with normalized scores.
@@ -36,11 +36,30 @@ def test_anomaly_summary_returns_model_metadata(client, viewer_headers):
     assert data["is_active"] is True
 
 
-def test_anomaly_scan_viewer_allowed(client, viewer_headers):
+def test_current_unusual_activity_viewer_allowed(client, viewer_headers):
+    resp = client.get("/api/v1/anomalies/current", headers=viewer_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["model_version"] == "1.0.0"
+    assert data["total_telemetry_scanned"] >= 20000
+    assert len(data["top_anomalies"]) <= 50
+
+
+def test_anomaly_scan_forbidden_for_viewer(client, viewer_headers):
     resp = client.post(
         "/api/v1/anomalies/scan",
         json={"limit": 25, "threshold": 0.60},
         headers=viewer_headers,
+    )
+    assert resp.status_code == 403
+
+
+def test_anomaly_scan_returns_ranked_outliers_for_analyst(client, analyst_headers):
+    resp = client.post(
+        "/api/v1/anomalies/scan",
+        json={"limit": 25, "threshold": 0.60},
+        headers=analyst_headers,
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -64,6 +83,9 @@ def test_anomaly_scan_viewer_allowed(client, viewer_headers):
     assert "telemetry" in top_item
     assert "asset_tag" in top_item
     assert "site_name" in top_item
+    assert 0 <= top_item["problem_signal_count"] <= 5
+    ranking_keys = [(item["anomaly_score"], item["problem_signal_count"]) for item in data["top_anomalies"]]
+    assert ranking_keys == sorted(ranking_keys, reverse=True)
 
 
 def test_anomaly_train_forbidden_for_viewer(client, viewer_headers):

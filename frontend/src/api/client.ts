@@ -725,6 +725,7 @@ export interface AnomalyItem {
   recorded_at: string
   telemetry: TelemetryFeatureValues
   anomaly_score: number
+  problem_signal_count: number
   is_outlier: boolean
   known_injected_outlier?: boolean | null
   rank: number
@@ -774,6 +775,15 @@ export async function runAnomalyScan(
     }
     return res.json()
   })
+}
+
+export async function fetchCurrentUnusualActivity(): Promise<AnomalyScanResponse> {
+  const res = await authFetch(`${API_BASE}/anomalies/current`)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiRequestError(err.detail || `Failed to load unusual activity: ${res.status}`, res.status, res.status >= 500)
+  }
+  return res.json()
 }
 
 export async function trainAnomalyModel(contamination: number = 0.015): Promise<ModelTrainResponse> {

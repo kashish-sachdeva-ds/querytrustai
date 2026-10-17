@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react'
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronRight,
+  Info,
   Zap,
   Search,
   Flame,
 } from 'lucide-react'
 import {
   fetchAnomalySummary,
+  fetchCurrentUnusualActivity,
   runAnomalyScan,
   trainAnomalyModel,
   type ModelMetadataResponse,
@@ -18,31 +21,40 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ExplainButton } from './ExplainButton'
 
-export const AnomalyMonitorView: React.FC = () => {
+interface AnomalyMonitorViewProps {
+  onOpenDevice: (deviceId: number) => void
+}
+
+export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDevice }) => {
   const { user } = useAuth()
   const { mode: viewMode } = useTheme()
   const [modelMeta, setModelMeta] = useState<ModelMetadataResponse | null>(null)
   const [scanResult, setScanResult] = useState<AnomalyScanResponse | null>(null)
   const [anomalies, setAnomalies] = useState<AnomalyItem[]>([])
-  const [isLoadingMeta, setIsLoadingMeta] = useState(true)
+  const [isLoadingMeta, setIsLoadingMeta] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [isTraining, setIsTraining] = useState(false)
   const [scanLimit, setScanLimit] = useState(50)
   const [scoreThreshold, setScoreThreshold] = useState(0.65)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [showTechnicalMetrics, setShowTechnicalMetrics] = useState(false)
+  const [shownNumbers, setShownNumbers] = useState<Set<number>>(() => new Set())
 
-  const canTrain = user?.role === 'admin' || user?.role === 'analyst'
+  const canManageScan = user?.role === 'admin' || user?.role === 'analyst'
+  const canTrain = canManageScan
 
   const loadInitialData = async () => {
-    setIsLoadingMeta(true)
+    setIsLoadingMeta(viewMode === 'expert')
     setErrorMessage(null)
     try {
-      const meta = await fetchAnomalySummary()
-      setModelMeta(meta)
+      if (viewMode === 'expert') {
+        const meta = await fetchAnomalySummary()
+        setModelMeta(meta)
+      }
       setIsScanning(true)
-      const scan = await runAnomalyScan(scanLimit, scoreThreshold)
+      const scan = canManageScan
+        ? await runAnomalyScan(scanLimit, scoreThreshold)
+        : await fetchCurrentUnusualActivity()
       setScanResult(scan)
       setAnomalies(scan.top_anomalies)
     } catch (err: any) {
@@ -55,7 +67,7 @@ export const AnomalyMonitorView: React.FC = () => {
 
   useEffect(() => {
     loadInitialData()
-  }, [])
+  }, [viewMode, canManageScan])
 
   const handleScan = async () => {
     setIsScanning(true)
@@ -101,6 +113,12 @@ export const AnomalyMonitorView: React.FC = () => {
     return 'var(--qt-text)'
   }
 
+  const getUnusualLabel = (score: number) => {
+    if (score >= 0.85) return 'Extremely unusual'
+    if (score >= 0.7) return 'Very unusual'
+    return 'Slightly unusual'
+  }
+
   const getOutlierStory = (t: AnomalyItem['telemetry']): string[] => {
     const stories: string[] = []
     if (t.temperature_c > 75) stories.push(`Running hot (${t.temperature_c}°C)`)
@@ -114,13 +132,23 @@ export const AnomalyMonitorView: React.FC = () => {
 
   return (
     <div className="view-container">
-      {/* Governance & Policy Disclosure Banner */}
-      <div className="governance-banner" style={{ marginBottom: '1.25rem', borderColor: 'rgba(167, 56, 44, 0.3)' }}>
+      <div className="unusual-activity-hero">
+        <h2>Unusual activity</h2>
+        <p>Equipment that is behaving differently from normal right now.</p>
+      </div>
+
+      <div className="unusual-activity-note" role="note">
+        <Info size={18} aria-hidden="true" />
+        <p>Unusual does not mean it will fail. This flags readings that look different from normal so you can take a look.</p>
+      </div>
+
+      {viewMode === 'expert' && (
+      <div className="governance-banner unusual-activity-technical-note" style={{ marginBottom: '1.25rem' }}>
         <div className="banner-left">
-          <AlertTriangle size={20} style={{ color: 'var(--qt-danger)', flexShrink: 0, marginTop: 2 }} />
+          <Info size={20} style={{ color: 'var(--qt-accent)', flexShrink: 0, marginTop: 2 }} />
           <div>
-            <div className="banner-title" style={{ color: 'var(--qt-danger)', fontSize: '0.9rem' }}>
-              Governance Disclosure: Statistical Outlier Monitor
+            <div className="banner-title" style={{ fontSize: '0.9rem' }}>
+              Technical disclosure: statistical outlier monitor
             </div>
             <div className="banner-desc">
               Scores reflect statistical distance calculated by an unsupervised <strong>scikit-learn IsolationForest</strong> model across CPU, memory, operating temperature, packet loss, and latency.
@@ -131,13 +159,13 @@ export const AnomalyMonitorView: React.FC = () => {
           </div>
         </div>
         <div className="banner-right" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="badge badge-warning">Unsupervised ML</span>
           <ExplainButton
             title="Statistical Outliers vs Failure"
             explanation="IsolationForest computes multidimensional distance from typical readings. While unusual readings highlight equipment needing review, they are not failure probabilities."
           />
         </div>
       </div>
+      )}
 
       {/* Success and Error Alerts */}
       {successMessage && (
@@ -152,7 +180,8 @@ export const AnomalyMonitorView: React.FC = () => {
         </div>
       )}
 
-      {/* Model Metadata Card */}
+      {/* Technical model metadata is intentionally exclusive to Expert mode. */}
+      {viewMode === 'expert' && (
       <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
         {isLoadingMeta ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0' }}>
@@ -199,8 +228,7 @@ export const AnomalyMonitorView: React.FC = () => {
               </div>
             </div>
 
-            {/* Benchmark Toggle for Simple vs Expert Mode */}
-            {(viewMode === 'expert' || showTechnicalMetrics) && modelMeta?.metrics?.synthetic_benchmark_metrics && (
+            {canManageScan && modelMeta?.metrics?.synthetic_benchmark_metrics && (
               <div
                 style={{
                   marginTop: '1rem',
@@ -246,59 +274,43 @@ export const AnomalyMonitorView: React.FC = () => {
               </div>
             )}
 
-            {viewMode === 'simple' && !showTechnicalMetrics && (
-              <button
-                type="button"
-                className="toggle-btn"
-                onClick={() => setShowTechnicalMetrics(true)}
-                style={{
-                  marginTop: '0.75rem',
-                  fontSize: '0.72rem',
-                  background: 'var(--qt-surface-muted)',
-                  border: '1px solid var(--qt-border)',
-                  padding: '3px 8px',
-                  borderRadius: 'var(--qt-radius-control)',
-                }}
-              >
-                Inspect technical model benchmarks (Precision / Recall / F1)
-              </button>
-            )}
           </>
         )}
       </div>
+      )}
 
       {/* Interactive Controls Dock */}
+      {canManageScan && (
       <div className="card" style={{ marginBottom: '1.25rem', padding: '1rem 1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--qt-muted)' }}>
-                How Unusual (Threshold):
+                Sensitivity
               </label>
               <select
-                className="select-input"
+                className="select-input unusual-activity-select"
                 value={scoreThreshold}
                 onChange={(e) => setScoreThreshold(parseFloat(e.target.value))}
                 style={{ width: '130px', padding: '0.35rem 0.6rem', fontSize: '0.78rem' }}
-                aria-label="Filter outlier score threshold"
+                aria-label="Sensitivity"
               >
-                <option value={0.55}>0.55 (Broad)</option>
-                <option value={0.65}>0.65 (Balanced)</option>
-                <option value={0.75}>0.75 (Strict)</option>
-                <option value={0.85}>0.85 (Extreme)</option>
+                <option value={0.85}>Fewer</option>
+                <option value={0.65}>Balanced</option>
+                <option value={0.55}>More</option>
               </select>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--qt-muted)' }}>
-                Max Display Rows:
+                Show
               </label>
               <select
-                className="select-input"
+                className="select-input unusual-activity-select"
                 value={scanLimit}
                 onChange={(e) => setScanLimit(parseInt(e.target.value))}
                 style={{ width: '90px', padding: '0.35rem 0.6rem', fontSize: '0.78rem' }}
-                aria-label="Filter max display rows"
+                aria-label="Number of unusual activity rows to show"
               >
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -329,14 +341,15 @@ export const AnomalyMonitorView: React.FC = () => {
           </button>
         </div>
       </div>
+      )}
 
       {/* Ranked Outliers Table with Human Stories */}
       <div className="card" style={{ overflow: 'hidden' }}>
         <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h3 className="card-title" style={{ fontSize: '1rem', margin: 0 }}>
-                Unusual Equipment Activity Stories ({anomalies.length})
+              <h3 className="card-title unusual-activity-section-title" style={{ fontSize: '1rem', margin: 0 }}>
+                Unusual equipment
               </h3>
               <ExplainButton
                 title="Unusual Activity Stories"
@@ -344,7 +357,9 @@ export const AnomalyMonitorView: React.FC = () => {
               />
             </div>
             <p style={{ fontSize: '0.78rem', color: 'var(--qt-muted)', margin: '0.2rem 0 0 0' }}>
-              Observations sorted descending by statistical deviation score.
+              {scanResult
+                ? `Showing the ${anomalies.length} most unusual of ${scanResult.anomalies_detected.toLocaleString()}.`
+                : 'Loading unusual activity.'}
             </p>
           </div>
           {scanResult && (
@@ -364,27 +379,41 @@ export const AnomalyMonitorView: React.FC = () => {
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--qt-muted)' }}>
             <CheckCircle2 size={36} style={{ color: 'var(--qt-success)', margin: '0 auto 0.75rem auto' }} />
             <h4 style={{ color: 'var(--qt-ink)', margin: '0 0 0.25rem 0' }}>All Telemetry Normal</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem' }}>No telemetry readings exceeded the deviation threshold of {scoreThreshold}.</p>
+            <p style={{ margin: 0, fontSize: '0.85rem' }}>No readings are currently unusual enough to appear here.</p>
           </div>
         ) : (
           <div className="table-responsive">
-            <table className="data-table">
+            <table className="data-table unusual-activity-table">
               <thead>
                 <tr>
                   <th style={{ width: '60px' }}>Rank</th>
-                  <th style={{ width: '150px' }}>How Unusual</th>
-                  <th>Observed Pattern Story</th>
-                  <th style={{ width: '130px' }}>Asset Tag</th>
+                  <th style={{ width: '150px' }}>How unusual</th>
+                  <th>Observed patterns</th>
+                  <th style={{ width: '130px' }}>Asset tag</th>
                   <th style={{ width: '160px' }}>Location</th>
-                  <th>Raw Sensor Readings</th>
-                  <th style={{ width: '120px' }}>Timestamp</th>
+                  {viewMode === 'expert' && <th>Raw sensor readings</th>}
+                  <th style={{ width: '120px' }}>Recorded</th>
+                  <th style={{ width: '130px' }}>Device</th>
                 </tr>
               </thead>
               <tbody>
                 {anomalies.map((item) => {
                   const stories = getOutlierStory(item.telemetry)
                   return (
-                    <tr key={item.reading_id}>
+                    <tr
+                      key={item.reading_id}
+                      className="interactive-row"
+                      onClick={() => onOpenDevice(item.device_id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          onOpenDevice(item.device_id)
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Open ${item.asset_tag} device details`}
+                    >
                       <td>
                         <span className="badge badge-neutral" style={{ fontWeight: 600 }}>
                           #{item.rank}
@@ -396,21 +425,11 @@ export const AnomalyMonitorView: React.FC = () => {
                             style={{
                               fontWeight: 700,
                               color: getScoreColor(item.anomaly_score),
-                              fontFamily: 'var(--font-mono)',
                               fontSize: '0.88rem',
                             }}
                           >
-                            {item.anomaly_score.toFixed(3)}
+                            {getUnusualLabel(item.anomaly_score)}
                           </span>
-                          {item.known_injected_outlier && (
-                            <span
-                              className="badge badge-primary"
-                              style={{ fontSize: '0.62rem', padding: '1px 5px' }}
-                              title="Synthetic benchmark verified anomaly spike"
-                            >
-                              Injected Spike
-                            </span>
-                          )}
                         </div>
                         <div
                           style={{
@@ -449,6 +468,31 @@ export const AnomalyMonitorView: React.FC = () => {
                               {st}
                             </span>
                           ))}
+                          {viewMode === 'simple' && (
+                            <div>
+                              <button
+                                type="button"
+                                className="unusual-activity-numbers-toggle"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  setShownNumbers((previous) => {
+                                    const next = new Set(previous)
+                                    if (next.has(item.reading_id)) next.delete(item.reading_id)
+                                    else next.add(item.reading_id)
+                                    return next
+                                  })
+                                }}
+                                aria-expanded={shownNumbers.has(item.reading_id)}
+                              >
+                                {shownNumbers.has(item.reading_id) ? 'Hide numbers' : 'Show numbers'}
+                              </button>
+                              {shownNumbers.has(item.reading_id) && (
+                                <div className="unusual-activity-numbers" aria-label={`Sensor readings for ${item.asset_tag}`}>
+                                  CPU {item.telemetry.cpu_percent}% · Memory {item.telemetry.memory_percent}% · Temperature {item.telemetry.temperature_c}°C · Packet loss {item.telemetry.packet_loss_percent}% · Latency {item.telemetry.latency_ms}ms
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td>
@@ -461,7 +505,7 @@ export const AnomalyMonitorView: React.FC = () => {
                         <div style={{ fontWeight: 500, color: 'var(--qt-ink)' }}>{item.site_name}</div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>Region: {item.region}</div>
                       </td>
-                      <td>
+                      {viewMode === 'expert' && <td>
                         <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                           <span
                             className="badge"
@@ -514,7 +558,7 @@ export const AnomalyMonitorView: React.FC = () => {
                             {item.telemetry.latency_ms}ms
                           </span>
                         </div>
-                      </td>
+                      </td>}
                       <td style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', fontFamily: 'var(--font-mono)' }}>
                         {new Date(item.recorded_at).toLocaleDateString([], {
                           month: 'short',
@@ -522,6 +566,18 @@ export const AnomalyMonitorView: React.FC = () => {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-outline unusual-activity-open-device"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onOpenDevice(item.device_id)
+                          }}
+                        >
+                          Open device <ChevronRight size={14} aria-hidden="true" />
+                        </button>
                       </td>
                     </tr>
                   )

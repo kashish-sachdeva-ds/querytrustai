@@ -37,6 +37,7 @@ import {
   type ChatMessage,
 } from '../api/client'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
 
 interface MessageItem {
@@ -303,8 +304,14 @@ const QueryLoadingSkeleton: React.FC = () => (
   </div>
 )
 
-export const AskDataView: React.FC = () => {
+interface AskDataViewProps {
+  initialQuestion?: string | null
+}
+
+export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => {
   const { mode } = useTheme()
+  const { user } = useAuth()
+  const isViewer = user?.role === 'viewer'
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageItem[]>([])
@@ -323,6 +330,10 @@ export const AskDataView: React.FC = () => {
   >({})
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (initialQuestion?.trim()) setInputQuestion(initialQuestion)
+  }, [initialQuestion])
 
   useEffect(() => {
     loadSessions()
@@ -816,8 +827,8 @@ export const AskDataView: React.FC = () => {
                           </div>
                         )}
 
-                        {/* SQL Preview Block (Simple vs Expert Mode) */}
-                        {msg.previewData?.sql_preview && (
+                        {/* SQL Preview Block (Simple vs Expert Mode) - Hidden for Viewer */}
+                        {msg.previewData?.sql_preview && !isViewer && (
                           <div className="sql-preview-container">
                             {mode === 'simple' && (
                               <button

@@ -293,6 +293,18 @@ class TelemetryAnomalyDetector:
             is_outlier = bool(preds[i] == -1 or score >= threshold)
 
             if is_outlier:
+                # A human-friendly severity tie-breaker. This is deliberately a
+                # count of readings outside documented review thresholds, not a
+                # prediction about device health or failure.
+                problem_signal_count = sum(
+                    (
+                        t_reading.cpu_percent > 85,
+                        t_reading.memory_percent > 85,
+                        t_reading.temperature_c > 75,
+                        t_reading.packet_loss_percent > 5,
+                        t_reading.latency_ms > 100,
+                    )
+                )
                 results.append(
                     {
                         "reading_id": t_reading.id,
@@ -312,13 +324,18 @@ class TelemetryAnomalyDetector:
                             "latency_ms": t_reading.latency_ms,
                         },
                         "anomaly_score": score,
+                        "problem_signal_count": problem_signal_count,
                         "is_outlier": is_outlier,
                         "known_injected_outlier": t_reading.known_injected_outlier,
                     }
                 )
 
-        # Sort descending by anomaly score
-        results.sort(key=lambda x: x["anomaly_score"], reverse=True)
+        # Preserve the statistical rank, then prefer readings with more
+        # independently concerning signals when rounded scores are tied.
+        results.sort(
+            key=lambda x: (x["anomaly_score"], x["problem_signal_count"]),
+            reverse=True,
+        )
 
         # Add ranks
         for rank_idx, item in enumerate(results[:limit], start=1):

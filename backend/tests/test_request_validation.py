@@ -13,17 +13,17 @@ def test_preview_rejects_blank_question_and_unknown_fields(client, analyst_heade
     assert extra.status_code == 422
 
 
-def test_anomaly_scan_rejects_coerced_or_extra_input(client, viewer_headers):
+def test_anomaly_scan_rejects_coerced_or_extra_input(client, analyst_headers):
     coerced = client.post(
         "/api/v1/anomalies/scan",
         json={"limit": "50", "threshold": 0.65},
-        headers=viewer_headers,
+        headers=analyst_headers,
     )
     assert coerced.status_code == 422
 
     extra = client.post(
         "/api/v1/anomalies/scan",
         json={"limit": 10, "threshold": 0.65, "admin_override": True},
-        headers=viewer_headers,
+        headers=analyst_headers,
     )
     assert extra.status_code == 422

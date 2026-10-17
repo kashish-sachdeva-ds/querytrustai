@@ -44,6 +44,7 @@ class AnomalyItem(BaseModel):
     recorded_at: datetime
     telemetry: TelemetryFeatureValues
     anomaly_score: float  # Normalized 0.0 to 1.0 (higher = more anomalous)
+    problem_signal_count: int = Field(ge=0, le=5)
     is_outlier: bool
     known_injected_outlier: Optional[bool] = None
     rank: int

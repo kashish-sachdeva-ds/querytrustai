@@ -53,10 +53,27 @@ const AppShell: React.FC = () => {
   const { theme, mode, toggleTheme, toggleMode } = useTheme()
   const [activeTab, setActiveTab] = useState<ActiveTab>(getTabFromUrl)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+  const [pendingAskQuestion, setPendingAskQuestion] = useState<string | null>(null)
 
   const selectTab = (tab: ActiveTab) => {
-    pushUrlParams({ tab })
+    if (tab === 'overview') {
+      // Home is a clean destination, never a carrier for inventory filters.
+      window.history.pushState({}, '', `${window.location.pathname}${window.location.hash}`)
+    } else {
+      pushUrlParams({ tab })
+    }
+    if (tab !== 'ask-data') setPendingAskQuestion(null)
     withLayoutTransition(() => setActiveTab(tab))
+  }
+
+  const openAskQuestion = (question: string) => {
+    setPendingAskQuestion(question)
+    selectTab('ask-data')
+  }
+
+  const openDevice = (deviceId: number) => {
+    pushUrlParams({ tab: 'devices', device: deviceId })
+    withLayoutTransition(() => setActiveTab('devices'))
   }
 
   useEffect(() => {
@@ -132,13 +149,23 @@ const AppShell: React.FC = () => {
 
         <main className="content-area">
           <div className="page-transition" key={activeTab}>
-            {activeTab === 'overview' && <OverviewView onNavigate={selectTab} />}
+            {activeTab === 'overview' && (
+              <OverviewView
+                onNavigate={selectTab}
+                onAskQuestion={openAskQuestion}
+                onOpenDevice={openDevice}
+              />
+            )}
             {activeTab === 'devices' && <DevicesView />}
-            {activeTab === 'ask-data' && <AskDataView />}
+            {activeTab === 'ask-data' && <AskDataView initialQuestion={pendingAskQuestion} />}
             {activeTab === 'admin' && <AdminView />}
 
             {activeTab === 'data-quality' && <DataQualityView />}
-            {activeTab === 'anomalies' && <AnomalyMonitorView />}
+            {activeTab === 'anomalies' && (
+              <AnomalyMonitorView
+                onOpenDevice={openDevice}
+              />
+            )}
 
             {activeTab === 'history' && <QueryHistoryView />}
             {activeTab === 'evaluations' && <EvaluationLabView />}

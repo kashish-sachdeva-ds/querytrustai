@@ -20,7 +20,13 @@ def test_dashboard_summary_returns_live_counts(client, viewer_headers):
     assert data["open_service_events"] > 0
 
     # Categorical breakdown lists
-    assert len(data["devices_by_type"]) > 0
+    assert {item["name"] for item in data["devices_by_type"]} == {
+        "Switch",
+        "Router",
+        "Access Point",
+        "Gateway",
+        "Firewall",
+    }
     assert len(data["devices_by_status"]) > 0
     assert len(data["events_by_severity"]) > 0
     assert len(data["recent_service_events"]) <= 5

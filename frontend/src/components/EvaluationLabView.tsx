@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   ChevronDown,
   Shield,
+  ShieldCheck,
   SlidersHorizontal,
   FileCheck,
   FlaskConical,
@@ -36,6 +37,7 @@ import { withLayoutTransition } from '../motion'
 import { readUrlParam, replaceUrlParams } from '../urlState'
 import { ExplainButton } from './ExplainButton'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
 const CATEGORY_META: Record<
   string,
@@ -66,6 +68,8 @@ type EvaluationTab = 'overview' | 'categories' | 'cases' | 'failures'
 
 export default function EvaluationLabView() {
   const { mode: viewMode } = useTheme()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
   const [runResult, setRunResult] = useState<EvaluationRunResponse | null>(null)
   const [pastRuns, setPastRuns] = useState<EvaluationRunListItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -265,24 +269,45 @@ export default function EvaluationLabView() {
           </div>
         </div>
 
-        <button
-          type="button"
-          className="eval-lab__run-btn"
-          onClick={handleRunEvaluation}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <span className="eval-lab__spinner" />
-              <span>Running Safety Benchmark…</span>
-            </>
-          ) : (
-            <>
-              <Play size={14} fill="currentColor" />
-              <span>Execute Safety Benchmark</span>
-            </>
-          )}
-        </button>
+        {isAdmin ? (
+          <button
+            type="button"
+            className="eval-lab__run-btn"
+            onClick={handleRunEvaluation}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="eval-lab__spinner" />
+                <span>Running Safety Benchmark…</span>
+              </>
+            ) : (
+              <>
+                <Play size={14} fill="currentColor" />
+                <span>Execute Safety Benchmark</span>
+              </>
+            )}
+          </button>
+        ) : (
+          <div
+            className="eval-lab__readonly-badge"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 14px',
+              borderRadius: 'var(--qt-radius-control, 6px)',
+              background: 'var(--qt-surface-muted)',
+              border: '1px solid var(--qt-border)',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'var(--qt-text)',
+            }}
+          >
+            <ShieldCheck size={15} style={{ color: 'var(--qt-accent)' }} />
+            <span>Read-only Safety Proof &bull; Execution reserved for Admin</span>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}

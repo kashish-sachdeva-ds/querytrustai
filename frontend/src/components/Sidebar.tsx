@@ -8,6 +8,7 @@ import {
   FlaskConical,
   Users,
   Shield,
+  ShieldAlert,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -79,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         const dqSummary = await fetchDataQualitySummary()
         if (isMounted) setDataHealthCount(dqSummary.total_findings)
       } catch {
-        if (isMounted) setDataHealthCount(6) // fallback based on known rules
+        if (isMounted) setDataHealthCount(null)
       }
 
       // 2. Telemetry anomalies count
@@ -99,12 +100,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         const history = await fetchQueryHistory(1, 20)
         if (isMounted) {
           const blocked = history.items.filter((item) => item.status === 'blocked').length
-          setBlockedQueriesCount(blocked > 0 ? blocked : 50)
-          setRecentQuestions(history.items.slice(0, 3))
+          setBlockedQueriesCount(blocked)
+
+          // Show only unique questions, newest first
+          const uniqueQuestions: QueryHistoryItem[] = []
+          const seenQuestions = new Set<string>()
+          for (const item of history.items) {
+            const normalized = item.question?.trim()
+            if (normalized && !seenQuestions.has(normalized.toLowerCase())) {
+              seenQuestions.add(normalized.toLowerCase())
+              uniqueQuestions.push(item)
+              if (uniqueQuestions.length >= 3) break
+            }
+          }
+          setRecentQuestions(uniqueQuestions)
         }
       } catch {
         if (isMounted) {
-          setBlockedQueriesCount(50)
+          setBlockedQueriesCount(0)
         }
       }
     }
@@ -198,18 +211,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
             </button>
           </div>
           <div className="sidebar-recent-list">
-            {recentQuestions.map((q) => (
-              <button
-                key={q.id}
-                type="button"
-                className="sidebar-recent-item"
-                onClick={() => onSelectTab('ask-data')}
-                title={q.question}
-              >
-                <Clock size={11} className="sidebar-recent-icon" />
-                <span className="sidebar-recent-text">{q.question}</span>
-              </button>
-            ))}
+            {recentQuestions.map((q) => {
+              const isBlocked = q.status.toLowerCase() === 'blocked'
+              return (
+                <button
+                  key={q.id}
+                  type="button"
+                  className={`sidebar-recent-item ${isBlocked ? 'sidebar-recent-item--blocked' : ''}`}
+                  onClick={() => onSelectTab('ask-data')}
+                  title={q.question}
+                >
+                  {isBlocked ? <ShieldAlert size={11} className="sidebar-recent-icon" /> : <Clock size={11} className="sidebar-recent-icon" />}
+                  <span className="sidebar-recent-text">{q.question}</span>
+                  {isBlocked && <span className="sidebar-recent-blocked">Blocked</span>}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
@@ -280,7 +297,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
             <>
               <span>Unusual activity</span>
               {anomaliesCount !== null && (
-                <span className="nav-count-badge info" title={`${anomaliesCount} statistical outliers`}>
+                <span
+                  className="nav-count-badge neutral"
+                  title="A small share is flagged by design. Unusual does not mean failing."
+                >
                   {anomaliesCount}
                 </span>
               )}

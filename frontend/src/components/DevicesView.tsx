@@ -8,7 +8,6 @@ import {
   X,
   Building,
   RefreshCw,
-  ExternalLink,
   ChevronDown,
   Copy,
   Check,
@@ -36,13 +35,13 @@ const readPositiveInteger = (value: string | null, fallback: number) => {
 }
 
 const readDeviceUrlState = () => {
-  const pageSize = readPositiveInteger(readUrlParam('pageSize'), 20)
+  const pageSize = readPositiveInteger(readUrlParam('pageSize'), 50)
   const sort = readUrlParam('sort') || 'asset_tag-asc'
   const [sortBy = 'asset_tag', sortDirection = 'asc'] = sort.split('-')
 
   return {
     page: readPositiveInteger(readUrlParam('page'), 1),
-    pageSize: [10, 20, 50, 100].includes(pageSize) ? pageSize : 20,
+    pageSize: [10, 20, 50, 100].includes(pageSize) ? pageSize : 50,
     search: readUrlParam('q') || '',
     deviceType: readUrlParam('type') || '',
     status: readUrlParam('status') || '',
@@ -77,6 +76,31 @@ export const formatFirmwareVersion = (version?: string | null): string => {
   return `v${cleaned}`
 }
 
+export interface WarrantyStatusInfo {
+  label: string
+  variant: 'expired' | 'warning' | 'covered' | 'unknown'
+}
+
+export const getWarrantyStatus = (expiryDateStr?: string | null): WarrantyStatusInfo => {
+  if (!expiryDateStr) return { label: '—', variant: 'unknown' }
+  const expiry = new Date(expiryDateStr)
+  if (isNaN(expiry.getTime())) return { label: expiryDateStr, variant: 'unknown' }
+
+  const today = new Date('2026-10-17')
+  const diffTime = expiry.getTime() - today.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) {
+    return { label: 'Expired', variant: 'expired' }
+  } else if (diffDays <= 90) {
+    return { label: `Ends in ${diffDays} days`, variant: 'warning' }
+  } else {
+    return { label: `Covered until ${expiry.getFullYear()}`, variant: 'covered' }
+  }
+}
+
+type QuickFilterKey = 'all' | 'warranty_soon' | 'offline' | 'open_incidents' | 'glitch'
+
 export const DevicesView: React.FC = () => {
   const initialUrlState = readDeviceUrlState()
   const [devices, setDevices] = useState<DeviceSummary[]>([])
@@ -92,6 +116,7 @@ export const DevicesView: React.FC = () => {
   const [siteId, setSiteId] = useState<number | undefined>(initialUrlState.siteId)
   const [sortBy, setSortBy] = useState<string>(initialUrlState.sortBy)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>(initialUrlState.sortDir)
+  const [quickFilter, setQuickFilter] = useState<QuickFilterKey>('all')
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [copiedAssetId, setCopiedAssetId] = useState(false)
@@ -144,35 +169,47 @@ export const DevicesView: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedDeviceId])
 
-  // Keydown handler to trap focus within drawer
+  // Trap focus inside modal drawer
   const handleDrawerKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      closeDeviceModal()
-      return
-    }
-    if (e.key === 'Tab') {
-      const focusable = drawerPanelRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      if (!focusable || focusable.length === 0) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
-        }
+    if (e.key !== 'Tab') return
+    const panel = drawerPanelRef.current
+    if (!panel) return
+    const focusable = panel.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+    if (focusable.length === 0) return
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
       }
     }
   }
 
-  // Load devices on filter / page change
+  // Debounce search input (300ms)
+  useEffect(() => {
+    if (isInitialSearchEffect.current) {
+      isInitialSearchEffect.current = false
+      return
+    }
+    const timer = setTimeout(() => {
+      withLayoutTransition(() => {
+        setDebouncedSearch(search)
+        setPage(1)
+      })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
   const loadDevices = async () => {
     setLoading(true)
     setError(null)
@@ -180,51 +217,37 @@ export const DevicesView: React.FC = () => {
       const res = await fetchDevices({
         page,
         page_size: pageSize,
-        search: debouncedSearch.trim() || undefined,
+        search: debouncedSearch || undefined,
         device_type: deviceType || undefined,
         status: status || undefined,
         site_id: siteId,
         sort_by: sortBy,
         sort_dir: sortDir,
       })
-      withLayoutTransition(() => {
-        setDevices(res.items)
-        setTotal(res.total)
-        setTotalPages(res.total_pages)
-      })
+      setDevices(res.items)
+      setTotal(res.total)
+      setTotalPages(res.total_pages)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load devices.')
+      setError(err instanceof Error ? err.message : 'Failed to retrieve inventory data.')
     } finally {
-      withLayoutTransition(() => setLoading(false))
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    if (isInitialSearchEffect.current) {
-      isInitialSearchEffect.current = false
-      return
-    }
-    const timer = setTimeout(() => {
-      setPage(1)
-      setDebouncedSearch(search)
-    }, 350)
-    return () => clearTimeout(timer)
-  }, [search])
+    loadDevices()
+  }, [page, pageSize, debouncedSearch, deviceType, status, siteId, sortBy, sortDir])
 
   useEffect(() => {
     replaceUrlParams({
-      q: search,
-      type: deviceType,
-      status,
-      site: siteId,
       page: page === 1 ? null : page,
-      pageSize: pageSize === 20 ? null : pageSize,
+      pageSize: pageSize === 50 ? null : pageSize,
+      q: debouncedSearch || null,
+      type: deviceType || null,
+      status: status || null,
+      site: siteId || null,
       sort: sortBy === 'asset_tag' && sortDir === 'asc' ? null : `${sortBy}-${sortDir}`,
     })
-  }, [search, deviceType, status, siteId, page, pageSize, sortBy, sortDir])
-
-  useEffect(() => {
-    loadDevices()
   }, [page, pageSize, debouncedSearch, deviceType, status, siteId, sortBy, sortDir])
 
   useEffect(() => {
@@ -244,6 +267,13 @@ export const DevicesView: React.FC = () => {
     }
     window.addEventListener('popstate', syncFiltersFromBrowserHistory)
     return () => window.removeEventListener('popstate', syncFiltersFromBrowserHistory)
+  }, [])
+
+  useEffect(() => {
+    const deviceId = readPositiveInteger(readUrlParam('device'), 0)
+    if (!deviceId) return
+    openDeviceModal(deviceId)
+    replaceUrlParams({ device: null })
   }, [])
 
   const openDeviceModal = async (id: number) => {
@@ -275,32 +305,56 @@ export const DevicesView: React.FC = () => {
       setCopiedAssetId(true)
       setTimeout(() => setCopiedAssetId(false), 2000)
     } catch {
-      // Fallback
+      /* Fallback */
     }
   }
+
+  const handleSelectQuickFilter = (qf: QuickFilterKey) => {
+    setQuickFilter(qf)
+    setPage(1)
+    if (qf === 'all') {
+      setStatus('')
+      setSortBy('asset_tag')
+      setSortDir('asc')
+    } else if (qf === 'warranty_soon') {
+      setStatus('')
+      setSortBy('warranty_expiry')
+      setSortDir('asc')
+    } else if (qf === 'offline') {
+      setStatus('inactive')
+    } else if (qf === 'open_incidents') {
+      setStatus('maintenance')
+    } else if (qf === 'glitch') {
+      setStatus('')
+    }
+  }
+
+  const displayedDevices = quickFilter === 'glitch'
+    ? devices.filter((d) => checkDataGlitch(d).hasGlitch)
+    : devices
 
   const renderStatusPill = (devStatus: string) => {
     const s = devStatus.toLowerCase()
     let className = 'status-semantic-pill '
-    let label = 'ACTIVE'
+    let label = 'Active'
     if (s.includes('active')) {
       className += 'active'
-      label = 'ACTIVE'
+      label = 'Active'
     } else if (s.includes('maint')) {
       className += 'maintenance'
-      label = 'MAINTENANCE'
+      label = 'Maintenance'
     } else if (s.includes('decom')) {
       className += 'decommissioned'
-      label = 'DECOMMISSIONED'
+      label = 'Decommissioned'
     } else {
       className += 'offline'
-      label = 'OFFLINE'
+      label = 'Offline'
     }
 
     return (
       <span className={className}>
-        <span className="status-dot-mini" />
-        {label}
+        <span className="status-dot-indicator" aria-hidden="true" />
+        <span>{label}</span>
       </span>
     )
   }
@@ -310,14 +364,9 @@ export const DevicesView: React.FC = () => {
       {/* 1. VIEW HERO ROW */}
       <div className="devices-hero-row">
         <div>
-          <div className="devices-eyebrow">
-            <span style={{ color: 'var(--qt-accent, #FF4F00)' }}>●</span>
-            FLEET INVENTORY / ASSET REGISTER
-          </div>
-          <h2 className="devices-heading">Hardware Inventory Explorer</h2>
+          <h2 className="devices-heading">Find equipment</h2>
           <p className="devices-copy">
-            Search, filter, and inspect {total.toLocaleString()} synthetic physical and virtual networking assets.
-            Full lifecycle, firmware, and telemetry association.
+            Search 5,000 devices by name, place or status.
           </p>
         </div>
 
@@ -343,9 +392,54 @@ export const DevicesView: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. UPGRADED FILTER TOOLBAR */}
+      {/* 2. QUICK FILTER CHIPS */}
+      <div className="devices-quick-chips" role="group" aria-label="Quick filters">
+        <button
+          type="button"
+          className={`quick-chip ${quickFilter === 'all' ? 'active' : ''}`}
+          onClick={() => handleSelectQuickFilter('all')}
+        >
+          All
+        </button>
+        <button
+          type="button"
+          className={`quick-chip ${quickFilter === 'warranty_soon' ? 'active' : ''}`}
+          onClick={() => handleSelectQuickFilter('warranty_soon')}
+          title="Sorted by upcoming warranty expiration dates"
+        >
+          Warranty ending soon
+        </button>
+        <button
+          type="button"
+          className={`quick-chip ${quickFilter === 'offline' ? 'active' : ''}`}
+          onClick={() => handleSelectQuickFilter('offline')}
+          title="Filtered to inactive/offline equipment (Real API)"
+        >
+          Offline
+        </button>
+        <button
+          type="button"
+          className={`quick-chip ${quickFilter === 'open_incidents' ? 'active' : ''}`}
+          onClick={() => handleSelectQuickFilter('open_incidents')}
+          title="Equipment with active maintenance events (Mocked filter)"
+        >
+          <span>Has open incidents</span>
+          <span className="chip-mock-pill">Mocked filter</span>
+        </button>
+        <button
+          type="button"
+          className={`quick-chip ${quickFilter === 'glitch' ? 'active' : ''}`}
+          onClick={() => handleSelectQuickFilter('glitch')}
+          title="Equipment with version format anomalies or inverted warranty records"
+        >
+          <span>Needs data fix</span>
+          <span className="chip-mock-pill">Glitch filter</span>
+        </button>
+      </div>
+
+      {/* 3. SEARCH & DROPDOWN TOOLBAR */}
       <div className="devices-filter-toolbar">
-        {/* Search Input with Magnifying Glass & Keyboard Shortcut Badge */}
+        {/* Search Input */}
         <div className="devices-search-box">
           <Search size={14} className="devices-search-icon" />
           <input
@@ -355,6 +449,7 @@ export const DevicesView: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="devices-search-input"
+            aria-label="Search equipment"
           />
           <div className="devices-search-badges">
             {search ? (
@@ -363,6 +458,7 @@ export const DevicesView: React.FC = () => {
                 className="devices-clear-btn"
                 onClick={() => setSearch('')}
                 title="Clear search"
+                aria-label="Clear search"
               >
                 <X size={13} />
               </button>
@@ -415,7 +511,7 @@ export const DevicesView: React.FC = () => {
             <option value="active">Active</option>
             <option value="maintenance">Maintenance</option>
             <option value="decommissioned">Decommissioned</option>
-            <option value="offline">Offline</option>
+            <option value="inactive">Inactive / Offline</option>
           </select>
           <ChevronDown size={14} className="select-dropdown-icon" aria-hidden="true" />
         </div>
@@ -482,56 +578,65 @@ export const DevicesView: React.FC = () => {
         </div>
       )}
 
-      {/* 3. ENTERPRISE DATA TABLE */}
+      {/* 4. ENTERPRISE DATA TABLE / RESPONSIVE CARDS */}
       <div className="devices-table-card layout-transition-target">
         <div className="devices-table-container">
           <table className="devices-table">
             <thead>
               <tr className="devices-table-header">
-                <th style={{ width: '150px' }}>ASSET TAG</th>
-                <th style={{ width: '130px' }}>TYPE</th>
+                <th style={{ width: '160px' }}>ASSET TAG</th>
+                <th style={{ width: '120px' }}>TYPE</th>
                 <th>MODEL / VENDOR</th>
-                <th style={{ width: '190px' }}>SITE &amp; REGION</th>
-                <th style={{ width: '140px' }}>STATUS</th>
+                <th style={{ width: '180px' }}>SITE &amp; REGION</th>
+                <th style={{ width: '130px' }}>STATUS</th>
                 <th style={{ width: '120px' }}>INSTALLED</th>
-                <th style={{ width: '140px' }}>WARRANTY EXPIRY</th>
-                <th style={{ width: '110px', textAlign: 'right' }}>ACTIONS</th>
+                <th style={{ width: '160px' }}>WARRANTY</th>
               </tr>
             </thead>
             <tbody>
-              {loading && devices.length === 0 ? (
+              {loading && displayedDevices.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
                     <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
-                    <span style={{ fontSize: '12.5px', color: '#71706B' }}>
-                      Querying PostgreSQL inventory repository...
+                    <span style={{ fontSize: '12.5px', color: 'var(--qt-muted)' }}>
+                      Loading equipment inventory...
                     </span>
                   </td>
                 </tr>
-              ) : devices.length === 0 ? (
+              ) : displayedDevices.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
-                    <Server size={30} style={{ color: '#A1A09A', margin: '0 auto 0.5rem auto' }} />
-                    <div style={{ fontSize: '13.5px', fontWeight: 500, color: '#141413' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
+                    <Server size={30} style={{ color: 'var(--qt-muted)', margin: '0 auto 0.5rem auto' }} />
+                    <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--qt-ink)' }}>
                       No devices match filters
                     </div>
-                    <div style={{ fontSize: '12px', color: '#71706B', marginTop: '0.25rem' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--qt-muted)', marginTop: '0.25rem' }}>
                       Try clearing filters or broadening search parameters.
                     </div>
                   </td>
                 </tr>
               ) : (
-                devices.map((dev) => {
+                displayedDevices.map((dev) => {
                   const glitch = checkDataGlitch(dev)
+                  const warrantyInfo = getWarrantyStatus(dev.warranty_expiry)
                   return (
                     <tr
                       key={dev.id}
                       className="devices-table-row group"
                       onClick={() => openDeviceModal(dev.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          openDeviceModal(dev.id)
+                        }
+                      }}
+                      aria-label={`Inspect ${dev.asset_tag} details`}
                     >
                       {/* Asset Tag Token */}
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                      <td data-label="Asset Tag">
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                           <span className="asset-tag-token">{dev.asset_tag}</span>
                           {glitch.hasGlitch && (
                             <span
@@ -545,106 +650,87 @@ export const DevicesView: React.FC = () => {
                         </div>
                       </td>
 
-                    {/* Device Type */}
-                    <td>
-                      <span className="device-type-token">{dev.device_type}</span>
-                    </td>
+                      {/* Device Type */}
+                      <td data-label="Type">
+                        <span className="device-type-token">{dev.device_type}</span>
+                      </td>
 
-                    {/* Model & Vendor */}
-                    <td>
-                      <div className="model-vendor-cell">
-                        <span className="model-name-text" title={dev.model}>
-                          {dev.model}
-                        </span>
-                        <span
-                          className="vendor-subtle-text"
-                          title={`${dev.vendor} • ${formatFirmwareVersion(dev.firmware_version)}`}
-                        >
-                          {dev.vendor} &bull; {formatFirmwareVersion(dev.firmware_version)}
-                        </span>
-                      </div>
-                    </td>
+                      {/* Model & Vendor */}
+                      <td data-label="Model / Vendor">
+                        <div className="model-vendor-cell">
+                          <span className="model-name-text" title={dev.model}>
+                            {dev.model}
+                          </span>
+                          <span
+                            className="vendor-subtle-text"
+                            title={`${dev.vendor} • ${formatFirmwareVersion(dev.firmware_version)}`}
+                          >
+                            {dev.vendor} &bull; {formatFirmwareVersion(dev.firmware_version)}
+                          </span>
+                        </div>
+                      </td>
 
-                    {/* Site & Region */}
-                    <td>
-                      <div className="site-cell-wrap">
-                        <span
-                          className="site-name-text"
-                          title={dev.site_name || `Site #${dev.site_id}`}
-                        >
-                          {dev.site_name || `Site #${dev.site_id}`}
-                        </span>
-                        <span className="region-code-badge">
-                          {dev.region || 'Region'}
-                        </span>
-                      </div>
-                    </td>
+                      {/* Site & Region */}
+                      <td data-label="Site & Region">
+                        <div className="site-cell-wrap">
+                          <span
+                            className="site-name-text"
+                            title={dev.site_name || `Site #${dev.site_id}`}
+                          >
+                            {dev.site_name || `Site #${dev.site_id}`}
+                          </span>
+                          <span className="region-code-badge">
+                            {dev.region || 'Region'}
+                          </span>
+                        </div>
+                      </td>
 
-                    {/* Status Semantic Pill */}
-                    <td>{renderStatusPill(dev.status)}</td>
+                      {/* Status Semantic Pill */}
+                      <td data-label="Status">{renderStatusPill(dev.status)}</td>
 
-                    {/* Installed Date */}
-                    <td>
-                      <span className="mono-date-text">{dev.installed_at}</span>
-                    </td>
+                      {/* Installed Date (WCAG AA High Contrast) */}
+                      <td data-label="Installed">
+                        <span className="mono-date-text">{dev.installed_at || '—'}</span>
+                      </td>
 
-                    {/* Warranty Expiry */}
-                    <td>
-                      {dev.warranty_expiry ? (
-                        <span className="mono-date-text">
-                          {dev.warranty_expiry}
-                        </span>
-                      ) : (
-                        <span className="empty-metric-dash">—</span>
-                      )}
-                    </td>
-
-                    {/* Inspect Button */}
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        type="button"
-                        className="device-inspect-btn"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openDeviceModal(dev.id)
-                        }}
+                      {/* Warranty Column (Plain status with exact date on hover) */}
+                      <td
+                        data-label="Warranty"
+                        title={dev.warranty_expiry ? `Exact warranty expiration date: ${dev.warranty_expiry}` : 'No warranty record'}
                       >
-                        <span>Inspect</span>
-                        <ExternalLink size={12} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
+                        {dev.warranty_expiry ? (
+                          <span className={`warranty-status-pill ${warrantyInfo.variant}`}>
+                            {warrantyInfo.label}
+                          </span>
+                        ) : (
+                          <span className="empty-metric-dash">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
           </table>
         </div>
 
-        {/* Pagination Footer */}
-        <div className="pagination-bar" style={{ borderTop: '1px solid #EFECE6' }}>
-          <div style={{ fontSize: '12px', color: '#71706B' }}>
-            Showing{' '}
-            <span style={{ fontWeight: 600, color: '#141413' }}>
-              {total > 0 ? (page - 1) * pageSize + 1 : 0}
-            </span>{' '}
-            to{' '}
-            <span style={{ fontWeight: 600, color: '#141413' }}>
-              {Math.min(page * pageSize, total)}
-            </span>{' '}
-            of <span style={{ fontWeight: 600, color: '#141413' }}>{total.toLocaleString()}</span> devices
+        {/* 5. PAGINATION FOOTER */}
+        <div className="pagination-bar">
+          <div className="pagination-info">
+            Showing <span className="pagination-strong">{total > 0 ? (page - 1) * pageSize + 1 : 0}-{Math.min(page * pageSize, total)}</span> of <span className="pagination-strong">{total.toLocaleString()}</span>
           </div>
 
           <div className="pagination-controls">
             <div className="page-size-picker">
-              <span style={{ fontSize: '12px', color: '#71706B' }}>Show</span>
+              <span>Show</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(parseInt(e.target.value))
                   setPage(1)
                 }}
-                className="page-select"
+                className="page-select accessible-native-select"
+                aria-label="Items per page"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -659,10 +745,11 @@ export const DevicesView: React.FC = () => {
                 className="page-nav-btn"
                 disabled={page <= 1 || loading}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label="Previous page"
               >
                 <ChevronLeft size={16} />
               </button>
-              <span className="page-current" style={{ fontSize: '12px' }}>
+              <span className="page-current">
                 Page {page} of {Math.max(1, totalPages)}
               </span>
               <button
@@ -670,6 +757,7 @@ export const DevicesView: React.FC = () => {
                 className="page-nav-btn"
                 disabled={page >= totalPages || loading}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label="Next page"
               >
                 <ChevronRight size={16} />
               </button>
@@ -678,7 +766,7 @@ export const DevicesView: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. ASSET INSPECT SLIDE-OVER DRAWER (PORTAL ATTACHED) */}
+      {/* 6. ASSET INSPECT SLIDE-OVER DRAWER */}
       {selectedDeviceId &&
         createPortal(
           <div className="asset-drawer-backdrop" onClick={closeDeviceModal}>
@@ -746,7 +834,7 @@ export const DevicesView: React.FC = () => {
               {detailLoading ? (
                 <div style={{ padding: '3rem', textAlign: 'center' }}>
                   <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
-                  <p style={{ fontSize: '12.5px', color: '#71706B' }}>
+                  <p style={{ fontSize: '12.5px', color: 'var(--qt-muted)' }}>
                     Loading device specifications &amp; events...
                   </p>
                 </div>
@@ -824,79 +912,67 @@ export const DevicesView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Section 3: Warranty & Lifecycle Status */}
+                  {/* Section 3: Warranty Coverage Horizon */}
                   <div>
                     <div className="asset-section-label">
-                      <span>Warranty &amp; Lifecycle Status</span>
+                      <span>Warranty Horizon</span>
                       <Calendar size={13} />
                     </div>
                     <div className="asset-spec-card">
                       <div className="asset-spec-grid-2">
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Warranty Expiry</span>
-                          <span className="asset-spec-val mono">
-                            {deviceDetail.warranty_expiry || 'Unspecified'}
+                          <span className="asset-spec-name">Coverage Status</span>
+                          <span className="asset-spec-val">
+                            {deviceDetail.warranty_expiry ? (
+                              <span className={`warranty-status-pill ${getWarrantyStatus(deviceDetail.warranty_expiry).variant}`}>
+                                {getWarrantyStatus(deviceDetail.warranty_expiry).label}
+                              </span>
+                            ) : (
+                              'No Warranty Record'
+                            )}
                           </span>
                         </div>
                         <div className="asset-spec-item">
-                          <span className="asset-spec-name">Device Status</span>
-                          <span className="asset-spec-val" style={{ textTransform: 'capitalize' }}>
-                            {deviceDetail.status}
+                          <span className="asset-spec-name">Exact Expiration</span>
+                          <span className="asset-spec-val mono">
+                            {deviceDetail.warranty_expiry || '—'}
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Section 4: Associated Telemetry & Events */}
+                  {/* Section 4: Recent Service Incidents */}
                   <div>
                     <div className="asset-section-label">
-                      <span>Associated Service Incidents ({deviceDetail.recent_events.length})</span>
+                      <span>Recent Service Incidents</span>
                       <Activity size={13} />
                     </div>
-                    {deviceDetail.recent_events.length === 0 ? (
-                      <div className="asset-spec-card" style={{ textAlign: 'center', padding: '1.5rem' }}>
-                        <span style={{ fontSize: '12px', color: '#71706B' }}>
-                          No historical service events recorded for this asset.
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="incident-history-list">
-                        {deviceDetail.recent_events.map((ev) => (
-                          <div key={ev.id} className="incident-history-item">
-                            <div className="incident-history-header">
-                              <span className="incident-type-text">
-                                {ev.event_type.replace(/_/g, ' ')}
-                              </span>
-                              <span
-                                className={`severity-pill ${
-                                  ev.severity.toLowerCase().includes('high') ||
-                                  ev.severity.toLowerCase().includes('crit')
-                                    ? 'high'
-                                    : ev.severity.toLowerCase().includes('med')
-                                    ? 'medium'
-                                    : 'low'
-                                }`}
-                              >
-                                {ev.severity}
+                    {deviceDetail.recent_events && deviceDetail.recent_events.length > 0 ? (
+                      <div className="asset-events-list">
+                        {deviceDetail.recent_events.map((evt) => (
+                          <div key={evt.id} className="asset-event-card">
+                            <div className="asset-event-top">
+                              <span className="asset-event-type">{evt.event_type}</span>
+                              <span className={`asset-event-sev ${evt.severity.toLowerCase()}`}>
+                                {evt.severity}
                               </span>
                             </div>
-                            <p className="incident-desc-text">
-                              {ev.description || 'No event description recorded.'}
-                            </p>
-                            <div className="incident-footer-meta">
-                              <span>Opened: {new Date(ev.opened_at).toLocaleDateString()}</span>
-                              <span style={{ textTransform: 'capitalize' }}>Status: {ev.status}</span>
-                            </div>
+                            <div className="asset-event-desc">{evt.description}</div>
+                            <div className="asset-event-date">{evt.opened_at}</div>
                           </div>
                         ))}
+                      </div>
+                    ) : (
+                      <div className="asset-events-empty">
+                        <span>No historical or open service incidents recorded.</span>
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', color: '#EF4444' }}>
-                  Failed to load device details from server.
+                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--qt-muted)' }}>
+                  Unable to load specifications for device #{selectedDeviceId}
                 </div>
               )}
             </div>

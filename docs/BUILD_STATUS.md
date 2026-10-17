@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-17  
-**Current milestone:** 7 — Sidebar & Topbar Ergonomics, Dark Mode Consistency & UI Normalization (Complete)
-**Overall status:** Full stack operational; Vite frontend and Uvicorn backend active; 104/104 backend tests passing; zero build errors.
+**Current milestone:** 8 — Equipment Screen Overhaul, WCAG AA Contrast, Card Layout & Viewer Role Enforcement (In progress)
+**Overall status:** Frontend production build and Python module compilation pass. No PostgreSQL, FastAPI, or Vite listener was available for live backend integration tests or browser validation in this workspace.
 
 ---
 
@@ -721,6 +721,44 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 | Browser: Header controls | Theme toggle (dark ↔ light), mode switcher (Simple ↔ Expert), command palette — all verified |
 | Browser: "Try to break it" | `DROP TABLE devices;` blocked by real backend, recorded with `Blocked` badge in Activity history |
 | Browser: People & access | Blocked entries visible in Activity History with red `Blocked` status badge |
+
+---
+
+## Unusual Activity Clarity and Viewer Enforcement — 2026-10-17
+
+- Added a plain-language page title and neutral explanation, with the detailed IsolationForest disclosure and model metadata restricted to Expert view.
+- Simple view now uses qualitative unusualness labels, on-demand per-row sensor numbers, sentence-case headers, and direct device-detail navigation.
+- Viewer accounts receive the fixed, read-only current activity result only. The backend rejects viewer requests to `POST /api/v1/anomalies/scan`; sensitivity and result-limit controls are not rendered for that role.
+- Scores with the same normalized value are ranked by the number of independently concerning sensor signals. The score remains a statistical outlier measure, never a device-failure prediction.
+
+### Verification — 2026-10-17
+
+| Command / Check | Observed result |
+|---|---|
+| `npm.cmd run build` (frontend) | Passed — `tsc -b && vite build` completed in **3.85s**. |
+| `python -m compileall -q app` (backend) | Passed. |
+| Database-backed anomaly tests | Not completed — the test client stalled while opening the database-backed fixture; no PostgreSQL, FastAPI, or Vite listener was present. |
+
+---
+
+## Home Operations Refinement — 2026-10-17
+
+**Status:** Implemented — frontend production build and backend source compilation verified; live API walkthrough pending local services.
+
+- Replaced the duplicated Home workflow hub with a prominent, keyboard-accessible equipment question input and three safe, domain-specific suggested questions. A submitted question opens Ask with the exact prompt prefilled for its normal read-only preview flow.
+- Dashboard equipment types now aggregate casing and surrounding-whitespace variants into the approved five-category vocabulary. The Home chart derives its leading-category headline from the aggregate and reads the category-formatting finding from Data health rather than inventing the count.
+- Morning Briefing now uses the latest Data health summary for its third item, removes numbered/all-caps labels, and avoids repeating the metric-strip values in its narrative. The active-fleet metric exposes real non-active status counts as links into Equipment.
+- Coverage uses the dataset baseline date, a live "expired or ending within 30 days" total, danger/amber urgency colors, and muted longer-horizon buckets. Recent service requests use high-contrast dark status/severity pills, relative dates with exact UTC hover text, clickable asset tags, and a View all action.
+- All reusable explanation triggers are now compact, keyboard-focusable question-mark icon buttons. Blocked sidebar history entries carry a shield and a Blocked label. Home navigation clears stale URL filters and sorting state.
+
+### Verification
+
+| Command / Check | Observed result |
+|---|---|
+| `npm.cmd run build` (frontend) | Passed — `tsc -b && vite build` completed successfully in 12.35s. |
+| `python -m compileall -q app` (backend) | Passed — no compilation diagnostics. |
+| Local listeners on 5173, 8000, 5432 | None present — no authenticated live API/browser pass was performed or claimed. |
+| `python -m pytest tests/test_dashboard.py -q` (backend) | Did not produce a completed result during the bounded local attempt; no test result is claimed. |
 
 
 

@@ -18,7 +18,7 @@ from sqlalchemy import text
 
 from app.database import get_db
 from app.models.user import User
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, require_role
 from app.core.anomaly_detector import anomaly_detector
 from app.schemas.anomalies import (
     AnomalyScanRequest,
@@ -31,6 +31,39 @@ from app.schemas.anomalies import (
 
 logger = logging.getLogger("querytrust.api.anomalies")
 router = APIRouter(prefix="/anomalies", tags=["Anomalies"])
+scan_controls_required = require_role("analyst", "admin")
+
+
+def _to_scan_response(scan_results: dict) -> AnomalyScanResponse:
+    """Keep the default viewer result and operator scan response identical."""
+    top_items = [
+        AnomalyItem(
+            reading_id=item["reading_id"],
+            device_id=item["device_id"],
+            asset_tag=item["asset_tag"],
+            device_type=item["device_type"],
+            vendor=item["vendor"],
+            model=item["model"],
+            site_name=item["site_name"],
+            region=item["region"],
+            recorded_at=item["recorded_at"],
+            telemetry=TelemetryFeatureValues(**item["telemetry"]),
+            anomaly_score=item["anomaly_score"],
+            problem_signal_count=item["problem_signal_count"],
+            is_outlier=item["is_outlier"],
+            known_injected_outlier=item.get("known_injected_outlier"),
+            rank=item.get("rank", idx + 1),
+        )
+        for idx, item in enumerate(scan_results["top_anomalies"])
+    ]
+    return AnomalyScanResponse(
+        model_version=scan_results["model_version"],
+        algorithm=scan_results["algorithm"],
+        total_telemetry_scanned=scan_results["total_telemetry_scanned"],
+        anomalies_detected=scan_results["anomalies_detected"],
+        scan_time_ms=scan_results["scan_time_ms"],
+        top_anomalies=top_items,
+    )
 
 
 @router.get("/summary", response_model=ModelMetadataResponse)
@@ -66,10 +99,30 @@ def get_anomaly_model_summary(
     )
 
 
+@router.get("/current", response_model=AnomalyScanResponse)
+def get_current_unusual_activity(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Returns the governed default unusual-activity view for every role.
+
+    Viewers can inspect a fixed, read-only result set but cannot change scan
+    sensitivity or row limits, nor trigger an operator-controlled scan.
+    """
+    try:
+        return _to_scan_response(anomaly_detector.scan_telemetry(db=db, limit=50, threshold=0.65))
+    except Exception as e:
+        logger.error("Error loading current unusual activity: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to load unusual activity.",
+        ) from e
+
+
 @router.post("/scan", response_model=AnomalyScanResponse)
 def run_telemetry_anomaly_scan(
     payload: AnomalyScanRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(scan_controls_required),
     db: Session = Depends(get_db),
 ):
     """Executes an unsupervised IsolationForest anomaly detection scan across telemetry readings.
@@ -83,34 +136,7 @@ def run_telemetry_anomaly_scan(
             threshold=payload.threshold or 0.65,
         )
 
-        top_items = [
-            AnomalyItem(
-                reading_id=item["reading_id"],
-                device_id=item["device_id"],
-                asset_tag=item["asset_tag"],
-                device_type=item["device_type"],
-                vendor=item["vendor"],
-                model=item["model"],
-                site_name=item["site_name"],
-                region=item["region"],
-                recorded_at=item["recorded_at"],
-                telemetry=TelemetryFeatureValues(**item["telemetry"]),
-                anomaly_score=item["anomaly_score"],
-                is_outlier=item["is_outlier"],
-                known_injected_outlier=item.get("known_injected_outlier"),
-                rank=item.get("rank", idx + 1),
-            )
-            for idx, item in enumerate(scan_results["top_anomalies"])
-        ]
-
-        return AnomalyScanResponse(
-            model_version=scan_results["model_version"],
-            algorithm=scan_results["algorithm"],
-            total_telemetry_scanned=scan_results["total_telemetry_scanned"],
-            anomalies_detected=scan_results["anomalies_detected"],
-            scan_time_ms=scan_results["scan_time_ms"],
-            top_anomalies=top_items,
-        )
+        return _to_scan_response(scan_results)
     except Exception as e:
         logger.error(f"Error executing telemetry anomaly scan: {e}", exc_info=True)
         raise HTTPException(

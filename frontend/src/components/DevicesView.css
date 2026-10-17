@@ -759,3 +759,264 @@
   display: block;
   margin-bottom: 2px;
 }
+
+/* ==========================================================================
+   5. QUICK FILTER CHIPS
+   ========================================================================== */
+
+.devices-quick-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--qt-surface);
+  color: var(--qt-text);
+  border: 1px solid var(--qt-border);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.quick-chip:hover {
+  background: var(--qt-surface-muted);
+  border-color: var(--qt-border-strong);
+  color: var(--qt-ink);
+}
+
+.quick-chip.active {
+  background: var(--qt-accent);
+  color: #ffffff;
+  border-color: var(--qt-accent);
+  box-shadow: 0 2px 6px rgba(255, 79, 0, 0.28);
+}
+
+.quick-chip.active .chip-mock-pill {
+  background: rgba(0, 0, 0, 0.22);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.chip-mock-pill {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--qt-surface-muted);
+  color: var(--qt-muted);
+  border: 1px solid var(--qt-border);
+}
+
+/* ==========================================================================
+   6. SOFT TINTED SEMANTIC STATUS PILLS & WARRANTY PILLS
+   ========================================================================== */
+
+.status-semantic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.status-semantic-pill .status-dot-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-semantic-pill.active {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+.status-semantic-pill.active .status-dot-indicator {
+  background: #22c55e;
+}
+
+.status-semantic-pill.maintenance {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.status-semantic-pill.maintenance .status-dot-indicator {
+  background: #f59e0b;
+}
+
+.status-semantic-pill.offline,
+.status-semantic-pill.decommissioned {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.status-semantic-pill.offline .status-dot-indicator,
+.status-semantic-pill.decommissioned .status-dot-indicator {
+  background: #ef4444;
+}
+
+/* Plain Warranty Status Pills */
+.warranty-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.warranty-status-pill.warning {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.warranty-status-pill.expired {
+  background: rgba(239, 68, 68, 0.14);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.warranty-status-pill.covered {
+  background: var(--qt-surface-muted);
+  color: var(--qt-text);
+  border: 1px solid var(--qt-border);
+  font-weight: 500;
+}
+
+/* WCAG AA High Contrast Date Text */
+.mono-date-text {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--qt-ink, #141413);
+  white-space: nowrap;
+}
+
+/* Pagination info styling */
+.pagination-strong {
+  font-weight: 700;
+  color: var(--qt-ink);
+}
+
+/* ==========================================================================
+   7. RESPONSIVE MOBILE CARDS (No horizontal cut-off)
+   ========================================================================== */
+
+@media (max-width: 820px) {
+  .devices-table-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .devices-table-container {
+    overflow-x: visible;
+  }
+
+  .devices-table {
+    display: block;
+    width: 100%;
+  }
+
+  .devices-table-header {
+    display: none;
+  }
+
+  .devices-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    width: 100%;
+  }
+
+  .devices-table-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 1.1rem;
+    border: 1px solid var(--qt-border);
+    border-radius: 10px;
+    background: var(--qt-surface) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .devices-table-row td {
+    padding: 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .devices-table-row td::before {
+    content: attr(data-label);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--qt-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .devices-table-row td:first-child {
+    border-bottom: 1px solid var(--qt-border);
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* Dark mode overrides for pills */
+[data-theme="dark"] .status-semantic-pill.active {
+  background: rgba(34, 197, 94, 0.18);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+[data-theme="dark"] .status-semantic-pill.maintenance {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+[data-theme="dark"] .status-semantic-pill.offline,
+[data-theme="dark"] .status-semantic-pill.decommissioned {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+[data-theme="dark"] .warranty-status-pill.warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="dark"] .warranty-status-pill.expired {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+[data-theme="dark"] .mono-date-text {
+  color: #f7f5f2 !important;
+}
+

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { HelpCircle, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface ExplainButtonProps {
   title: string
@@ -39,8 +39,7 @@ export const ExplainButton: React.FC<ExplainButtonProps> = ({ title, explanation
         aria-label={`Explain: ${title}`}
         aria-expanded={open}
       >
-        <HelpCircle size={13} aria-hidden="true" />
-        <span>Explain this</span>
+        <span aria-hidden="true">?</span>
       </button>
       {open && (
         <div className="qt-explain-popover" role="tooltip" aria-label={title}>

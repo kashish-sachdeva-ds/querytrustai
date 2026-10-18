@@ -4,6 +4,7 @@ import {
   apiGetMe,
   apiLogin,
   apiLogout,
+  clearStoredToken,
 } from '../api/client'
 
 interface AuthContextType {
@@ -89,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     setIsLoading(true)
     try {
+      clearStoredToken()
       await apiLogout()
     } finally {
       setUser(null)

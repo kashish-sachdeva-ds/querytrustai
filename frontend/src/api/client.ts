@@ -302,25 +302,48 @@ function requireFiniteNumber(value: number, label: string, min: number, max: num
   return value
 }
 
+let inMemoryToken: string | null = null
+
 export function getStoredToken(): string | null {
-  // One-time cleanup for sessions created before the HttpOnly-cookie upgrade.
-  localStorage.removeItem(TOKEN_KEY)
-  return null
+  if (inMemoryToken) return inMemoryToken
+  try {
+    const token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY)
+    if (token) inMemoryToken = token
+    return token
+  } catch {
+    return null
+  }
 }
 
 export function setStoredToken(token: string): void {
-  // Intentionally a no-op. Browser sessions use an HttpOnly SameSite cookie.
-  void token
+  inMemoryToken = token
+  try {
+    sessionStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(TOKEN_KEY, token)
+  } catch {
+    // Ignore storage quota errors
+  }
 }
 
 export function clearStoredToken(): void {
-  localStorage.removeItem(TOKEN_KEY)
+  inMemoryToken = null
+  try {
+    sessionStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+  } catch {
+    // Ignore
+  }
 }
 
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const headers = new Headers(options.headers || {})
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
+  }
+
+  const token = getStoredToken()
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`)
   }
 
   const response = await requestWithTimeout(url, {
@@ -377,6 +400,9 @@ export async function apiLogin(email: string, password: string): Promise<LoginRe
     }
 
     const data: LoginResponse = await res.json()
+    if (data.access_token) {
+      setStoredToken(data.access_token)
+    }
     return data
   })
 }

@@ -54,3 +54,5 @@ frontend/dist-ssr/
 *~
 .DS_Store
 Thumbs.db
+scratch/
+**/scratch/

@@ -337,10 +337,11 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
   return response
 }
 
-const API_BASE = '/api/v1'
+const API_BASE_ORIGIN = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+const API_BASE = `${API_BASE_ORIGIN}/api/v1`
 
 export async function fetchHealth(): Promise<HealthResponse> {
-  const res = await requestWithTimeout('/health')
+  const res = await requestWithTimeout(`${API_BASE_ORIGIN}/health`)
   if (!res.ok) {
     throw new Error(`Health probe failed: ${res.statusText}`)
   }
@@ -348,7 +349,7 @@ export async function fetchHealth(): Promise<HealthResponse> {
 }
 
 export async function fetchReady(): Promise<HealthResponse> {
-  const res = await requestWithTimeout('/ready')
+  const res = await requestWithTimeout(`${API_BASE_ORIGIN}/ready`)
   if (!res.ok) {
     throw new Error(`Readiness probe failed: ${res.statusText}`)
   }

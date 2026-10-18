@@ -7,7 +7,7 @@ settings = get_settings()
 
 # Primary database engine (used by migrations and app services with full app_user rights)
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.sqlalchemy_database_url,
     pool_pre_ping=True,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
@@ -15,9 +15,9 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Read-only database engine (strictly bound to analytics_reader role)
+# Read-only database engine (strictly bound to analytics_reader role or fallback to primary DB)
 readonly_engine = create_engine(
-    settings.READONLY_DATABASE_URL,
+    settings.sqlalchemy_readonly_database_url,
     pool_pre_ping=True,
     execution_options={"isolation_level": "AUTOCOMMIT"},
 )

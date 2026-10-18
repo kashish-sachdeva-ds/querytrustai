@@ -21,7 +21,6 @@ import { QueryTrustLogo } from './QueryTrustLogo'
 import { GlobalErrorBanner } from './GlobalErrorBanner'
 import type { ErrorBannerType } from './GlobalErrorBanner'
 import { PasswordStrengthMeter } from './PasswordStrengthMeter'
-import { OAuthButtons } from './OAuthButtons'
 import {
   sanitizeInput,
   validateEmail,
@@ -59,7 +58,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   // UI Interactive States
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [loadingOAuth, setLoadingOAuth] = useState<'google' | 'github' | null>(null)
 
   // Validation States
   const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({})
@@ -175,33 +173,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     }
   }
 
-  // OAuth Simulation / Provider Trigger with 1.5s delay
-  const handleSelectOAuth = async (provider: 'google' | 'github') => {
-    setLoadingOAuth(provider)
-    setGlobalError(null)
-
-    try {
-      // 1.5-second simulated OAuth authentication handshake
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      if (isDemoMode) {
-        // Authenticate as Analyst via OAuth SSO in demo mode
-        await login('analyst@querytrust.local', 'AnalystPass123!')
-      } else {
-        setGlobalError({
-          type: 'server_error',
-          message: `${provider === 'google' ? 'Google Workspace' : 'GitHub'} enterprise SSO is currently undergoing scheduled directory synchronization. Please use work email credentials.`,
-        })
-      }
-    } catch (err: unknown) {
-      setGlobalError({
-        type: 'server_error',
-        message: err instanceof Error ? err.message : 'OAuth connection timed out.',
-      })
-    } finally {
-      setLoadingOAuth(null)
-    }
-  }
 
   // 1-Click Demo Login
   const loginAsDemo = async (demoEmail: string, demoPass: string) => {
@@ -325,20 +296,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             <p>Enter your enterprise credentials to access safe network analytics.</p>
           </header>
 
-          {/* Alternative OAuth Options */}
-          <section aria-label="Alternative Single Sign-On Options">
-            <OAuthButtons
-              onSelectProvider={handleSelectOAuth}
-              disabled={loading}
-              loadingProvider={loadingOAuth}
-            />
-
-            <div className="oauth-divider" role="separator">
-              <span className="divider-line" />
-              <span className="divider-text">or continue with work email</span>
-              <span className="divider-line" />
-            </div>
-          </section>
 
           {/* Global Error Banner */}
           {globalError && (

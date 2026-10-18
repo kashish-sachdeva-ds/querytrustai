@@ -25,7 +25,6 @@ import {
   Cpu,
   Radio,
 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
 import './LandingPage.css'
@@ -200,9 +199,7 @@ const ATTACK_VECTORS: AttackVector[] = [
 ]
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
-  const { login } = useAuth()
   const { theme, toggleTheme } = useTheme()
-  const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
 
   // Interactive Sandbox state
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('warranties')
@@ -220,8 +217,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
   const [demoFormSubmitted, setDemoFormSubmitted] = useState<boolean>(false)
   const [demoFormData, setDemoFormData] = useState({ name: '', email: '', company: '', role: 'Network Operations' })
 
-  // Quick Demo Login state
-  const [loggingInRole, setLoggingInRole] = useState<'admin' | 'analyst' | 'viewer' | null>(null)
 
   const activeScenario =
     SANDBOX_SCENARIOS.find((s) => s.id === selectedScenarioId) || SANDBOX_SCENARIOS[0]
@@ -265,19 +260,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
     })
   }
 
-  const handleQuickDemoLogin = async (role: 'admin' | 'analyst' | 'viewer') => {
-    setLoggingInRole(role)
-    try {
-      if (role === 'admin') await login('admin@querytrust.local', 'AdminPass123!')
-      else if (role === 'analyst') await login('analyst@querytrust.local', 'AnalystPass123!')
-      else await login('viewer@querytrust.local', 'ViewerPass123!')
-    } catch (err) {
-      console.error('Demo sign-in error:', err)
-      onGoToLogin()
-    } finally {
-      setLoggingInRole(null)
-    }
-  }
 
   const launchAttackSimulation = (attack: AttackVector) => {
     setActiveAttack(attack)
@@ -349,42 +331,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
               )}
             </button>
 
-            {/* Quick Demo Role Selector */}
-            {isDemoMode && (
-              <div className="quick-demo-group" role="group" aria-label="1-Click Instant Demo Roles">
-                <span className="quick-demo-tag">Try 1-Click:</span>
-                <button
-                  type="button"
-                  className="quick-role-btn role-analyst"
-                  onClick={() => handleQuickDemoLogin('analyst')}
-                  disabled={!!loggingInRole}
-                  title="Instant 1-click access as Analyst (Natural language queries & SQL explanations)"
-                  aria-label="Instant 1-click login as Analyst"
-                >
-                  {loggingInRole === 'analyst' ? 'Opening…' : 'Analyst'}
-                </button>
-                <button
-                  type="button"
-                  className="quick-role-btn role-admin"
-                  onClick={() => handleQuickDemoLogin('admin')}
-                  disabled={!!loggingInRole}
-                  title="Instant 1-click access as Admin (Full audit logs, guardrails, policy control)"
-                  aria-label="Instant 1-click login as Admin"
-                >
-                  {loggingInRole === 'admin' ? 'Opening…' : 'Admin'}
-                </button>
-                <button
-                  type="button"
-                  className="quick-role-btn role-viewer"
-                  onClick={() => handleQuickDemoLogin('viewer')}
-                  disabled={!!loggingInRole}
-                  title="Instant 1-click access as Viewer (Read-only equipment catalog & dashboards)"
-                  aria-label="Instant 1-click login as Viewer"
-                >
-                  {loggingInRole === 'viewer' ? 'Opening…' : 'Viewer'}
-                </button>
-              </div>
-            )}
 
             {/* Sign In Primary Action */}
             <button
@@ -429,14 +375,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
             <button
               type="button"
               className="btn-hero-primary"
-              onClick={() => {
-                if (isDemoMode) handleQuickDemoLogin('analyst')
-                else onGoToLogin()
-              }}
-              disabled={!!loggingInRole}
+              onClick={onGoToLogin}
             >
               <Zap size={16} />
-              <span>{isDemoMode ? 'Launch Live Demo (Analyst)' : 'Get Started Free'}</span>
+              <span>Launch Live Workspace</span>
               <ArrowRight size={16} />
             </button>
 
@@ -806,10 +748,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
               <button
                 type="button"
                 className="btn-try-live-app"
-                onClick={() => {
-                  if (isDemoMode) handleQuickDemoLogin('analyst')
-                  else onGoToLogin()
-                }}
+                onClick={onGoToLogin}
               >
                 <span>Open in Full App</span>
                 <ArrowRight size={13} />
@@ -1182,9 +1121,9 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
             <button
               type="button"
               className="btn-plan-action secondary"
-              onClick={() => handleQuickDemoLogin('viewer')}
+              onClick={onGoToLogin}
             >
-              Test Drive as Viewer
+              Sign In to View
             </button>
           </div>
 
@@ -1206,9 +1145,9 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
             <button
               type="button"
               className="btn-plan-action primary"
-              onClick={() => handleQuickDemoLogin('analyst')}
+              onClick={onGoToLogin}
             >
-              Test Drive as Analyst
+              Sign In to Access
             </button>
           </div>
 
@@ -1347,11 +1286,10 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
                       className="btn-modal-try"
                       onClick={() => {
                         setActiveAttack(null)
-                        if (isDemoMode) handleQuickDemoLogin('analyst')
-                        else onGoToLogin()
+                        onGoToLogin()
                       }}
                     >
-                      <span>Try Live in Sandbox</span>
+                      <span>Sign In to Test Live</span>
                       <ArrowRight size={13} />
                     </button>
                   </div>
@@ -1408,10 +1346,10 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
                     className="btn-hero-primary"
                     onClick={() => {
                       setShowDemoModal(false)
-                      handleQuickDemoLogin('admin')
+                      onGoToLogin()
                     }}
                   >
-                    Open Admin Workspace Now
+                    Open Workspace Login
                   </button>
                 </div>
               ) : (

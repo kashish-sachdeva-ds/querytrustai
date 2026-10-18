@@ -480,38 +480,37 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
         {/* --- Bottom Footer Controls --- */}
         <div className="onboarding-footer">
-          {step > 1 ? (
-            <button
-              type="button"
-              className="onboarding-back-btn"
-              onClick={() => setStep((s) => (s - 1) as any)}
-            >
-              <ArrowLeft size={13} />
-              <span>Back</span>
-            </button>
-          ) : (
-            <div />
-          )}
+          <button
+            type="button"
+            className="onboarding-back-btn"
+            onClick={() => setStep((s) => (s - 1) as any)}
+            style={{ visibility: step > 1 ? 'visible' : 'hidden' }}
+            aria-hidden={step <= 1}
+          >
+            <ArrowLeft size={13} />
+            <span>Back</span>
+          </button>
 
-          {step < 4 ? (
-            <button
-              type="button"
-              className="onboarding-next-btn"
-              onClick={() => setStep((s) => (s + 1) as any)}
-            >
-              <span>{step === 1 ? 'Next: Security Shield' : step === 2 ? 'Next: Live Questions' : 'Next: Database Architecture'}</span>
-              <ArrowRight size={13} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="onboarding-next-btn"
-              onClick={handleComplete}
-            >
-              <span>Start Exploring Workspace</span>
-              <Check size={13} />
-            </button>
-          )}
+          <div className="onboarding-step-indicator" aria-label={`Step ${step} of 4`}>
+            Step {step} of 4
+          </div>
+
+          <button
+            type="button"
+            className="onboarding-next-btn"
+            onClick={step < 4 ? () => setStep((s) => (s + 1) as any) : handleComplete}
+          >
+            <span>
+              {step === 1
+                ? 'Next: Security Shield'
+                : step === 2
+                ? 'Next: Live Questions'
+                : step === 3
+                ? 'Next: Database Sync'
+                : 'Get Started'}
+            </span>
+            {step < 4 ? <ArrowRight size={13} /> : <Check size={13} />}
+          </button>
         </div>
       </div>
     </div>

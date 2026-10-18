@@ -23,7 +23,7 @@
 }
 
 .devices-eyebrow {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -60,8 +60,10 @@
 }
 
 .devices-count-pill {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-size: 11.5px;
+  font-weight: 500;
   color: #575653;
   background: #F4F3EF;
   border: 1px solid #E6E4DD;
@@ -293,9 +295,11 @@
 
 /* Asset Tag Token */
 .asset-tag-token {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   background: #F2EFE9;
   color: #141413;
   padding: 2.5px 8px;
@@ -425,10 +429,11 @@
   background: #71717A;
 }
 
-/* Monospace Dates */
+/* Clean Dates */
 .mono-date-text {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: #575653;
   white-space: nowrap;
 }
@@ -481,6 +486,8 @@
   display: flex;
   justify-content: flex-end;
   animation: fadeIn 0.16s ease-out;
+  overscroll-behavior: contain;
+  touch-action: none;
 }
 
 .asset-drawer-panel {
@@ -495,6 +502,7 @@
   flex-direction: column;
   animation: slideLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 @media (max-width: 640px) {
@@ -537,9 +545,10 @@
 }
 
 .asset-id-pill {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: #F4F3EF;
   background: #1D1D1C;
   border: 1px solid #2E2E2B;
@@ -558,7 +567,7 @@
 }
 
 .asset-category-pill {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 600;
   color: #EA580C;
@@ -600,6 +609,8 @@
 .asset-drawer-body {
   padding: 1.4rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -741,21 +752,21 @@
 }
 
 .data-hygiene-note {
-  background: var(--qt-warning-soft);
-  border: 1px solid rgba(178, 94, 2, 0.25);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: var(--qt-radius-control);
   padding: 0.75rem 0.9rem;
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
-  font-size: 0.75rem;
-  color: var(--qt-ink);
+  font-size: 0.8rem;
+  color: #FEF3C7;
   line-height: 1.45;
   margin-bottom: 1rem;
 }
 
 .data-hygiene-note strong {
-  color: var(--qt-warning);
+  color: #F59E0B;
   display: block;
   margin-bottom: 2px;
 }
@@ -808,8 +819,10 @@
 }
 
 .chip-mock-pill {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 1px 5px;

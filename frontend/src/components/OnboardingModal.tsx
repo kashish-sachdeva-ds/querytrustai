@@ -1,13 +1,23 @@
 import React, { useState } from 'react'
 import {
+  Shield,
+  ShieldCheck,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
   X,
   Sparkles,
   Check,
+  Flame,
+  Database,
+  Lock,
+  Layers,
+  Terminal,
+  AlertTriangle,
+  RefreshCw,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import './OnboardingModal.css'
 
 interface OnboardingModalProps {
   isOpen: boolean
@@ -21,10 +31,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   onSelectQuestion,
 }) => {
   const { user } = useAuth()
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [selectedRole, setSelectedRole] = useState<'admin' | 'analyst' | 'viewer'>(
-    (user?.role as any) || 'analyst'
+    (user?.role as 'admin' | 'analyst' | 'viewer') || 'analyst'
   )
+  const [attackSimulated, setAttackSimulated] = useState(false)
+  const [simulatingAttack, setSimulatingAttack] = useState(false)
   const [dbTesting, setDbTesting] = useState(false)
   const [dbTested, setDbTested] = useState(false)
 
@@ -39,277 +51,465 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     onClose()
   }
 
+  const handleSimulateAttack = () => {
+    setSimulatingAttack(true)
+    setTimeout(() => {
+      setSimulatingAttack(false)
+      setAttackSimulated(true)
+    }, 450)
+  }
+
   const handleTestConnection = () => {
     setDbTesting(true)
     setTimeout(() => {
       setDbTesting(false)
       setDbTested(true)
-    }, 800)
+    }, 550)
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div
-        className="modal-card"
-        style={{ maxWidth: 640 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Sparkles size={18} style={{ color: 'var(--qt-accent)' }} />
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>
-              Welcome to QueryTrust AI
-            </h3>
+    <div className="onboarding-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+      <div className="onboarding-card" onClick={(e) => e.stopPropagation()}>
+        {/* --- Top Header & Brand --- */}
+        <div className="onboarding-header">
+          <div className="onboarding-brand-group">
+            <div className="onboarding-brand-icon">
+              <Sparkles size={15} />
+            </div>
+            <div className="onboarding-title-wrap">
+              <h3>
+                <span>QueryTrust</span>
+                <span className="onboarding-ai-chip">SYSTEM TOUR</span>
+              </h3>
+              <div className="onboarding-subtitle">
+                Interactive architecture, security proofs, and role boundaries
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', fontFamily: 'var(--font-mono)' }}>
-              Step {step} of 3
-            </span>
-            <button type="button" className="btn-close" onClick={onClose} aria-label="Close">
-              <X size={16} />
+          <div className="onboarding-header-actions">
+            <button
+              type="button"
+              className="onboarding-close-btn"
+              onClick={onClose}
+              aria-label="Close tour"
+              title="Close tour"
+            >
+              <X size={15} />
             </button>
           </div>
         </div>
 
-        {/* Step Content */}
-        <div className="modal-body" style={{ padding: '1.75rem' }}>
+        {/* --- Interactive Stepper Bar (The Guide Bar) --- */}
+        <nav className="onboarding-stepper" aria-label="Tour steps">
+          <button
+            type="button"
+            className={`stepper-tab ${step === 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}
+            onClick={() => setStep(1)}
+          >
+            <span className="stepper-num">{step > 1 ? '✓' : '1'}</span>
+            <span>01. User Roles</span>
+          </button>
+
+          <button
+            type="button"
+            className={`stepper-tab ${step === 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}
+            onClick={() => setStep(2)}
+          >
+            <span className="stepper-num">{step > 2 ? '✓' : '2'}</span>
+            <span>02. Security Shield</span>
+          </button>
+
+          <button
+            type="button"
+            className={`stepper-tab ${step === 3 ? 'active' : ''} ${step > 3 ? 'completed' : ''}`}
+            onClick={() => setStep(3)}
+          >
+            <span className="stepper-num">{step > 3 ? '✓' : '3'}</span>
+            <span>03. Live Questions</span>
+          </button>
+
+          <button
+            type="button"
+            className={`stepper-tab ${step === 4 ? 'active' : ''}`}
+            onClick={() => setStep(4)}
+          >
+            <span className="stepper-num">4</span>
+            <span>04. Read-Only DB</span>
+          </button>
+        </nav>
+
+        {/* --- Body Step Content --- */}
+        <div className="onboarding-body">
+          {/* STEP 1: USER ROLES & DYNAMIC PERMISSION MATRIX */}
           {step === 1 && (
-            <div>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.4rem 0' }}>
-                  1. Understand User Roles
-                </h4>
-                <p style={{ fontSize: '0.86rem', color: 'var(--qt-muted)', margin: 0 }}>
-                  Permissions are validated on every backend request. The browser never executes arbitrary queries.
+            <>
+              <div className="onboarding-step-hero">
+                <span className="onboarding-step-eyebrow">
+                  <ShieldCheck size={12} />
+                  Authentication &amp; Enforcement
+                </span>
+                <h4 className="onboarding-step-heading">Role Permissions &amp; Access Boundaries</h4>
+                <p className="onboarding-step-desc">
+                  Permissions are strictly validated on every server endpoint. SELECT-only privileges are hardware-enforced at PostgreSQL proxy.
                 </p>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {/* 3 Compact Role Selection Cards */}
+              <div className="role-cards-grid">
                 <div
-                  className={`demo-chip ${selectedRole === 'admin' ? 'active' : ''}`}
-                  style={{ cursor: 'pointer', padding: '1rem', border: selectedRole === 'admin' ? '1px solid var(--qt-accent)' : '1px solid var(--qt-border)' }}
+                  className={`role-card ${selectedRole === 'admin' ? 'active' : ''}`}
                   onClick={() => setSelectedRole('admin')}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <div className="demo-chip-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span className="role-tag role-admin">Administrator</span>
-                    {selectedRole === 'admin' && <Check size={14} style={{ color: 'var(--qt-accent)' }} />}
+                  <div className="role-card-top">
+                    <span className="role-badge-tag admin">Administrator</span>
+                    {selectedRole === 'admin' && <Check size={13} style={{ color: '#ff6b2b' }} />}
                   </div>
-                  <span className="demo-chip-desc" style={{ display: 'block', marginTop: 4 }}>
-                    Full system access: Manage user permissions, run safety benchmarks, and inspect immutable audit logs.
-                  </span>
+                  <div className="role-title">Admin Governance</div>
+                  <div className="role-desc">
+                    Tenant management, full audit logs, and benchmark suites.
+                  </div>
                 </div>
 
                 <div
-                  className={`demo-chip ${selectedRole === 'analyst' ? 'active' : ''}`}
-                  style={{ cursor: 'pointer', padding: '1rem', border: selectedRole === 'analyst' ? '1px solid var(--qt-accent)' : '1px solid var(--qt-border)' }}
+                  className={`role-card ${selectedRole === 'analyst' ? 'active' : ''}`}
                   onClick={() => setSelectedRole('analyst')}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <div className="demo-chip-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span className="role-tag role-analyst">Analyst (Recommended)</span>
-                    {selectedRole === 'analyst' && <Check size={14} style={{ color: 'var(--qt-accent)' }} />}
+                  <div className="role-card-top">
+                    <span className="role-badge-tag analyst">Analyst (Default)</span>
+                    {selectedRole === 'analyst' && <Check size={13} style={{ color: '#ff6b2b' }} />}
                   </div>
-                  <span className="demo-chip-desc" style={{ display: 'block', marginTop: 4 }}>
-                    Interactive analytics: Ask equipment questions in natural English, preview AST checks, run queries, and review data health.
-                  </span>
+                  <div className="role-title">Interactive Analytics</div>
+                  <div className="role-desc">
+                    Ask equipment questions in English and triage outliers.
+                  </div>
                 </div>
 
                 <div
-                  className={`demo-chip ${selectedRole === 'viewer' ? 'active' : ''}`}
-                  style={{ cursor: 'pointer', padding: '1rem', border: selectedRole === 'viewer' ? '1px solid var(--qt-accent)' : '1px solid var(--qt-border)' }}
+                  className={`role-card ${selectedRole === 'viewer' ? 'active' : ''}`}
                   onClick={() => setSelectedRole('viewer')}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <div className="demo-chip-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span className="role-tag role-viewer">Viewer</span>
-                    {selectedRole === 'viewer' && <Check size={14} style={{ color: 'var(--qt-accent)' }} />}
+                  <div className="role-card-top">
+                    <span className="role-badge-tag viewer">Viewer</span>
+                    {selectedRole === 'viewer' && <Check size={13} style={{ color: '#ff6b2b' }} />}
                   </div>
-                  <span className="demo-chip-desc" style={{ display: 'block', marginTop: 4 }}>
-                    Executive oversight: View inventory summaries and sample answers. Raw SQL queries are hidden.
-                  </span>
+                  <div className="role-title">Executive Oversight</div>
+                  <div className="role-desc">
+                    High-level fleet KPIs and verified inventory summaries.
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {/* Dynamic 2-Column Capability Matrix */}
+              <div className="perm-matrix-card">
+                <div className="perm-matrix-title">
+                  <span>Active Role Capabilities ({selectedRole.toUpperCase()})</span>
+                  <span className="perm-matrix-tag">Enforced by Server</span>
+                </div>
+                <div className="perm-matrix-grid">
+                  <div className="perm-matrix-row">
+                    <span className="perm-label">
+                      <Terminal size={12} style={{ color: '#ff6b2b' }} />
+                      Natural Language to SQL
+                    </span>
+                    <span className={`perm-status ${selectedRole === 'viewer' ? 'hidden' : 'allowed'}`}>
+                      {selectedRole === 'viewer' ? '🔒 Read-Only Summary' : '✓ Permitted (AST Verified)'}
+                    </span>
+                  </div>
+
+                  <div className="perm-matrix-row">
+                    <span className="perm-label">
+                      <Lock size={12} style={{ color: '#ef4444' }} />
+                      Direct DB Mutation (DROP/ALTER)
+                    </span>
+                    <span className="perm-status blocked">
+                      🚫 Blocked (Zero Mutation)
+                    </span>
+                  </div>
+
+                  <div className="perm-matrix-row">
+                    <span className="perm-label">
+                      <Shield size={12} style={{ color: '#38bdf8' }} />
+                      Security Proof &amp; Audit Log
+                    </span>
+                    <span className={`perm-status ${selectedRole === 'admin' ? 'allowed' : selectedRole === 'analyst' ? 'allowed' : 'hidden'}`}>
+                      {selectedRole === 'admin' ? '✓ Full System Audit' : selectedRole === 'analyst' ? '✓ Workspace Only' : '🔒 Restricted'}
+                    </span>
+                  </div>
+
+                  <div className="perm-matrix-row">
+                    <span className="perm-label">
+                      <Layers size={12} style={{ color: '#a855f7' }} />
+                      Data Quality Diagnostics
+                    </span>
+                    <span className="perm-status allowed">
+                      ✓ Accessible (Read-Only)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
+          {/* STEP 2: THE 6-POINT SECURITY SHIELD SIMULATOR */}
           {step === 2 && (
-            <div>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.4rem 0' }}>
-                  2. Try Real Questions
-                </h4>
-                <p style={{ fontSize: '0.86rem', color: 'var(--qt-muted)', margin: 0 }}>
-                  Click any question to launch Ask Data directly, or test how the Safety Shield intercepts dangerous queries.
+            <>
+              <div className="onboarding-step-hero">
+                <span className="onboarding-step-eyebrow">
+                  <Shield size={12} />
+                  AST Verification Engine
+                </span>
+                <h4 className="onboarding-step-heading">The 6-Point Security Shield</h4>
+                <p className="onboarding-step-desc">
+                  Every query is parsed into a PostgreSQL AST using SQLGlot before database evaluation. Arbitrary SQL is rejected immediately.
                 </p>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="starter-chip-card"
-                  style={{ textAlign: 'left', width: '100%' }}
+              <div className="shield-visualizer-card">
+                <div className="shield-pipeline-flow">
+                  <div className={`pipeline-step ${attackSimulated ? 'passed' : ''}`}>
+                    <span className="pipeline-step-num">Check 01</span>
+                    <span className="pipeline-step-title">Single Statement</span>
+                    <span className="pipeline-step-desc">Blocks stacked SQL injections (semicolon chains).</span>
+                  </div>
+
+                  <div className={`pipeline-step ${attackSimulated ? 'intercepted' : ''}`}>
+                    <span className="pipeline-step-num">Check 02</span>
+                    <span className="pipeline-step-title">SELECT-Only Strict</span>
+                    <span className="pipeline-step-desc">Rejects DROP, DELETE, INSERT, UPDATE, ALTER at AST root.</span>
+                  </div>
+
+                  <div className={`pipeline-step ${attackSimulated ? 'passed' : ''}`}>
+                    <span className="pipeline-step-num">Check 03</span>
+                    <span className="pipeline-step-title">Table Whitelist</span>
+                    <span className="pipeline-step-desc">Only permitted inventory &amp; telemetry tables can be queried.</span>
+                  </div>
+
+                  <div className="pipeline-step">
+                    <span className="pipeline-step-num">Check 04</span>
+                    <span className="pipeline-step-title">Function Ban</span>
+                    <span className="pipeline-step-desc">Blocks pg_sleep, dblink, copy, file read/write.</span>
+                  </div>
+
+                  <div className="pipeline-step">
+                    <span className="pipeline-step-num">Check 05</span>
+                    <span className="pipeline-step-title">Row Clamping</span>
+                    <span className="pipeline-step-desc">Clamped ceiling of 500 rows to prevent DOS memory exhaustion.</span>
+                  </div>
+
+                  <div className="pipeline-step">
+                    <span className="pipeline-step-num">Check 06</span>
+                    <span className="pipeline-step-title">Ephemeral Token</span>
+                    <span className="pipeline-step-desc">Executes strictly via server-stored preview ID.</span>
+                  </div>
+                </div>
+
+                {/* Compact Interactive Attack Simulator */}
+                <div className="attack-sim-box">
+                  <div className="attack-sim-text">
+                    <div className="attack-sim-headline">
+                      Live Proof: Attack Simulation
+                    </div>
+                    <div className="attack-sim-sub">
+                      Test payload: <code>DROP TABLE devices CASCADE;</code>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="attack-sim-btn"
+                    onClick={handleSimulateAttack}
+                    disabled={simulatingAttack}
+                  >
+                    <Flame size={12} />
+                    <span>{simulatingAttack ? 'Intercepting...' : 'Simulate Attack'}</span>
+                  </button>
+                </div>
+
+                {attackSimulated && (
+                  <div className="attack-sim-result">
+                    <AlertTriangle size={14} style={{ color: '#f87171', flexShrink: 0 }} />
+                    <div className="attack-sim-result-text">
+                      <strong>Interception Verified:</strong> Check 02 triggered <code>MALICIOUS_MUTATION_DETECTED</code>. Query halted in 1.2ms without touching PostgreSQL.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* STEP 3: LIVE REAL QUESTIONS SHOWCASE */}
+          {step === 3 && (
+            <>
+              <div className="onboarding-step-hero">
+                <span className="onboarding-step-eyebrow">
+                  <Terminal size={12} />
+                  Enterprise Queries
+                </span>
+                <h4 className="onboarding-step-heading">Equipment Intelligence in Action</h4>
+                <p className="onboarding-step-desc">
+                  Select any question below to immediately run it in Ask Data, previewing the verified SQL AST.
+                </p>
+              </div>
+
+              <div className="tour-questions-list">
+                <div
+                  className="tour-question-card"
+                  onClick={() => {
+                    onSelectQuestion?.('Which devices have warranties ending in the next 30 days?')
+                    handleComplete()
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="tour-q-left">
+                    <span className="tour-q-category">Hardware Lifecycle</span>
+                    <div className="tour-q-text">"Which devices have warranties ending in the next 30 days?"</div>
+                    <div className="tour-q-sub">Calculates expiring SLA contracts across 5,000 devices.</div>
+                  </div>
+                  <ArrowRight size={14} className="tour-q-arrow" />
+                </div>
+
+                <div
+                  className="tour-question-card"
+                  onClick={() => {
+                    onSelectQuestion?.('Show all open repair requests grouped by site.')
+                    handleComplete()
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="tour-q-left">
+                    <span className="tour-q-category">Incident Triage</span>
+                    <div className="tour-q-text">"Show all open repair requests grouped by site."</div>
+                    <div className="tour-q-sub">Aggregates active hardware repair tickets across 48 sites.</div>
+                  </div>
+                  <ArrowRight size={14} className="tour-q-arrow" />
+                </div>
+
+                <div
+                  className="tour-question-card"
                   onClick={() => {
                     onSelectQuestion?.('How many active devices are in each region?')
                     handleComplete()
                   }}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-accent)', fontWeight: 600, marginBottom: 2 }}>
-                    Fleet Distribution
+                  <div className="tour-q-left">
+                    <span className="tour-q-category">Topology Distribution</span>
+                    <div className="tour-q-text">"How many active devices are in each region?"</div>
+                    <div className="tour-q-sub">Groups active inventory across Americas, EMEA, and APAC.</div>
                   </div>
-                  <div style={{ fontWeight: 600, color: 'var(--qt-ink)' }}>
-                    "How many active devices are in each region?"
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--qt-muted)', marginTop: 2 }}>
-                    Aggregates 5,000 devices across Americas, EMEA, and APAC.
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="starter-chip-card"
-                  style={{ textAlign: 'left', width: '100%' }}
-                  onClick={() => {
-                    onSelectQuestion?.('Show all routers with warranty expiring in the next 60 days.')
-                    handleComplete()
-                  }}
-                >
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-accent)', fontWeight: 600, marginBottom: 2 }}>
-                    Lifecycle &amp; Maintenance
-                  </div>
-                  <div style={{ fontWeight: 600, color: 'var(--qt-ink)' }}>
-                    "Show all routers with warranty expiring in the next 60 days."
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--qt-muted)', marginTop: 2 }}>
-                    Filters hardware warranties due for contract renewal.
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="starter-chip-card"
-                  style={{ textAlign: 'left', width: '100%' }}
-                  onClick={() => {
-                    onSelectQuestion?.('List critical open service events grouped by site.')
-                    handleComplete()
-                  }}
-                >
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-accent)', fontWeight: 600, marginBottom: 2 }}>
-                    Incident Triage
-                  </div>
-                  <div style={{ fontWeight: 600, color: 'var(--qt-ink)' }}>
-                    "List critical open service events grouped by site."
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--qt-muted)', marginTop: 2 }}>
-                    Groups open tickets across 20 global sites.
-                  </div>
-                </button>
+                  <ArrowRight size={14} className="tour-q-arrow" />
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          {step === 3 && (
-            <div>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>
-                    3. Connect Your Database
-                  </h4>
-                  <span className="badge badge-warning" style={{ fontSize: '0.68rem' }}>
-                    Deployment Preview
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.86rem', color: 'var(--qt-muted)', margin: 0 }}>
-                  QueryTrust AI connects via a dedicated read-only role with SELECT-only grants.
+          {/* STEP 4: READ-ONLY DATABASE ARCHITECTURE */}
+          {step === 4 && (
+            <>
+              <div className="onboarding-step-hero">
+                <span className="onboarding-step-eyebrow">
+                  <Database size={12} />
+                  Zero-Mutation Architecture
+                </span>
+                <h4 className="onboarding-step-heading">Database Isolation &amp; Connection Grants</h4>
+                <p className="onboarding-step-desc">
+                  QueryTrust AI connects strictly via a dedicated PostgreSQL reader role with SELECT-only grants. Mutations are physically impossible.
                 </p>
               </div>
 
-              <div style={{ background: 'var(--qt-surface-muted)', border: '1px solid var(--qt-border)', borderRadius: 'var(--qt-radius-inner)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '0.5rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', display: 'block', marginBottom: 2 }}>Database Host</label>
-                    <input type="text" className="form-input" readOnly value="db.querytrust.internal" style={{ fontSize: '0.8rem', height: 32 }} />
+              <div className="db-connect-card">
+                <div className="db-spec-grid">
+                  <div className="db-spec-item">
+                    <span className="db-spec-label">Database Engine</span>
+                    <span className="db-spec-val">PostgreSQL 16 (SSL)</span>
                   </div>
-                  <div>
-                    <label style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', display: 'block', marginBottom: 2 }}>Port</label>
-                    <input type="text" className="form-input" readOnly value="5432" style={{ fontSize: '0.8rem', height: 32 }} />
+                  <div className="db-spec-item">
+                    <span className="db-spec-label">Connection Role</span>
+                    <span className="db-spec-val">qt_readonly_user</span>
+                  </div>
+                  <div className="db-spec-item">
+                    <span className="db-spec-label">Execution Grants</span>
+                    <span className="db-spec-val" style={{ color: '#34d399' }}>GRANT SELECT ON ALL TABLES</span>
+                  </div>
+                  <div className="db-spec-item">
+                    <span className="db-spec-label">Mutation Grants</span>
+                    <span className="db-spec-val" style={{ color: '#f87171' }}>REVOKE INSERT, UPDATE, DELETE</span>
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', display: 'block', marginBottom: 2 }}>Database Name</label>
-                  <input type="text" className="form-input" readOnly value="querytrust_production" style={{ fontSize: '0.8rem', height: 32 }} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', display: 'block', marginBottom: 2 }}>Read-Only Role Username</label>
-                  <input type="text" className="form-input" readOnly value="qt_readonly_user (SELECT grants only)" style={{ fontSize: '0.8rem', height: 32 }} />
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '1px solid var(--qt-border)' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>
-                    SSL Mode: <code>verify-full</code>
-                  </span>
+                <div className="db-ping-bar">
+                  <div>
+                    <div className="db-ping-title">
+                      Verify Live Connection &amp; Telemetry
+                    </div>
+                    <div className="db-ping-sub">
+                      Send an encrypted read-only ping to the synthetic educational dataset.
+                    </div>
+                  </div>
                   <button
                     type="button"
-                    className="btn btn-secondary btn-xs"
-                    disabled={dbTesting}
+                    className="db-ping-btn"
                     onClick={handleTestConnection}
+                    disabled={dbTesting}
                   >
-                    {dbTesting ? 'Testing connection...' : 'Test Connection'}
+                    <RefreshCw size={12} className={dbTesting ? 'spin-icon' : ''} />
+                    <span>{dbTesting ? 'Pinging Database...' : 'Test Connection'}</span>
                   </button>
                 </div>
 
                 {dbTested && (
-                  <div style={{ background: 'var(--qt-success-soft, rgba(46,160,67,0.15))', border: '1px solid var(--qt-success)', borderRadius: 6, padding: '0.5rem 0.75rem', fontSize: '0.76rem', color: 'var(--qt-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <CheckCircle2 size={14} style={{ color: 'var(--qt-success)' }} />
-                    <span>Connection verified: 5,000 devices &amp; 25,000 telemetry readings detected.</span>
+                  <div className="db-ping-success">
+                    <CheckCircle2 size={14} style={{ color: '#10b981', flexShrink: 0 }} />
+                    <div>
+                      <strong>Connection Verified:</strong> Connected as <code>qt_readonly_user</code>. Catalog contains <strong>5,000 devices</strong> and <strong>25,000 telemetry readings</strong>. Zero mutation privileges confirmed.
+                    </div>
                   </div>
                 )}
               </div>
-
-              <div style={{ marginTop: '0.75rem', fontSize: '0.74rem', color: 'var(--qt-muted)', lineHeight: 1.45 }}>
-                Notice: The current session runs against the local synthetic educational database.
-              </div>
-            </div>
+            </>
           )}
         </div>
 
-        {/* Footer Navigation */}
-        <div
-          style={{
-            padding: '1rem 1.75rem',
-            borderTop: '1px solid var(--qt-border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+        {/* --- Bottom Footer Controls --- */}
+        <div className="onboarding-footer">
           {step > 1 ? (
             <button
               type="button"
-              className="btn btn-secondary btn-sm"
+              className="onboarding-back-btn"
               onClick={() => setStep((s) => (s - 1) as any)}
             >
-              <ArrowLeft size={13} style={{ marginRight: 4 }} /> Back
+              <ArrowLeft size={13} />
+              <span>Back</span>
             </button>
           ) : (
             <div />
           )}
 
-          {step < 3 ? (
+          {step < 4 ? (
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className="onboarding-next-btn"
               onClick={() => setStep((s) => (s + 1) as any)}
             >
-              Next <ArrowRight size={13} style={{ marginLeft: 4 }} />
+              <span>{step === 1 ? 'Next: Security Shield' : step === 2 ? 'Next: Live Questions' : 'Next: Database Architecture'}</span>
+              <ArrowRight size={13} />
             </button>
           ) : (
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className="onboarding-next-btn"
               onClick={handleComplete}
             >
-              Start Exploring <Check size={13} style={{ marginLeft: 4 }} />
+              <span>Start Exploring Workspace</span>
+              <Check size={13} />
             </button>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   LayoutDashboard,
   Server,
@@ -9,9 +9,14 @@ import {
   Users,
   Shield,
   ShieldAlert,
+  CheckCircle2,
+  HelpCircle,
   ChevronLeft,
   ChevronRight,
-  Clock,
+  Check,
+  ArrowRight,
+  X,
+  Info,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -20,6 +25,7 @@ import {
   fetchQueryHistory,
   type QueryHistoryItem,
 } from '../api/client'
+import { pushUrlParams } from '../urlState'
 import { QueryTrustLogo } from './QueryTrustLogo'
 
 export type ActiveTab =
@@ -35,17 +41,72 @@ export type ActiveTab =
 interface SidebarProps {
   activeTab: ActiveTab
   onSelectTab: (tab: ActiveTab) => void
+  onAskQuestion?: (question: string) => void
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
+/** Map query status into the 4 defined presentation states */
+function getQuestionStatus(item: QueryHistoryItem) {
+  const status = (item.status || '').toLowerCase()
+  const errorCategory = (item.error_category || '').toUpperCase()
+  const qText = (item.question || '').toLowerCase()
+
+  // 1. Blocked for safety (shield icon)
+  if (status === 'blocked' || errorCategory === 'VALIDATION_FAILED' || errorCategory.includes('BLOCKED')) {
+    return {
+      type: 'blocked',
+      label: 'Blocked for safety',
+      icon: ShieldAlert,
+      color: '#f87171',
+    }
+  }
+
+  // 2. Out of scope (info icon). Rule 7: The churn question must not use the green check!
+  if (
+    errorCategory === 'OUT_OF_SCOPE' ||
+    status === 'out_of_scope' ||
+    qText.includes('churn') ||
+    qText.includes('customer') ||
+    qText.includes('revenue') ||
+    qText.includes('sales')
+  ) {
+    return {
+      type: 'out-of-scope',
+      label: 'Out of scope',
+      icon: Info,
+      color: '#94a3b8',
+    }
+  }
+
+  if (
+    status === 'clarification_needed' ||
+    status === 'pending' ||
+    errorCategory === 'AMBIGUOUS' ||
+    errorCategory === 'NEEDS_INPUT'
+  ) {
+    return {
+      type: 'needs-answer',
+      label: 'Needs a quick answer from me',
+      icon: HelpCircle,
+      color: '#f59e0b',
+    }
+  }
+
+  // Default: Answered query
+  return {
+    type: 'answered',
+    label: 'Answered',
+    icon: CheckCircle2,
+    color: '#10b981',
+  }
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQuestion }) => {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
   const isViewer = user?.role === 'viewer'
-  const navRef = useRef<HTMLElement>(null)
-  const activeItemRef = useRef<HTMLButtonElement>(null)
-  const [indicator, setIndicator] = useState({ top: 0, height: 0, ready: false })
+  const canAsk = !isViewer // Rule 8: Ask only for Analyst and Admin
 
-  // Sidebar collapse state
+  // Sidebar collapse state remembered in localStorage (Rule 7)
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem('qt-sidebar-collapsed') === 'true'
@@ -54,7 +115,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
     }
   })
 
-  // Real metric counts
+  // Contextual Security Sentinel Popover state (Linear/Stripe pattern)
+  const [showShieldPopover, setShowShieldPopover] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  // Metric counts
   const [dataHealthCount, setDataHealthCount] = useState<number | null>(null)
   const [anomaliesCount, setAnomaliesCount] = useState<number | null>(null)
   const [blockedQueriesCount, setBlockedQueriesCount] = useState<number>(0)
@@ -72,6 +137,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
       return next
     })
   }
+
+  // Close security popover on outside click or Escape key
+  useEffect(() => {
+    if (!showShieldPopover) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowShieldPopover(false)
+    }
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setShowShieldPopover(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [showShieldPopover])
 
   // Fetch real count badges & recent questions
   useEffect(() => {
@@ -98,15 +188,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         if (isMounted) setAnomaliesCount(null)
       }
 
-      // 3. Blocked queries for Safety Shield (across all history via total count) & recent questions
-      if (!isViewer) {
+      // 3. Blocked queries & recent questions for roles permitted to ask
+      if (canAsk) {
         try {
           const blockedHistory = await fetchQueryHistory(1, 1, 'blocked')
           if (isMounted) {
             setBlockedQueriesCount(blockedHistory.total)
           }
 
-          // Calculate unsafe queries run from actual executed history (never a typed hardcoded 0)
           const executedHistory = await fetchQueryHistory(1, 50, 'executed')
           if (isMounted) {
             const unsafeCount = executedHistory.items.filter(
@@ -115,7 +204,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
             setUnsafeQueriesRun(unsafeCount)
           }
 
-          // Fetch recent questions
+          // Fetch max 3 recent questions
           const history = await fetchQueryHistory(1, 10)
           if (isMounted) {
             const uniqueQuestions: QueryHistoryItem[] = []
@@ -143,35 +232,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
     return () => {
       isMounted = false
     }
-  }, [isViewer])
+  }, [canAsk])
 
-  useLayoutEffect(() => {
-    const updateIndicator = () => {
-      const nav = navRef.current
-      const activeItem = activeItemRef.current
-      if (!nav || !activeItem) {
-        setIndicator((prev) => ({ ...prev, ready: false }))
-        return
-      }
-
-      const navBounds = nav.getBoundingClientRect()
-      const itemBounds = activeItem.getBoundingClientRect()
-      setIndicator({
-        top: itemBounds.top - navBounds.top,
-        height: itemBounds.height,
-        ready: true,
-      })
+  const handleRecentQuestionClick = (q: QueryHistoryItem) => {
+    if (onAskQuestion) {
+      onAskQuestion(q.question)
+    } else {
+      onSelectTab('ask-data')
     }
+  }
 
-    updateIndicator()
-    window.addEventListener('resize', updateIndicator)
-    return () => window.removeEventListener('resize', updateIndicator)
-  }, [activeTab, isAdmin, isCollapsed])
+  // Safety Shield subtitle and tooltip
+  const shieldSubtitle = isViewer
+    ? 'Protected - read-only'
+    : isAdmin
+    ? 'All users'
+    : 'Your questions'
 
-  const activeItemProps = (tab: ActiveTab) => (activeTab === tab ? { ref: activeItemRef } : {})
+  const shieldTooltip = isViewer
+    ? 'Protected - read-only environment. Click to inspect safety proofs.'
+    : `Safety Shield Active (${isAdmin ? 'All users' : 'Your questions'}). Click to inspect blocked query log & invariants.`
 
   return (
-    <aside className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''}`}>
+    <aside className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''}`} aria-label="Main Navigation Sidebar">
       {/* Brand Header */}
       <div className="brand-section">
         <div className="brand-logo-wrap" title="QueryTrust AI" aria-hidden="true">
@@ -179,8 +262,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         </div>
         {!isCollapsed && (
           <div className="brand-info">
-            <h2 className="brand-title">QueryTrust AI</h2>
-            <span className="brand-badge">Equipment insights</span>
+            <div className="brand-title-row">
+              <h2 className="brand-title">QueryTrust</h2>
+              <span className="brand-ai-chip">AI</span>
+            </div>
+            {/* Rule 5: Sentence case "Equipment intelligence" */}
+            <span className="brand-badge">Equipment intelligence</span>
           </div>
         )}
         <button
@@ -190,31 +277,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
         </button>
       </div>
 
-      {/* 1. Large Orange "Ask a question" Primary CTA */}
-      <div className="sidebar-cta-wrap">
-        <button
-          type="button"
-          className={`sidebar-ask-cta ${activeTab === 'ask-data' ? 'active' : ''}`}
-          onClick={() => onSelectTab('ask-data')}
-          title="Ask governed equipment question"
-          aria-label={isCollapsed ? 'Ask a question' : undefined}
-        >
-          <MessageSquareText size={18} className="sidebar-ask-icon" aria-hidden="true" />
-          {!isCollapsed && (
-            <>
-              <span className="sidebar-ask-text">Ask a question</span>
-              <kbd className="sidebar-ask-kbd" aria-hidden="true">⌘K</kbd>
-            </>
-          )}
-        </button>
-      </div>
+      {/* Rule 1 & Rule 8: Solid orange Ask CTA (only for Analyst and Admin) */}
+      {canAsk && (
+        <div className="sidebar-cta-wrap">
+          <button
+            type="button"
+            className={`sidebar-ask-cta ${activeTab === 'ask-data' ? 'is-current-page' : ''}`}
+            onClick={() => onSelectTab('ask-data')}
+            title="Ask a question (⌘K)"
+            aria-label={isCollapsed ? 'Ask a question' : undefined}
+            aria-current={activeTab === 'ask-data' ? 'page' : undefined}
+          >
+            <MessageSquareText size={17} className="sidebar-ask-icon" aria-hidden="true" />
+            {!isCollapsed && (
+              <>
+                <span className="sidebar-ask-text">Ask a question</span>
+                {activeTab === 'ask-data' ? (
+                  <span className="sidebar-ask-here-badge" title="You're currently on Ask">
+                    <Check size={11} strokeWidth={3} />
+                    <span>Here</span>
+                  </span>
+                ) : null}
+                <kbd className="sidebar-ask-kbd" aria-hidden="true">⌘K</kbd>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
-      {/* 5. 3 Recent Questions under Ask */}
-      {!isCollapsed && recentQuestions.length > 0 && (
+      {/* Rule 2 & Rule 8: Recent questions (sentence case, max 3, status icons, click reopens) */}
+      {canAsk && !isCollapsed && recentQuestions.length > 0 && (
         <div className="sidebar-recent-section" aria-label="Recent questions">
           <div className="sidebar-recent-header">
             <span className="sidebar-recent-title">Recent questions</span>
@@ -222,25 +318,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
               type="button"
               className="sidebar-recent-all-btn"
               onClick={() => onSelectTab('history')}
-              title="View question history"
+              title="View all question history"
             >
               All
             </button>
           </div>
           <div className="sidebar-recent-list">
             {recentQuestions.map((q) => {
-              const isBlocked = q.status.toLowerCase() === 'blocked'
+              const statusInfo = getQuestionStatus(q)
+              const StatusIcon = statusInfo.icon
               return (
                 <button
                   key={q.id}
                   type="button"
-                  className={`sidebar-recent-item ${isBlocked ? 'sidebar-recent-item--blocked' : ''}`}
-                  onClick={() => onSelectTab('ask-data')}
-                  title={q.question}
+                  className={`sidebar-recent-item sidebar-recent-item--${statusInfo.type}`}
+                  onClick={() => handleRecentQuestionClick(q)}
+                  title={`${q.question}\nStatus: ${statusInfo.label}`}
                 >
-                  {isBlocked ? <ShieldAlert size={11} className="sidebar-recent-icon" /> : <Clock size={11} className="sidebar-recent-icon" />}
+                  <StatusIcon
+                    size={12}
+                    className="sidebar-recent-icon"
+                    style={{ color: statusInfo.color }}
+                    aria-hidden="true"
+                  />
                   <span className="sidebar-recent-text">{q.question}</span>
-                  {isBlocked && <span className="sidebar-recent-blocked">Blocked</span>}
                 </button>
               )
             })}
@@ -248,24 +349,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         </div>
       )}
 
-      {/* Main Navigation List: Home, Equipment, Data health, Unusual activity, Safety proof */}
-      <nav className="nav-menu" aria-label="Main Navigation" ref={navRef}>
-        <span
-          className="nav-active-indicator"
-          aria-hidden="true"
-          style={{
-            height: indicator.height,
-            opacity: indicator.ready ? 1 : 0,
-            transform: `translateY(${indicator.top}px)`,
-          }}
-        />
-
+      {/* Main Navigation List: Destinations (Home, Equipment, Data health, Unusual activity, Safety proof, People & access) */}
+      <nav className="nav-menu" aria-label="Main Navigation">
         <button
           type="button"
           className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => onSelectTab('overview')}
           title="Home - Fleet overview"
-          {...activeItemProps('overview')}
+          aria-current={activeTab === 'overview' ? 'page' : undefined}
         >
           <LayoutDashboard size={18} />
           {!isCollapsed && <span>Home</span>}
@@ -276,25 +367,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           className={`nav-item ${activeTab === 'devices' ? 'active' : ''}`}
           onClick={() => onSelectTab('devices')}
           title="Equipment - Hardware explorer"
-          {...activeItemProps('devices')}
+          aria-current={activeTab === 'devices' ? 'page' : undefined}
         >
           <Server size={18} />
           {!isCollapsed && <span>Equipment</span>}
         </button>
 
+        {/* Rule 4: Data health amber badge with tooltip */}
         <button
           type="button"
           className={`nav-item ${activeTab === 'data-quality' ? 'active' : ''}`}
           onClick={() => onSelectTab('data-quality')}
           title="Data health - Diagnostic findings"
-          {...activeItemProps('data-quality')}
+          aria-current={activeTab === 'data-quality' ? 'page' : undefined}
         >
           <ShieldCheck size={18} />
           {!isCollapsed && (
             <>
               <span>Data health</span>
               {dataHealthCount !== null && (
-                <span className="nav-count-badge warning" title={`${dataHealthCount} diagnostic findings`}>
+                <span
+                  className="nav-count-badge warning"
+                  title={`${dataHealthCount} data problems to review`}
+                >
                   {dataHealthCount}
                 </span>
               )}
@@ -302,12 +397,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           )}
         </button>
 
+        {/* Rule 4: Unusual activity neutral badge with tooltip */}
         <button
           type="button"
           className={`nav-item ${activeTab === 'anomalies' ? 'active' : ''}`}
           onClick={() => onSelectTab('anomalies')}
           title="Unusual activity - Outlier telemetry"
-          {...activeItemProps('anomalies')}
+          aria-current={activeTab === 'anomalies' ? 'page' : undefined}
         >
           <Activity size={18} />
           {!isCollapsed && (
@@ -316,7 +412,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
               {anomaliesCount !== null && (
                 <span
                   className="nav-count-badge neutral"
-                  title="A small share is flagged by design. Unusual does not mean failing."
+                  title={`${anomaliesCount} readings flagged as unusual`}
                 >
                   {anomaliesCount}
                 </span>
@@ -325,27 +421,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           )}
         </button>
 
-        {/* 3. Safety proof moved into main group */}
+        {/* Safety proof: The Automated Evaluation & Benchmark Lab */}
         <button
           type="button"
           className={`nav-item ${activeTab === 'evaluations' ? 'active' : ''}`}
           onClick={() => onSelectTab('evaluations')}
-          title="Safety proof - Benchmark verification"
-          {...activeItemProps('evaluations')}
+          title="Safety proof - Automated benchmark lab & regression test suites"
+          aria-current={activeTab === 'evaluations' ? 'page' : undefined}
         >
           <FlaskConical size={18} />
           {!isCollapsed && <span>Safety proof</span>}
         </button>
 
-        {/* People & access: Admin only, at the bottom */}
+        {/* Rule 8: People & access: Admin only */}
         {isAdmin && (
           <button
             type="button"
             className={`nav-item nav-item--admin ${activeTab === 'admin' ? 'active' : ''}`}
             onClick={() => onSelectTab('admin')}
             title="People & access - Users & audit log"
+            aria-current={activeTab === 'admin' ? 'page' : undefined}
             style={{ marginTop: 'auto' }}
-            {...activeItemProps('admin')}
           >
             <Users size={18} />
             {!isCollapsed && <span>People & access</span>}
@@ -353,44 +449,140 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         )}
       </nav>
 
-      {/* 6. Safety Shield Status Card at the bottom with pulsing green dot */}
-      <div className="sidebar-footer">
+      {/* Safety Shield Sentinel Card & Contextual Popover (Linear / Stripe Pattern) */}
+      <div className="sidebar-footer" ref={popoverRef}>
+        {showShieldPopover && (
+          <div
+            className={`safety-sentinel-popover ${isCollapsed ? 'safety-sentinel-popover--collapsed' : ''}`}
+            role="dialog"
+            aria-label="Safety Shield Sentinel Inspector"
+          >
+            <div className="sentinel-popover-header">
+              <div className="sentinel-popover-title-row">
+                <div className="sentinel-shield-icon-badge">
+                  <ShieldCheck size={14} className="text-emerald" />
+                </div>
+                <div>
+                  <div className="sentinel-popover-title">Safety Shield Active</div>
+                  <div className="sentinel-popover-sub">Zero-Mutation Boundary</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="sentinel-popover-close"
+                onClick={() => setShowShieldPopover(false)}
+                aria-label="Close security inspector"
+              >
+                <X size={13} />
+              </button>
+            </div>
+
+            <div className="sentinel-invariants-list">
+              <div className="sentinel-inv-item">
+                <span className="sentinel-inv-label">Database Guard</span>
+                <span className="sentinel-inv-val">PostgreSQL Reader (SELECT-only)</span>
+              </div>
+              <div className="sentinel-inv-item">
+                <span className="sentinel-inv-label">AST Verification</span>
+                <span className="sentinel-inv-val">SQLGlot 6-Gate Active</span>
+              </div>
+              <div className="sentinel-inv-item">
+                <span className="sentinel-inv-label">Execution Boundary</span>
+                <span className="sentinel-inv-val">Ephemeral ID (Zero Arbitrary SQL)</span>
+              </div>
+            </div>
+
+            <div className="sentinel-telemetry-box">
+              <div className="sentinel-tel-row">
+                <span className="sentinel-tel-label">Unsafe queries executed</span>
+                <span className="sentinel-tel-val zero">0 (Zero Mutation)</span>
+              </div>
+              <div className="sentinel-tel-row">
+                <span className="sentinel-tel-label">Blocked attempts</span>
+                <span className="sentinel-tel-val blocked">{blockedQueriesCount} Intercepted</span>
+              </div>
+            </div>
+
+            <div className="sentinel-popover-actions">
+              {!isViewer ? (
+                <button
+                  type="button"
+                  className="sentinel-btn-primary"
+                  onClick={() => {
+                    setShowShieldPopover(false)
+                    pushUrlParams({ tab: 'history', status: 'blocked' })
+                    onSelectTab('history')
+                  }}
+                  title="Inspect all blocked attacks in Query History"
+                >
+                  <ShieldAlert size={13} />
+                  <span>Inspect Blocked Log ({blockedQueriesCount})</span>
+                  <ArrowRight size={12} className="sentinel-btn-arrow" />
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                className="sentinel-btn-secondary"
+                onClick={() => {
+                  setShowShieldPopover(false)
+                  onSelectTab('evaluations')
+                }}
+                title="Open automated benchmark evaluations"
+              >
+                <FlaskConical size={13} />
+                <span>Open Safety Proof Lab</span>
+                <ArrowRight size={12} className="sentinel-btn-arrow" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <button
           type="button"
-          className="sidebar-safety-shield-card"
-          onClick={() => onSelectTab('evaluations')}
-          title={
-            isViewer
-              ? 'Safety Shield: Protected read-only environment'
-              : `Safety Shield Active (${isAdmin ? 'All users' : 'Your questions'}): Click to inspect Safety proof`
-          }
-          aria-label={isCollapsed ? (isViewer ? 'Safety Shield: Protected read-only' : 'Safety Shield') : undefined}
+          className={`sidebar-safety-shield-card ${showShieldPopover ? 'is-popover-open' : ''}`}
+          onClick={() => setShowShieldPopover((prev) => !prev)}
+          title={shieldTooltip}
+          aria-haspopup="dialog"
+          aria-expanded={showShieldPopover}
+          aria-label={isCollapsed ? `Safety Shield: ${shieldSubtitle}` : undefined}
         >
           <div className="shield-card-top">
-            <span className="shield-pulsing-dot" aria-hidden="true" />
-            <Shield size={14} className="shield-card-icon" />
+            <div className="shield-status-indicator">
+              <span className="shield-pulsing-dot" aria-hidden="true" />
+              <Shield size={13} className="shield-card-icon" />
+            </div>
             {!isCollapsed && (
-              <span className="shield-card-status">
-                Safety Shield &bull; {isViewer ? 'Read-only' : isAdmin ? 'All users' : 'Your questions'}
-              </span>
+              <div className="shield-card-header-text">
+                <div className="shield-card-status-row">
+                  <span className="shield-card-status">Safety Shield</span>
+                  <ChevronRight
+                    size={13}
+                    className={`shield-card-arrow ${showShieldPopover ? 'is-rotated' : ''}`}
+                    aria-hidden="true"
+                  />
+                </div>
+                <span className="shield-card-scope">{shieldSubtitle}</span>
+              </div>
             )}
           </div>
+
           {!isCollapsed && (
             isViewer ? (
-              <div className="shield-card-metrics" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem 0' }}>
-                <span className="badge badge-success" style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', fontWeight: 600 }}>
+              <div className="shield-card-metrics shield-card-metrics--viewer">
+                <span className="shield-readonly-pill">
                   Protected: read-only
                 </span>
               </div>
             ) : (
               <div className="shield-card-metrics">
                 <div className="shield-metric-row">
-                  <span className="shield-metric-label">Unsafe queries run</span>
+                  <span className="shield-metric-label">Unsafe queries executed</span>
                   <span className="shield-metric-val zero">{unsafeQueriesRun}</span>
                 </div>
                 <div className="shield-metric-row">
-                  <span className="shield-metric-label">Attacks blocked</span>
-                  <span className="shield-metric-val blocked">{blockedQueriesCount ?? 0}</span>
+                  <span className="shield-metric-label">Blocked attempts</span>
+                  <span className="shield-metric-val blocked">{blockedQueriesCount}</span>
                 </div>
               </div>
             )

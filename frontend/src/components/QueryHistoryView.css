@@ -51,12 +51,12 @@
 .audit-table th, .audit-table td { padding: .88rem .7rem; text-align: left; vertical-align: middle; }
 .audit-table th:first-child, .audit-table td:first-child { padding-left: 1.35rem; }
 .audit-table th:last-child, .audit-table td:last-child { padding-right: 1.35rem; text-align: right; }
-.audit-table-header th { border-bottom: 1px solid var(--qt-border); background: var(--qt-surface-muted); color: var(--qt-muted); font-family: var(--font-mono); font-size: .65rem; font-weight: 600; letter-spacing: .12em; }
+.audit-table-header th { border-bottom: 1px solid var(--qt-border); background: var(--qt-surface-muted); color: var(--qt-muted); font-family: var(--font-sans); font-size: .68rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 .audit-table-row { border-bottom: 1px solid var(--qt-border); cursor: pointer; }
 .audit-table-row:last-child { border-bottom: 0; }
 .audit-table-row:hover { background: var(--qt-surface-muted); }
 .timestamp-wrap { display: flex; flex-direction: column; gap: .15rem; }
-.timestamp-date, .timestamp-time, .row-count-value, .empty-metric-dash, .page-current { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.timestamp-date, .timestamp-time, .row-count-value, .empty-metric-dash, .page-current { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
 .timestamp-date { color: var(--qt-muted); font-size: .67rem; }
 .timestamp-time, .row-count-value { color: var(--qt-ink); font-size: .72rem; }
 .empty-metric-dash { color: var(--qt-muted); }

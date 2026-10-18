@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-10-17  
-**Current milestone:** 9 — Landing Page Complete Overhaul, Flawless WCAG AA Contrast, Interactive Query Terminal & Zero-Mutation Sandbox
-**Overall status:** Landing page fully redesigned and verified in both Dark and Light themes. Hero text visibility resolved with crystal-clear 100% contrast, interactive live query sandbox with 6-layer AST inspector implemented, attack matrix simulator verified, and TypeScript/Vite production build passing cleanly.
+**Last updated:** 2026-10-18  
+**Current milestone:** 11 — User Menu Polish (Initials Avatar, Sentence-case Role Pill, API Permissions Explainer, System Theme & Real Demo Role Switcher)
+**Overall status:** User profile menu completely polished with full WCAG disclosure accessibility (aria-expanded, aria-haspopup, role="menu", focus trap, Escape/Arrow navigation). Avatar renders colored circles with initials (SA, LA, EV). Single sentence-case role pill ("Admin", "Analyst", "Viewer") and normal email font. Dynamic permissions explainer ("What can an Admin do?") grounded in real backend API rules. Single tour entry point retained in top bar ("Guide"). System theme option added with persistent preference and live media query reactivity. Neutral sign-out button with red hover tint. Real demo role switcher performing true sign-out and POST /auth/login. All 112 pytest backend tests pass and frontend build compiles with 0 errors.
 
 ---
 

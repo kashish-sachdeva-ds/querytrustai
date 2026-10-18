@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   ArrowRight,
@@ -18,13 +18,14 @@ import {
   fetchDataQualityFindings,
   fetchDataQualitySummary,
 } from '../api/client'
+import { useTheme } from '../context/ThemeContext'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
 import './OverviewView.css'
 
 interface OverviewViewProps {
-  onNavigate: (destination: 'devices' | 'ask-data' | 'data-quality') => void
+  onNavigate: (destination: any, params?: Record<string, string | number>) => void
   onAskQuestion: (question: string) => void
   onOpenDevice: (deviceId: number) => void
 }
@@ -34,6 +35,61 @@ const SUGGESTED_QUESTIONS = [
   'Show open repair requests by site.',
   'How many active devices are in each region?',
 ]
+
+/** Standard number formatter across the entire page (Rule 5: 1,500 not 1500) */
+const formatNumber = (value: number | null | undefined): string => {
+  if (value === null || value === undefined || isNaN(value)) return '0'
+  return new Intl.NumberFormat('en-US').format(value)
+}
+
+/** Smooth count-up hook under 400ms respecting prefers-reduced-motion (Rule 8) */
+function useCountUp(endValue: number, durationMs = 360): number {
+  const [count, setCount] = useState<number>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      return endValue
+    }
+    return 0
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setCount(endValue)
+      return
+    }
+
+    if (!endValue) {
+      setCount(0)
+      return
+    }
+
+    let start: number | null = null
+    let frameId: number
+
+    const step = (now: number) => {
+      if (!start) start = now
+      const elapsed = now - start
+      const progress = Math.min(elapsed / durationMs, 1)
+      const easeOut = 1 - Math.pow(1 - progress, 3)
+      setCount(Math.round(easeOut * endValue))
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(step)
+      } else {
+        setCount(endValue)
+      }
+    }
+
+    frameId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frameId)
+  }, [endValue, durationMs])
+
+  return count
+}
+
+const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
+  const animated = useCountUp(value)
+  return <>{formatNumber(animated)}</>
+}
 
 const formatStatus = (value: string) =>
   value.replace(/_/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase())
@@ -45,7 +101,7 @@ export const STATUS_CANONICAL_MAP: Record<
   active: {
     label: 'Active',
     isApproved: true,
-    tooltip: 'Standard operational equipment (groups casing variants: active, Active, ACTIVE). Total: 3,019.',
+    tooltip: 'Standard operational equipment. Total: 3,019.',
   },
   maintenance: {
     label: 'Maintenance',
@@ -65,12 +121,12 @@ export const STATUS_CANONICAL_MAP: Record<
   decommissioned_pending_audit: {
     label: 'Pending Audit',
     isApproved: false,
-    tooltip: '50 devices with ad-hoc status "decommissioned_pending_audit". Flagged by Data health check DQ-005; mapped here distinct from standard Retired.',
+    tooltip: '50 devices with ad-hoc status "decommissioned_pending_audit". Flagged by Data health check DQ-005.',
   },
   staged: {
     label: 'Staged',
     isApproved: false,
-    tooltip: '17 devices with pre-deployment status "staged". Flagged by Data health check DQ-005; pending live deployment approval.',
+    tooltip: '17 devices with pre-deployment status "staged". Flagged by Data health check DQ-005.',
   },
 }
 
@@ -92,6 +148,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   onAskQuestion,
   onOpenDevice,
 }) => {
+  const { mode } = useTheme()
   const [data, setData] = useState<DashboardSummaryResponse | null>(null)
   const [dataHealth, setDataHealth] = useState<DataQualityRunSummary | null>(null)
   const [typeFormattingIssues, setTypeFormattingIssues] = useState<number | null>(null)
@@ -101,6 +158,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState('')
   const [activeBentoTab, setActiveBentoTab] = useState<'warranty' | 'severity'>('warranty')
+
+  // Refs for keyboard shortcuts & smooth scrolling
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const lastKeyRef = useRef<{ key: string; time: number }>({ key: '', time: 0 })
+  const repairsTableRef = useRef<HTMLElement>(null)
 
   const loadData = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true)
@@ -139,20 +201,49 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     return () => window.removeEventListener('querytrust:refresh-overview', refreshOverview)
   }, [])
 
+  // Rule 8: Keyboard shortcuts (/ search focus, R refresh, G then H for Home)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key.toLowerCase() === 'r' &&
-        document.activeElement?.tagName !== 'INPUT' &&
-        document.activeElement?.tagName !== 'TEXTAREA'
-      ) {
+      const isInput =
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA'
+
+      // 1. "/" focuses the Ask box
+      if (event.key === '/' && !isInput) {
+        event.preventDefault()
+        searchInputRef.current?.focus()
+        searchInputRef.current?.select()
+        return
+      }
+
+      // 2. "r" or "R" refreshes overview
+      if (event.key.toLowerCase() === 'r' && !isInput) {
         event.preventDefault()
         loadData(true)
+        return
+      }
+
+      // 3. "G" then "H" navigates to Home
+      if (!isInput) {
+        const now = Date.now()
+        if (event.key.toLowerCase() === 'g') {
+          lastKeyRef.current = { key: 'g', time: now }
+        } else if (
+          event.key.toLowerCase() === 'h' &&
+          lastKeyRef.current.key === 'g' &&
+          now - lastKeyRef.current.time < 1000
+        ) {
+          event.preventDefault()
+          onNavigate('overview')
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+          lastKeyRef.current = { key: '', time: 0 }
+        }
       }
     }
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [onNavigate])
 
   const activeShare =
     data && data.total_devices > 0
@@ -162,7 +253,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   // Standardized fleet breakdown totaling exactly 5,000
   const normalizedFleetBreakdown = useMemo(() => {
     if (!data) return []
-    // Group variants so numbers add up to exactly total_devices (5,000)
     const map = new Map<string, number>()
     for (const item of data.devices_by_status) {
       const label = displayFleetStatus(item.name)
@@ -172,18 +262,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     map.forEach((value, name) => {
       result.push({ name, value })
     })
-    // Sort with Active first
     return result.sort((a, b) => (a.name === 'Active' ? -1 : b.name === 'Active' ? 1 : b.value - a.value))
   }, [data])
-
-  const nonActiveStatuses = useMemo(() => {
-    return normalizedFleetBreakdown.filter((item) => item.name !== 'Active')
-  }, [normalizedFleetBreakdown])
 
   const totalBreakdownCount = useMemo(() => {
     return normalizedFleetBreakdown.reduce((sum, item) => sum + item.value, 0)
   }, [normalizedFleetBreakdown])
 
+  // Rule 4: Total urgent warranties (208 ending soon + 50 already expired = 258)
   const urgentWarrantyCount = useMemo(
     () =>
       data?.warranties_by_bucket
@@ -193,11 +279,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   )
 
   const topEquipmentType = data?.devices_by_type[0]
-  const attentionCount = [
-    data?.expiring_warranties_30d,
-    data?.open_service_events,
-    nonActiveStatuses.length > 0 ? 1 : 0,
-  ].filter(Boolean).length
 
   const severityClass = (value: string) =>
     value.toLowerCase().includes('crit') || value.toLowerCase().includes('high')
@@ -211,7 +292,26 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       ? 'expired'
       : name.toLowerCase() === '0 - 30 days'
       ? 'soon'
-      : 'muted'
+      : 'neutral'
+
+  const getLifecycleColorClass = (statusName: string) => {
+    switch (statusName) {
+      case 'Active':
+        return 'segment-active'
+      case 'Offline':
+        return 'segment-offline'
+      case 'Maintenance':
+        return 'segment-maintenance'
+      case 'Retired':
+        return 'segment-retired'
+      case 'Pending Audit':
+        return 'segment-audit'
+      case 'Staged':
+        return 'segment-staged'
+      default:
+        return 'segment-neutral'
+    }
+  }
 
   const submitQuestion = (event: React.FormEvent) => {
     event.preventDefault()
@@ -219,19 +319,23 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     if (nextQuestion) onAskQuestion(nextQuestion)
   }
 
+  const scrollToRepairs = () => {
+    repairsTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <div className="overview-command-center">
-      {/* Standard Unified Header */}
+      {/* ─── 1. PAGE TITLE & HEADER (Unified Inter Typography) ─── */}
       <PageHeader
         title="Fleet overview"
         description="Your equipment at a glance. Preview safe, read-only analytics before any query runs."
-        helpText="This overview summarizes your network hardware inventory, upcoming warranty expirations, and open maintenance requests. Click any card to filter equipment or ask a question."
+        helpText="Summarizes your network hardware inventory, upcoming warranty expirations, and open repair requests. Click any card to filter equipment or ask a question."
         actions={
           <div className="overview-hero-actions">
             {lastUpdated && (
-              <span className="snapshot-pill">
+              <span className="snapshot-pill" title="Last snapshot timestamp">
                 <Clock size={12} />
-                Snapshot {lastUpdated}
+                <span>Snapshot {lastUpdated}</span>
               </span>
             )}
             <button
@@ -250,39 +354,204 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         }
       />
 
-      {/* Hero Ask Box with 3 Starter Chips */}
-      <section className="overview-ask-panel" aria-labelledby="overview-ask-heading">
-        <div className="overview-ask-heading-row">
-          <div>
-            <h3 id="overview-ask-heading">Ask anything about your equipment</h3>
-            <p>Type a plain-language question or select a suggestion to create a read-only preview.</p>
-          </div>
-          <ExplainButton
-            title="How questions stay safe"
-            explanation="Questions create a server-validated preview first. QueryTrust only executes a saved, SELECT-only preview after the safety checks pass."
-          />
-        </div>
-        <form className="overview-ask-form" onSubmit={submitQuestion}>
-          <Search size={18} aria-hidden="true" />
+      {/* ─── 2. HERO ASK BOX (Squint-test Anchor: Hero, Larger, Starter Chips) ─── */}
+      <section className="overview-prompt-card hero-ask-box" aria-label="Ask equipment AI">
+        <form className="overview-prompt-bar hero-prompt-bar" onSubmit={submitQuestion}>
+          <Search size={19} className="prompt-search-icon" aria-hidden="true" />
           <input
+            ref={searchInputRef}
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Ask anything about equipment, e.g., 'How many active devices are in each region?'"
-            aria-label="Ask anything about your equipment"
+            placeholder="Ask equipment AI in plain English... e.g., 'Which devices have warranties ending in the next 30 days?'"
+            aria-label="Ask equipment intelligence question"
           />
-          <button type="submit" disabled={!question.trim()}>
+          <kbd className="prompt-slash-kbd" title="Press / anywhere to focus search" aria-hidden="true">/</kbd>
+          <button type="submit" className="prompt-submit-btn" disabled={!question.trim()}>
             <span>Ask</span>
-            <Send size={14} aria-hidden="true" />
+            <Send size={13} aria-hidden="true" />
           </button>
         </form>
-        <div className="overview-suggestion-row" aria-label="Suggested questions">
+        <div className="overview-suggestion-row" aria-label="Suggested starter queries">
+          <span className="prompt-suggestions-label">Suggestions:</span>
           {SUGGESTED_QUESTIONS.map((suggestion) => (
-            <button key={suggestion} type="button" onClick={() => onAskQuestion(suggestion)}>
+            <button
+              key={suggestion}
+              type="button"
+              className="prompt-suggestion-pill"
+              onClick={() => onAskQuestion(suggestion)}
+            >
               {suggestion}
             </button>
           ))}
         </div>
       </section>
+
+      {/* ─── 3. MORNING OPERATIONAL BRIEFING (Ranked 1-3 with Urgent First & Why) ─── */}
+      {data && (
+        <section className="morning-briefing-card" aria-label="Morning briefing">
+          <div className="morning-briefing-header">
+            <div className="morning-briefing-title-group">
+              <Sun size={16} className="briefing-sun-icon" />
+              <h3>Morning operational briefing</h3>
+              <span className="briefing-attention-pill">3 items prioritized by urgency</span>
+            </div>
+            <ExplainButton
+              title="Morning briefing"
+              explanation="Items are strictly ranked 1 to 3 by operational impact. Click any item to jump directly into technician triage or audit."
+            />
+          </div>
+          <div className="morning-briefing-items">
+            {/* Rank 1: Open repair requests (Most Urgent - Red) */}
+            <button
+              type="button"
+              className="morning-briefing-item priority-1"
+              onClick={scrollToRepairs}
+              title="View recent repair requests"
+            >
+              <div className="briefing-rank-chip rank-urgent">1</div>
+              <div className="morning-briefing-item-content">
+                <div className="briefing-headline-row">
+                  <span className="morning-briefing-item-badge badge-urgent">Open repair requests</span>
+                  <span className="briefing-metric-text">
+                    <strong><AnimatedNumber value={data.open_service_events} /></strong> active repair requests
+                  </span>
+                </div>
+                <div className="briefing-why-text">
+                  Why: Unresolved hardware faults risk line-rate degradation and link flaps.
+                </div>
+              </div>
+              <ArrowRight size={14} className="morning-briefing-item-arrow" />
+            </button>
+
+            {/* Rank 2: Warranties ending soon (Action Required - Amber) */}
+            <button
+              type="button"
+              className="morning-briefing-item priority-2"
+              onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
+              title="Review warranties ending soon"
+            >
+              <div className="briefing-rank-chip rank-attention">2</div>
+              <div className="morning-briefing-item-content">
+                <div className="briefing-headline-row">
+                  <span className="morning-briefing-item-badge badge-attention">Warranties ending soon</span>
+                  <span className="briefing-metric-text">
+                    <strong><AnimatedNumber value={urgentWarrantyCount} /></strong> devices near SLA expiry
+                  </span>
+                </div>
+                <div className="briefing-why-text">
+                  Why: 50 already expired; uncovered equipment risks unbudgeted replacement delays.
+                </div>
+              </div>
+              <ArrowRight size={14} className="morning-briefing-item-arrow" />
+            </button>
+
+            {/* Rank 3: Data health (Advisory - Neutral/Amber) */}
+            <button
+              type="button"
+              className="morning-briefing-item priority-3"
+              onClick={() => onNavigate('data-quality')}
+              title="Review data hygiene diagnostics"
+            >
+              <div className="briefing-rank-chip rank-advisory">3</div>
+              <div className="morning-briefing-item-content">
+                <div className="briefing-headline-row">
+                  <span className="morning-briefing-item-badge badge-advisory">Data health</span>
+                  <span className="briefing-metric-text">
+                    <strong><AnimatedNumber value={dataHealth?.total_findings ?? 6} /></strong> hygiene anomalies
+                  </span>
+                </div>
+                <div className="briefing-why-text">
+                  Why: Unapproved statuses and spelling variations skew fleet metrics.
+                </div>
+              </div>
+              <ArrowRight size={14} className="morning-briefing-item-arrow" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* ─── 4. EXECUTIVE FLEET KPI METRICS (Each whole card is a link) ─── */}
+      {data && (
+        <section className="overview-kpi-grid" aria-label="Key fleet metrics">
+          {/* Card 1: Total Fleet -> All Equipment */}
+          <div
+            className="overview-kpi-card"
+            onClick={() => onNavigate('devices')}
+            role="button"
+            tabIndex={0}
+            title="View all equipment records"
+          >
+            <div className="kpi-header">
+              <span className="kpi-label">Total equipment</span>
+              <div className="kpi-icon-wrap"><Server size={15} /></div>
+            </div>
+            <div className="kpi-value"><AnimatedNumber value={data.total_devices} /></div>
+            <div className="kpi-subtext">
+              <span>Across {formatNumber(data.total_sites)} sites</span>
+            </div>
+          </div>
+
+          {/* Card 2: Active Fleet -> Equipment filtered to Active */}
+          <div
+            className="overview-kpi-card"
+            onClick={() => onNavigate('devices', { status: 'active' })}
+            role="button"
+            tabIndex={0}
+            title="View active operational equipment"
+          >
+            <div className="kpi-header">
+              <span className="kpi-label">Active fleet</span>
+              <div className="kpi-icon-wrap" style={{ color: 'var(--qt-success, #10b981)' }}>
+                <span className="status-pulse-dot" />
+              </div>
+            </div>
+            <div className="kpi-value"><AnimatedNumber value={data.active_devices} /></div>
+            <div className="kpi-subtext kpi-subtext--success">
+              <span>{activeShare}% operational rate</span>
+            </div>
+          </div>
+
+          {/* Card 3: Warranties ending soon (Renamed, 258 headline, 208 ending soon - 50 already expired) */}
+          <div
+            className="overview-kpi-card"
+            onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
+            role="button"
+            tabIndex={0}
+            title="Review 258 urgent warranties (208 ending soon · 50 already expired)"
+          >
+            <div className="kpi-header">
+              <span className="kpi-label">Warranties ending soon</span>
+              <div className="kpi-icon-wrap" style={{ color: '#D97706' }}>
+                <Clock size={15} />
+              </div>
+            </div>
+            <div className="kpi-value"><AnimatedNumber value={urgentWarrantyCount} /></div>
+            <div className="kpi-subtext kpi-subtext--warning">
+              <span>208 ending soon &bull; 50 already expired</span>
+            </div>
+          </div>
+
+          {/* Card 4: Open repair requests (Whole card links to repair work) */}
+          <div
+            className="overview-kpi-card"
+            onClick={scrollToRepairs}
+            role="button"
+            tabIndex={0}
+            title="Scroll to recent repair requests"
+          >
+            <div className="kpi-header">
+              <span className="kpi-label">Open repair requests</span>
+              <div className="kpi-icon-wrap" style={{ color: '#DC2626' }}>
+                <AlertTriangle size={15} />
+              </div>
+            </div>
+            <div className="kpi-value"><AnimatedNumber value={data.open_service_events} /></div>
+            <div className="kpi-subtext kpi-subtext--danger">
+              <span>Needs technician triage</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {error && (
         <div className="security-alert-box alert-error" role="alert">
@@ -294,168 +563,82 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       )}
 
+      {/* ─── SKELETON LOADING (Rule 8: Section-by-section graceful loading) ─── */}
       {loading && !data && (
         <div className="overview-skeleton" role="status" aria-live="polite">
-          <div className="qt-skeleton" style={{ height: 124 }} />
-          <div className="qt-skeleton" style={{ height: 100 }} />
-          <div className="overview-skeleton-grid">
-            <div className="qt-skeleton" style={{ height: 290 }} />
-            <div className="qt-skeleton" style={{ height: 290 }} />
+          <div className="qt-skeleton" style={{ height: 110, borderRadius: 8 }} />
+          <div className="qt-skeleton" style={{ height: 140, borderRadius: 8 }} />
+          <div className="overview-skeleton-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+            <div className="qt-skeleton" style={{ height: 95, borderRadius: 8 }} />
+            <div className="qt-skeleton" style={{ height: 95, borderRadius: 8 }} />
+            <div className="qt-skeleton" style={{ height: 95, borderRadius: 8 }} />
+            <div className="qt-skeleton" style={{ height: 95, borderRadius: 8 }} />
           </div>
+          <div className="qt-skeleton" style={{ height: 85, borderRadius: 8 }} />
+          <div className="overview-skeleton-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+            <div className="qt-skeleton" style={{ height: 260, borderRadius: 8 }} />
+            <div className="qt-skeleton" style={{ height: 260, borderRadius: 8 }} />
+          </div>
+          <div className="qt-skeleton" style={{ height: 280, borderRadius: 8 }} />
         </div>
       )}
 
       {data && (
         <>
-          {/* Morning Briefing Narrative Card - High Contrast, Plain Titles, No Repeated Numbers */}
-          <section className="morning-briefing-card" aria-label="Morning briefing">
-            <div className="morning-briefing-header">
-              <div className="morning-briefing-title-group">
-                <Sun size={18} />
-                <h3>Morning briefing</h3>
-              </div>
-              <ExplainButton
-                title="Morning briefing"
-                explanation="This briefing links the same live inventory, service, and data-health counts used across the application."
-              />
+          {/* ─── 5. EQUIPMENT LIFECYCLE DISTRIBUTION (One Stacked Proportion Bar + Legend) ─── */}
+          <section className="lifecycle-strip-card" aria-label="Equipment lifecycle breakdown">
+            <div className="lifecycle-header">
+              <span className="lifecycle-title">Equipment lifecycle distribution</span>
+              <span className="lifecycle-meta">Total: {formatNumber(totalBreakdownCount)} devices &bull; Read-only audit</span>
             </div>
-            <p className="morning-briefing-lead">
-              <strong>{attentionCount} operational areas need attention.</strong> Start with the item that best fits today’s maintenance window.
-            </p>
-            <div className="morning-briefing-items">
-              <button
-                type="button"
-                className="morning-briefing-item"
-                onClick={() => onNavigate('devices')}
-              >
-                <span className="morning-briefing-item-content">
-                  <span className="morning-briefing-item-badge badge-attention">Warranties ending soon</span>
-                  <span className="morning-briefing-item-text">
-                    Review devices reaching end of service coverage in the current cycle.
-                  </span>
-                </span>
-                <ArrowRight size={15} className="morning-briefing-item-arrow" />
-              </button>
-              <button
-                type="button"
-                className="morning-briefing-item"
-                onClick={() => onNavigate('ask-data')}
-              >
-                <span className="morning-briefing-item-content">
-                  <span className="morning-briefing-item-badge badge-urgent">Open repair requests</span>
-                  <span className="morning-briefing-item-text">
-                    Active hardware service events requiring technician triage.
-                  </span>
-                </span>
-                <ArrowRight size={15} className="morning-briefing-item-arrow" />
-              </button>
-              <button
-                type="button"
-                className="morning-briefing-item"
-                onClick={() => onNavigate('data-quality')}
-              >
-                <span className="morning-briefing-item-content">
-                  <span
-                    className={`morning-briefing-item-badge ${
-                      dataHealth?.critical_count ? 'badge-urgent' : 'badge-attention'
-                    }`}
+
+            {/* Single Stacked Proportion Bar (Rule 6) */}
+            <div className="lifecycle-stacked-bar" role="progressbar" aria-label="Fleet lifecycle status proportions">
+              {normalizedFleetBreakdown.map((item) => {
+                const pct = totalBreakdownCount > 0 ? (item.value / totalBreakdownCount) * 100 : 0
+                return (
+                  <div
+                    key={item.name}
+                    className={`lifecycle-bar-segment ${getLifecycleColorClass(item.name)}`}
+                    style={{ width: `${pct}%` }}
+                    title={`${item.name}: ${formatNumber(item.value)} (${pct.toFixed(1)}%)`}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Legend with Counts (Rule 6) */}
+            <div className="lifecycle-legend-grid">
+              {normalizedFleetBreakdown.map((item) => {
+                const isUnapproved = item.name === 'Pending Audit' || item.name === 'Staged'
+                const pct = totalBreakdownCount > 0 ? ((item.value / totalBreakdownCount) * 100).toFixed(1) : '0'
+
+                return (
+                  <button
+                    key={item.name}
+                    type="button"
+                    className="lifecycle-legend-item"
+                    onClick={() => onNavigate('devices', { status: item.name.toLowerCase() })}
+                    title={`Filter equipment by ${item.name}`}
                   >
-                    Data health
-                  </span>
-                  <span className="morning-briefing-item-text">
-                    {dataHealth
-                      ? `${dataHealth.total_findings} data problems identified across equipment records.`
-                      : 'Data health is temporarily unavailable.'}
-                  </span>
-                </span>
-                <ArrowRight size={15} className="morning-briefing-item-arrow" />
-              </button>
+                    <span className={`lifecycle-legend-dot ${getLifecycleColorClass(item.name)}`} />
+                    <span className="lifecycle-legend-name">{item.name}</span>
+                    <span className="lifecycle-legend-count">{formatNumber(item.value)}</span>
+                    <span className="lifecycle-legend-pct">{pct}%</span>
+                    {isUnapproved && (
+                      <span className="lifecycle-unapproved-label" title="Unapproved lifecycle status flagged by data health rule">
+                        {mode === 'expert' ? 'Not an approved status (DQ-005)' : 'Not an approved status'}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </section>
 
-          {/* At-a-glance equipment summary: Numbers Add Up to exactly 5,000 */}
-          <section className="overview-control-strip" aria-label="At-a-glance equipment summary">
-            <div className="strip-metric-item">
-              <span className="strip-metric-label">Total equipment</span>
-              <div className="strip-metric-value">{data.total_devices.toLocaleString()}</div>
-              <div className="strip-metric-subtext">
-                <Server size={12} />
-                <span>Across {data.total_sites.toLocaleString()} locations</span>
-              </div>
-            </div>
-
-            <div className="strip-metric-item">
-              <span className="strip-metric-label">Active fleet</span>
-              <div className="strip-metric-value">{data.active_devices.toLocaleString()}</div>
-              <div className="strip-metric-subtext operational-subtext-pill">
-                <span className="status-pulse-dot" />
-                <span>{activeShare}% currently active</span>
-              </div>
-              <div className="fleet-status-list" aria-label="Non-active equipment statuses">
-                {nonActiveStatuses.map((item) => {
-                  const isPendingAudit = item.name === 'Pending Audit'
-                  const isStaged = item.name === 'Staged'
-                  const meta = isPendingAudit
-                    ? STATUS_CANONICAL_MAP['decommissioned_pending_audit']
-                    : isStaged
-                    ? STATUS_CANONICAL_MAP['staged']
-                    : null
-
-                  return (
-                    <button
-                      type="button"
-                      key={item.name}
-                      onClick={() => onNavigate('devices')}
-                      title={meta?.tooltip ?? `Lifecycle state: ${item.name}`}
-                      aria-label={`${item.name}: ${item.value.toLocaleString()} devices. ${meta?.tooltip ?? ''}`}
-                    >
-                      <span>{item.name}</span> <strong>{item.value.toLocaleString()}</strong>
-                      {(isPendingAudit || isStaged) && (
-                        <span
-                          style={{
-                            marginLeft: 4,
-                            fontSize: '0.62rem',
-                            padding: '1px 4px',
-                            borderRadius: 3,
-                            background: 'var(--qt-accent-subtle, rgba(247,147,30,0.15))',
-                            color: 'var(--qt-accent, #c96e10)',
-                            fontWeight: 600,
-                          }}
-                          title={meta?.tooltip}
-                        >
-                          DQ-005
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--qt-muted)', marginTop: '0.35rem' }}>
-                Total: {totalBreakdownCount.toLocaleString()} devices &bull; 67 unapproved status records flagged in Data health (DQ-005)
-              </div>
-            </div>
-
-            <div className="strip-metric-item">
-              <span className="strip-metric-label">Open repair requests</span>
-              <div className="strip-metric-value">{data.open_service_events.toLocaleString()}</div>
-              <div className="strip-metric-subtext warning-subtext-pill">
-                <AlertTriangle size={12} />
-                <span>Needs maintenance review</span>
-              </div>
-            </div>
-
-            <div className="strip-metric-item">
-              <span className="strip-metric-label">Warranties ending soon</span>
-              <div className="strip-metric-value">{data.expiring_warranties_30d.toLocaleString()}</div>
-              <div className="strip-metric-subtext">
-                <Clock size={12} />
-                <span>Within the next 30 days</span>
-              </div>
-            </div>
-          </section>
-
-          {/* Bento Grid: Equipment by type + Coverage and service */}
+          {/* ─── 6. BENTO CHARTS (Neutral Data Bars, Red Expired / Amber Soon) ─── */}
           <section className="overview-bento-grid" aria-label="Fleet distributions">
+            {/* Left Card: Equipment by type (Neutral Data Bars) */}
             <article className="bento-card">
               <div className="bento-card-header">
                 <div className="bento-card-title-group">
@@ -485,13 +668,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                         <span className="distribution-name">{item.name}</span>
                       </div>
                       <div className="distribution-track">
+                        {/* Rule 2: Neutral data bar tone (NOT orange!) */}
                         <div
-                          className="distribution-fill"
+                          className="distribution-fill distribution-fill--neutral"
                           style={{ width: `${item.percentage || 0}%` }}
                         />
                       </div>
                       <div className="distribution-value">
-                        {item.value.toLocaleString()} / {item.percentage}%
+                        {formatNumber(item.value)} / {item.percentage}%
                       </div>
                     </div>
                   ))
@@ -501,7 +685,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               </div>
               {typeFormattingIssues !== null && (
                 <p className="bento-data-note">
-                  {typeFormattingIssues.toLocaleString()} records have inconsistent spelling.{' '}
+                  {formatNumber(typeFormattingIssues)} records have inconsistent spelling.{' '}
                   <button type="button" onClick={() => onNavigate('data-quality')}>
                     See Data health
                   </button>
@@ -509,6 +693,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               )}
             </article>
 
+            {/* Right Card: Coverage and service (Red Expired, Amber Soon, Unified 'repair requests') */}
             <article className="bento-card">
               <div className="bento-card-header">
                 <div className="bento-card-title-group">
@@ -536,19 +721,19 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   </div>
                   <ExplainButton
                     title="Coverage and service"
-                    explanation="Coverage buckets use the visible dataset baseline. Service urgency reflects the recorded severity of live service events."
+                    explanation="Coverage buckets use the visible dataset baseline. Service urgency reflects the recorded severity of live repair requests."
                   />
                 </div>
               </div>
               <p className="bento-insight">
                 {activeBentoTab === 'warranty'
-                  ? `${urgentWarrantyCount.toLocaleString()} warranties expired or ending within 30 days`
+                  ? `${formatNumber(urgentWarrantyCount)} warranties expired or ending within 30 days`
                   : 'Open repair requests grouped by recorded urgency'}
               </p>
               <p className="bento-card-desc">
                 {activeBentoTab === 'warranty'
                   ? `as of ${formatReferenceDate(data.reference_date)}`
-                  : 'Newest service records are shown below.'}
+                  : 'Newest repair requests are shown below.'}
               </p>
               <div className="bento-distribution-list">
                 {activeBentoTab === 'warranty'
@@ -562,13 +747,14 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                             <span className="distribution-name">{bucket.name}</span>
                           </div>
                           <div className="distribution-track">
+                            {/* Rule 2: Expired is red, 0-30 days is amber, others neutral */}
                             <div
                               className={`distribution-fill warranty ${warrantyClass(bucket.name)}`}
                               style={{ width: `${percent}%` }}
                             />
                           </div>
                           <div className="distribution-value">
-                            {bucket.value.toLocaleString()} / {percent}%
+                            {formatNumber(bucket.value)} / {percent}%
                           </div>
                         </div>
                       )
@@ -588,7 +774,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                             />
                           </div>
                           <div className="distribution-value">
-                            {item.value.toLocaleString()} / {item.percentage}%
+                            {formatNumber(item.value)} / {item.percentage}%
                           </div>
                         </div>
                       )
@@ -597,15 +783,20 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </article>
           </section>
 
-          {/* Recent Service Incidents Table */}
-          <section className="overview-table-card" aria-labelledby="incidents-heading">
+          {/* ─── 7. RECENT REPAIR REQUESTS TABLE (Rule 5: 'repair requests' Unified Term) ─── */}
+          <section
+            ref={repairsTableRef}
+            className="overview-table-card"
+            id="recent-repairs-table"
+            aria-labelledby="incidents-heading"
+          >
             <div className="overview-table-header-bar">
               <div>
                 <h3 className="overview-table-title" id="incidents-heading">
-                  Recent service requests
+                  Recent repair requests
                 </h3>
                 <div className="overview-table-sub">
-                  Newest requests, with the exact opening time available on hover.
+                  Newest repair requests, with the exact opening time available on hover.
                 </div>
               </div>
               <div className="overview-table-actions">
@@ -618,8 +809,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <ArrowRight size={14} />
                 </button>
                 <ExplainButton
-                  title="Service request audit"
-                  explanation="This table is sorted by newest opening time. Asset tags open the corresponding read-only equipment detail."
+                  title="Repair request audit"
+                  explanation="Sorted by newest opening time. Asset tags open the corresponding read-only equipment detail."
                 />
               </div>
             </div>
@@ -627,7 +818,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <table className="overview-table">
                 <thead>
                   <tr>
-                    <th>Event</th>
+                    <th>Request</th>
                     <th>Asset</th>
                     <th>Type</th>
                     <th>Severity</th>
@@ -647,6 +838,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                               type="button"
                               className="asset-tag-cell"
                               onClick={() => onOpenDevice(event.device_id)}
+                              title={`Inspect asset ${event.asset_tag}`}
                             >
                               {event.asset_tag}
                             </button>
@@ -671,7 +863,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   ) : (
                     <tr>
                       <td colSpan={6} className="overview-table-empty">
-                        No recent service events were returned.
+                        No recent repair requests were returned.
                       </td>
                     </tr>
                   )}

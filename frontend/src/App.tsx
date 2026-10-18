@@ -74,8 +74,10 @@ const AppShell: React.FC = () => {
     }
   }, [isAuthenticated])
 
-  const selectTab = (tab: ActiveTab) => {
-    if (tab === 'overview') {
+  const selectTab = (tab: ActiveTab, params?: Record<string, string | number>) => {
+    if (params) {
+      pushUrlParams({ tab, ...params })
+    } else if (tab === 'overview') {
       // Home is a clean destination, never a carrier for inventory filters.
       window.history.pushState({}, '', `${window.location.pathname}${window.location.hash}`)
     } else {
@@ -165,7 +167,7 @@ const AppShell: React.FC = () => {
 
   return (
     <div className="app-container">
-      <Sidebar activeTab={activeTab} onSelectTab={selectTab} />
+      <Sidebar activeTab={activeTab} onSelectTab={selectTab} onAskQuestion={openAskQuestion} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
         <Header

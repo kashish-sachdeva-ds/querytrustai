@@ -22,6 +22,7 @@ import { useTheme } from '../context/ThemeContext'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
+import { DeviceDetailDrawer } from './DeviceDetailDrawer'
 
 interface AnomalyMonitorViewProps {
   onOpenDevice: (deviceId: number) => void
@@ -41,6 +42,7 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [shownNumbers, setShownNumbers] = useState<Set<number>>(() => new Set())
+  const [inspectingDeviceId, setInspectingDeviceId] = useState<number | null>(null)
 
   const canManageScan = user?.role === 'admin' || user?.role === 'analyst'
   const canTrain = canManageScan
@@ -592,10 +594,10 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                           className="btn btn-outline unusual-activity-open-device"
                           onClick={(event) => {
                             event.stopPropagation()
-                            onOpenDevice(item.device_id)
+                            setInspectingDeviceId(item.device_id)
                           }}
                         >
-                          Open device <ChevronRight size={14} aria-hidden="true" />
+                          Inspect device <ChevronRight size={14} aria-hidden="true" />
                         </button>
                       </td>
                     </tr>
@@ -606,6 +608,16 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
           </div>
         )}
       </div>
+
+      {/* In-place Hardware Specification & Diagnostics Drawer */}
+      <DeviceDetailDrawer
+        deviceId={inspectingDeviceId}
+        onClose={() => setInspectingDeviceId(null)}
+        onNavigateToEquipment={(devId) => {
+          setInspectingDeviceId(null)
+          onOpenDevice(devId)
+        }}
+      />
     </div>
   )
 }

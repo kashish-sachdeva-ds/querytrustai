@@ -1,21 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import {
   Server,
   Search,
   ChevronLeft,
   ChevronRight,
   X,
-  Building,
   RefreshCw,
   ChevronDown,
-  Copy,
-  Check,
-  Calendar,
-  Cpu,
-  Activity,
   AlertTriangle,
-  MessageSquareText,
 } from 'lucide-react'
 import {
   type DeviceSummary,
@@ -23,7 +15,6 @@ import {
   type SiteSummary,
   type DeviceCountsResponse,
   fetchDevices,
-  fetchDeviceDetail,
   fetchDeviceCounts,
   fetchSites,
 } from '../api/client'
@@ -32,6 +23,7 @@ import { readUrlParam, replaceUrlParams } from '../urlState'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
+import { DeviceDetailDrawer } from './DeviceDetailDrawer'
 import './DevicesView.css'
 
 interface DevicesViewProps {
@@ -151,16 +143,12 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
   const [deviceCounts, setDeviceCounts] = useState<DeviceCountsResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-  const [copiedAssetId, setCopiedAssetId] = useState(false)
   const isInitialSearchEffect = useRef(true)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Drawer / Detail state
+  // Drawer state
   const [selectedDeviceId, setSelectedDeviceId] = useState<number | null>(null)
-  const [deviceDetail, setDeviceDetail] = useState<DeviceDetail | null>(null)
-  const [detailLoading, setDetailLoading] = useState<boolean>(false)
   const lastFocusedElementRef = useRef<HTMLElement | null>(null)
-  const drawerPanelRef = useRef<HTMLDivElement>(null)
 
   // Load sites and quick counts once on mount
   useEffect(() => {
@@ -172,21 +160,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
       .catch(() => {})
   }, [])
 
-  // Focus management for drawer: focus first element on open
-  useEffect(() => {
-    if (!selectedDeviceId) return
-    const timer = setTimeout(() => {
-      const focusable = drawerPanelRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      if (focusable && focusable.length > 0) {
-        focusable[0].focus()
-      }
-    }, 50)
-    return () => clearTimeout(timer)
-  }, [selectedDeviceId])
-
-  // Global shortcut '/' to focus search input, 'Escape' to close drawer
+  // Global shortcut '/' to focus search input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -196,39 +170,11 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
       ) {
         e.preventDefault()
         searchInputRef.current?.focus()
-      } else if (e.key === 'Escape' && selectedDeviceId) {
-        closeDeviceModal()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedDeviceId])
-
-  // Trap focus inside modal drawer
-  const handleDrawerKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== 'Tab') return
-    const panel = drawerPanelRef.current
-    if (!panel) return
-    const focusable = panel.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )
-    if (focusable.length === 0) return
-
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-
-    if (e.shiftKey) {
-      if (document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      }
-    } else {
-      if (document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-  }
+  }, [])
 
   // Debounce search input (300ms)
   useEffect(() => {
@@ -313,37 +259,14 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
     replaceUrlParams({ device: null })
   }, [])
 
-  const openDeviceModal = async (id: number) => {
+  const openDeviceModal = (id: number) => {
     lastFocusedElementRef.current = document.activeElement as HTMLElement
-    withLayoutTransition(() => setSelectedDeviceId(id))
-    setDetailLoading(true)
-    setCopiedAssetId(false)
-    try {
-      const detail = await fetchDeviceDetail(id)
-      setDeviceDetail(detail)
-    } catch {
-      setDeviceDetail(null)
-    } finally {
-      setDetailLoading(false)
-    }
+    setSelectedDeviceId(id)
   }
 
   const closeDeviceModal = () => {
-    withLayoutTransition(() => {
-      setSelectedDeviceId(null)
-      setDeviceDetail(null)
-    })
+    setSelectedDeviceId(null)
     lastFocusedElementRef.current?.focus()
-  }
-
-  const handleCopyAssetId = async (tag: string) => {
-    try {
-      await navigator.clipboard.writeText(tag)
-      setCopiedAssetId(true)
-      setTimeout(() => setCopiedAssetId(false), 2000)
-    } catch {
-      /* Fallback */
-    }
   }
 
   const handleSelectQuickFilter = (qf: QuickFilterKey) => {
@@ -826,257 +749,11 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
       </div>
 
       {/* 6. ASSET INSPECT SLIDE-OVER DRAWER */}
-      {selectedDeviceId &&
-        createPortal(
-          <div className="asset-drawer-backdrop" onClick={closeDeviceModal}>
-            <div
-              ref={drawerPanelRef}
-              className="asset-drawer-panel"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="asset-drawer-title"
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={handleDrawerKeyDown}
-            >
-              {/* Header */}
-              <div className="asset-drawer-header">
-                <div className="asset-drawer-header-top">
-                  <div className="asset-drawer-badges">
-                    <button
-                      className="asset-id-pill"
-                      onClick={() => {
-                        if (deviceDetail?.asset_tag) handleCopyAssetId(deviceDetail.asset_tag)
-                      }}
-                      title="Click to copy asset tag"
-                      disabled={!deviceDetail?.asset_tag}
-                    >
-                      <span>{deviceDetail?.asset_tag || 'Loading...'}</span>
-                      {copiedAssetId ? <Check size={12} color="var(--qt-accent, #FF4F00)" /> : <Copy size={12} />}
-                    </button>
-
-                    {deviceDetail && (
-                      <span className="asset-category-pill">
-                        {deviceDetail.device_type}
-                      </span>
-                    )}
-
-                    {deviceDetail && renderStatusPill(deviceDetail.status)}
-                  </div>
-
-                  <button
-                    type="button"
-                    className="asset-close-btn"
-                    onClick={closeDeviceModal}
-                    title="Close inspector (Esc)"
-                    aria-label="Close device inspection drawer"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-
-                <div className="asset-drawer-meta-sub" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.4rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <h3 id="asset-drawer-title" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--qt-ink)', margin: 0 }}>
-                      {deviceDetail ? `${deviceDetail.asset_tag} — ${deviceDetail.model}` : `Device #${selectedDeviceId}`}
-                    </h3>
-                  </div>
-                  <ExplainButton
-                    title="Hardware Specification Drawer"
-                    explanation="Detailed network device telemetry, site location, warranty dates, and recent service incidents."
-                  />
-                </div>
-
-                {/* Drawer Quick Action Buttons */}
-                {deviceDetail && (
-                  <div className="drawer-action-buttons">
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      onClick={() => {
-                        closeDeviceModal()
-                        onAskQuestion?.(`Show all telemetry and open events for device ${deviceDetail.asset_tag}`)
-                      }}
-                      title="Ask a governed question about this device"
-                    >
-                      <MessageSquareText size={13} style={{ marginRight: 5 }} />
-                      Ask about this device
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => handleCopyAssetId(deviceDetail.asset_tag)}
-                      title="Copy asset tag to clipboard"
-                    >
-                      {copiedAssetId ? (
-                        <>
-                          <Check size={13} style={{ marginRight: 5, color: 'var(--qt-accent)' }} />
-                          Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={13} style={{ marginRight: 5 }} />
-                          Copy asset tag
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Body */}
-              {detailLoading ? (
-                <div style={{ padding: '3rem', textAlign: 'center' }}>
-                  <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
-                  <p style={{ fontSize: '12.5px', color: 'var(--qt-muted)' }}>
-                    Loading device specifications &amp; events...
-                  </p>
-                </div>
-              ) : deviceDetail ? (
-                <div className="asset-drawer-body">
-                  {/* Data hygiene note if glitch detected */}
-                  {deviceDetail && checkDataGlitch(deviceDetail).hasGlitch && (
-                    <div className="data-hygiene-note">
-                      <AlertTriangle size={15} style={{ color: 'var(--qt-warning)', flexShrink: 0, marginTop: 2 }} />
-                      <div>
-                        <strong>Data hygiene note</strong>
-                        <span>{checkDataGlitch(deviceDetail).message}. Preserved as-is in read-only mode.</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Section 1: Hardware (Plain title) */}
-                  <div>
-                    <div className="asset-section-label">
-                      <span>Hardware</span>
-                      <Cpu size={13} />
-                    </div>
-                    <div className="asset-spec-card">
-                      <div className="asset-spec-grid-2">
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Model</span>
-                          <span className="asset-spec-val">{deviceDetail.model}</span>
-                        </div>
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Vendor</span>
-                          <span className="asset-spec-val">{deviceDetail.vendor}</span>
-                        </div>
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Firmware version</span>
-                          <span className="asset-spec-val mono">{formatFirmwareVersion(deviceDetail.firmware_version)}</span>
-                        </div>
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Serial number</span>
-                          <span className="asset-spec-val mono">
-                            {deviceDetail.serial_number || '—'}
-                          </span>
-                        </div>
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Device ID</span>
-                          <span className="asset-spec-val mono">#{deviceDetail.id}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 2: Location (Plain title) */}
-                  <div>
-                    <div className="asset-section-label">
-                      <span>Location</span>
-                      <Building size={13} />
-                    </div>
-                    <div className="asset-spec-card">
-                      <div className="asset-spec-grid-2">
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Facility name</span>
-                          <span className="asset-spec-val">{deviceDetail.site_name}</span>
-                        </div>
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Site code</span>
-                          <span className="asset-spec-val mono">{deviceDetail.site_code}</span>
-                        </div>
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Geographic region</span>
-                          <span className="asset-spec-val">{deviceDetail.region}</span>
-                        </div>
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Installation date</span>
-                          <span className="asset-spec-val mono">
-                            <HumanDate iso={deviceDetail.installed_at} />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 3: Warranty (Plain title) */}
-                  <div>
-                    <div className="asset-section-label">
-                      <span>Warranty</span>
-                      <Calendar size={13} />
-                    </div>
-                    <div className="asset-spec-card">
-                      <div className="asset-spec-grid-2">
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Coverage status</span>
-                          <span className="asset-spec-val">
-                            {deviceDetail.warranty_expiry ? (
-                              <span className={`warranty-status-pill ${getWarrantyStatus(deviceDetail.warranty_expiry).variant}`}>
-                                {getWarrantyStatus(deviceDetail.warranty_expiry).label}
-                              </span>
-                            ) : (
-                              'No warranty on record'
-                            )}
-                          </span>
-                        </div>
-                        <div className="asset-spec-item">
-                          <span className="asset-spec-name">Exact expiration</span>
-                          <span className="asset-spec-val mono">
-                            <HumanDate iso={deviceDetail.warranty_expiry} fallback="No warranty on record" />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 4: Recent repair requests (Plain title, fix Configuration Drift + High collision) */}
-                  <div>
-                    <div className="asset-section-label">
-                      <span>Recent repair requests</span>
-                      <Activity size={13} />
-                    </div>
-                    {deviceDetail.recent_events && deviceDetail.recent_events.length > 0 ? (
-                      <div className="asset-events-list">
-                        {deviceDetail.recent_events.map((evt) => (
-                          <div key={evt.id} className="asset-event-card">
-                            <div className="asset-event-top">
-                              <span className="asset-event-type">{evt.event_type}</span>
-                              <span className={`asset-event-sev ${evt.severity.toLowerCase()}`}>
-                                {evt.severity}
-                              </span>
-                            </div>
-                            <div className="asset-event-desc">{evt.description}</div>
-                            <div className="asset-event-date">
-                              <HumanDate iso={evt.opened_at} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="asset-events-empty">
-                        <span>No historical or open repair requests recorded.</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--qt-muted)' }}>
-                  Unable to load specifications for device #{selectedDeviceId}
-                </div>
-              )}
-            </div>
-          </div>,
-          document.body
-        )}
+      <DeviceDetailDrawer
+        deviceId={selectedDeviceId}
+        onClose={closeDeviceModal}
+        onAskQuestion={onAskQuestion}
+      />
     </div>
   )
 }

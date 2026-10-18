@@ -51,7 +51,9 @@ VENDORS_AND_MODELS = [
 def seed_database(db: Session | None = None) -> dict:
     """Deterministic database seed function."""
     random.seed(RANDOM_SEED)
-    close_db = False
+    print("[*] Creating schema tables if they do not exist...")
+    Base.metadata.create_all(bind=engine)
+
     if db is None:
         db = SessionLocal()
         close_db = True

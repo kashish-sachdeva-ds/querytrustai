@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
 
     # CORS
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,https://querytrustai-mauve.vercel.app,https://querytrustai.vercel.app"
 
     # Execution safeguards
     MAX_QUERY_ROWS: int = 200

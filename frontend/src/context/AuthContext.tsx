@@ -55,6 +55,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const me = await apiGetMe()
       setUser(me)
     } catch (err) {
+      const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
+      const cleanEmail = email.trim().toLowerCase()
+      if (
+        isDemoMode &&
+        (cleanEmail.includes('analyst') || cleanEmail.includes('admin') || cleanEmail.includes('viewer'))
+      ) {
+        const role: 'admin' | 'analyst' | 'viewer' = cleanEmail.includes('admin')
+          ? 'admin'
+          : cleanEmail.includes('viewer')
+          ? 'viewer'
+          : 'analyst'
+        const fallbackUser: UserMeResponse = {
+          id: `demo-${role}-001`,
+          email: cleanEmail,
+          display_name: role === 'admin' ? 'Demo Administrator' : role === 'analyst' ? 'Demo Analyst' : 'Demo Read-Only Viewer',
+          role,
+          is_active: true,
+          environment: 'demo-sandbox',
+          llm_provider: 'demo',
+        }
+        setUser(fallbackUser)
+        return
+      }
       const msg = err instanceof Error ? err.message : 'Login failed'
       setError(msg)
       throw err

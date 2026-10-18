@@ -2,6 +2,26 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/:match*",
+      "destination": "https://querytrustai.onrender.com/api/:match*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://querytrustai.onrender.com/health"
+    },
+    {
+      "source": "/ready",
+      "destination": "https://querytrustai.onrender.com/ready"
+    },
+    {
+      "source": "/docs",
+      "destination": "https://querytrustai.onrender.com/docs"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "https://querytrustai.onrender.com/openapi.json"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

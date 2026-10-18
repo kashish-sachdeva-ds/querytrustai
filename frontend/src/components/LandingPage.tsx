@@ -855,6 +855,19 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
           </p>
         </div>
 
+        <div className="safety-architecture-visual-banner">
+          <img
+            src="/images/ast_architecture.jpg"
+            alt="Multi-layer AST Safety Shield Architecture Diagram"
+            className="safety-architecture-img"
+            loading="lazy"
+          />
+          <div className="safety-architecture-overlay">
+            <span className="safety-arch-tag">6-Point AST Traversal Pipeline</span>
+            <span className="safety-arch-sub">Strict read-only verification before database reader dispatch</span>
+          </div>
+        </div>
+
         <div className="architecture-steps-flow">
           <div className="arch-step-box">
             <div className="step-badge-counter">01</div>
@@ -923,6 +936,14 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
 
         <div className="hardware-categories-grid">
           <div className="hardware-card">
+            <div className="hardware-visual-banner">
+              <img
+                src="/images/switch.jpg"
+                alt="Enterprise Core and Access Switch Rackmount Chassis"
+                className="hardware-visual-img"
+                loading="lazy"
+              />
+            </div>
             <div className="hardware-icon-head">
               <Server size={22} className="hardware-icon" />
               <span className="asset-count">1,629 Units</span>
@@ -939,6 +960,14 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
           </div>
 
           <div className="hardware-card">
+            <div className="hardware-visual-banner">
+              <img
+                src="/images/router.jpg"
+                alt="Enterprise Edge and WAN Router Chassis"
+                className="hardware-visual-img"
+                loading="lazy"
+              />
+            </div>
             <div className="hardware-icon-head">
               <Radio size={22} className="hardware-icon" />
               <span className="asset-count">882 Units</span>
@@ -955,6 +984,14 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
           </div>
 
           <div className="hardware-card">
+            <div className="hardware-visual-banner">
+              <img
+                src="/images/firewall.jpg"
+                alt="Enterprise Next-Gen Security Firewall Appliance"
+                className="hardware-visual-img"
+                loading="lazy"
+              />
+            </div>
             <div className="hardware-icon-head">
               <Shield size={22} className="hardware-icon" />
               <span className="asset-count">887 Units</span>
@@ -971,6 +1008,14 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
           </div>
 
           <div className="hardware-card">
+            <div className="hardware-visual-banner">
+              <img
+                src="/images/access_point.jpg"
+                alt="Enterprise Campus Wireless Access Point"
+                className="hardware-visual-img"
+                loading="lazy"
+              />
+            </div>
             <div className="hardware-icon-head">
               <Cpu size={22} className="hardware-icon" />
               <span className="asset-count">837 Units</span>

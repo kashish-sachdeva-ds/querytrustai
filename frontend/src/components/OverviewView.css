@@ -1402,3 +1402,173 @@
   );
   background-size: 200% 100%;
 }
+
+/* ==========================================================================
+   GLOBAL FLEET TELEMETRY BANNER CARD
+   ========================================================================== */
+
+.fleet-topology-banner-card {
+  background: var(--qt-surface, #ffffff);
+  border: 1px solid var(--qt-border, #E6E4DD);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.topology-card-header {
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--qt-border, #E6E4DD);
+  background: var(--qt-canvas, #FAF8F5);
+}
+
+.topology-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topology-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  animation: pulse-dot 2.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.topology-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--qt-ink, #141413);
+  letter-spacing: -0.01em;
+}
+
+.topology-region-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--qt-muted, #71706B);
+  background: var(--qt-surface, #ffffff);
+  border: 1px solid var(--qt-border, #E6E4DD);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.topology-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topology-telemetry-stat {
+  font-size: 11.5px;
+  color: var(--qt-muted, #71706B);
+}
+
+.topology-telemetry-stat strong {
+  color: var(--qt-ink, #141413);
+  font-weight: 600;
+}
+
+.topology-visual-frame {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  background: #090d16;
+  overflow: hidden;
+}
+
+.topology-visual-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.92;
+  transition: transform 0.5s ease;
+}
+
+.fleet-topology-banner-card:hover .topology-visual-img {
+  transform: scale(1.015);
+}
+
+.topology-overlay-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(9, 13, 22, 0.1) 0%, rgba(9, 13, 22, 0.88) 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 1.25rem 1.4rem;
+  pointer-events: none;
+}
+
+.topology-node-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.topology-node-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #f1f5f9;
+}
+
+.node-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.node-dot-green { background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6); }
+.node-dot-blue { background: #38bdf8; box-shadow: 0 0 6px rgba(56, 189, 248, 0.6); }
+.node-dot-amber { background: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.6); }
+
+.node-chip-region {
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.node-chip-count {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .topology-card-header {
+  background: var(--qt-surface-muted, #1F1E1D);
+  border-bottom-color: var(--qt-border, #2E2D2B);
+}
+
+[data-theme="dark"] .topology-title {
+  color: var(--qt-ink, #EDEDEC);
+}
+
+[data-theme="dark"] .topology-region-badge {
+  background: var(--qt-surface, #1A1918);
+  border-color: var(--qt-border, #2E2D2B);
+  color: var(--qt-muted, #8A8884);
+}
+
+[data-theme="dark"] .topology-telemetry-stat strong {
+  color: var(--qt-ink, #EDEDEC);
+}
+

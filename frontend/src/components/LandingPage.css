@@ -1552,13 +1552,100 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
 }
 
 [data-theme="light"] .hardware-card {
   background: #ffffff;
   border: 1px solid #e6e4e0;
 }
+
+.hardware-visual-banner {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1.1rem;
+  background: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .hardware-visual-banner {
+  border-color: #e2e8f0;
+}
+
+.hardware-visual-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.hardware-card:hover .hardware-visual-img {
+  transform: scale(1.05);
+}
+
+.safety-architecture-visual-banner {
+  position: relative;
+  width: 100%;
+  max-width: 980px;
+  height: 280px;
+  margin: 0 auto 2.5rem auto;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.45);
+  background: #060911;
+}
+
+[data-theme="light"] .safety-architecture-visual-banner {
+  border-color: #cbd5e1;
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.12);
+}
+
+.safety-architecture-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.95;
+  transition: transform 0.5s ease;
+}
+
+.safety-architecture-visual-banner:hover .safety-architecture-img {
+  transform: scale(1.015);
+}
+
+.safety-architecture-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(180deg, rgba(6, 9, 17, 0.05) 0%, rgba(6, 9, 17, 0.92) 100%);
+  padding: 1.25rem 1.75rem;
+  pointer-events: none;
+}
+
+.safety-arch-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #38bdf8;
+  margin-bottom: 2px;
+}
+
+.safety-arch-sub {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
 
 .hardware-icon-head {
   display: flex;

@@ -23,7 +23,7 @@ import { readUrlParam, replaceUrlParams } from '../urlState'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
-import { DeviceDetailDrawer } from './DeviceDetailDrawer'
+import { DeviceDetailDrawer, getDeviceImage } from './DeviceDetailDrawer'
 import './DevicesView.css'
 
 interface DevicesViewProps {
@@ -618,7 +618,16 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
 
                       {/* Device Type */}
                       <td data-label="Type">
-                        <span className="device-type-token">{dev.device_type}</span>
+                        <div className="device-type-thumb-badge">
+                          <img
+                            src={getDeviceImage(dev.device_type)}
+                            alt=""
+                            aria-hidden="true"
+                            className="device-type-thumbnail"
+                            loading="lazy"
+                          />
+                          <span className="device-type-token">{dev.device_type}</span>
+                        </div>
                       </td>
 
                       {/* Model & Vendor */}

@@ -903,6 +903,21 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                 The enterprise analytics path you can't make dangerous. We interpret your intent, verify compliance across 6 independent AST checks, and execute strictly through a read-only PostgreSQL role.
               </p>
 
+              <div className="ast-visual-hero-banner">
+                <img
+                  src="/images/ast_architecture.jpg"
+                  alt="QueryTrust AI 6-Point AST Safety Shield and Execution Pipeline Architecture"
+                  className="ast-visual-hero-img"
+                  loading="lazy"
+                />
+                <div className="ast-visual-hero-overlay">
+                  <div className="ast-visual-hero-meta">
+                    <span className="ast-visual-tag">AST Security Architecture</span>
+                    <span className="ast-visual-sub">Client Query &rarr; LLM &rarr; SQLGlot AST Parse &rarr; Read-Only Replica</span>
+                  </div>
+                </div>
+              </div>
+
               <ol className="ask-data-steps" aria-label="How asking works">
                 <li>
                   <span className="ask-step-num">1</span>

@@ -783,6 +783,48 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </article>
           </section>
 
+          {/* ─── 6.5 GLOBAL TOPOLOGY & NOC TELEMETRY VISUAL ─── */}
+          <section className="fleet-topology-banner-card" aria-label="Global equipment telemetry topology">
+            <div className="topology-card-header">
+              <div className="topology-header-left">
+                <div className="topology-live-dot" aria-hidden="true" />
+                <h3 className="topology-title">Global Fleet Telemetry & Edge Nodes</h3>
+                <span className="topology-region-badge">{data.total_sites} Monitored Sites</span>
+              </div>
+              <div className="topology-header-right">
+                <span className="topology-telemetry-stat">Telemetry Ingest: <strong className="tabular-nums">Active</strong></span>
+                <span className="topology-telemetry-stat">Read-only Sync: <strong className="tabular-nums">Sub-second</strong></span>
+              </div>
+            </div>
+            <div className="topology-visual-frame">
+              <img
+                src="/images/fleet_topology.jpg"
+                alt="Global fleet operations telemetry map showing enterprise equipment nodes"
+                className="topology-visual-img"
+                loading="lazy"
+              />
+              <div className="topology-overlay-gradient">
+                <div className="topology-node-chips">
+                  <div className="topology-node-chip">
+                    <span className="node-chip-dot node-dot-green" />
+                    <span className="node-chip-region">Global Edge Fleet</span>
+                    <span className="node-chip-count tabular-nums">{formatNumber(data.total_devices)} assets across {data.total_sites} sites</span>
+                  </div>
+                  <div className="topology-node-chip">
+                    <span className="node-chip-dot node-dot-blue" />
+                    <span className="node-chip-region">Online Telemetry</span>
+                    <span className="node-chip-count tabular-nums">{formatNumber(data.active_devices)} operational nodes</span>
+                  </div>
+                  <div className="topology-node-chip">
+                    <span className="node-chip-dot node-dot-amber" />
+                    <span className="node-chip-region">Coverage Scope</span>
+                    <span className="node-chip-count tabular-nums">Americas &bull; EMEA &bull; APAC</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* ─── 7. RECENT REPAIR REQUESTS TABLE (Rule 5: 'repair requests' Unified Term) ─── */}
           <section
             ref={repairsTableRef}

@@ -25,6 +25,15 @@ interface DeviceDetailDrawerProps {
   onNavigateToEquipment?: (deviceId: number) => void
 }
 
+export const getDeviceImage = (deviceType?: string): string => {
+  const type = (deviceType || '').toLowerCase()
+  if (type.includes('router')) return '/images/router.jpg'
+  if (type.includes('switch')) return '/images/switch.jpg'
+  if (type.includes('firewall')) return '/images/firewall.jpg'
+  if (type.includes('access point') || type.includes('ap') || type.includes('wireless')) return '/images/access_point.jpg'
+  return '/images/switch.jpg'
+}
+
 export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
   deviceId,
   onClose,
@@ -252,6 +261,27 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
                   Equipment Explorer
                 </button>
               )}
+            </div>
+          )}
+
+          {/* Hardware Device Render Visual Card */}
+          {deviceDetail && (
+            <div className="asset-hardware-visual-card">
+              <img
+                src={getDeviceImage(deviceDetail.device_type)}
+                alt={`${deviceDetail.model} ${deviceDetail.device_type}`}
+                className="asset-hardware-img"
+                loading="lazy"
+              />
+              <div className="asset-hardware-overlay">
+                <div>
+                  <div className="asset-hardware-model">{deviceDetail.model}</div>
+                  <div className="asset-hardware-vendor">{deviceDetail.vendor}</div>
+                </div>
+                <div className="asset-hardware-type-tag">
+                  {deviceDetail.device_type}
+                </div>
+              </div>
             </div>
           )}
         </div>

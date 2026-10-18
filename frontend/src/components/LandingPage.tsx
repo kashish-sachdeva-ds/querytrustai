@@ -351,13 +351,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
 
             {/* Quick Demo Role Selector */}
             {isDemoMode && (
-              <div className="quick-demo-group">
+              <div className="quick-demo-group" role="group" aria-label="1-Click Instant Demo Roles">
                 <span className="quick-demo-tag">Try 1-Click:</span>
                 <button
                   type="button"
                   className="quick-role-btn role-analyst"
                   onClick={() => handleQuickDemoLogin('analyst')}
                   disabled={!!loggingInRole}
+                  title="Instant 1-click access as Analyst (Natural language queries & SQL explanations)"
+                  aria-label="Instant 1-click login as Analyst"
                 >
                   {loggingInRole === 'analyst' ? 'Opening…' : 'Analyst'}
                 </button>
@@ -366,6 +368,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                   className="quick-role-btn role-admin"
                   onClick={() => handleQuickDemoLogin('admin')}
                   disabled={!!loggingInRole}
+                  title="Instant 1-click access as Admin (Full audit logs, guardrails, policy control)"
+                  aria-label="Instant 1-click login as Admin"
                 >
                   {loggingInRole === 'admin' ? 'Opening…' : 'Admin'}
                 </button>
@@ -374,6 +378,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                   className="quick-role-btn role-viewer"
                   onClick={() => handleQuickDemoLogin('viewer')}
                   disabled={!!loggingInRole}
+                  title="Instant 1-click access as Viewer (Read-only equipment catalog & dashboards)"
+                  aria-label="Instant 1-click login as Viewer"
                 >
                   {loggingInRole === 'viewer' ? 'Opening…' : 'Viewer'}
                 </button>

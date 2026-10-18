@@ -1842,6 +1842,82 @@ body.command-palette-open { overflow: hidden; }
   background: rgba(239, 68, 68, 0.18) !important;
 }
 
+[data-theme="dark"] .thoughtspot-intent-card,
+[data-theme="dark"] .shield-check-card,
+[data-theme="dark"] .result-summary-box,
+[data-theme="dark"] .result-visualization-area,
+[data-theme="dark"] .unsupported-box {
+  background: var(--qt-surface-muted) !important;
+  border-color: var(--qt-border) !important;
+  color: var(--qt-ink) !important;
+}
+
+[data-theme="dark"] .entity-chip {
+  background: var(--qt-surface) !important;
+  border-color: var(--qt-border) !important;
+  color: var(--qt-ink) !important;
+}
+
+[data-theme="dark"] .new-session-btn {
+  background: var(--qt-surface-muted) !important;
+  color: var(--qt-ink) !important;
+  border-color: var(--qt-border) !important;
+}
+
+[data-theme="dark"] .new-session-btn:hover {
+  background: var(--qt-surface) !important;
+  border-color: var(--qt-border-strong) !important;
+  color: var(--qt-accent) !important;
+}
+
+[data-theme="dark"] .sessions-filter-input {
+  background: var(--qt-canvas) !important;
+  color: var(--qt-ink) !important;
+  border-color: var(--qt-border) !important;
+}
+
+[data-theme="dark"] .clarification-box {
+  background: rgba(217, 119, 6, 0.12) !important;
+  border-color: rgba(217, 119, 6, 0.3) !important;
+}
+
+[data-theme="dark"] .clarification-title {
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .result-metric-pill,
+[data-theme="dark"] .run-id-code {
+  background: var(--qt-surface-muted) !important;
+  color: var(--qt-muted) !important;
+  border-color: var(--qt-border) !important;
+}
+
+[data-theme="dark"] .result-table-wrapper {
+  background: var(--qt-surface) !important;
+  border-color: var(--qt-border) !important;
+}
+
+[data-theme="dark"] .result-data-table th {
+  background: var(--qt-surface-muted) !important;
+  color: var(--qt-muted) !important;
+  border-bottom-color: var(--qt-border) !important;
+}
+
+[data-theme="dark"] .result-data-table td {
+  border-bottom-color: var(--qt-border) !important;
+  color: var(--qt-ink) !important;
+}
+
+[data-theme="dark"] .result-data-table tbody tr:hover td {
+  background: var(--qt-surface-muted) !important;
+}
+
+[data-theme="dark"] .feedback-notes-input {
+  background: var(--qt-surface-muted) !important;
+  border-color: var(--qt-border) !important;
+  color: var(--qt-ink) !important;
+}
+
 [data-theme="dark"] .overview-table th,
 [data-theme="dark"] .devices-table-header th,
 [data-theme="dark"] .snapshot-pill,

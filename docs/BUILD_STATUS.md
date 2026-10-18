@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-18  
-**Current milestone:** 11 — User Menu Polish (Initials Avatar, Sentence-case Role Pill, API Permissions Explainer, System Theme & Real Demo Role Switcher)
-**Overall status:** User profile menu completely polished with full WCAG disclosure accessibility (aria-expanded, aria-haspopup, role="menu", focus trap, Escape/Arrow navigation). Avatar renders colored circles with initials (SA, LA, EV). Single sentence-case role pill ("Admin", "Analyst", "Viewer") and normal email font. Dynamic permissions explainer ("What can an Admin do?") grounded in real backend API rules. Single tour entry point retained in top bar ("Guide"). System theme option added with persistent preference and live media query reactivity. Neutral sign-out button with red hover tint. Real demo role switcher performing true sign-out and POST /auth/login. All 112 pytest backend tests pass and frontend build compiles with 0 errors.
+**Current milestone:** 12 — Ask Governed Data & SQL AST Inspector Elevation (ThoughtSpot & Linear Benchmarks)
+**Overall status:** Natural-language query interface elevated to ThoughtSpot and Linear standards. Sessions drawer upgraded with active left-indicator border, message counts, relative timestamps, search filter, and instant New session creation. ThoughtSpot semantic interpretation cards breakdown recognized tables, entities, and assumptions. 6-point AST Safety Shield Inspector displays verified pass/fail states with clear explainability. SQL preview block features developer-grade syntax highlighting (PostgreSQL dialect), LIMIT 200 badge, dialect tag, and one-click Copy action. Action footer features prominent solid orange primary CTA button ("Run query" with Ctrl+Enter hint) and dedicated "Execution blocked by safety policy" indicator when unsafe queries are intercepted. Execution results table features high-density rows, right-aligned tabular numerals, asset tag monospace chips, and CSV export. Neutral data charts replace orange data bars with neutral slate/zinc tones in strict compliance with color restraint invariants. All 112 pytest backend tests pass and frontend build compiles with 0 errors.
 
 ---
 
@@ -784,6 +784,49 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 | `python -m pytest` (backend) | ✅ Passed — **112 passed in 5.26s** (all suites). |
 | `axe-core` accessibility audit | ✅ Passed — **100/100** on Home, AskData, Equipment, DataHealth. |
 | `lighthouse` accessibility audit | ✅ Passed — **89/100** on running web application. |
+
+---
+
+## Milestone 10 — Home Elevation Pass (Restraint & Hierarchy) — 2026-10-18
+
+**Status:** Completed and committed (`545f082`). Order: Title -> Hero Ask box -> Ranked Briefing 1-3 -> Linked KPI cards -> Single stacked lifecycle bar & legend -> Neutral bento charts -> Recent repair requests table. Inter tabular numerals, smooth count-up, skeleton loading.
+
+## Milestone 11 — User Menu Polish (Initials Avatar, Role Pill, Permissions Explainer, System Theme) — 2026-10-18
+
+**Status:** Completed and committed (`545f082`). Initials avatar circles (`SA`, `LA`, `EV`), sentence-case role pills (`Admin`, `Analyst`, `Viewer`), dynamic API permissions explainer (`"What can an Admin do?"`), single Guide button entry point, View mode hint, System theme with `matchMedia` listener, neutral sign-out button, real demo role switcher via `POST /auth/login`, and full WCAG menu disclosure/focus trap.
+
+---
+
+## Milestone 12 — Ask Governed Data & SQL AST Inspector Elevation (ThoughtSpot & Linear Benchmarks) — 2026-10-18
+
+**Status:** Completed — 112 backend tests passing, frontend production build verified (`tsc -b && vite build` passing).
+
+### Screen-by-Screen Implementation:
+1. **Linear-Style Sessions Sidebar:**
+   - Conversations drawer with session count badge, active left indicator border, message count pills, and relative timestamps (`HumanDate`).
+   - Clean "+ New" session creation button and search filter box.
+   - Hover-revealed soft delete button with tooltip and focus trap prevention.
+2. **ThoughtSpot-Style Semantic Interpretation Breakdown:**
+   - "Semantic interpretation" header card with Sparkles icon.
+   - Plain-English intent mapping text.
+   - Recognized tables (`Table: devices`), business terms (`Term: routers`), and assumptions chips.
+   - Status badge prominently placed: `Safe to run` (green pill with live pulse dot), `Blocked for safety` (red pill with ShieldAlert), `Quick question back` (amber pill), `Outside equipment domain` (neutral pill).
+3. **6-Point AST Safety Shield Inspector:**
+   - Single statement parsed, SELECT-only execution, permitted schema tables, public schema isolation, safe functions only, row clamp enforced.
+   - Interactive `?` Explain button detailing authoritative server AST boundaries.
+4. **Developer-Grade SQL Syntax Highlighting Block:**
+   - Dark editor theme with syntax token coloring for SQL keywords (`SELECT`, `COUNT`, `FROM`, `JOIN`, `ON`, `WHERE`, `GROUP BY`, `ORDER BY`, `LIMIT`), functions, numbers, strings, and identifiers.
+   - Top toolbar: PostgreSQL dialect tag, LIMIT 200 clamped badge, and one-click `Copy SQL` button with instant `"Copied!"` checkmark feedback.
+   - Collapsible in Simple mode; expanded by default in Expert mode.
+5. **Execution Action Bar & Strict Color Invariants:**
+   - Solid primary orange CTA button: `"Run query"` with Play icon and `Ctrl+↵` shortcut hint.
+   - Dedicated `"Execution blocked by safety policy"` indicator with ShieldAlert when unsafe queries (`DROP TABLE devices;`) are intercepted.
+6. **Execution Results & Neutral Visuals (Zero Orange Data Bars):**
+   - Header with execution metadata: `Read-only executed`, duration in milliseconds, rows retrieved, CSV download action.
+   - High-density Linear-style data table with sticky uppercase headers, zebra row hover, right-aligned tabular numerals, and monospace asset tag chips (`ASSET-xxxx`).
+   - Visual charts: bar charts strictly use neutral slate `#71706b` / `#8a8884` data bars; metric single-value display uses high-contrast neutral ink; donut charts use balanced 8-color categorical palette (teal, indigo, amber, slate).
+   - Thumbs up/down feedback card with optional evaluation notes logging to backend API.
+
 
 
 

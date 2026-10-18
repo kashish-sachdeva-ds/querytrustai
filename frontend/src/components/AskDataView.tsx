@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
-  Shield,
   ShieldCheck,
   ShieldAlert,
   AlertTriangle,
@@ -23,6 +22,7 @@ import {
   Sparkles,
   Code2,
   Lock,
+  Search,
 } from 'lucide-react'
 import {
   previewQuery,
@@ -42,6 +42,7 @@ import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
+import './AskDataView.css'
 
 interface MessageItem {
   id: string
@@ -82,20 +83,98 @@ const STARTER_PROMPTS = [
   },
 ]
 
-// Visual Chart Component
+// Accessible, balanced categorical palette (ThoughtSpot / Datadog inspired)
+const DONUT_PALETTE = [
+  '#475569', // slate 600
+  '#0d9488', // teal 600
+  '#6366f1', // indigo 500
+  '#d97706', // amber 600
+  '#0284c7', // sky 600
+  '#8b5cf6', // violet 500
+  '#64748b', // slate 500
+  '#a1a1aa', // zinc 400
+]
+
+// Developer-grade SQL syntax highlighter (Pure React, zero external dependencies)
+const HighlightedSql: React.FC<{ sql: string }> = ({ sql }) => {
+  const tokens = useMemo(() => {
+    if (!sql) return []
+    const tokenRegex =
+      /('(?:''|[^'])*'|\b(?:SELECT|FROM|WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|INNER\s+JOIN|OUTER\s+JOIN|ON|AS|AND|OR|NOT|IN|IS|NULL|LIKE|ILIKE|BETWEEN|CASE|WHEN|THEN|ELSE|END|DISTINCT|HAVING|ASC|DESC|UNION|ALL)\b|\b(?:COUNT|SUM|AVG|MIN|MAX|DATE_TRUNC|COALESCE|ROUND|NOW)\b|\b\d+(?:\.\d+)?\b|[().,;*:=<>!+-]+|[a-zA-Z_][a-zA-Z0-9_]*|\s+)/gi
+
+    const matched = sql.match(tokenRegex) || [sql]
+    return matched.map((token, idx) => {
+      const upper = token.toUpperCase()
+      if (/^'.*'$/.test(token)) {
+        return (
+          <span key={idx} className="sql-token-string">
+            {token}
+          </span>
+        )
+      }
+      if (
+        /^(SELECT|FROM|WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|INNER\s+JOIN|OUTER\s+JOIN|ON|AS|AND|OR|NOT|IN|IS|NULL|LIKE|ILIKE|BETWEEN|CASE|WHEN|THEN|ELSE|END|DISTINCT|HAVING|ASC|DESC|UNION|ALL)$/i.test(
+          upper
+        )
+      ) {
+        return (
+          <span key={idx} className="sql-token-keyword">
+            {token}
+          </span>
+        )
+      }
+      if (/^(COUNT|SUM|AVG|MIN|MAX|DATE_TRUNC|COALESCE|ROUND|NOW)$/i.test(upper)) {
+        return (
+          <span key={idx} className="sql-token-function">
+            {token}
+          </span>
+        )
+      }
+      if (/^\d+(?:\.\d+)?$/.test(token)) {
+        return (
+          <span key={idx} className="sql-token-number">
+            {token}
+          </span>
+        )
+      }
+      if (/^[().,;*:=<>!+-]+$/.test(token)) {
+        return (
+          <span key={idx} className="sql-token-punct">
+            {token}
+          </span>
+        )
+      }
+      return (
+        <span key={idx} className="sql-token-ident">
+          {token}
+        </span>
+      )
+    })
+  }, [sql])
+
+  return <code>{tokens}</code>
+}
+
+// Visual Chart Component (Strict Invariant: Neutral Data Bars, No Orange Monochrome)
 const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
   const { chart_recommendation: rec, rows, columns } = result
   if (!rows || rows.length === 0) {
-    return <div className="chart-empty">No data to visualize.</div>
+    return <div className="chart-empty">No records available to visualize.</div>
   }
 
   // 1. Metric Single Value
   if (rec.chart_type === 'metric' || (rows.length === 1 && columns.length === 1)) {
-    const val = rows[0][columns[0]]
+    const rawVal = rows[0][columns[0]]
+    const displayVal =
+      typeof rawVal === 'number'
+        ? rawVal.toLocaleString()
+        : String(rawVal ?? '0')
+
     return (
       <div className="metric-chart-container">
-        <div className="metric-chart-label">{rec.title || columns[0].replace('_', ' ')}</div>
-        <div className="metric-chart-value">{val?.toLocaleString?.() ?? val}</div>
+        <div className="metric-chart-label">{rec.title || columns[0].replace(/_/g, ' ')}</div>
+        <div className="metric-chart-value">{displayVal}</div>
+        <div className="metric-chart-sub">Read-only verified aggregate metric</div>
       </div>
     )
   }
@@ -103,7 +182,7 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
   const xKey = rec.x_axis || columns[0]
   const yKey = rec.y_axis || columns[1]
 
-  // 2. Bar Chart
+  // 2. Bar Chart (Neutral Tone)
   if (rec.chart_type === 'bar') {
     const chartData = rows.slice(0, 15).map((r) => ({
       label: String(r[xKey] ?? 'Unknown'),
@@ -112,27 +191,36 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
     const maxVal = Math.max(...chartData.map((d) => d.value), 1)
     const height = 240
     const barWidth = Math.max(28, Math.min(56, Math.floor(520 / chartData.length) - 16))
+    const totalWidth = Math.max(540, chartData.length * (barWidth + 24))
 
     return (
       <div className="svg-chart-wrapper">
         <div className="chart-title">{rec.title}</div>
         <div className="bar-chart-scroll">
-          <svg width={Math.max(540, chartData.length * (barWidth + 24))} height={height} className="svg-chart">
+          <svg width={totalWidth} height={height} className="svg-chart" role="img" aria-label={rec.title}>
+            {/* Subtle baseline */}
+            <line
+              x1="20"
+              y1={height - 38}
+              x2={totalWidth - 20}
+              y2={height - 38}
+              stroke="var(--qt-border)"
+              strokeWidth="1"
+            />
             {chartData.map((d, i) => {
-              const barHeight = Math.max(4, Math.round((d.value / maxVal) * (height - 70)))
+              const barHeight = Math.max(4, Math.round((d.value / maxVal) * (height - 75)))
               const x = 30 + i * (barWidth + 24)
               const y = height - 40 - barHeight
 
               return (
-                <g key={i} className="bar-group">
+                <g key={i} className="bar-group" tabIndex={0} role="graphics-symbol" aria-label={`${d.label}: ${d.value}`}>
                   <rect
                     x={x}
                     y={y}
                     width={barWidth}
                     height={barHeight}
                     rx={4}
-                    fill="var(--qt-accent, #FF4F00)"
-                    className="svg-bar"
+                    className="svg-neutral-bar"
                   />
                   <text x={x + barWidth / 2} y={y - 8} textAnchor="middle" className="bar-value-label">
                     {d.value.toLocaleString()}
@@ -145,6 +233,7 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
                   >
                     {d.label.length > 12 ? d.label.substring(0, 10) + '…' : d.label}
                   </text>
+                  <title>{`${d.label}: ${d.value.toLocaleString()}`}</title>
                 </g>
               )
             })}
@@ -154,14 +243,13 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
     )
   }
 
-  // 3. Donut / Pie Chart
+  // 3. Multi-Color Donut Chart
   if (rec.chart_type === 'pie') {
     const chartData = rows.slice(0, 8).map((r) => ({
       label: String(r[xKey] ?? 'Unknown'),
       value: Number(r[yKey] ?? 0),
     }))
     const total = chartData.reduce((acc, curr) => acc + curr.value, 0) || 1
-    const colors = ['#FF4F00', '#C44000', '#8A6A50', '#5C5550', '#A0937E', '#766F68', '#4F4A45', '#B8B0A6']
 
     let accumulatedAngle = 0
     const center = 90
@@ -194,7 +282,7 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
       ].join(' ')
 
       const pct = Math.round((d.value / total) * 100)
-      return { pathData, color: colors[idx % colors.length], label: d.label, value: d.value, pct }
+      return { pathData, color: DONUT_PALETTE[idx % DONUT_PALETTE.length], label: d.label, value: d.value, pct }
     })
 
     return (
@@ -202,9 +290,11 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
         <div className="chart-title" style={{ width: '100%', marginBottom: '0.75rem' }}>
           {rec.title}
         </div>
-        <svg width="180" height="180" viewBox="0 0 180 180" className="donut-svg">
+        <svg width="180" height="180" viewBox="0 0 180 180" className="donut-svg" role="img" aria-label={rec.title}>
           {slices.map((s, idx) => (
-            <path key={idx} d={s.pathData} fill={s.color} className="donut-slice" />
+            <path key={idx} d={s.pathData} fill={s.color} className="donut-slice">
+              <title>{`${s.label}: ${s.value.toLocaleString()} (${s.pct}%)`}</title>
+            </path>
           ))}
         </svg>
         <div className="donut-legend">
@@ -225,28 +315,59 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
   return null
 }
 
-// 6-Point Safety Shield Sequence Component
+// 6-Point Safety Shield Sequence Component (ThoughtSpot / Monte Carlo Benchmark)
 interface SafetyShieldProps {
   preview: PreviewResponse
 }
 
 const SafetyShieldDisplay: React.FC<SafetyShieldProps> = ({ preview }) => {
   const isBlocked = preview.status === 'blocked' || !preview.validation.passed
-  const tables = preview.validation.tables_referenced?.length > 0
-    ? preview.validation.tables_referenced.join(', ')
-    : 'devices'
+  const tables =
+    preview.validation.tables_referenced?.length > 0
+      ? preview.validation.tables_referenced.join(', ')
+      : 'devices'
 
   // The 6 strict safety invariants required by specification
   const checks = [
-    { id: 'single_statement', label: 'One command only', sublabel: 'Single statement parsed via AST', pass: !isBlocked },
-    { id: 'select_only', label: 'Only reads data', sublabel: 'Strict SELECT-only, no mutations', pass: !isBlocked },
-    { id: 'table_allowlist', label: 'Allowed tables only', sublabel: tables ? `Permitted: ${tables}` : 'Permitted tables only', pass: !isBlocked },
-    { id: 'schema_allowlist', label: 'No system areas', sublabel: 'System schemas blocked', pass: !isBlocked },
-    { id: 'function_allowlist', label: 'Safe functions only', sublabel: 'Dangerous functions rejected', pass: !isBlocked },
-    { id: 'row_limit', label: 'Result size capped', sublabel: 'Clamped to 200 rows max', pass: true },
+    {
+      id: 'single_statement',
+      label: 'Single statement parsed',
+      sublabel: 'Rejects multi-command chaining and injection',
+      pass: !isBlocked,
+    },
+    {
+      id: 'select_only',
+      label: 'SELECT-only execution',
+      sublabel: 'Zero mutations: INSERT, UPDATE, DELETE, and DROP forbidden',
+      pass: !isBlocked,
+    },
+    {
+      id: 'table_allowlist',
+      label: 'Permitted schema tables',
+      sublabel: tables ? `Confined to: ${tables}` : 'Equipment inventory tables only',
+      pass: !isBlocked,
+    },
+    {
+      id: 'schema_allowlist',
+      label: 'Public schema isolation',
+      sublabel: 'Blocks access to pg_catalog and system namespaces',
+      pass: !isBlocked,
+    },
+    {
+      id: 'function_allowlist',
+      label: 'Safe functions only',
+      sublabel: 'Permits math & aggregates; rejects system execution routines',
+      pass: !isBlocked,
+    },
+    {
+      id: 'row_limit',
+      label: 'Row clamp enforced',
+      sublabel: 'Strict limit capped to 200 rows max in read-only transaction',
+      pass: true,
+    },
   ]
 
-  const passedCount = isBlocked ? checks.filter(c => c.pass).length : 6
+  const passedCount = isBlocked ? checks.filter((c) => c.pass).length : 6
 
   return (
     <div className={`safety-shield ${isBlocked ? 'blocked' : 'passed'}`} role="status" aria-live="polite">
@@ -256,35 +377,35 @@ const SafetyShieldDisplay: React.FC<SafetyShieldProps> = ({ preview }) => {
             {isBlocked ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}
           </div>
           <div className="shield-title-text">
-            <h4>{isBlocked ? 'Blocked for safety' : `Safety Shield: ${passedCount} of 6 checks passed`}</h4>
+            <h4>{isBlocked ? 'Query blocked by AST safety rules' : `Safety Shield: ${passedCount} of 6 AST checks verified`}</h4>
             <p>
               {isBlocked
                 ? 'Intercepted before reaching your database. Zero modifications possible.'
-                : 'Guaranteed read-only. Clean AST verified. Safe to run.'}
+                : 'Guaranteed read-only. Abstract syntax tree verified. Safe to run.'}
             </p>
           </div>
         </div>
         <ExplainButton
-          title="Safety Shield Verification"
+          title="6-Point Safety Shield Verification"
           explanation="Every question must pass 6 automated checks before execution. Antigravity AST guards reject writes, drops, unauthorized tables, and unbound limits."
         />
       </div>
 
-      <div className="shield-checks-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
+      <div className="shield-checks-grid">
         {checks.map((chk, idx) => (
           <div
             key={chk.id}
             className={`shield-check-card ${chk.pass ? 'check-pass' : 'check-fail'}`}
-            style={{ animationDelay: `${idx * 60}ms` }}
+            style={{ animationDelay: `${idx * 40}ms` }}
           >
             {chk.pass ? (
-              <CheckCircle2 size={14} style={{ color: 'var(--qt-success)', flexShrink: 0 }} />
+              <CheckCircle2 size={15} className="check-icon-pass" />
             ) : (
-              <XCircle size={14} style={{ color: 'var(--qt-danger)', flexShrink: 0 }} />
+              <XCircle size={15} className="check-icon-fail" />
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <span style={{ fontWeight: 600 }}>{chk.label}</span>
-              <span style={{ fontSize: '0.68rem', color: 'var(--qt-muted)' }}>{chk.sublabel}</span>
+            <div className="check-card-body">
+              <span className="check-card-title">{chk.label}</span>
+              <span className="check-card-sub">{chk.sublabel}</span>
             </div>
           </div>
         ))}
@@ -365,20 +486,20 @@ const ViewerAskPlaceholder: React.FC = () => {
 // Skeleton loading placeholder
 const QueryLoadingSkeleton: React.FC = () => (
   <div className="chat-message-row assistant">
-    <div className="skeleton-shield-card" style={{ width: '100%' }}>
+    <div className="skeleton-shield-card" style={{ width: '100%', background: 'var(--qt-surface)', border: '1px solid var(--qt-border)', borderRadius: 'var(--qt-radius-inner)', padding: '1.25rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div className="qt-skeleton" style={{ width: 34, height: 34, borderRadius: '50%' }} />
+        <div className="qt-skeleton" style={{ width: 34, height: 34, borderRadius: 8 }} />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div className="qt-skeleton" style={{ width: '40%', height: 14 }} />
-          <div className="qt-skeleton" style={{ width: '65%', height: 11 }} />
+          <div className="qt-skeleton" style={{ width: '35%', height: 14 }} />
+          <div className="qt-skeleton" style={{ width: '60%', height: 11 }} />
         </div>
       </div>
-      <div className="shield-checks-grid" style={{ marginTop: '0.5rem' }}>
+      <div className="shield-checks-grid" style={{ marginTop: '1rem' }}>
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="qt-skeleton" style={{ height: 36, borderRadius: 6 }} />
+          <div key={i} className="qt-skeleton" style={{ height: 42, borderRadius: 6 }} />
         ))}
       </div>
-      <div className="qt-skeleton" style={{ width: '85%', height: 16, marginTop: '0.5rem' }} />
+      <div className="qt-skeleton" style={{ width: '85%', height: 16, marginTop: '1rem' }} />
     </div>
   </div>
 )
@@ -399,6 +520,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [copiedQueryId, setCopiedQueryId] = useState<string | null>(null)
   const [expandedSqlMap, setExpandedSqlMap] = useState<Record<string, boolean>>({})
+  const [sessionSearchTerm, setSessionSearchTerm] = useState('')
 
   // Execution & Feedback States
   const [executingId, setExecutingId] = useState<string | null>(null)
@@ -423,6 +545,12 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading, executingId])
+
+  const filteredSessions = useMemo(() => {
+    if (!sessionSearchTerm.trim()) return sessions
+    const term = sessionSearchTerm.toLowerCase()
+    return sessions.filter((s) => s.title.toLowerCase().includes(term))
+  }, [sessions, sessionSearchTerm])
 
   const loadSessions = async () => {
     try {
@@ -650,40 +778,64 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
 
   return (
     <div className="ask-data-container">
-      {/* Sessions Drawer / Sidebar */}
+      {/* Linear-Style Sessions Drawer */}
       <aside className="ask-data-sessions-sidebar" aria-label="Conversation Sessions">
         <div className="sessions-header">
-          <span className="sessions-title">Conversations</span>
+          <div className="sessions-header-left">
+            <span className="sessions-title">Conversations</span>
+            <span className="sessions-count-badge">{sessions.length}</span>
+          </div>
           <button
-            className="btn btn-secondary btn-sm"
+            type="button"
+            className="new-session-btn"
             onClick={handleCreateNewSession}
             title="Start a new query conversation"
             aria-label="New Session"
           >
-            <Plus size={13} style={{ marginRight: 4 }} />
-            New
+            <Plus size={13} />
+            <span>New</span>
           </button>
         </div>
 
-        <ul className="sessions-list" role="list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {sessions.length === 0 ? (
-            <li className="sessions-empty">No conversations yet. Ask a question to begin.</li>
+        {sessions.length > 2 && (
+          <div className="sessions-filter-box">
+            <Search size={12} className="sessions-filter-icon" />
+            <input
+              type="text"
+              className="sessions-filter-input"
+              placeholder="Search conversations..."
+              value={sessionSearchTerm}
+              onChange={(e) => setSessionSearchTerm(e.target.value)}
+              aria-label="Filter conversations"
+            />
+          </div>
+        )}
+
+        <ul className="sessions-list" role="list">
+          {filteredSessions.length === 0 ? (
+            <li className="sessions-empty">
+              <span>No conversations found.</span>
+              <small>Ask a question to begin a new session.</small>
+            </li>
           ) : (
-            sessions.map((s) => (
-              <li key={s.id} role="listitem" className="session-list-wrapper" style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+            filteredSessions.map((s) => (
+              <li
+                key={s.id}
+                role="listitem"
+                className="session-list-wrapper"
+              >
                 <button
                   type="button"
                   className={`session-item ${activeSessionId === s.id ? 'active' : ''}`}
                   onClick={() => selectSession(s.id)}
                   aria-current={activeSessionId === s.id ? 'page' : undefined}
-                  style={{ flex: 1, textAlign: 'left', cursor: 'pointer' }}
                 >
                   <div className="session-item-content">
                     <div className="session-item-title" title={s.title}>
                       {s.title}
                     </div>
                     <div className="session-item-meta">
-                      <span>
+                      <span className="session-msg-badge">
                         {s.message_count} {s.message_count === 1 ? 'msg' : 'msgs'}
                       </span>
                       <span>•</span>
@@ -698,7 +850,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                   title="Delete conversation"
                   aria-label={`Delete ${s.title}`}
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={13} />
                 </button>
               </li>
             ))
@@ -706,27 +858,27 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
         </ul>
       </aside>
 
-      {/* Main Conversation & Preview Area */}
+      {/* Main Conversation & ThoughtSpot Preview Area */}
       <section className="ask-data-workspace">
         <PageHeader
-          title="Ask your data"
-          description="Translate plain English questions into safe, validated SQL queries."
-          helpText="Type any question or click a starter suggestion. Every generated query is checked across 6 safety checks and run via a read-only PostgreSQL role."
+          title="Ask governed data"
+          description="Translate natural-language questions into safe, validated SQL queries."
+          helpText="Every generated query is checked across 6 safety checks and run via a SELECT-only PostgreSQL reader."
         />
 
-        {/* Governance & Status Banner */}
+        {/* Governance & Safety Status Bar */}
         <div className="ask-data-governance-banner">
           <div className="governance-badge-group">
             <span className="badge badge-warning">
               <span className="live-dot" style={{ backgroundColor: 'var(--qt-accent, #FF4F00)' }} />
               Guided demo mode
             </span>
-            <span className="badge badge-neutral">Demo data</span>
-            <span className="badge badge-success">6 safety checks</span>
+            <span className="badge badge-neutral">Demo inventory</span>
+            <span className="badge badge-success">6-layer AST guardrails</span>
             <span className="badge badge-primary">Read-only connection</span>
           </div>
           <div className="governance-notice-text">
-            Every request previewed before execution. Your input never executes SQL directly.
+            <span>Guaranteed read-only. No raw client SQL execution.</span>
           </div>
         </div>
 
@@ -742,18 +894,31 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
         <div className="ask-data-feed">
           {messages.length === 0 ? (
             <div className="ask-data-hero">
-              <div className="hero-icon-container">
-                <Shield size={32} />
+              <div className="ask-hero-badge">
+                <Sparkles size={13} />
+                <span>AI SQL Translation with 6-Layer AST Guardrails</span>
               </div>
               <h2 className="hero-title">Ask your equipment anything, in plain English.</h2>
               <p className="hero-subtitle">
-                The AI you can't make dangerous. We translate your question, verify safety across 6 independent checks, and execute through a read-only database reader.
+                The enterprise analytics path you can't make dangerous. We interpret your intent, verify compliance across 6 independent AST checks, and execute strictly through a read-only PostgreSQL role.
               </p>
 
               <ol className="ask-data-steps" aria-label="How asking works">
-                <li><span>1</span><strong>Ask freely</strong><small>Natural English phrasing.</small></li>
-                <li><span>2</span><strong>Safety check</strong><small>6-point shield blocks harmful queries.</small></li>
-                <li><span>3</span><strong>Trust completely</strong><small>Read-only verified data.</small></li>
+                <li>
+                  <span className="ask-step-num">1</span>
+                  <strong>Ask freely</strong>
+                  <small>Natural English phrasing without technical SQL syntax.</small>
+                </li>
+                <li>
+                  <span className="ask-step-num">2</span>
+                  <strong>Safety check</strong>
+                  <small>6-point AST shield blocks destructive commands & injections.</small>
+                </li>
+                <li>
+                  <span className="ask-step-num">3</span>
+                  <strong>Trust completely</strong>
+                  <small>Verified read-only database reader clamped to 200 rows.</small>
+                </li>
               </ol>
 
               {/* Starter Prompt Chips */}
@@ -780,7 +945,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                 <div className="try-break-card">
                   <div className="try-break-text">
                     <h5>
-                      <Flame size={14} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+                      <Flame size={14} style={{ color: '#dc2626' }} />
                       Want proof? Try to break it.
                     </h5>
                     <p>
@@ -808,7 +973,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                 const activeMode = viewModeMap[runId] || 'table'
                 const feedbackState = feedbackMap[runId]
                 const isSqlExpanded = !!expandedSqlMap[runId] || mode === 'expert'
-                const providerLabel = msg.previewData?.provider === 'gemini' ? 'Gemini' : 'Demo engine'
+                const providerLabel = msg.previewData?.provider === 'gemini' ? 'Gemini 1.5' : 'Rule-based AST Engine'
 
                 return (
                   <div key={msg.id} className={`chat-message-row ${msg.role}`}>
@@ -822,14 +987,14 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                       </div>
                     ) : (
                       <div className="assistant-preview-card">
-                        {/* Card Header */}
+                        {/* Card Header with Status Badge */}
                         <div className="preview-card-header">
                           <div className="header-left">
                             <span className="brand-pill">QueryTrust Guard</span>
-                            <span className="badge badge-neutral" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
+                            <span className="badge badge-neutral" style={{ fontSize: '0.6875rem' }}>
                               {providerLabel}
                             </span>
-                            <span className="preview-time" style={{ marginLeft: 8 }}>
+                            <span className="preview-time" style={{ marginLeft: 6 }}>
                               <HumanDate iso={msg.createdAt} />
                             </span>
                           </div>
@@ -857,13 +1022,37 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                           </div>
                         </div>
 
-                        {/* Animated 6-Point Safety Shield */}
+                        {/* Animated 6-Point Safety Shield Inspector */}
                         {msg.previewData && <SafetyShieldDisplay preview={msg.previewData} />}
 
-                        {/* Interpreted Meaning */}
-                        <div className="interpretation-section">
-                          <div className="section-label">What I understood</div>
-                          <div className="interpretation-text">{msg.content}</div>
+                        {/* ThoughtSpot-Style Intent Breakdown */}
+                        <div className="thoughtspot-intent-card">
+                          <div className="intent-card-header">
+                            <div className="intent-title-group">
+                              <Sparkles size={13} className="intent-sparkle-icon" />
+                              <span className="intent-card-label">Semantic interpretation</span>
+                            </div>
+                            <span className="intent-card-sub">What the engine mapped from plain English</span>
+                          </div>
+                          <div className="intent-meaning-text">{msg.content}</div>
+
+                          <div className="intent-entities-row">
+                            {msg.previewData?.validation.tables_referenced?.map((tbl) => (
+                              <span key={tbl} className="entity-chip entity-table">
+                                <span className="entity-chip-label">Table:</span> {tbl}
+                              </span>
+                            ))}
+                            {msg.previewData?.business_terms_used?.map((term) => (
+                              <span key={term} className="entity-chip entity-term">
+                                <span className="entity-chip-label">Term:</span> {term}
+                              </span>
+                            ))}
+                            {msg.previewData?.assumptions?.map((asm, idx) => (
+                              <span key={idx} className="entity-chip entity-assumption">
+                                <span className="entity-chip-label">Rule:</span> {asm}
+                              </span>
+                            ))}
+                          </div>
                         </div>
 
                         {/* Clarification Alert (if ambiguous) */}
@@ -873,18 +1062,21 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                             <div className="clarification-prompt">{msg.previewData.clarification_question}</div>
                             <div className="clarification-actions">
                               <button
+                                type="button"
                                 className="btn btn-secondary btn-sm"
                                 onClick={() => handleSendQuestion('Show devices with warranty expiring in 30 days')}
                               >
                                 Option 1: Imminent Warranty Expiry (&lt;30d)
                               </button>
                               <button
+                                type="button"
                                 className="btn btn-secondary btn-sm"
                                 onClick={() => handleSendQuestion('List open Critical service events')}
                               >
                                 Option 2: Open Critical Incidents
                               </button>
                               <button
+                                type="button"
                                 className="btn btn-secondary btn-sm"
                                 onClick={() => handleSendQuestion('Show offline or maintenance devices')}
                               >
@@ -942,7 +1134,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                           </div>
                         )}
 
-                        {/* SQL Preview Block (Simple vs Expert Mode) */}
+                        {/* SQL Syntax Highlighted Inspector Block (Simple vs Expert Mode) */}
                         {msg.previewData?.sql_preview && (
                           <div className="sql-preview-container">
                             <button
@@ -958,7 +1150,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                 padding: '4px 8px',
                                 borderRadius: 'var(--qt-radius-control)',
                                 marginBottom: isSqlExpanded ? 8 : 0,
-                                fontSize: '0.78rem',
+                                fontSize: '0.75rem',
                               }}
                             >
                               <Code2 size={13} />
@@ -971,8 +1163,9 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                 <div className="sql-preview-header">
                                   <span className="sql-dialect-tag">PostgreSQL (SELECT-only)</span>
                                   <div className="sql-header-actions">
-                                    <span className="limit-clamped-badge">Clamped to 200 rows max</span>
+                                    <span className="limit-clamped-badge">LIMIT 200 clamped</span>
                                     <button
+                                      type="button"
                                       className="copy-btn"
                                       onClick={() =>
                                         handleCopySQL(msg.previewData!.query_run_id, msg.previewData!.sql_preview!)
@@ -980,7 +1173,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                       title="Copy SQL statement"
                                     >
                                       {copiedQueryId === msg.previewData.query_run_id ? (
-                                        <span style={{ color: 'var(--qt-accent)' }}>
+                                        <span style={{ color: '#4ade80' }}>
                                           <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copied
                                         </span>
                                       ) : (
@@ -992,53 +1185,60 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                   </div>
                                 </div>
                                 <pre className="sql-code-box">
-                                  <code>{msg.previewData.sql_preview}</code>
+                                  <HighlightedSql sql={msg.previewData.sql_preview} />
                                 </pre>
                               </div>
                             )}
                           </div>
                         )}
 
-                        {/* Semantic Catalog Assumptions */}
-                        {msg.previewData && msg.previewData.assumptions.length > 0 && (
-                          <div className="assumptions-container">
-                            <span className="assumptions-title">Assumptions:</span>
-                            <ul className="assumptions-list">
-                              {msg.previewData.assumptions.map((asm, idx) => (
-                                <li key={idx}>{asm}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* Action Footer (Execute button: single "Run it" button) */}
+                        {/* Action Footer (Prominent Solid Orange CTA or Blocked Indicator) */}
                         {msg.previewData && !execResult && (
                           <div className="preview-action-footer">
                             <div className="footer-meta">
                               <span className="run-id-label">Preview ID:</span>
                               <code className="run-id-code">{msg.previewData.query_run_id.slice(0, 12)}…</code>
                             </div>
-                            <button
-                              className={`btn ${msg.previewData.can_execute ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-                              onClick={() => handleExecuteQuery(msg.previewData!)}
-                              disabled={!msg.previewData.can_execute || isExecuting}
-                              title={
-                                msg.previewData.can_execute
-                                  ? 'Execute query in read-only transaction'
-                                  : 'Query blocked or requires clarification'
-                              }
-                            >
-                              {isExecuting ? (
-                                <>
-                                  <div className="btn-spinner" /> Running safely in read-only mode...
-                                </>
-                              ) : (
-                                <>
-                                  <Play size={13} style={{ marginRight: 4 }} />
-                                  Run it
-                                </>
-                              )}
-                            </button>
+                            {msg.previewData.can_execute ? (
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-md run-query-btn"
+                                onClick={() => handleExecuteQuery(msg.previewData!)}
+                                disabled={isExecuting}
+                                title="Execute query in read-only transaction"
+                              >
+                                {isExecuting ? (
+                                  <>
+                                    <div className="btn-spinner" /> Running safely in read-only mode...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play size={13} fill="currentColor" />
+                                    <span>Run query</span>
+                                    <kbd className="kbd-shortcut">Ctrl+↵</kbd>
+                                  </>
+                                )}
+                              </button>
+                            ) : (
+                              <div
+                                className="blocked-execution-pill"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  padding: '6px 12px',
+                                  borderRadius: 'var(--qt-radius-control)',
+                                  background: 'var(--qt-danger-soft)',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  color: 'var(--qt-danger)',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                <ShieldAlert size={14} />
+                                <span>Execution blocked by safety policy</span>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -1059,16 +1259,16 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                   <span className="live-dot" /> Read-only executed
                                 </span>
                                 <span className="result-metric-pill">
-                                  <Zap size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> {execResult.execution_duration_ms} ms
+                                  <Zap size={12} style={{ verticalAlign: 'middle' }} /> {execResult.execution_duration_ms} ms
                                 </span>
                                 <span className="result-metric-pill">
-                                  <FileText size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> {execResult.row_count} {execResult.row_count === 1 ? 'row' : 'rows'}
+                                  <FileText size={12} style={{ verticalAlign: 'middle' }} /> {execResult.row_count} {execResult.row_count === 1 ? 'row' : 'rows'}
                                 </span>
                                 {execResult.truncated && (
                                   <span className="badge badge-warning">Max 200 row limit reached</span>
                                 )}
                               </div>
-                              <div className="result-header-right" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                              <div className="result-header-right">
                                 <button
                                   type="button"
                                   className="toggle-btn"
@@ -1077,9 +1277,9 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: 4,
-                                    background: 'var(--qt-surface-muted)',
+                                    background: 'var(--qt-surface)',
                                     border: '1px solid var(--qt-border)',
-                                    padding: '4px 8px',
+                                    padding: '3px 8px',
                                     borderRadius: 'var(--qt-radius-control)',
                                   }}
                                   title="Export result table as CSV"
@@ -1089,12 +1289,14 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                 </button>
                                 <div className="view-mode-toggle">
                                   <button
+                                    type="button"
                                     className={`toggle-btn ${activeMode === 'table' ? 'active' : ''}`}
                                     onClick={() => setViewModeMap((p) => ({ ...p, [runId]: 'table' }))}
                                   >
                                     Table
                                   </button>
                                   <button
+                                    type="button"
                                     className={`toggle-btn ${activeMode === 'chart' ? 'active' : ''}`}
                                     onClick={() => setViewModeMap((p) => ({ ...p, [runId]: 'chart' }))}
                                   >
@@ -1118,7 +1320,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                               </div>
                             )}
 
-                            {/* View Mode: Table */}
+                            {/* View Mode: Table (Linear Standard) */}
                             {activeMode === 'table' && (
                               <div className="result-table-wrapper">
                                 <table className="result-data-table">
@@ -1132,11 +1334,29 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                   <tbody>
                                     {execResult.rows.map((row, rIdx) => (
                                       <tr key={rIdx}>
-                                        {execResult.columns.map((col) => (
-                                          <td key={col} title={row[col] !== null ? String(row[col]) : undefined}>
-                                            <span className="cell-truncate">{row[col] !== null ? String(row[col]) : '—'}</span>
-                                          </td>
-                                        ))}
+                                        {execResult.columns.map((col) => {
+                                          const val = row[col]
+                                          const isNumeric = typeof val === 'number'
+                                          const isAssetTag = typeof val === 'string' && /^ASSET-\d+/i.test(val)
+
+                                          return (
+                                            <td
+                                              key={col}
+                                              className={isNumeric ? 'cell-numeric' : undefined}
+                                              title={val !== null && val !== undefined ? String(val) : undefined}
+                                            >
+                                              {val === null || val === undefined ? (
+                                                <span className="cell-null">—</span>
+                                              ) : isAssetTag ? (
+                                                <span className="asset-tag-token">{String(val)}</span>
+                                              ) : isNumeric ? (
+                                                Number(val).toLocaleString()
+                                              ) : (
+                                                String(val)
+                                              )}
+                                            </td>
+                                          )
+                                        })}
                                       </tr>
                                     ))}
                                   </tbody>
@@ -1156,16 +1376,18 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                               </div>
                               <div className="feedback-actions">
                                 <button
+                                  type="button"
                                   className={`feedback-btn ${feedbackState?.isHelpful === true ? 'active-helpful' : ''}`}
                                   onClick={() => handleFeedbackSubmit(runId, true)}
                                 >
-                                  <ThumbsUp size={12} style={{ marginRight: 3 }} /> Helpful
+                                  <ThumbsUp size={12} style={{ marginRight: 4 }} /> Helpful
                                 </button>
                                 <button
+                                  type="button"
                                   className={`feedback-btn ${feedbackState?.isHelpful === false ? 'active-unhelpful' : ''}`}
                                   onClick={() => handleFeedbackSubmit(runId, false)}
                                 >
-                                  <ThumbsDown size={12} style={{ marginRight: 3 }} /> Needs improvement
+                                  <ThumbsDown size={12} style={{ marginRight: 4 }} /> Needs improvement
                                 </button>
                                 <input
                                   type="text"
@@ -1184,6 +1406,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                   }
                                 />
                                 <button
+                                  type="button"
                                   className="btn btn-secondary btn-sm"
                                   onClick={() => handleFeedbackSubmit(runId, feedbackState?.isHelpful ?? true)}
                                 >

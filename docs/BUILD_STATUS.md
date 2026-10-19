@@ -1,13 +1,12 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 22 — Data Catalog & Schema Explorer: Interactive Schema Inspection & Dynamic BYOD Data Modeling
-**Overall status:** ThoughtSpot & Metabase-grade data catalog and schema modeling architecture implemented:
-- **Data Catalog Navigation:** Replaced IoT-specific "Equipment" tab with generalized "Data catalog" (`Sidebar.tsx`), aligning navigation with modern BI and AI analytics platforms (Metabase, ThoughtSpot, Snowflake Cortex).
-- **Segmented Catalog Switcher:** Unified `[ Hardware & Asset Inventory ]` and `[ Schema & Data Model ]` into a segmented dual-mode workbench (`DevicesView.tsx`).
-- **Interactive Schema Inspector:** Master-detail visual catalog showing all database tables with column counts and row estimates, interactive column breakdown table (column names with PK/FK icons, color-coded SQL data types, nullability badges, and constraints), and 1-click "Query this table" prompt generation.
-- **Enterprise Auth Disclosure:** Converted giant demo persona cards into a clean, collapsible accordion ("Explore Demo Sandbox Personas") so production login remains enterprise-grade and uncluttered.
-All 127 pytest backend tests pass in 11.62s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Current milestone:** 23 — Dynamic Schema-Aware Starter Prompts & Connected Workspace Intelligence
+**Overall status:** ThoughtSpot & Snowflake Cortex-grade conversational data discovery implemented:
+- **Dynamic Schema-Aware Prompts (`AskDataView.tsx`):** Conversational starter chips now dynamically introspect the active data source (`fetchActiveDataSource`). When connected to a custom company database, queries auto-tailor to discovered business tables (e.g., sample table rows, record counts, and multi-table insights) instead of hardcoding Cisco router queries.
+- **Dynamic Safety Proof Banner:** The "Try to break it" destructive injection demo automatically targets the active schema table, proving AST safety against both custom enterprise tables and demo fixtures.
+- **Enterprise Workspace Overview (`OverviewView.tsx`):** Added a top enterprise workspace hero card displaying connection status, discovered table counts, engine type, and 1-click query shortcuts.
+All 127 pytest backend tests pass in 11.37s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 

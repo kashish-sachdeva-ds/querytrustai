@@ -34,10 +34,12 @@ import {
   createChatSession,
   fetchSessionMessages,
   deleteChatSession,
+  fetchActiveDataSource,
   type PreviewResponse,
   type ExecuteResponse,
   type ChatSessionSummary,
   type ChatMessage,
+  type ActiveDataSourceResponse,
 } from '../api/client'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
@@ -709,6 +711,55 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading, executingId])
 
+  const [activeSource, setActiveSource] = useState<ActiveDataSourceResponse | null>(null)
+
+  useEffect(() => {
+    fetchActiveDataSource()
+      .then(setActiveSource)
+      .catch(() => {})
+  }, [])
+
+  const starterPrompts = useMemo(() => {
+    if (activeSource?.mode === 'connected' && activeSource.tables && activeSource.tables.length > 0) {
+      const t1 = activeSource.tables[0]
+      const t2 = activeSource.tables[1] || t1
+      const t3 = activeSource.tables[2] || t1
+
+      return [
+        {
+          category: 'Sample inspection',
+          label: `Sample rows from ${t1}`,
+          prompt: `Show the first 10 records from table ${t1}.`,
+          badge: 'Explore Table',
+          badgeClass: 'badge-success',
+        },
+        {
+          category: 'Record aggregation',
+          label: `Total count of ${t2}`,
+          prompt: `How many rows are in table ${t2}?`,
+          badge: 'Aggregation',
+          badgeClass: 'badge-info',
+        },
+        {
+          category: 'Multi-table insights',
+          label: `Records in ${t3}`,
+          prompt: `Show sample rows and summary from table ${t3}.`,
+          badge: 'Data Insights',
+          badgeClass: 'badge-primary',
+        },
+        {
+          category: 'Safety check demo',
+          label: 'Test safety with injection',
+          prompt: `SELECT 1; DROP TABLE ${t1};`,
+          badge: 'AST Interception',
+          badgeClass: 'badge-warning',
+        },
+      ]
+    }
+
+    return STARTER_PROMPTS
+  }, [activeSource])
+
   const filteredSessions = useMemo(() => {
     if (!sessionSearchTerm.trim()) return sessions
     const term = sessionSearchTerm.toLowerCase()
@@ -857,8 +908,13 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   }
 
   // Real "Try to break it" trigger: calls the backend with a dangerous statement
+  const breakQuery =
+    activeSource?.mode === 'connected' && activeSource.tables && activeSource.tables.length > 0
+      ? `DROP TABLE ${activeSource.tables[0]};`
+      : 'DROP TABLE devices;'
+
   const handleTryToBreakIt = () => {
-    handleSendQuestion('DROP TABLE devices;')
+    handleSendQuestion(breakQuery)
   }
 
   const handleCopySQL = (queryId: string, sql: string) => {
@@ -1104,9 +1160,13 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
 
               {/* Starter Prompt Chips */}
               <div className="starter-prompts-matrix">
-                <div className="starter-prompts-label">Try one of these real questions:</div>
+                <div className="starter-prompts-label">
+                  {activeSource?.mode === 'connected'
+                    ? `Try a question on ${activeSource.name}:`
+                    : 'Try one of these real questions:'}
+                </div>
                 <div className="starter-chips-grid">
-                  {STARTER_PROMPTS.map((item, idx) => (
+                  {starterPrompts.map((item, idx) => (
                     <button
                       key={idx}
                       className="starter-chip-card"
@@ -1130,7 +1190,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                       Want proof? Try to break it.
                     </h5>
                     <p>
-                      Click below to send <code>DROP TABLE devices;</code> directly to the backend. Watch the Safety Shield intercept it live without touching a single record.
+                      Click below to send <code>{breakQuery}</code> directly to the backend. Watch the Safety Shield intercept it live without touching a single record.
                     </p>
                   </div>
                   <button

@@ -39,7 +39,37 @@ def login(
         .first()
     )
 
-    if not user or not verify_password(request.password, user.password_hash):
+    if not user:
+        # Check if an access request is pending administrator review
+        pending = (
+            db.query(AccessRequest)
+            .filter(func.lower(AccessRequest.email) == clean_email, AccessRequest.status == "pending")
+            .first()
+        )
+        if pending:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access request for {clean_email} is pending administrator review. You will be able to sign in once approved in People & access.",
+            )
+
+        rejected = (
+            db.query(AccessRequest)
+            .filter(func.lower(AccessRequest.email) == clean_email, AccessRequest.status == "rejected")
+            .first()
+        )
+        if rejected:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access request for {clean_email} was declined by workspace administrators.",
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not verify_password(request.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",

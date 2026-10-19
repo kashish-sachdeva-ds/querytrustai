@@ -13,6 +13,7 @@ import {
   Building,
   User as UserIcon,
   CheckCircle2,
+  Clock,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
@@ -69,6 +70,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     onAction?: () => void
   } | null>(null)
 
+  // Status Notice State (e.g. Access Request Pending)
+  const [statusNotice, setStatusNotice] = useState<{
+    title: string
+    message: string
+    email?: string
+  } | null>(null)
+
   // Request Access Modal State
   const [showRequestAccess, setShowRequestAccess] = useState(false)
   const [requestLoading, setRequestLoading] = useState(false)
@@ -95,6 +103,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       setErrors((prev) => ({ ...prev, email: err || undefined }))
     }
     if (globalError) setGlobalError(null)
+    if (statusNotice && statusNotice.email && statusNotice.email !== rawVal.toLowerCase().trim()) {
+      setStatusNotice(null)
+    }
   }
 
   const handleEmailBlur = () => {
@@ -154,10 +165,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     try {
       await login(sanitizedEmail, sanitizedPassword)
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message.toLowerCase() : ''
-      if (errorMsg.includes('locked') || errorMsg.includes('too many')) {
+      const rawErrorMsg = err instanceof Error ? err.message : ''
+      const lower = rawErrorMsg.toLowerCase()
+      if (lower.includes('pending administrator review') || lower.includes('pending')) {
+        setGlobalError(null)
+        setStatusNotice({
+          title: 'Status: Access Request Pending Review',
+          message: rawErrorMsg || `An access request for ${sanitizedEmail} is currently pending review by workspace administrators in People & access.`,
+          email: sanitizedEmail,
+        })
+      } else if (lower.includes('declined') || lower.includes('rejected')) {
+        setStatusNotice(null)
+        setGlobalError({
+          type: 'invalid_credentials',
+          message: rawErrorMsg || 'Your access request was declined by workspace administrators.',
+        })
+      } else if (lower.includes('locked') || lower.includes('too many')) {
+        setStatusNotice(null)
         setGlobalError({ type: 'account_locked' })
       } else {
+        setStatusNotice(null)
         setGlobalError({
           type: 'invalid_credentials',
           message: 'Invalid work credentials. If you are new to QueryTrust AI or do not have an approved account yet, please request access below.',
@@ -166,6 +193,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             setShowRequestAccess(true)
             setRequestSubmitted(false)
             setRequestError(null)
+            setGlobalError(null)
             setRequestForm((prev) => ({ ...prev, email: sanitizedEmail }))
           },
         })
@@ -216,6 +244,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     }
   }
 
+  const handleReturnToSignIn = () => {
+    const submittedEmail = (requestForm.email || formValues.email).toLowerCase().trim()
+    setShowRequestAccess(false)
+    setRequestSubmitted(false)
+    setRequestError(null)
+    setGlobalError(null)
+    setFormValues((prev) => ({ ...prev, email: submittedEmail, password: '' }))
+    setStatusNotice({
+      title: 'Status: Access Request Pending Review',
+      message: `Your access request for ${submittedEmail} has been recorded in the database. Workspace administrators can review and approve your account in People & access. You will be able to sign in once approved.`,
+      email: submittedEmail,
+    })
+    setRequestForm({ name: '', email: '', company: '', roleRequested: 'Analyst', justification: '' })
+  }
+
   const isSubmitDisabled = loading || !formValues.email.trim() || !formValues.password
 
   return (
@@ -224,7 +267,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       <aside className="login-brand-panel" aria-label="Brand Overview and Safety Guarantees">
         <div className="login-brand-content">
           <div className="login-brand-header">
-            <QueryTrustLogo size={42} />
+            <QueryTrustLogo size={48} />
             <div>
               <div className="login-brand-title">QueryTrust AI</div>
               <span className="login-brand-subtitle">Equipment intelligence</span>
@@ -312,6 +355,45 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             <h2>Sign in to workspace</h2>
             <p>Sign in with your work email to access safe network analytics.</p>
           </header>
+
+          {/* Status Notice (e.g. Access Request Pending) */}
+          {statusNotice && (
+            <div
+              className="login-status-card"
+              role="status"
+              style={{
+                marginBottom: '1.25rem',
+                padding: '0.9rem 1rem',
+                borderRadius: '10px',
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                color: 'var(--qt-ink, #ffffff)',
+                display: 'flex',
+                gap: '12px',
+                alignItems: 'flex-start',
+              }}
+            >
+              <Clock size={18} style={{ color: '#f59e0b', flexShrink: 0, marginTop: 2 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: '#fbbf24' }}>
+                    {statusNotice.title}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => setStatusNotice(null)}
+                    style={{ background: 'none', border: 'none', color: 'var(--qt-muted)', cursor: 'pointer', padding: 0 }}
+                    aria-label="Dismiss status notification"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--qt-ink-muted, #d1d5db)', lineHeight: 1.45 }}>
+                  {statusNotice.message}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Global Error Banner */}
           {globalError && (
@@ -533,7 +615,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               <button
                 type="button"
                 className="login-modal-close"
-                onClick={() => setShowRequestAccess(false)}
+                onClick={requestSubmitted ? handleReturnToSignIn : () => setShowRequestAccess(false)}
                 aria-label="Close request access modal"
               >
                 <X size={18} />
@@ -560,11 +642,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 <button
                   type="button"
                   className="login-submit-btn"
-                  onClick={() => {
-                    setShowRequestAccess(false)
-                    setRequestSubmitted(false)
-                    setRequestForm({ name: '', email: '', company: '', roleRequested: 'Analyst', justification: '' })
-                  }}
+                  onClick={handleReturnToSignIn}
                 >
                   Return to Sign In
                 </button>

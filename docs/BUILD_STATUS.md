@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 15 — Seamless Enterprise Login Flow, Unregistered Email Guidance, and Request Access UX Elevation
-**Overall status:** Complete enterprise SaaS authentication, read-only analytics execution, and governance workflow. Resolved login form unmounting issue so failed authentication displays persistent, actionable error banners with immediate 1-click Request Access guidance. Refined Request Access modal by removing awkward top banner and adding dedicated success card with requester summary. Verified end-to-end user request lifecycle in People & access with admin approval, salted bcrypt password hashing (`bcrypt.gensalt(12)`), and instant user account login. All 117 pytest backend tests pass in 6.36s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Current milestone:** 16 — Access Request Pending Status Sync & Login Layout Elevation
+**Overall status:** Complete enterprise SaaS authentication, read-only analytics execution, and governance workflow. Resolved login header clipping with safe flexbox alignment (`margin: auto 0;`). Upgraded left brand panel typography and scaled animated components to gracefully fill empty space. Synchronized access request status so submitting an access request automatically updates the login page with an amber pending review status card, clears red errors, and displays pending review messaging if login is attempted before approval. All 117 pytest backend tests pass in 15.43s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 
@@ -893,3 +893,18 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
    - Transformed the submission result into a dedicated, clear success state with a green checkmark, request summary, request ID, and a clean "Return to Sign In" button.
 4. **Admin Approval Feedback Clarity (`AdminView.tsx`):**
    - Updated success notification on access request approval to explicitly show the provisioned temporary password (`WelcomePass123!`). Verified end-to-end user provisioning with salted bcrypt hashes (`$2b$12$...`) in PostgreSQL and validated newly approved account login.
+
+## Milestone 16 — Access Request Pending Status Sync & Login Layout Elevation — 2026-10-19
+
+**Status:** Completed — 117 backend tests passing, frontend production build verified (`tsc -b && vite build` passing with 0 errors).
+
+### Summary of Enhancements:
+1. **Access Request Pending Status Synchronization (`auth.py` & `LoginPage.tsx`):**
+   - Updated `POST /api/v1/auth/login` to inspect `access_requests` when a user account is not found in `users`. If a pending access request exists for that email, returns HTTP 403 with status message informing the user that review is pending in People & access.
+   - When a user submits an access request and clicks "Return to Sign In", the red error banner is cleared and replaced by an amber **"Status: Access Request Pending Review"** notification card. The password field is cleared and the email is retained.
+2. **Header Scroll-Clipping Fix (`LoginPage.css`):**
+   - Replaced `justify-content: center` in `.login-form-panel` with safe flex alignment (`justify-content: flex-start; margin: auto 0;`). "Sign in to workspace" is now fully visible and never clipped or cut off at the top of the browser viewport.
+3. **Left Brand Panel Typography & Space Filling (`LoginPage.css` & `LoginPage.tsx`):**
+   - Expanded `.login-brand-content` max width from 520px to 620px.
+   - Upgraded typography across title (`clamp(1.6rem, 2.2vw, 2.1rem)`), subtitle (`0.92rem`), tagline (`clamp(1.35rem, 1.9vw, 1.75rem)`), feature list headings (`1.05rem`), and descriptions (`0.88rem`).
+   - Scaled animated safety shield radar and logo (`size={48}`), eliminating awkward empty gaps on wide desktop screens.

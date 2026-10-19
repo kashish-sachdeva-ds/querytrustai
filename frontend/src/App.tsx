@@ -55,14 +55,17 @@ const getTabFromUrl = (): ActiveTab => {
 }
 
 const AppShell: React.FC = () => {
-  const { isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading, user, logout } = useAuth()
   const { theme, mode, toggleTheme, toggleMode } = useTheme()
   const [activeTab, setActiveTab] = useState<ActiveTab>(getTabFromUrl)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [pendingAskQuestion, setPendingAskQuestion] = useState<string | null>(null)
-  const [unauthView, setUnauthView] = useState<'landing' | 'login'>(() =>
-    readUrlParam('tab') === 'login' ? 'login' : 'landing'
-  )
+  const joinParam = readUrlParam('join') || readUrlParam('workspace')
+  const [unauthView, setUnauthView] = useState<'landing' | 'login'>(() => {
+    const tab = readUrlParam('tab')
+    const join = readUrlParam('join') || readUrlParam('workspace')
+    return tab === 'login' || Boolean(join) ? 'login' : 'landing'
+  })
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
 
   useEffect(() => {
@@ -170,48 +173,113 @@ const AppShell: React.FC = () => {
   }
 
   return (
-    <div className="app-container">
-      <Sidebar activeTab={activeTab} onSelectTab={selectTab} onAskQuestion={openAskQuestion} />
-
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
-        <Header
-          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-          onOpenOnboarding={() => setIsOnboardingOpen(true)}
-        />
-
-        <main className="content-area">
-          <div className="page-transition" key={activeTab}>
-            {activeTab === 'overview' && (
-              <OverviewView
-                onNavigate={selectTab}
-                onAskQuestion={openAskQuestion}
-                onOpenDevice={openDevice}
-              />
-            )}
-            {activeTab === 'devices' && <DevicesView onAskQuestion={openAskQuestion} />}
-            {activeTab === 'ask-data' && <AskDataView initialQuestion={pendingAskQuestion} />}
-            {activeTab === 'data-sources' && <DataSourcesView />}
-            {activeTab === 'admin' && <AdminView />}
-
-            {activeTab === 'data-quality' && <DataQualityView />}
-            {activeTab === 'anomalies' && (
-              <AnomalyMonitorView
-                onOpenDevice={openDevice}
-              />
-            )}
-
-            {activeTab === 'history' && <QueryHistoryView onAskQuestion={openAskQuestion} />}
-            {activeTab === 'evaluations' && <EvaluationLabView />}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      {/* Invite Workspace Awareness Banner if logged into another account */}
+      {joinParam && user && user.workspace_name?.toLowerCase() !== joinParam.toLowerCase() && (
+        <div style={{
+          background: 'linear-gradient(90deg, #ff5a14 0%, #ea4800 100%)',
+          color: '#ffffff',
+          padding: '9px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.82rem',
+          fontWeight: 500,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          zIndex: 9999,
+          flexShrink: 0,
+        }}>
+          <span>
+            👋 You opened an invite link to join <strong>{joinParam}</strong>, but you are currently signed in as <strong>{user.display_name}</strong> ({user.workspace_name || 'Personal Account'}).
+          </span>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={async () => {
+                await logout()
+                setUnauthView('login')
+              }}
+              style={{
+                background: '#ffffff',
+                color: '#ea4800',
+                border: 'none',
+                borderRadius: 4,
+                padding: '4px 12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: '0.78rem',
+              }}
+            >
+              Sign out &amp; Join {joinParam}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const url = new URL(window.location.href)
+                url.searchParams.delete('join')
+                url.searchParams.delete('workspace')
+                window.history.replaceState({}, '', url.toString())
+                window.dispatchEvent(new Event('popstate'))
+              }}
+              style={{
+                background: 'rgba(0,0,0,0.15)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.4)',
+                borderRadius: 4,
+                padding: '4px 10px',
+                cursor: 'pointer',
+                fontSize: '0.78rem',
+              }}
+            >
+              Dismiss
+            </button>
           </div>
-        </main>
+        </div>
+      )}
+
+      <div className="app-container" style={{ flex: 1, minHeight: 0 }}>
+        <Sidebar activeTab={activeTab} onSelectTab={selectTab} onAskQuestion={openAskQuestion} />
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
+          <Header
+            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+            onOpenOnboarding={() => setIsOnboardingOpen(true)}
+          />
+
+          <main className="content-area">
+            <div className="page-transition" key={activeTab}>
+              {activeTab === 'overview' && (
+                <OverviewView
+                  onNavigate={selectTab}
+                  onAskQuestion={openAskQuestion}
+                  onOpenDevice={openDevice}
+                />
+              )}
+              {activeTab === 'devices' && <DevicesView onAskQuestion={openAskQuestion} />}
+              {activeTab === 'ask-data' && <AskDataView initialQuestion={pendingAskQuestion} />}
+              {activeTab === 'data-sources' && <DataSourcesView />}
+              {activeTab === 'admin' && <AdminView />}
+
+              {activeTab === 'data-quality' && <DataQualityView />}
+              {activeTab === 'anomalies' && (
+                <AnomalyMonitorView
+                  onOpenDevice={openDevice}
+                />
+              )}
+
+              {activeTab === 'history' && <QueryHistoryView onAskQuestion={openAskQuestion} />}
+              {activeTab === 'evaluations' && <EvaluationLabView />}
+            </div>
+          </main>
+        </div>
+        {isCommandPaletteOpen && <CommandPalette actions={commandActions} onClose={() => setIsCommandPaletteOpen(false)} />}
+        <OnboardingModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          onSelectQuestion={openAskQuestion}
+        />
+        <ApiFailureToast />
       </div>
-      {isCommandPaletteOpen && <CommandPalette actions={commandActions} onClose={() => setIsCommandPaletteOpen(false)} />}
-      <OnboardingModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        onSelectQuestion={openAskQuestion}
-      />
-      <ApiFailureToast />
     </div>
   )
 }

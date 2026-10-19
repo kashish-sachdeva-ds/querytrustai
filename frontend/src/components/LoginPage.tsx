@@ -44,8 +44,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   const { login, register, joinWorkspace } = useAuth()
   const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
 
-  // Auth Mode: 'signin' | 'register' | 'join'
-  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'join'>('signin')
+  // Auth Mode: 'signin' | 'register' | 'join' (default to 'join' if invite parameter present)
+  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'join'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('join') || params.get('workspace')) {
+        return 'join'
+      }
+    }
+    return 'signin'
+  })
 
   // Unique IDs for accessibility
   const emailInputId = useId()
@@ -78,12 +86,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   const [showRegisterPassword, setShowRegisterPassword] = useState(false)
 
   // Join Workspace Form State (Join Existing Team Workspace)
-  const [joinValues, setJoinValues] = useState({
-    workspaceName: '',
-    fullName: '',
-    email: '',
-    password: '',
-    role: 'analyst' as 'analyst' | 'viewer',
+  const [joinValues, setJoinValues] = useState(() => {
+    let ws = ''
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      ws = params.get('join') || params.get('workspace') || ''
+    }
+    return {
+      workspaceName: ws,
+      fullName: '',
+      email: '',
+      password: '',
+      role: 'analyst' as 'analyst' | 'viewer',
+    }
   })
   const [joinErrors, setJoinErrors] = useState<{
     workspaceName?: string
@@ -819,6 +834,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           {/* Join Existing Workspace Form */}
           {authMode === 'join' && (
             <form onSubmit={handleJoinSubmit} className="login-form" noValidate>
+              {joinValues.workspaceName && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 12px',
+                  background: 'rgba(255, 90, 20, 0.08)',
+                  border: '1px solid rgba(255, 90, 20, 0.25)',
+                  borderRadius: 8,
+                  marginBottom: '14px',
+                  fontSize: '0.8rem',
+                  color: 'var(--qt-ink, #ffffff)',
+                }}>
+                  <Building size={15} style={{ color: 'var(--qt-accent, #ff5a14)', flexShrink: 0 }} />
+                  <span>
+                    You are onboarding into: <strong>{joinValues.workspaceName}</strong>
+                  </span>
+                </div>
+              )}
+
               {/* Workspace / Company Name */}
               <div className={`form-group ${joinErrors.workspaceName ? 'has-error' : ''}`}>
                 <label className="form-label">Company workspace name to join</label>

@@ -19,6 +19,7 @@ import { QueryTrustLogo } from './QueryTrustLogo'
 import { GlobalErrorBanner } from './GlobalErrorBanner'
 import type { ErrorBannerType } from './GlobalErrorBanner'
 import { PasswordStrengthMeter } from './PasswordStrengthMeter'
+import { submitAccessRequest } from '../api/client'
 import {
   sanitizeInput,
   validateEmail,
@@ -68,7 +69,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
   // Request Access Modal State
   const [showRequestAccess, setShowRequestAccess] = useState(false)
+  const [requestLoading, setRequestLoading] = useState(false)
+  const [requestError, setRequestError] = useState<string | null>(null)
   const [requestSubmitted, setRequestSubmitted] = useState(false)
+  const [submittedRequestId, setSubmittedRequestId] = useState<string | null>(null)
   const [requestForm, setRequestForm] = useState({
     name: '',
     email: '',
@@ -182,9 +186,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   }
 
   // Request Access handler
-  const handleRequestSubmit = (e: React.FormEvent) => {
+  const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setRequestSubmitted(true)
+    setRequestLoading(true)
+    setRequestError(null)
+    try {
+      const res = await submitAccessRequest({
+        full_name: requestForm.name,
+        email: requestForm.email,
+        company: requestForm.company,
+        role_requested: requestForm.roleRequested.toLowerCase() as 'analyst' | 'viewer',
+        use_case: requestForm.justification,
+      })
+      setSubmittedRequestId(res.id)
+      setRequestSubmitted(true)
+    } catch (err) {
+      setRequestError(err instanceof Error ? err.message : 'Failed to submit access request. Please verify inputs.')
+    } finally {
+      setRequestLoading(false)
+    }
   }
 
   const isSubmitDisabled = loading || !formValues.email.trim() || !formValues.password
@@ -481,12 +501,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         </div>
       </main>
 
-      {/* ─── Request Access Modal (Preview Only) ─── */}
+      {/* ─── Request Access Modal (Database Stored) ─── */}
       {showRequestAccess && (
         <div className="login-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="request-modal-title">
           <div className="login-modal-card">
             <div className="request-preview-banner" role="status">
-              Preview only. Nothing is saved or sent.
+              Submitted requests are stored in the database for administrator review.
             </div>
 
             <div className="login-modal-header">
@@ -507,23 +527,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             {requestSubmitted ? (
               <div className="login-modal-success">
                 <CheckCircle2 size={36} className="text-emerald" />
-                <h4>Access Request Preview</h4>
+                <h4>Access Request Submitted</h4>
                 <p>
-                  This is a demonstration preview. In a production workspace, your administrator would receive this request. No personal data was saved or sent.
+                  Your access request has been recorded in the database. Workspace administrators can now review and approve your account from the administration portal.
                 </p>
-                <p className="preview-role-summary">
-                  Requested role: <strong>{requestForm.roleRequested}</strong> for <strong>{requestForm.name || 'User'}</strong>
-                </p>
+                <div className="preview-role-summary" style={{ textAlign: 'left', margin: '0.85rem 0', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: 6, fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div>Requested role: <strong>{requestForm.roleRequested}</strong></div>
+                  <div>Requester: <strong>{requestForm.name} ({requestForm.company})</strong></div>
+                  <div>Work email: <strong>{requestForm.email}</strong></div>
+                  {submittedRequestId && (
+                    <div style={{ fontSize: '0.7rem', color: 'var(--qt-muted)' }}>Request ID: {submittedRequestId}</div>
+                  )}
+                </div>
                 <button
                   type="button"
                   className="login-submit-btn"
-                  onClick={() => setShowRequestAccess(false)}
+                  onClick={() => {
+                    setShowRequestAccess(false)
+                    setRequestSubmitted(false)
+                    setRequestForm({ name: '', email: '', company: '', roleRequested: 'Analyst', justification: '' })
+                  }}
                 >
                   Return to Sign In
                 </button>
               </div>
             ) : (
               <form onSubmit={handleRequestSubmit} className="modal-form">
+                {requestError && (
+                  <div role="alert" style={{ marginBottom: '0.75rem', padding: '0.65rem 0.85rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 6, color: '#f87171', fontSize: '0.78rem' }}>
+                    {requestError}
+                  </div>
+                )}
                 <div className="form-group">
                   <label htmlFor="req-name" className="form-label">
                     Full name <span className="req-star" aria-hidden="true">*</span>
@@ -613,11 +647,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                     type="button"
                     className="btn btn-secondary"
                     onClick={() => setShowRequestAccess(false)}
+                    disabled={requestLoading}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="login-submit-btn">
-                    Submit Access Request
+                  <button type="submit" className="login-submit-btn" disabled={requestLoading}>
+                    {requestLoading ? 'Submitting to database…' : 'Submit Access Request'}
                   </button>
                 </div>
               </form>

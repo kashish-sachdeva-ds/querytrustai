@@ -62,3 +62,42 @@ class UserUpdateRequest(StrictRequestModel):
     role: Optional[Literal["admin", "analyst", "viewer"]] = Field(None, description="Role: admin, analyst, or viewer")
     is_active: Optional[bool] = Field(None, description="Active status flag")
     display_name: Optional[str] = Field(None, min_length=1, max_length=255)
+
+
+class AccessRequestCreate(StrictRequestModel):
+    """Payload submitted when a user requests access."""
+    full_name: str = Field(..., min_length=2, max_length=255, description="Requester's full name")
+    email: str = Field(..., min_length=3, max_length=255, description="Requester's work email")
+    company: str = Field(..., min_length=1, max_length=255, description="Organization or company name")
+    role_requested: Literal["analyst", "viewer"] = Field("viewer", description="Requested access role (analyst or viewer)")
+    use_case: Optional[str] = Field(None, max_length=1000, description="Brief justification or primary use case")
+
+    @field_validator("email")
+    @classmethod
+    def email_must_be_well_formed(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
+            raise ValueError("Email address is invalid")
+        return normalized
+
+
+class AccessRequestPublic(BaseModel):
+    """Public representation of an access request."""
+    id: uuid.UUID
+    full_name: str
+    email: str
+    company: str
+    role_requested: str
+    use_case: Optional[str] = None
+    status: str
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[str] = None
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class AccessRequestReview(StrictRequestModel):
+    """Admin review payload for an access request."""
+    status: Literal["approved", "rejected"] = Field(..., description="Decision status: approved or rejected")

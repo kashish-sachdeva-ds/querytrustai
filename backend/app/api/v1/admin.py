@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -7,8 +8,15 @@ from sqlalchemy import desc
 from app.database import get_db
 from app.models.user import User
 from app.models.query_run import QueryRun
+from app.models.access_request import AccessRequest
 from app.core.auth import require_role
-from app.schemas.auth import UserPublic, UserUpdateRequest
+from app.core.security import get_password_hash
+from app.schemas.auth import (
+    UserPublic,
+    UserUpdateRequest,
+    AccessRequestPublic,
+    AccessRequestReview,
+)
 
 router = APIRouter(prefix="/admin", tags=["Administration"])
 
@@ -84,3 +92,99 @@ def get_audit_logs(
         }
         for run in runs
     ]
+
+
+@router.get("/access-requests", response_model=List[AccessRequestPublic], dependencies=[Depends(admin_required)])
+def list_access_requests(
+    status_filter: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """Retrieve all access requests submitted from the public portal.
+
+    Admin access only. Ordered by newest request first.
+    """
+    query = db.query(AccessRequest)
+    if status_filter:
+        query = query.filter(AccessRequest.status == status_filter)
+    requests = query.order_by(desc(AccessRequest.created_at)).all()
+
+    return [
+        AccessRequestPublic(
+            id=r.id,
+            full_name=r.full_name,
+            email=r.email,
+            company=r.company,
+            role_requested=r.role_requested,
+            use_case=r.use_case,
+            status=r.status,
+            reviewed_by=r.reviewed_by,
+            reviewed_at=r.reviewed_at.isoformat() if r.reviewed_at else None,
+            created_at=r.created_at.isoformat(),
+        )
+        for r in requests
+    ]
+
+
+@router.patch("/access-requests/{request_id}", response_model=AccessRequestPublic)
+def review_access_request(
+    request_id: uuid.UUID,
+    payload: AccessRequestReview,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(require_role("admin")),
+):
+    """Approve or reject a submitted user access request.
+
+    If approved:
+    - Automatically provisions a system user with their requested role and a salted bcrypt hashed password.
+    - Updates request status to 'approved' and marks reviewer metadata.
+    If rejected:
+    - Updates request status to 'rejected' and marks reviewer metadata.
+    """
+    req = db.query(AccessRequest).filter(AccessRequest.id == request_id).with_for_update().first()
+    if not req:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Access request with ID {request_id} not found",
+        )
+
+    now = datetime.now(timezone.utc)
+    req.status = payload.status
+    req.reviewed_by = current_admin.email
+    req.reviewed_at = now
+
+    if payload.status == "approved":
+        # Check if user already exists
+        existing_user = db.query(User).filter(User.email == req.email.lower()).first()
+        if not existing_user:
+            # Provision new enterprise user with salted bcrypt password hash
+            # Temporary initial password for newly approved user
+            initial_password_hash = get_password_hash("WelcomePass123!")
+            new_user = User(
+                email=req.email.lower(),
+                display_name=req.full_name,
+                password_hash=initial_password_hash,
+                role=req.role_requested,
+                is_active=True,
+            )
+            db.add(new_user)
+        else:
+            # If user existed but was deactivated, reactivate and set role
+            existing_user.is_active = True
+            existing_user.role = req.role_requested
+
+    db.commit()
+    db.refresh(req)
+
+    return AccessRequestPublic(
+        id=req.id,
+        full_name=req.full_name,
+        email=req.email,
+        company=req.company,
+        role_requested=req.role_requested,
+        use_case=req.use_case,
+        status=req.status,
+        reviewed_by=req.reviewed_by,
+        reviewed_at=req.reviewed_at.isoformat() if req.reviewed_at else None,
+        created_at=req.created_at.isoformat(),
+    )
+

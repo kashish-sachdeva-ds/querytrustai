@@ -62,6 +62,19 @@ export interface LoginResponse {
   user: UserPublic
 }
 
+export interface AccessRequestItem {
+  id: string
+  full_name: string
+  email: string
+  company: string
+  role_requested: 'analyst' | 'viewer'
+  use_case?: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  reviewed_by?: string | null
+  reviewed_at?: string | null
+  created_at: string
+}
+
 export interface DeviceSummary {
   id: number
   asset_tag: string
@@ -528,6 +541,62 @@ export async function fetchAdminAuditLogs(): Promise<AuditLogItem[]> {
   const res = await authFetch(`${API_BASE}/admin/audit-logs`)
   if (!res.ok) {
     throw new Error(`Failed to fetch audit logs: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function submitAccessRequest(payload: {
+  full_name: string
+  email: string
+  company: string
+  role_requested: 'analyst' | 'viewer'
+  use_case?: string
+}): Promise<AccessRequestItem> {
+  const cleanName = requireText(payload.full_name, 'Full name', 2, 255)
+  const cleanEmail = requireText(payload.email, 'Work email', 3, 255)
+  const cleanCompany = requireText(payload.company, 'Company', 1, 255)
+  const res = await fetch(`${API_BASE}/auth/request-access`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      full_name: cleanName,
+      email: cleanEmail,
+      company: cleanCompany,
+      role_requested: payload.role_requested,
+      use_case: payload.use_case?.trim() || null,
+    }),
+  })
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new ApiRequestError(errorData.detail || `Failed to submit access request: ${res.status}`, res.status)
+  }
+  return res.json()
+}
+
+export async function fetchAdminAccessRequests(statusFilter?: string): Promise<AccessRequestItem[]> {
+  const url = statusFilter
+    ? `${API_BASE}/admin/access-requests?status_filter=${encodeURIComponent(statusFilter)}`
+    : `${API_BASE}/admin/access-requests`
+  const res = await authFetch(url)
+  if (!res.ok) {
+    throw new ApiRequestError(`Failed to fetch access requests: ${res.status}`, res.status)
+  }
+  return res.json()
+}
+
+export async function reviewAdminAccessRequest(
+  id: string,
+  decision: 'approved' | 'rejected'
+): Promise<AccessRequestItem> {
+  requireUuid(id, 'Access Request ID')
+  const res = await authFetch(`${API_BASE}/admin/access-requests/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: decision }),
+  })
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new ApiRequestError(errorData.detail || `Failed to review access request: ${res.status}`, res.status)
   }
   return res.json()
 }

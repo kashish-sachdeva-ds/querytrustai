@@ -8,13 +8,20 @@ import {
   UserX,
   History,
   ShieldAlert,
+  UserPlus,
+  Check,
+  X,
+  Clock,
 } from 'lucide-react'
 import {
   type UserPublic,
   type AuditLogItem,
+  type AccessRequestItem,
   fetchAdminUsers,
   updateAdminUser,
   fetchAdminAuditLogs,
+  fetchAdminAccessRequests,
+  reviewAdminAccessRequest,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
@@ -25,6 +32,7 @@ export const AdminView: React.FC = () => {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<UserPublic[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
+  const [accessRequests, setAccessRequests] = useState<AccessRequestItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -33,12 +41,14 @@ export const AdminView: React.FC = () => {
     setLoading(true)
     setNotification(null)
     try {
-      const [usersData, logsData] = await Promise.all([
+      const [usersData, logsData, reqsData] = await Promise.all([
         fetchAdminUsers(),
         fetchAdminAuditLogs(),
+        fetchAdminAccessRequests(),
       ])
       setUsers(usersData)
       setAuditLogs(logsData)
+      setAccessRequests(reqsData)
     } catch (err) {
       setNotification({
         type: 'error',
@@ -98,6 +108,35 @@ export const AdminView: React.FC = () => {
       setNotification({
         type: 'error',
         message: err instanceof Error ? err.message : 'Status update failed.',
+      })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const handleReviewRequest = async (requestId: string, decision: 'approved' | 'rejected') => {
+    setUpdatingId(requestId)
+    setNotification(null)
+    try {
+      const updated = await reviewAdminAccessRequest(requestId, decision)
+      setAccessRequests((prev) => prev.map((r) => (r.id === requestId ? updated : r)))
+      if (decision === 'approved') {
+        const usersData = await fetchAdminUsers()
+        setUsers(usersData)
+        setNotification({
+          type: 'success',
+          message: `Approved access for ${updated.full_name} (${updated.email}). Provisioned ${updated.role_requested} account with hashed password.`,
+        })
+      } else {
+        setNotification({
+          type: 'success',
+          message: `Declined access request for ${updated.email}.`,
+        })
+      }
+    } catch (err) {
+      setNotification({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to update access request.',
       })
     } finally {
       setUpdatingId(null)
@@ -298,6 +337,145 @@ export const AdminView: React.FC = () => {
                             </>
                           )}
                         </button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Prospective Access Requests Card */}
+      <div className="content-card full-width-card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem' }}>
+        <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--qt-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UserPlus size={18} style={{ color: 'var(--qt-accent)' }} />
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Access requests ({accessRequests.length})</h3>
+                {accessRequests.filter((r) => r.status === 'pending').length > 0 && (
+                  <span className="badge badge-warning" style={{ fontSize: '0.7rem', padding: '2px 7px' }}>
+                    {accessRequests.filter((r) => r.status === 'pending').length} pending review
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', margin: 0 }}>
+                Requests submitted from the public sign-in portal. Approving instantly provisions their account.
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ExplainButton
+              title="Access Request Provisioning"
+              explanation="Approving an access request automatically creates the user account in PostgreSQL with their requested role and a salted bcrypt hashed password."
+            />
+          </div>
+        </div>
+
+        <div className="table-responsive">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Requester Name / Company</th>
+                <th>Work Email</th>
+                <th>Requested Role</th>
+                <th>Date Submitted</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
+                    <div className="table-loading-spinner" />
+                    <p className="text-muted" style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                      Retrieving access requests…
+                    </p>
+                  </td>
+                </tr>
+              ) : accessRequests.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem' }}>
+                    <p className="text-muted" style={{ margin: 0 }}>No prospective access requests received yet.</p>
+                  </td>
+                </tr>
+              ) : (
+                accessRequests.map((req) => {
+                  const isPending = req.status === 'pending'
+                  const isUpdating = updatingId === req.id
+                  return (
+                    <tr key={req.id}>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600 }}>{req.full_name}</span>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--qt-muted)' }}>{req.company}</span>
+                          {req.use_case && (
+                            <span style={{ fontSize: '0.7rem', color: 'var(--qt-ink-muted)', marginTop: 2, fontStyle: 'italic' }}>
+                              &ldquo;{req.use_case}&rdquo;
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.82rem' }}>
+                        {req.email}
+                      </td>
+                      <td>
+                        <span className={`badge ${req.role_requested === 'analyst' ? 'badge-primary' : 'badge-neutral'}`} style={{ textTransform: 'capitalize' }}>
+                          {req.role_requested}
+                        </span>
+                      </td>
+                      <td>
+                        <HumanDate iso={req.created_at} />
+                      </td>
+                      <td>
+                        {req.status === 'pending' ? (
+                          <span className="badge badge-warning" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Clock size={11} /> Pending
+                          </span>
+                        ) : req.status === 'approved' ? (
+                          <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <CheckCircle2 size={11} /> Approved
+                          </span>
+                        ) : (
+                          <span className="badge badge-danger" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <X size={11} /> Declined
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {isPending ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              disabled={isUpdating}
+                              onClick={() => handleReviewRequest(req.id, 'approved')}
+                              style={{ fontSize: '0.72rem', padding: '3px 9px' }}
+                              title="Approve request and provision user"
+                            >
+                              <Check size={12} style={{ marginRight: 3 }} />
+                              <span>Approve</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              disabled={isUpdating}
+                              onClick={() => handleReviewRequest(req.id, 'rejected')}
+                              style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                              title="Decline request"
+                            >
+                              <X size={12} style={{ marginRight: 3 }} />
+                              <span>Decline</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>
+                            Reviewed {req.reviewed_by ? `by ${req.reviewed_by.split('@')[0]}` : ''}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   )

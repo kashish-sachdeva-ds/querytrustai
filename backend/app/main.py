@@ -15,6 +15,9 @@ from app.api.v1.data_quality import router as data_quality_router
 from app.api.v1.anomalies import router as anomalies_router
 from app.api.v1.evaluations import router as evaluations_router
 
+from app.database import Base, engine
+import app.models  # noqa: F401 - Register all models
+
 settings = get_settings()
 
 logging.basicConfig(
@@ -28,6 +31,11 @@ logger = logging.getLogger("querytrust.api")
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} ({settings.ENVIRONMENT})")
     logger.info(f"LLM Provider mode: {settings.LLM_PROVIDER}")
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables verified and initialized.")
+    except Exception as exc:
+        logger.warning(f"Database schema auto-creation check skipped or deferred: {exc}")
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 

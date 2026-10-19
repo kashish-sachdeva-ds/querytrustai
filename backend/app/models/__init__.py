@@ -8,6 +8,7 @@ from app.models.query_run import QueryRun, QueryFeedback
 from app.models.data_quality import DataQualityRun, DataQualityFinding
 from app.models.evaluation import EvaluationRun
 from app.models.ml_model import MLModelVersion
+from app.models.access_request import AccessRequest
 
 __all__ = [
     "User",
@@ -23,4 +24,5 @@ __all__ = [
     "DataQualityFinding",
     "EvaluationRun",
     "MLModelVersion",
+    "AccessRequest",
 ]

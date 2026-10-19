@@ -5,9 +5,17 @@ from sqlalchemy import func
 from app.config import get_settings, Settings
 from app.database import get_db
 from app.models.user import User
+from app.models.access_request import AccessRequest
 from app.core.security import verify_password
 from app.core.auth import create_access_token, get_current_user
-from app.schemas.auth import LoginRequest, LoginResponse, UserMeResponse, UserPublic
+from app.schemas.auth import (
+    LoginRequest,
+    LoginResponse,
+    UserMeResponse,
+    UserPublic,
+    AccessRequestCreate,
+    AccessRequestPublic,
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -91,3 +99,67 @@ def logout(response: Response):
     """Client-side token disposal endpoint."""
     response.delete_cookie(key="querytrust_access_token", path="/api/v1", samesite="strict")
     return {"message": "Logged out successfully"}
+
+
+@router.post("/request-access", response_model=AccessRequestPublic, status_code=status.HTTP_201_CREATED)
+def request_access(
+    payload: AccessRequestCreate,
+    db: Session = Depends(get_db),
+):
+    """Submit a prospective user access request for workspace administrator review.
+
+    Stores the request in the access_requests database table for audit and review.
+    """
+    clean_email = payload.email.strip().lower()
+
+    # Check if a pending request already exists for this email
+    existing = (
+        db.query(AccessRequest)
+        .filter(func.lower(AccessRequest.email) == clean_email, AccessRequest.status == "pending")
+        .first()
+    )
+    if existing:
+        existing.full_name = payload.full_name.strip()
+        existing.company = payload.company.strip()
+        existing.role_requested = payload.role_requested
+        existing.use_case = payload.use_case.strip() if payload.use_case else None
+        db.commit()
+        db.refresh(existing)
+        return AccessRequestPublic(
+            id=existing.id,
+            full_name=existing.full_name,
+            email=existing.email,
+            company=existing.company,
+            role_requested=existing.role_requested,
+            use_case=existing.use_case,
+            status=existing.status,
+            reviewed_by=existing.reviewed_by,
+            reviewed_at=existing.reviewed_at.isoformat() if existing.reviewed_at else None,
+            created_at=existing.created_at.isoformat(),
+        )
+
+    new_request = AccessRequest(
+        full_name=payload.full_name.strip(),
+        email=clean_email,
+        company=payload.company.strip(),
+        role_requested=payload.role_requested,
+        use_case=payload.use_case.strip() if payload.use_case else None,
+        status="pending",
+    )
+    db.add(new_request)
+    db.commit()
+    db.refresh(new_request)
+
+    return AccessRequestPublic(
+        id=new_request.id,
+        full_name=new_request.full_name,
+        email=new_request.email,
+        company=new_request.company,
+        role_requested=new_request.role_requested,
+        use_case=new_request.use_case,
+        status=new_request.status,
+        reviewed_by=new_request.reviewed_by,
+        reviewed_at=new_request.reviewed_at.isoformat() if new_request.reviewed_at else None,
+        created_at=new_request.created_at.isoformat(),
+    )
+

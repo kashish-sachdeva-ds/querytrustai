@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-10-18  
-**Current milestone:** 12 — Ask Governed Data & SQL AST Inspector Elevation (ThoughtSpot & Linear Benchmarks)
-**Overall status:** Natural-language query interface elevated to ThoughtSpot and Linear standards. Sessions drawer upgraded with active left-indicator border, message counts, relative timestamps, search filter, and instant New session creation. ThoughtSpot semantic interpretation cards breakdown recognized tables, entities, and assumptions. 6-point AST Safety Shield Inspector displays verified pass/fail states with clear explainability. SQL preview block features developer-grade syntax highlighting (PostgreSQL dialect), LIMIT 200 badge, dialect tag, and one-click Copy action. Action footer features prominent solid orange primary CTA button ("Run query" with Ctrl+Enter hint) and dedicated "Execution blocked by safety policy" indicator when unsafe queries are intercepted. Execution results table features high-density rows, right-aligned tabular numerals, asset tag monospace chips, and CSV export. Neutral data charts replace orange data bars with neutral slate/zinc tones in strict compliance with color restraint invariants. All 112 pytest backend tests pass and frontend build compiles with 0 errors.
+**Last updated:** 2026-10-19  
+**Current milestone:** 13 — Enterprise SaaS Login Elevation, Salted Bcrypt Storage, and Full Access Request Lifecycle
+**Overall status:** Complete enterprise SaaS authentication and governance workflow. Login page fully redesigned to strictly fit on single desktop screens without scrolling (`height: 100vh; overflow: hidden;` with fluid responsive clamp spacing). Passwords confirmed and strictly enforced as salted bcrypt hashes (`bcrypt.gensalt(12)`). Prospective user access requests are persisted in PostgreSQL via dedicated `access_requests` table and endpoints. Workspace administrators have full visibility in "People & access" under "Access requests" with pending review counters, requester profile cards, and instant 1-click Approve / Decline actions that auto-provision live user accounts. All 117 pytest backend tests pass in 12.09s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 

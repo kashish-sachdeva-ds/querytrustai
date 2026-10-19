@@ -16,9 +16,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "QueryTrust AI"
     API_V1_PREFIX: str = "/api/v1"
 
-    # Database
     DATABASE_URL: str = "postgresql://app_user:querytrust_app_dev@localhost:5432/querytrust"
-    READONLY_DATABASE_URL: str = "postgresql://analytics_reader:querytrust_reader_dev@localhost:5432/querytrust"
+    READONLY_DATABASE_URL: Optional[str] = None
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
 
@@ -55,7 +54,13 @@ class Settings(BaseSettings):
 
     @property
     def sqlalchemy_readonly_database_url(self) -> str:
-        url = self.READONLY_DATABASE_URL or self.DATABASE_URL
+        url = self.READONLY_DATABASE_URL
+        if not url:
+            url = self.DATABASE_URL
+        elif ("localhost" in url or "127.0.0.1" in url) and ("localhost" not in self.DATABASE_URL and "127.0.0.1" not in self.DATABASE_URL):
+            # Remote cloud database configured (e.g. Render/Neon/Supabase), but reader points to local host
+            url = self.DATABASE_URL
+
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
         return url

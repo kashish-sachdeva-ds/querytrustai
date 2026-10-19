@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func, desc
 
-from app.database import get_db, readonly_engine
+from app.database import get_db, engine, readonly_engine
 from app.config import get_settings
 from app.core.auth import get_current_user
 from app.models.user import User
@@ -361,7 +361,16 @@ def execute_previewed_query(
     truncated = False
 
     try:
-        with readonly_engine.connect() as conn:
+        try:
+            conn = readonly_engine.connect()
+        except Exception as conn_err:
+            logger.warning(
+                f"Dedicated readonly_engine connection failed ({conn_err}); "
+                "falling back to primary engine with SET TRANSACTION READ ONLY."
+            )
+            conn = engine.connect()
+
+        with conn:
             # Set statement timeout to configured limit (default 5s)
             conn.execute(text(f"SET LOCAL statement_timeout = '{settings.QUERY_TIMEOUT_SECONDS * 1000}';"))
             conn.execute(text("SET TRANSACTION READ ONLY;"))

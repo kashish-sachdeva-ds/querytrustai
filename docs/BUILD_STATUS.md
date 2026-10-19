@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 13 — Enterprise SaaS Login Elevation, Salted Bcrypt Storage, and Full Access Request Lifecycle
-**Overall status:** Complete enterprise SaaS authentication and governance workflow. Login page fully redesigned to strictly fit on single desktop screens without scrolling (`height: 100vh; overflow: hidden;` with fluid responsive clamp spacing). Passwords confirmed and strictly enforced as salted bcrypt hashes (`bcrypt.gensalt(12)`). Prospective user access requests are persisted in PostgreSQL via dedicated `access_requests` table and endpoints. Workspace administrators have full visibility in "People & access" under "Access requests" with pending review counters, requester profile cards, and instant 1-click Approve / Decline actions that auto-provision live user accounts. All 117 pytest backend tests pass in 12.09s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Current milestone:** 14 — Production Cloud Read-Only Resiliency & Header UI Polish
+**Overall status:** Complete enterprise SaaS authentication, read-only analytics execution, and governance workflow. Fixed cloud deployment read-only database reader connection fallback for platforms like Render/Neon/Supabase where dedicated `analytics_reader` roles are not pre-configured. Resolved user profile dropdown permissions accordion text overflow. All 117 pytest backend tests pass in 11.40s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 
@@ -861,3 +861,16 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
    - **Right Column:** Displays backend engine code proof (`app/core/sql_validator.py` with SQLGlot AST Guard badge) and 4-point security telemetry evidence grid (Defense Mechanism, HTTP 400 Bad Request, 0 Rows Affected, Audit Log record).
    - **Sticky Footer:** Features database safety assurance pill (`Zero database socket dispatch • Read-only reader role preserved`), `[Close]`, `[Copy Exploit SQL]`, and prominent `[Test in Sandbox ↑]` action button.
    - **Viewport Fit:** Entire modal fits comfortably within a single view at normal and zoomed desktop resolutions without requiring zoom out or vertical scrolling. Breakpoint at `860px` gracefully falls back to stacked single column on mobile.
+
+## Milestone 14 — Production Cloud Read-Only Resiliency & Header UI Polish — 2026-10-19
+
+**Status:** Completed — 117 backend tests passing, frontend production build verified (`tsc -b && vite build` passing with 0 errors).
+
+### Summary of Enhancements:
+1. **Cloud Environment Database Execution Fallback (`config.py` & `analytics.py`):**
+   - Set `READONLY_DATABASE_URL: Optional[str] = None` in `Settings` so hosted environments without a dedicated reader role default gracefully to `DATABASE_URL` instead of attempting connection to localhost:5432.
+   - Added dynamic detection in `sqlalchemy_readonly_database_url` to fallback to `DATABASE_URL` when remote database is configured and reader is omitted or points to localhost.
+   - In `execute_previewed_query`, implemented resilient engine connection fallback to primary `engine` if `readonly_engine` connection raises an operational error, strictly preserving AST validation, `SET LOCAL statement_timeout`, and `SET TRANSACTION READ ONLY;`.
+2. **Header User Dropdown Menu Overflow Polish (`index.css`):**
+   - Fixed text overflow in "What can an Admin do?" permissions accordion panel in user profile dropdown menu.
+   - Constrained `.dropdown-permissions-panel` with responsive width, `overflow: hidden`, and `word-break: break-word` / `overflow-wrap: anywhere` so descriptions never exceed the card border or viewport in light and dark themes.

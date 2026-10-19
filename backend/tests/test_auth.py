@@ -300,3 +300,126 @@ def test_claim_provisioned_access_request_account(client, db_session):
     db_session.commit()
 
 
+def test_join_workspace_flow(client, db_session):
+    """Employees can join an existing company workspace as analyst or viewer."""
+    from app.models.user import User
+
+    company = "Acme Global Dynamics"
+    admin_email = "lead_admin@acmeglobal.com"
+    employee_email = "employee_rohan@acmeglobal.com"
+
+    db_session.query(User).filter(User.email.in_([admin_email, employee_email])).delete()
+    db_session.commit()
+
+    # 1. Nonexistent workspace returns 404
+    non_existent = client.post(
+        "/api/v1/auth/join-workspace",
+        json={
+            "workspace_name": "NonExistentCompanyXYZ",
+            "full_name": "Rohan Kumar",
+            "email": employee_email,
+            "password": "RohanPass123!",
+            "role": "analyst",
+        },
+    )
+    assert non_existent.status_code == 404
+    assert "does not exist yet" in non_existent.json()["detail"]
+
+    # 2. Workspace admin creates workspace
+    reg_res = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Acme Admin Lead",
+            "email": admin_email,
+            "password": "AdminPass123!",
+            "workspace_name": company,
+            "role": "admin",
+        },
+    )
+    assert reg_res.status_code == 201
+
+    # 3. Employee joins the existing workspace
+    join_res = client.post(
+        "/api/v1/auth/join-workspace",
+        json={
+            "workspace_name": company,
+            "full_name": "Rohan Kumar",
+            "email": employee_email,
+            "password": "RohanPass123!",
+            "role": "analyst",
+        },
+    )
+    assert join_res.status_code == 201
+    join_data = join_res.json()
+    assert join_data["user"]["email"] == employee_email
+    assert join_data["user"]["display_name"] == "Rohan Kumar"
+    assert join_data["user"]["workspace_name"] == company
+    assert join_data["user"]["role"] == "analyst"
+
+    # Clean up
+    db_session.query(User).filter(User.email.in_([admin_email, employee_email])).delete()
+    db_session.commit()
+
+
+def test_admin_invite_team_member(client, db_session):
+    """Admin can invite a team member via /api/v1/admin/invite and member can claim their account."""
+    from app.models.user import User
+
+    company = "Stark Analytics Labs"
+    admin_email = "tony@starklabs.com"
+    invited_email = "peter@starklabs.com"
+
+    db_session.query(User).filter(User.email.in_([admin_email, invited_email])).delete()
+    db_session.commit()
+
+    # Create admin workspace
+    reg_res = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Tony Stark",
+            "email": admin_email,
+            "password": "StarkPass123!",
+            "workspace_name": company,
+            "role": "admin",
+        },
+    )
+    assert reg_res.status_code == 201
+    token = reg_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Invite team member
+    invite_res = client.post(
+        "/api/v1/admin/invite",
+        headers=headers,
+        json={
+            "full_name": "Peter Parker",
+            "email": invited_email,
+            "role": "analyst",
+        },
+    )
+    assert invite_res.status_code == 201
+    invited_data = invite_res.json()
+    assert invited_data["email"] == invited_email
+    assert invited_data["workspace_name"] == company
+    assert invited_data["role"] == "analyst"
+
+    # Member joins / claims using /join-workspace with custom password
+    join_res = client.post(
+        "/api/v1/auth/join-workspace",
+        json={
+            "workspace_name": company,
+            "full_name": "Peter Parker",
+            "email": invited_email,
+            "password": "WebShooter123!",
+            "role": "analyst",
+        },
+    )
+    assert join_res.status_code == 201
+    assert join_res.json()["user"]["workspace_name"] == company
+
+    # Clean up
+    db_session.query(User).filter(User.email.in_([admin_email, invited_email])).delete()
+    db_session.commit()
+
+
+

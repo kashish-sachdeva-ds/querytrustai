@@ -2,9 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import {
   type UserMeResponse,
   type RegisterPayload,
+  type JoinWorkspacePayload,
   apiGetMe,
   apiLogin,
   apiRegister,
+  apiJoinWorkspace,
   apiLogout,
   clearStoredToken,
 } from '../api/client'
@@ -16,6 +18,7 @@ interface AuthContextType {
   error: string | null
   login: (email: string, password: string) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
+  joinWorkspace: (payload: JoinWorkspacePayload) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -100,6 +103,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const joinWorkspace = async (payload: JoinWorkspacePayload) => {
+    setError(null)
+    try {
+      await apiJoinWorkspace(payload)
+      const me = await apiGetMe()
+      setUser(me)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Joining workspace failed'
+      setError(msg)
+      throw err
+    }
+  }
+
   const logout = async () => {
     setIsLoading(true)
     try {
@@ -120,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         login,
         register,
+        joinWorkspace,
         logout,
         refreshUser,
       }}

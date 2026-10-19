@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 
 from app.database import get_db
 from app.models.user import User
@@ -16,12 +16,66 @@ from app.schemas.auth import (
     UserUpdateRequest,
     AccessRequestPublic,
     AccessRequestReview,
+    InviteMemberRequest,
 )
 
 router = APIRouter(prefix="/admin", tags=["Administration"])
 
 # Restrict all endpoints in this router to admin role
 admin_required = require_role("admin")
+
+
+@router.post("/invite", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+def invite_workspace_member(
+    payload: InviteMemberRequest,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(require_role("admin")),
+):
+    """Invite a new team member to the administrator's company workspace."""
+    clean_email = payload.email.strip().lower()
+    target_workspace = current_admin.workspace_name or "Default Workspace"
+
+    # Check if user already exists
+    existing = db.query(User).filter(func.lower(User.email) == clean_email).first()
+    if existing:
+        if existing.workspace_name == target_workspace:
+            existing.role = payload.role
+            existing.is_active = True
+            db.commit()
+            db.refresh(existing)
+            return UserPublic.model_validate(existing)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"User with email '{clean_email}' already belongs to another workspace.",
+        )
+
+    # Provision user with temporary initial password
+    initial_password = payload.temporary_password or "WelcomePass123!"
+    new_user = User(
+        email=clean_email,
+        display_name=payload.full_name.strip(),
+        password_hash=get_password_hash(initial_password),
+        role=payload.role,
+        workspace_name=target_workspace,
+        is_active=True,
+    )
+    db.add(new_user)
+
+    # Create approved AccessRequest record for audit logging
+    audit_req = AccessRequest(
+        full_name=payload.full_name.strip(),
+        email=clean_email,
+        company=target_workspace,
+        role_requested=payload.role,
+        status="approved",
+        reviewed_by=current_admin.email,
+        reviewed_at=datetime.now(timezone.utc),
+    )
+    db.add(audit_req)
+
+    db.commit()
+    db.refresh(new_user)
+    return UserPublic.model_validate(new_user)
 
 
 @router.get("/users", response_model=List[UserPublic])

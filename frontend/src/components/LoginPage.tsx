@@ -1,4 +1,4 @@
-import React, { useState, useId } from 'react'
+import React, { useState, useId, useEffect } from 'react'
 import {
   ShieldCheck,
   Eye,
@@ -12,6 +12,7 @@ import {
   X,
   Building,
   User as UserIcon,
+  Users,
   CheckCircle2,
   Clock,
 } from 'lucide-react'
@@ -38,11 +39,11 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
-  const { login, register } = useAuth()
+  const { login, register, joinWorkspace } = useAuth()
   const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
 
-  // Auth Mode: 'signin' | 'register'
-  const [authMode, setAuthMode] = useState<'signin' | 'register'>('signin')
+  // Auth Mode: 'signin' | 'register' | 'join'
+  const [authMode, setAuthMode] = useState<'signin' | 'register' | 'join'>('signin')
 
   // Unique IDs for accessibility
   const emailInputId = useId()
@@ -73,6 +74,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   }>({})
   const [registerLoading, setRegisterLoading] = useState(false)
   const [showRegisterPassword, setShowRegisterPassword] = useState(false)
+
+  // Join Workspace Form State (Join Existing Team Workspace)
+  const [joinValues, setJoinValues] = useState({
+    workspaceName: '',
+    fullName: '',
+    email: '',
+    password: '',
+    role: 'analyst' as 'analyst' | 'viewer',
+  })
+  const [joinErrors, setJoinErrors] = useState<{
+    workspaceName?: string
+    fullName?: string
+    email?: string
+    password?: string
+  }>({})
+  const [joinLoading, setJoinLoading] = useState(false)
+  const [showJoinPassword, setShowJoinPassword] = useState(false)
 
   // UI Interactive States
   const [showPassword, setShowPassword] = useState(false)
@@ -113,6 +131,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
   // Dynamic Password Strength (for Registration & Password Creation)
   const registerPasswordStrength = calculatePasswordStrength(registerValues.password)
+  const joinPasswordStrength = calculatePasswordStrength(joinValues.password)
+
+  // Auto-detect invite link with ?join=WorkspaceName
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const joinParam = params.get('join') || params.get('workspace')
+      if (joinParam) {
+        setJoinValues((prev) => ({ ...prev, workspaceName: decodeURIComponent(joinParam) }))
+        setAuthMode('join')
+      }
+    }
+  }, [])
 
   // Real-time Field Handlers
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -289,6 +320,64 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     }
   }
 
+  // Join Workspace Submission
+  const handleJoinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const newErrors: Record<string, string> = {}
+    if (!joinValues.workspaceName.trim()) {
+      newErrors.workspaceName = 'Company or workspace name is required.'
+    }
+    if (!joinValues.fullName.trim()) {
+      newErrors.fullName = 'Full name is required.'
+    }
+    const emailErr = validateEmail(joinValues.email)
+    if (emailErr) {
+      newErrors.email = emailErr
+    }
+    if (!joinValues.password || joinValues.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters.'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setJoinErrors(newErrors)
+      setGlobalError({
+        type: 'invalid_credentials',
+        message: 'Please complete all required fields to join your company workspace.',
+      })
+      return
+    }
+
+    setJoinLoading(true)
+    setGlobalError(null)
+    setJoinErrors({})
+
+    try {
+      await joinWorkspace({
+        workspace_name: joinValues.workspaceName.trim(),
+        full_name: joinValues.fullName.trim(),
+        email: joinValues.email.trim(),
+        password: joinValues.password,
+        role: joinValues.role,
+      })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to join workspace.'
+      setGlobalError({
+        type: 'invalid_credentials',
+        message: msg,
+        actionLabel: msg.includes('already exists') ? 'Sign in with this email →' : undefined,
+        onAction: msg.includes('already exists')
+          ? () => {
+              setAuthMode('signin')
+              setFormValues((prev) => ({ ...prev, email: joinValues.email }))
+              setGlobalError(null)
+            }
+          : undefined,
+      })
+    } finally {
+      setJoinLoading(false)
+    }
+  }
+
   // 1-Click Demo Login
   const loginAsDemo = async (demoEmail: string, demoPass: string) => {
     setFormValues((prev) => ({ ...prev, email: demoEmail, password: demoPass }))
@@ -437,7 +526,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             </button>
           )}
 
-          {/* Top Auth Mode Tabs: Sign In vs Create Workspace */}
+          {/* Top Auth Mode Tabs: Sign In vs Join Workspace vs Create Workspace */}
           <div className="auth-mode-tabs" role="tablist" aria-label="Authentication Options">
             <button
               type="button"
@@ -451,6 +540,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             >
               <KeyRound size={14} />
               <span>Sign In</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={authMode === 'join'}
+              className={`auth-tab-btn ${authMode === 'join' ? 'active' : ''}`}
+              onClick={() => {
+                setAuthMode('join')
+                setGlobalError(null)
+                setStatusNotice(null)
+              }}
+            >
+              <Users size={14} />
+              <span>Join Workspace</span>
             </button>
             <button
               type="button"
@@ -469,10 +572,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           </div>
 
           <header className="login-card-header">
-            <h2>{authMode === 'signin' ? 'Sign in to workspace' : 'Create company workspace'}</h2>
+            <h2>
+              {authMode === 'signin'
+                ? 'Sign in to workspace'
+                : authMode === 'join'
+                ? 'Join company workspace'
+                : 'Create company workspace'}
+            </h2>
             <p>
               {authMode === 'signin'
                 ? 'Sign in with your work email to access safe read-only analytics.'
+                : authMode === 'join'
+                ? 'Join your team’s existing organization as an analyst or viewer.'
                 : 'Register your organization. Accounts and salted bcrypt password hashes are stored in PostgreSQL.'}
             </p>
           </header>
@@ -702,6 +813,206 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             </form>
           )}
 
+          {/* Join Existing Workspace Form */}
+          {authMode === 'join' && (
+            <form onSubmit={handleJoinSubmit} className="login-form" noValidate>
+              {/* Workspace / Company Name */}
+              <div className={`form-group ${joinErrors.workspaceName ? 'has-error' : ''}`}>
+                <label className="form-label">Company workspace name to join</label>
+                <div className="input-with-icon">
+                  <Building size={16} className="input-icon" aria-hidden="true" />
+                  <input
+                    type="text"
+                    value={joinValues.workspaceName}
+                    onChange={(e) => {
+                      setJoinValues((prev) => ({ ...prev, workspaceName: e.target.value }))
+                      if (joinErrors.workspaceName) setJoinErrors((p) => ({ ...p, workspaceName: undefined }))
+                    }}
+                    placeholder="e.g., Kashish private limited"
+                    className="form-input"
+                    required
+                  />
+                </div>
+                {joinErrors.workspaceName && (
+                  <div className="inline-field-error" role="alert">
+                    <span className="error-bullet" />
+                    <span>{joinErrors.workspaceName}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Full Name */}
+              <div className={`form-group ${joinErrors.fullName ? 'has-error' : ''}`}>
+                <label className="form-label">Full name</label>
+                <div className="input-with-icon">
+                  <UserIcon size={16} className="input-icon" aria-hidden="true" />
+                  <input
+                    type="text"
+                    value={joinValues.fullName}
+                    onChange={(e) => {
+                      setJoinValues((prev) => ({ ...prev, fullName: e.target.value }))
+                      if (joinErrors.fullName) setJoinErrors((p) => ({ ...p, fullName: undefined }))
+                    }}
+                    placeholder="e.g., Alex Carter"
+                    className="form-input"
+                    required
+                  />
+                </div>
+                {joinErrors.fullName && (
+                  <div className="inline-field-error" role="alert">
+                    <span className="error-bullet" />
+                    <span>{joinErrors.fullName}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Work Email */}
+              <div className={`form-group ${joinErrors.email ? 'has-error' : ''}`}>
+                <label className="form-label">Work email</label>
+                <div className="input-with-icon">
+                  <Mail size={16} className="input-icon" aria-hidden="true" />
+                  <input
+                    type="email"
+                    value={joinValues.email}
+                    onChange={(e) => {
+                      setJoinValues((prev) => ({ ...prev, email: e.target.value }))
+                      if (joinErrors.email) setJoinErrors((p) => ({ ...p, email: undefined }))
+                    }}
+                    placeholder="name@company.com"
+                    className="form-input"
+                    required
+                  />
+                </div>
+                {joinErrors.email && (
+                  <div className="inline-field-error" role="alert">
+                    <span className="error-bullet" />
+                    <span>{joinErrors.email}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Team Role Choice */}
+              <div className="form-group">
+                <label className="form-label">Team role in workspace</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: `1px solid ${joinValues.role === 'analyst' ? 'var(--qt-accent)' : 'var(--qt-border)'}`,
+                      background: joinValues.role === 'analyst' ? 'rgba(255, 92, 0, 0.08)' : 'var(--qt-canvas)',
+                      cursor: 'pointer',
+                      fontSize: '0.82rem',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="join-role"
+                      checked={joinValues.role === 'analyst'}
+                      onChange={() => setJoinValues((p) => ({ ...p, role: 'analyst' }))}
+                    />
+                    <span><strong>Analyst</strong> (Query & explore)</span>
+                  </label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: `1px solid ${joinValues.role === 'viewer' ? 'var(--qt-accent)' : 'var(--qt-border)'}`,
+                      background: joinValues.role === 'viewer' ? 'rgba(255, 92, 0, 0.08)' : 'var(--qt-canvas)',
+                      cursor: 'pointer',
+                      fontSize: '0.82rem',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="join-role"
+                      checked={joinValues.role === 'viewer'}
+                      onChange={() => setJoinValues((p) => ({ ...p, role: 'viewer' }))}
+                    />
+                    <span><strong>Viewer</strong> (Read-only)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div className={`form-group ${joinErrors.password ? 'has-error' : ''}`}>
+                <label className="form-label">Password</label>
+                <div className="input-with-icon">
+                  <Lock size={16} className="input-icon" aria-hidden="true" />
+                  <input
+                    type={showJoinPassword ? 'text' : 'password'}
+                    value={joinValues.password}
+                    onChange={(e) => {
+                      setJoinValues((prev) => ({ ...prev, password: e.target.value }))
+                      if (joinErrors.password) setJoinErrors((p) => ({ ...p, password: undefined }))
+                    }}
+                    placeholder="Create your team password (min 6 chars)"
+                    className="form-input"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowJoinPassword(!showJoinPassword)}
+                    title={showJoinPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showJoinPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {joinErrors.password && (
+                  <div className="inline-field-error" role="alert">
+                    <span className="error-bullet" />
+                    <span>{joinErrors.password}</span>
+                  </div>
+                )}
+                <PasswordStrengthMeter
+                  strength={joinPasswordStrength}
+                  passwordLength={joinValues.password.length}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={joinLoading}
+                className="login-submit-btn"
+                style={{ marginTop: '0.5rem' }}
+              >
+                {joinLoading ? (
+                  <>
+                    <span className="loading-spinner-inline" aria-hidden="true" />
+                    <span>Joining workspace…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Join company workspace</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+
+              <div className="login-request-access-row">
+                <span>Need a brand new organization? </span>
+                <button
+                  type="button"
+                  className="login-request-access-btn"
+                  onClick={() => {
+                    setAuthMode('register')
+                    setGlobalError(null)
+                  }}
+                >
+                  Create workspace
+                </button>
+              </div>
+            </form>
+          )}
+
           {/* Sign In Form */}
           {authMode === 'signin' && (
             <>
@@ -814,20 +1125,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               </div>
 
               <div className="login-request-access-row" style={{ marginTop: '0.25rem', fontSize: '0.75rem', opacity: 0.85 }}>
-                Joining an existing organization?{' '}
+                Joining a coworker's workspace?{' '}
                 <button
                   type="button"
                   className="login-request-access-btn"
                   onClick={() => {
-                    setShowRequestAccess(true)
-                    setRequestSubmitted(false)
-                    setRequestError(null)
-                    if (formValues.email) {
-                      setRequestForm((prev) => ({ ...prev, email: prev.email || formValues.email }))
-                    }
+                    setAuthMode('join')
+                    setGlobalError(null)
                   }}
                 >
-                  Request access
+                  Join workspace →
                 </button>
               </div>
 

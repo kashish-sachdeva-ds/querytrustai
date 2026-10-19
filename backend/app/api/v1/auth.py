@@ -16,6 +16,7 @@ from app.schemas.auth import (
     UserPublic,
     AccessRequestCreate,
     AccessRequestPublic,
+    JoinWorkspaceRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -188,6 +189,109 @@ def register(
         db.commit()
 
     # Automatically log the user in with a signed JWT
+    access_token = create_access_token(
+        user_id=str(new_user.id),
+        role=new_user.role,
+        settings=settings,
+    )
+    response.set_cookie(
+        key="querytrust_access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.ENVIRONMENT != "development",
+        samesite="strict",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/api/v1",
+    )
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserPublic.model_validate(new_user),
+    )
+
+
+@router.post("/join-workspace", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
+def join_workspace(
+    request: JoinWorkspaceRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    """Allow an employee to join an existing company workspace."""
+    clean_workspace = request.workspace_name.strip()
+    clean_email = request.email.strip().lower()
+
+    # 1. Verify workspace exists (must match an existing user's workspace_name)
+    workspace_anchor = (
+        db.query(User)
+        .filter(func.lower(User.workspace_name) == clean_workspace.lower())
+        .first()
+    )
+    if not workspace_anchor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workspace '{clean_workspace}' does not exist yet. Please check the workspace name with your company administrator or create a new workspace.",
+        )
+
+    canonical_workspace_name = workspace_anchor.workspace_name
+
+    # 2. Check if user already exists
+    existing = db.query(User).filter(func.lower(User.email) == clean_email).first()
+    if existing:
+        # If user was pre-provisioned with temporary password, claim their account!
+        if verify_password("WelcomePass123!", existing.password_hash):
+            existing.display_name = request.full_name.strip() or existing.display_name
+            existing.password_hash = get_password_hash(request.password)
+            existing.workspace_name = canonical_workspace_name
+            existing.role = request.role or existing.role or "analyst"
+            existing.is_active = True
+            db.commit()
+            db.refresh(existing)
+
+            access_token = create_access_token(
+                user_id=str(existing.id),
+                role=existing.role,
+                settings=settings,
+            )
+            response.set_cookie(
+                key="querytrust_access_token",
+                value=access_token,
+                httponly=True,
+                secure=settings.ENVIRONMENT != "development",
+                samesite="strict",
+                max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+                path="/api/v1",
+            )
+            return LoginResponse(
+                access_token=access_token,
+                token_type="bearer",
+                user=UserPublic.model_validate(existing),
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email address already exists. Please sign in instead.",
+        )
+
+    # 3. Provision new member into the existing workspace
+    new_user = User(
+        email=clean_email,
+        display_name=request.full_name.strip(),
+        password_hash=get_password_hash(request.password),
+        role=request.role or "analyst",
+        workspace_name=canonical_workspace_name,
+        is_active=True,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    # Clean up any access request audit records
+    pending = db.query(AccessRequest).filter(func.lower(AccessRequest.email) == clean_email).first()
+    if pending:
+        pending.status = "approved"
+        db.commit()
+
     access_token = create_access_token(
         user_id=str(new_user.id),
         role=new_user.role,

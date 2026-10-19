@@ -12,6 +12,7 @@ import {
   Check,
   X,
   Clock,
+  Copy,
 } from 'lucide-react'
 import {
   type UserPublic,
@@ -22,6 +23,7 @@ import {
   fetchAdminAuditLogs,
   fetchAdminAccessRequests,
   reviewAdminAccessRequest,
+  apiInviteMember,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
@@ -37,6 +39,57 @@ export const AdminView: React.FC = () => {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [assignedRoles, setAssignedRoles] = useState<Record<string, 'admin' | 'analyst' | 'viewer'>>({})
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [inviteValues, setInviteValues] = useState({
+    fullName: '',
+    email: '',
+    role: 'analyst' as 'analyst' | 'viewer',
+    temporaryPassword: 'WelcomePass123!',
+  })
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
+
+  const copyJoinLink = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
+    const wsName = currentUser?.workspace_name || 'Default Workspace'
+    const link = `${origin}/?join=${encodeURIComponent(wsName)}`
+    navigator.clipboard.writeText(link)
+    setCopiedLink(true)
+    setTimeout(() => setCopiedLink(false), 2000)
+  }
+
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inviteValues.email || !inviteValues.fullName) return
+    setInviteLoading(true)
+    try {
+      await apiInviteMember({
+        full_name: inviteValues.fullName.trim(),
+        email: inviteValues.email.trim(),
+        role: inviteValues.role,
+        temporary_password: inviteValues.temporaryPassword,
+      })
+      setNotification({
+        type: 'success',
+        message: `Successfully invited ${inviteValues.fullName} (${inviteValues.email}) as ${inviteValues.role} to '${currentUser?.workspace_name || 'your workspace'}'.`,
+      })
+      setShowInviteModal(false)
+      setInviteValues({
+        fullName: '',
+        email: '',
+        role: 'analyst',
+        temporaryPassword: 'WelcomePass123!',
+      })
+      await loadData()
+    } catch (err) {
+      setNotification({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to invite team member.',
+      })
+    } finally {
+      setInviteLoading(false)
+    }
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -253,6 +306,15 @@ export const AdminView: React.FC = () => {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setShowInviteModal(true)}
+              style={{ fontSize: '0.78rem', padding: '6px 12px' }}
+            >
+              <UserPlus size={13} style={{ marginRight: 6 }} />
+              <span>+ Invite Team Member</span>
+            </button>
             <ExplainButton
               title="User Roles"
               explanation="Admin: Access to benchmarks, user permissions, and audit logs. Analyst: Query asking, model refitting, and diagnostics. Viewer: Simplified plain-English asking with SQL hidden."
@@ -612,6 +674,186 @@ export const AdminView: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Invite Team Member Modal */}
+      {showInviteModal && (
+        <div className="modal-backdrop-centered" onClick={() => setShowInviteModal(false)}>
+          <div
+            className="modal-card"
+            style={{ maxWidth: 560, width: '100%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 8,
+                    background: 'rgba(255, 92, 0, 0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--qt-accent)',
+                  }}
+                >
+                  <UserPlus size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--qt-ink)' }}>
+                    Invite Team Member
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: 'var(--qt-muted)' }}>
+                    Add coworkers to <strong>{currentUser?.workspace_name || 'your workspace'}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-icon btn-sm"
+                onClick={() => setShowInviteModal(false)}
+                aria-label="Close"
+                style={{ fontSize: '1.1rem', lineHeight: 1 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Shareable Invite Link Box */}
+              <div
+                style={{
+                  background: 'var(--qt-canvas, #151821)',
+                  border: '1px solid var(--qt-border)',
+                  borderRadius: 8,
+                  padding: '12px 14px',
+                }}
+              >
+                <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--qt-ink)', marginBottom: 4 }}>
+                  Shareable Workspace Join Link
+                </div>
+                <p style={{ margin: '0 0 10px', fontSize: '0.74rem', color: 'var(--qt-muted)' }}>
+                  Send this link to teammates. They will enter their name and password to join directly.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'}/?join=${encodeURIComponent(currentUser?.workspace_name || 'Default Workspace')}`}
+                    className="form-control font-mono"
+                    style={{ fontSize: '0.76rem', padding: '6px 10px' }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={copyJoinLink}
+                    style={{ flexShrink: 0, fontSize: '0.78rem' }}
+                  >
+                    {copiedLink ? <Check size={13} style={{ color: 'var(--qt-success)' }} /> : <Copy size={13} />}
+                    <span style={{ marginLeft: 4 }}>{copiedLink ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Direct Provision Form */}
+              <form onSubmit={handleInviteSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--qt-ink)', borderTop: '1px solid var(--qt-border)', paddingTop: 12 }}>
+                  Or Directly Add Team Member
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.76rem' }}>Full name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={inviteValues.fullName}
+                    onChange={(e) => setInviteValues((p) => ({ ...p, fullName: e.target.value }))}
+                    placeholder="e.g. Alex Morgan"
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.76rem' }}>Work email *</label>
+                  <input
+                    type="email"
+                    required
+                    value={inviteValues.email}
+                    onChange={(e) => setInviteValues((p) => ({ ...p, email: e.target.value }))}
+                    placeholder="colleague@yourcompany.com"
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.76rem' }}>Role assignment</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: `1px solid ${inviteValues.role === 'analyst' ? 'var(--qt-accent)' : 'var(--qt-border)'}`,
+                        background: inviteValues.role === 'analyst' ? 'rgba(255, 92, 0, 0.08)' : 'var(--qt-canvas)',
+                        cursor: 'pointer',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="invite-role"
+                        checked={inviteValues.role === 'analyst'}
+                        onChange={() => setInviteValues((p) => ({ ...p, role: 'analyst' }))}
+                      />
+                      <span><strong>Analyst</strong></span>
+                    </label>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: `1px solid ${inviteValues.role === 'viewer' ? 'var(--qt-accent)' : 'var(--qt-border)'}`,
+                        background: inviteValues.role === 'viewer' ? 'rgba(255, 92, 0, 0.08)' : 'var(--qt-canvas)',
+                        cursor: 'pointer',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="invite-role"
+                        checked={inviteValues.role === 'viewer'}
+                        onChange={() => setInviteValues((p) => ({ ...p, role: 'viewer' }))}
+                      />
+                      <span><strong>Viewer</strong></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setShowInviteModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-sm"
+                    disabled={inviteLoading || !inviteValues.fullName || !inviteValues.email}
+                  >
+                    {inviteLoading ? 'Adding teammate…' : 'Add Teammate →'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

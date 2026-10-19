@@ -1,13 +1,12 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 20 — Bring Your Own Database (BYOD): Data Sources, Schema Introspection & Dual Target Execution
-**Overall status:** Complete enterprise commercial data platform architecture implemented:
-- **Bring Your Own Database (BYOD) Engine:** Workspaces can now register custom external PostgreSQL databases (`data_sources` table) with Fernet AES-symmetric encrypted credential storage, automated connection testing (measuring latency & database version with zero credentials logged), and public table/column schema introspection.
-- **Dual-Target Execution:** Workspaces seamlessly toggle between the **Evaluator Demo Sandbox** (synthetic Cisco telemetry & assets for instant zero-setup evaluation) and their **Active Enterprise Database**.
-- **Dynamic AST Governance:** Enhanced `validate_and_sanitize_sql` to dynamically accept `allowed_tables` extracted from the active data source's schema, enforcing SELECT-only constraints, row clamping, and read-only isolation across custom enterprise databases.
-- **Data Sources Frontend:** Integrated dedicated "Data sources" workbench with connection status badges, discovered tables tag clouds, quick sandbox toggling, and interactive connection testing modal.
-All 124 pytest backend tests pass in 8.30s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Current milestone:** 21 — Multi-User Workspace Onboarding: Self-Serve Join Flow & Admin Team Provisioning
+**Overall status:** Enterprise team collaboration and employee onboarding capabilities implemented:
+- **Join Workspace Flow:** Employees can now join their company's existing workspace (`POST /api/v1/auth/join-workspace`) by workspace name or invite link (`?join=WorkspaceName`), claim pre-provisioned invites, or self-register as an Analyst or Viewer under strict RBAC isolation.
+- **Admin Team Invite System:** Workspace admins can invite members via `POST /api/v1/admin/invite` with direct credential provisioning or 1-click shareable join URLs.
+- **Sign In Password Evaluation Fix:** Removed password strength evaluation from the Sign In form, preserving it strictly for registration/onboarding flows.
+All 127 pytest backend tests pass in 11.55s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 

@@ -465,6 +465,49 @@ export async function apiRegister(payload: RegisterPayload): Promise<LoginRespon
   return data
 }
 
+export interface JoinWorkspacePayload {
+  workspace_name: string
+  full_name: string
+  email: string
+  password: string
+  role?: 'analyst' | 'viewer'
+}
+
+export async function apiJoinWorkspace(payload: JoinWorkspacePayload): Promise<LoginResponse> {
+  const cleanEmail = requireText(payload.email, 'Email', 3, 255).toLowerCase()
+  const cleanPassword = requireText(payload.password, 'Password', 6, 255)
+  const cleanName = requireText(payload.full_name, 'Full Name', 2, 255)
+  const cleanWorkspace = requireText(payload.workspace_name, 'Workspace Name', 2, 255)
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    throw new ApiRequestError('Enter a valid work email address.')
+  }
+
+  const res = await requestWithTimeout(`${API_BASE}/auth/join-workspace`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: cleanEmail,
+      password: cleanPassword,
+      full_name: cleanName,
+      workspace_name: cleanWorkspace,
+      role: payload.role || 'analyst',
+    }),
+    credentials: 'same-origin',
+  })
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new ApiRequestError(errorData.detail || 'Failed to join workspace.', res.status, res.status >= 500)
+  }
+
+  const data: LoginResponse = await res.json()
+  if (data.access_token) {
+    setStoredToken(data.access_token)
+  }
+  return data
+}
+
 export async function apiGetMe(): Promise<UserMeResponse> {
   const res = await authFetch(`${API_BASE}/auth/me`)
   if (!res.ok) {
@@ -580,6 +623,36 @@ export async function updateAdminUser(
     if (!res.ok) throw new ApiRequestError(`Failed to update user: ${res.status}`, res.status, res.status >= 500)
     return res.json()
   })
+}
+
+export interface InviteMemberPayload {
+  full_name: string
+  email: string
+  role: 'analyst' | 'viewer'
+  temporary_password?: string
+}
+
+export async function apiInviteMember(payload: InviteMemberPayload): Promise<UserPublic> {
+  const cleanEmail = requireText(payload.email, 'Email', 3, 255).toLowerCase()
+  const cleanName = requireText(payload.full_name, 'Full name', 2, 255)
+
+  const res = await authFetch(`${API_BASE}/admin/invite`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: cleanEmail,
+      full_name: cleanName,
+      role: payload.role || 'analyst',
+      temporary_password: payload.temporary_password || 'WelcomePass123!',
+    }),
+  })
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new ApiRequestError(errorData.detail || 'Failed to invite team member.', res.status, res.status >= 500)
+  }
+
+  return res.json()
 }
 
 export async function fetchAdminAuditLogs(): Promise<AuditLogItem[]> {

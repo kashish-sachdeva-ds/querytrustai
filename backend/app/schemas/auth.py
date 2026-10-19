@@ -128,3 +128,44 @@ class AccessRequestReview(StrictRequestModel):
     status: Literal["approved", "rejected"] = Field(..., description="Decision status: approved or rejected")
     assigned_role: Optional[Literal["admin", "analyst", "viewer"]] = Field(None, description="Role assigned by workspace admin upon approval")
 
+
+class JoinWorkspaceRequest(StrictRequestModel):
+    """Payload when an employee registers to join an existing company workspace."""
+    workspace_name: str = Field(..., min_length=2, max_length=255, description="Company or workspace name to join")
+    full_name: str = Field(..., min_length=2, max_length=255, description="User full name")
+    email: str = Field(..., min_length=3, max_length=255, description="Work email address")
+    password: str = Field(..., min_length=6, max_length=255, description="Password (min 6 characters)")
+    role: Optional[Literal["analyst", "viewer"]] = Field("analyst", description="Desired team role (defaults to analyst)")
+
+    @field_validator("email")
+    @classmethod
+    def email_must_be_well_formed(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
+            raise ValueError("Email address is invalid")
+        return normalized
+
+    @field_validator("password")
+    @classmethod
+    def password_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Password must not be blank")
+        return value
+
+
+class InviteMemberRequest(StrictRequestModel):
+    """Payload when a workspace admin invites a new team member."""
+    email: str = Field(..., min_length=3, max_length=255, description="Work email of the member to invite")
+    full_name: str = Field(..., min_length=2, max_length=255, description="Full name of the member")
+    role: Literal["analyst", "viewer"] = Field("analyst", description="Role to assign")
+    temporary_password: Optional[str] = Field("WelcomePass123!", min_length=6, max_length=255, description="Initial temporary password")
+
+    @field_validator("email")
+    @classmethod
+    def email_must_be_well_formed(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
+            raise ValueError("Email address is invalid")
+        return normalized
+
+

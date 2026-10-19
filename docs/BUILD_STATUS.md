@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 16 — Access Request Pending Status Sync & Login Layout Elevation
-**Overall status:** Complete enterprise SaaS authentication, read-only analytics execution, and governance workflow. Resolved login header clipping with safe flexbox alignment (`margin: auto 0;`). Upgraded left brand panel typography and scaled animated components to gracefully fill empty space. Synchronized access request status so submitting an access request automatically updates the login page with an amber pending review status card, clears red errors, and displays pending review messaging if login is attempted before approval. All 117 pytest backend tests pass in 15.43s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Current milestone:** 17 — Dynamic Categorical Chart Visualizations & Multi-Attribute Aggregations
+**Overall status:** Complete enterprise SaaS authentication, read-only analytics execution, and governance workflow. Fixed missing chart visualization on multi-column table results: when users toggle to or request Chart view on tabular records (e.g. 200 devices across 7 attributes), `VisualChart` now intelligently detects candidate categorical dimensions (such as `device_type`, `region`, `status`, `site_name`, `model`), provides interactive breakdown pills (`Group by:`), supports instant switching between neutral Bar and multi-color Donut views, and provides safe number/fallback handling instead of rendering an empty container. All 117 pytest backend tests pass in 6.41s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 
@@ -908,3 +908,23 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
    - Expanded `.login-brand-content` max width from 520px to 620px.
    - Upgraded typography across title (`clamp(1.6rem, 2.2vw, 2.1rem)`), subtitle (`0.92rem`), tagline (`clamp(1.35rem, 1.9vw, 1.75rem)`), feature list headings (`1.05rem`), and descriptions (`0.88rem`).
    - Scaled animated safety shield radar and logo (`size={48}`), eliminating awkward empty gaps on wide desktop screens.
+
+## Milestone 17 — Dynamic Categorical Chart Visualizations & Multi-Attribute Aggregations — 2026-10-19
+
+**Status:** Completed — 117 backend tests passing, frontend production build verified (`tsc -b && vite build` passing with 0 errors), browser visual inspection recorded and verified.
+
+### Summary of Enhancements:
+1. **Dynamic Categorical Dimension Detection & Breakdown (`AskDataView.tsx`):**
+   - Fixed the issue where queries returning multi-attribute records (e.g., 200 devices with 7 columns such as `device_type`, `region`, `status`, `site_name`, `model`) previously rendered a blank/null container when switching to Chart view.
+   - `VisualChart` now dynamically scans columns and rows to identify candidate categorical breakdown dimensions (e.g. non-ID text/date columns with 2 to 35 unique values).
+   - Intelligently prioritizes common networking dimensions (`device_type`, `region`, `status`, `severity`, `site_name`, `model`, `vendor`) as the default breakdown.
+   - Provides an interactive `Group by:` dimension selector toolbar with sleek pill buttons, allowing operators to instantly pivot and explore distributions across any available category.
+2. **Interactive Chart Style Switching (`AskDataView.tsx` & `AskDataView.css`):**
+   - Added interactive `[Bar]` and `[Donut]` style toggle buttons to every chart view.
+   - Enhanced Bar chart with neutral slate styling, percentage tooltips, smooth baseline, value labels, and horizontal scroll for broader category sets.
+   - Enhanced Donut chart with accessible multi-color slices, responsive SVG geometry, percentage readouts, and structured legends.
+   - Provided an informative fallback summary card with attribute tags if a dataset contains only high-cardinality unique IDs, ensuring `VisualChart` never returns an empty grey box.
+3. **Backend Recommendation Flexibility (`analytics.py`):**
+   - Enhanced `_recommend_chart` to support 2-column distributions up to 100 rows for bar charts.
+   - Added candidate dimension suggestions (`x_axis`) and descriptive titles on multi-attribute queries so the frontend receives backend dimension recommendations while preserving default table viewing for raw record queries.
+   - Added natural-language intent detection for query prompts containing `chart`, `graph`, `breakdown`, or `distribution` to automatically initialize the view mode to `chart`.

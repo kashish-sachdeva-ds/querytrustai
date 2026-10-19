@@ -68,14 +68,26 @@ def _recommend_chart(columns: List[str], rows: List[Dict[str, Any]]) -> ChartRec
         title = col.replace("_", " ").title()
         return ChartRecommendation(chart_type="metric", y_axis=col, title=title)
 
+    # Helper to check numeric value
+    def _is_num(val: Any) -> bool:
+        if isinstance(val, (int, float)):
+            return True
+        if isinstance(val, str) and val.strip():
+            try:
+                float(val)
+                return True
+            except ValueError:
+                return False
+        return False
+
     # Two-column distribution (e.g. category + count)
     if len(columns) == 2:
         col_0, col_1 = columns[0], columns[1]
         val_0 = rows[0].get(col_0)
         val_1 = rows[0].get(col_1)
 
-        is_num_0 = isinstance(val_0, (int, float))
-        is_num_1 = isinstance(val_1, (int, float))
+        is_num_0 = _is_num(val_0)
+        is_num_1 = _is_num(val_1)
 
         if is_num_1 and not is_num_0:
             cat_col, num_col = col_0, col_1
@@ -88,10 +100,35 @@ def _recommend_chart(columns: List[str], rows: List[Dict[str, Any]]) -> ChartRec
 
         if len(rows) <= 7:
             return ChartRecommendation(chart_type="pie", x_axis=cat_col, y_axis=num_col, title=title)
-        elif len(rows) <= 30:
+        elif len(rows) <= 100:
             return ChartRecommendation(chart_type="bar", x_axis=cat_col, y_axis=num_col, title=title)
 
-    # Multi-column table default
+    # Multi-column table: detect primary categorical dimension for chart breakdown
+    candidate_dims: List[str] = []
+    for col in columns:
+        col_lower = col.lower()
+        if col_lower in ("id", "uuid") or col_lower.endswith("_id"):
+            continue
+        vals = {str(r.get(col)).strip() for r in rows if r.get(col) is not None}
+        if 2 <= len(vals) <= 35:
+            candidate_dims.append(col)
+
+    for pref in ("device_type", "region", "status", "severity", "site_name", "model", "vendor"):
+        if pref in candidate_dims:
+            return ChartRecommendation(
+                chart_type="table",
+                x_axis=pref,
+                title=f"Distribution by {pref.replace('_', ' ').title()}",
+            )
+
+    if candidate_dims:
+        first_dim = candidate_dims[0]
+        return ChartRecommendation(
+            chart_type="table",
+            x_axis=first_dim,
+            title=f"Distribution by {first_dim.replace('_', ' ').title()}",
+        )
+
     return ChartRecommendation(chart_type="table", title="Query Results")
 
 

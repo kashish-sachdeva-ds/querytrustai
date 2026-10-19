@@ -23,6 +23,8 @@ import {
   Code2,
   Lock,
   Search,
+  BarChart3,
+  PieChart,
 } from 'lucide-react'
 import {
   previewQuery,
@@ -158,11 +160,12 @@ const HighlightedSql: React.FC<{ sql: string }> = ({ sql }) => {
 // Visual Chart Component (Strict Invariant: Neutral Data Bars, No Orange Monochrome)
 const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
   const { chart_recommendation: rec, rows, columns } = result
+
   if (!rows || rows.length === 0) {
     return <div className="chart-empty">No records available to visualize.</div>
   }
 
-  // 1. Metric Single Value
+  // 1. Metric Single Value: if exactly 1 row & 1 column, or rec.chart_type === 'metric'
   if (rec.chart_type === 'metric' || (rows.length === 1 && columns.length === 1)) {
     const rawVal = rows[0][columns[0]]
     const displayVal =
@@ -179,25 +182,232 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
     )
   }
 
-  const xKey = rec.x_axis || columns[0]
-  const yKey = rec.y_axis || columns[1]
+  // Check if dataset is a 2-column pre-aggregated distribution (e.g. region + count)
+  const isTwoColAggregate = useMemo(() => {
+    if (columns.length !== 2) return false
+    const val0 = rows[0]?.[columns[0]]
+    const val1 = rows[0]?.[columns[1]]
+    const isNum0 = typeof val0 === 'number' || (!isNaN(Number(val0)) && val0 !== '' && val0 !== null)
+    const isNum1 = typeof val1 === 'number' || (!isNaN(Number(val1)) && val1 !== '' && val1 !== null)
+    return (isNum0 && !isNum1) || (!isNum0 && isNum1)
+  }, [columns, rows])
 
-  // 2. Bar Chart (Neutral Tone)
-  if (rec.chart_type === 'bar') {
-    const chartData = rows.slice(0, 15).map((r) => ({
-      label: String(r[xKey] ?? 'Unknown'),
-      value: Number(r[yKey] ?? 0),
-    }))
-    const maxVal = Math.max(...chartData.map((d) => d.value), 1)
-    const height = 240
-    const barWidth = Math.max(28, Math.min(56, Math.floor(520 / chartData.length) - 16))
-    const totalWidth = Math.max(540, chartData.length * (barWidth + 24))
+  // Detect candidate categorical dimensions across columns for multi-attribute tables
+  const candidateDimensions = useMemo(() => {
+    if (isTwoColAggregate) return []
+    return columns.filter((col) => {
+      const lower = col.toLowerCase()
+      // Skip IDs and UUIDs
+      if (lower === 'id' || lower.endsWith('_id') || lower === 'uuid') return false
 
+      const distinct = new Set<string>()
+      for (const r of rows) {
+        const v = r[col]
+        if (v !== null && v !== undefined && String(v).trim() !== '') {
+          distinct.add(String(v).trim())
+        }
+        if (distinct.size > 35) return false // Too broad for a clean categorical breakdown
+      }
+      return distinct.size >= 2
+    })
+  }, [columns, rows, isTwoColAggregate])
+
+  // Determine initial/default dimension
+  const defaultDimension = useMemo(() => {
+    if (rec.x_axis && candidateDimensions.includes(rec.x_axis)) {
+      return rec.x_axis
+    }
+    const priority = ['device_type', 'region', 'status', 'severity', 'site_name', 'model', 'vendor']
+    for (const p of priority) {
+      const match = candidateDimensions.find((c) => c.toLowerCase() === p)
+      if (match) return match
+    }
+    return candidateDimensions[0] || ''
+  }, [candidateDimensions, rec.x_axis])
+
+  const [selectedDimension, setSelectedDimension] = useState<string>(defaultDimension)
+  const [chartType, setChartType] = useState<'bar' | 'pie'>(rec.chart_type === 'pie' ? 'pie' : 'bar')
+
+  useEffect(() => {
+    if (defaultDimension && (!selectedDimension || !candidateDimensions.includes(selectedDimension))) {
+      setSelectedDimension(defaultDimension)
+    }
+  }, [defaultDimension, candidateDimensions, selectedDimension])
+
+  // Prepare chart items
+  const chartItems = useMemo(() => {
+    if (isTwoColAggregate) {
+      const val0 = rows[0]?.[columns[0]]
+      const isNum0 = typeof val0 === 'number' || (!isNaN(Number(val0)) && val0 !== '' && val0 !== null)
+      const catCol = isNum0 ? columns[1] : columns[0]
+      const numCol = isNum0 ? columns[0] : columns[1]
+
+      return rows.map((r) => {
+        const rawNum = Number(r[numCol])
+        return {
+          label: String(r[catCol] ?? 'Unknown'),
+          value: isNaN(rawNum) ? 0 : rawNum,
+        }
+      })
+    }
+
+    if (!selectedDimension) return []
+
+    // Aggregate counts by selected dimension
+    const counts: Record<string, number> = {}
+    for (const r of rows) {
+      const key = String(r[selectedDimension] ?? 'Unknown').trim() || 'Unknown'
+      counts[key] = (counts[key] || 0) + 1
+    }
+
+    return Object.entries(counts)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+  }, [isTwoColAggregate, columns, rows, selectedDimension])
+
+  // Title & Subtitle computation
+  const title = useMemo(() => {
+    if (isTwoColAggregate && rec.title) return rec.title
+    if (selectedDimension) {
+      return `Distribution by ${selectedDimension.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`
+    }
+    return rec.title || 'Data Visualization'
+  }, [isTwoColAggregate, rec.title, selectedDimension])
+
+  const subtitle = useMemo(() => {
+    if (isTwoColAggregate) {
+      const sum = chartItems.reduce((acc, c) => acc + c.value, 0)
+      return `${chartItems.length} categories (${sum.toLocaleString()} total)`
+    }
+    if (selectedDimension) {
+      return `Aggregated from ${rows.length} records across ${chartItems.length} ${selectedDimension.replace(/_/g, ' ')} categories`
+    }
+    return null
+  }, [isTwoColAggregate, chartItems, selectedDimension, rows.length])
+
+  // If no chart items can be computed (e.g. no categories and not 2-col), render summary fallback card
+  if (chartItems.length === 0) {
     return (
-      <div className="svg-chart-wrapper">
-        <div className="chart-title">{rec.title}</div>
+      <div className="chart-fallback-card">
+        <div className="chart-fallback-badge">
+          <FileText size={13} />
+          <span>Tabular Dataset Overview</span>
+        </div>
+        <div className="chart-fallback-title">Showing {rows.length} detailed records across {columns.length} attributes</div>
+        <div className="chart-fallback-desc">
+          This query returned detailed individual items with high uniqueness. Switch to the <strong>Table</strong> tab to inspect, sort, and review individual columns, or use <strong>Export CSV</strong> to save the complete dataset.
+        </div>
+        <div className="chart-attribute-pills">
+          {columns.map((c) => (
+            <span key={c} className="chart-attribute-pill">
+              {c.replace(/_/g, ' ')}
+            </span>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Display top items for readability (Bar shows up to 16, Donut shows up to 8 + Other)
+  const barChartData = chartItems.slice(0, 16)
+  const maxVal = Math.max(...barChartData.map((d) => d.value), 1)
+  const height = 240
+  const barWidth = Math.max(28, Math.min(56, Math.floor(520 / barChartData.length) - 16))
+  const totalWidth = Math.max(540, barChartData.length * (barWidth + 24))
+
+  // Donut data preparation
+  const donutTop = chartItems.slice(0, 7)
+  const donutRemainder = chartItems.slice(7)
+  const remainderSum = donutRemainder.reduce((sum, item) => sum + item.value, 0)
+  const donutData = remainderSum > 0 ? [...donutTop, { label: 'Other', value: remainderSum }] : donutTop
+  const donutTotal = donutData.reduce((acc, curr) => acc + curr.value, 0) || 1
+
+  let accumulatedAngle = 0
+  const center = 90
+  const radius = 70
+  const innerRadius = 45
+
+  const slices = donutData.map((d, idx) => {
+    const sliceAngle = (d.value / donutTotal) * 2 * Math.PI
+    const startAngle = accumulatedAngle
+    const endAngle = accumulatedAngle + sliceAngle
+    accumulatedAngle = endAngle
+
+    const x1 = center + radius * Math.cos(startAngle)
+    const y1 = center + radius * Math.sin(startAngle)
+    const x2 = center + radius * Math.cos(endAngle)
+    const y2 = center + radius * Math.sin(endAngle)
+
+    const x3 = center + innerRadius * Math.cos(endAngle)
+    const y3 = center + innerRadius * Math.sin(endAngle)
+    const x4 = center + innerRadius * Math.cos(startAngle)
+    const y4 = center + innerRadius * Math.sin(startAngle)
+
+    const largeArc = sliceAngle > Math.PI ? 1 : 0
+    const pathData = [
+      `M ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`,
+      `L ${x3} ${y3}`,
+      `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
+      'Z',
+    ].join(' ')
+
+    const pct = Math.round((d.value / donutTotal) * 100)
+    return { pathData, color: DONUT_PALETTE[idx % DONUT_PALETTE.length], label: d.label, value: d.value, pct }
+  })
+
+  return (
+    <div className="svg-chart-wrapper">
+      {/* Chart Controls: Dimension switcher and Chart style toggle */}
+      <div className="chart-controls-toolbar">
+        {candidateDimensions.length > 1 ? (
+          <div className="chart-dimension-selector">
+            <span className="chart-control-label">Group by:</span>
+            {candidateDimensions.map((dim) => (
+              <button
+                key={dim}
+                type="button"
+                className={`dimension-pill ${selectedDimension === dim ? 'active' : ''}`}
+                onClick={() => setSelectedDimension(dim)}
+                title={`Group records by ${dim.replace(/_/g, ' ')}`}
+              >
+                {dim.replace(/_/g, ' ')}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div />
+        )}
+
+        <div className="chart-style-toggle" role="group" aria-label="Chart representation">
+          <button
+            type="button"
+            className={`chart-style-btn ${chartType === 'bar' ? 'active' : ''}`}
+            onClick={() => setChartType('bar')}
+            title="Display as neutral bar chart"
+          >
+            <BarChart3 size={13} />
+            <span>Bar</span>
+          </button>
+          <button
+            type="button"
+            className={`chart-style-btn ${chartType === 'pie' ? 'active' : ''}`}
+            onClick={() => setChartType('pie')}
+            title="Display as multi-color donut chart"
+          >
+            <PieChart size={13} />
+            <span>Donut</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="chart-title">{title}</div>
+      {subtitle && <div className="chart-subtitle">{subtitle}</div>}
+
+      {/* Render Bar Chart */}
+      {chartType === 'bar' && (
         <div className="bar-chart-scroll">
-          <svg width={totalWidth} height={height} className="svg-chart" role="img" aria-label={rec.title}>
+          <svg width={totalWidth} height={height} className="svg-chart" role="img" aria-label={title}>
             {/* Subtle baseline */}
             <line
               x1="20"
@@ -207,7 +417,7 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
               stroke="var(--qt-border)"
               strokeWidth="1"
             />
-            {chartData.map((d, i) => {
+            {barChartData.map((d, i) => {
               const barHeight = Math.max(4, Math.round((d.value / maxVal) * (height - 75)))
               const x = 30 + i * (barWidth + 24)
               const y = height - 40 - barHeight
@@ -239,80 +449,33 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
             })}
           </svg>
         </div>
-      </div>
-    )
-  }
+      )}
 
-  // 3. Multi-Color Donut Chart
-  if (rec.chart_type === 'pie') {
-    const chartData = rows.slice(0, 8).map((r) => ({
-      label: String(r[xKey] ?? 'Unknown'),
-      value: Number(r[yKey] ?? 0),
-    }))
-    const total = chartData.reduce((acc, curr) => acc + curr.value, 0) || 1
-
-    let accumulatedAngle = 0
-    const center = 90
-    const radius = 70
-    const innerRadius = 45
-
-    const slices = chartData.map((d, idx) => {
-      const sliceAngle = (d.value / total) * 2 * Math.PI
-      const startAngle = accumulatedAngle
-      const endAngle = accumulatedAngle + sliceAngle
-      accumulatedAngle = endAngle
-
-      const x1 = center + radius * Math.cos(startAngle)
-      const y1 = center + radius * Math.sin(startAngle)
-      const x2 = center + radius * Math.cos(endAngle)
-      const y2 = center + radius * Math.sin(endAngle)
-
-      const x3 = center + innerRadius * Math.cos(endAngle)
-      const y3 = center + innerRadius * Math.sin(endAngle)
-      const x4 = center + innerRadius * Math.cos(startAngle)
-      const y4 = center + innerRadius * Math.sin(startAngle)
-
-      const largeArc = sliceAngle > Math.PI ? 1 : 0
-      const pathData = [
-        `M ${x1} ${y1}`,
-        `A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`,
-        `L ${x3} ${y3}`,
-        `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
-        'Z',
-      ].join(' ')
-
-      const pct = Math.round((d.value / total) * 100)
-      return { pathData, color: DONUT_PALETTE[idx % DONUT_PALETTE.length], label: d.label, value: d.value, pct }
-    })
-
-    return (
-      <div className="donut-chart-container">
-        <div className="chart-title" style={{ width: '100%', marginBottom: '0.75rem' }}>
-          {rec.title}
+      {/* Render Donut Chart */}
+      {chartType === 'pie' && (
+        <div className="donut-chart-container">
+          <svg width="180" height="180" viewBox="0 0 180 180" className="donut-svg" role="img" aria-label={title}>
+            {slices.map((s, idx) => (
+              <path key={idx} d={s.pathData} fill={s.color} className="donut-slice">
+                <title>{`${s.label}: ${s.value.toLocaleString()} (${s.pct}%)`}</title>
+              </path>
+            ))}
+          </svg>
+          <div className="donut-legend">
+            {slices.map((s, idx) => (
+              <div key={idx} className="legend-item">
+                <span className="legend-color-dot" style={{ backgroundColor: s.color }} />
+                <span className="legend-label">{s.label}:</span>
+                <span className="legend-val">
+                  {s.value.toLocaleString()} ({s.pct}%)
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-        <svg width="180" height="180" viewBox="0 0 180 180" className="donut-svg" role="img" aria-label={rec.title}>
-          {slices.map((s, idx) => (
-            <path key={idx} d={s.pathData} fill={s.color} className="donut-slice">
-              <title>{`${s.label}: ${s.value.toLocaleString()} (${s.pct}%)`}</title>
-            </path>
-          ))}
-        </svg>
-        <div className="donut-legend">
-          {slices.map((s, idx) => (
-            <div key={idx} className="legend-item">
-              <span className="legend-color-dot" style={{ backgroundColor: s.color }} />
-              <span className="legend-label">{s.label}:</span>
-              <span className="legend-val">
-                {s.value.toLocaleString()} ({s.pct}%)
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  return null
+      )}
+    </div>
+  )
 }
 
 // 6-Point Safety Shield Sequence Component (ThoughtSpot / Monte Carlo Benchmark)
@@ -714,8 +877,11 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     try {
       const execResult = await executeSavedQuery(previewData.query_run_id)
       setResultsMap((prev) => ({ ...prev, [previewData.query_run_id]: execResult }))
+      const askedForChart = /chart|graph|plot|visualiz|breakdown|distribution/i.test(
+        previewData.interpreted_question || ''
+      )
       const initialMode =
-        execResult.chart_recommendation.chart_type === 'table' ? 'table' : 'chart'
+        execResult.chart_recommendation.chart_type !== 'table' || askedForChart ? 'chart' : 'table'
       setViewModeMap((prev) => ({ ...prev, [previewData.query_run_id]: initialMode }))
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to execute query in read-only transaction.')

@@ -202,3 +202,38 @@ def test_register_creates_account_with_hashed_password(client, db_session):
     db_session.query(User).filter(User.email == test_email).delete()
     db_session.commit()
 
+
+def test_admin_workspace_isolation(client, db_session):
+    """A company admin only sees users within their company workspace, not demo or other tenant accounts."""
+    from app.models.user import User
+    admin_email = "boss@acme-networks.com"
+    # Clean up any stale
+    db_session.query(User).filter(User.email == admin_email).delete()
+    db_session.commit()
+
+    reg_payload = {
+        "full_name": "Acme Admin",
+        "email": admin_email,
+        "password": "SuperSecretPass123!",
+        "workspace_name": "Acme Networks",
+        "role": "admin",
+    }
+    reg_resp = client.post("/api/v1/auth/register", json=reg_payload)
+    assert reg_resp.status_code == 201
+    token = reg_resp.json()["access_token"]
+    acme_headers = {"Authorization": f"Bearer {token}"}
+
+    # Query admin users
+    users_resp = client.get("/api/v1/admin/users", headers=acme_headers)
+    assert users_resp.status_code == 200
+    tenant_users = users_resp.json()
+
+    # Must contain ONLY the Acme Admin, NOT demo users
+    assert len(tenant_users) == 1
+    assert tenant_users[0]["email"] == admin_email
+    assert tenant_users[0]["workspace_name"] == "Acme Networks"
+
+    # Clean up
+    db_session.query(User).filter(User.email == admin_email).delete()
+    db_session.commit()
+

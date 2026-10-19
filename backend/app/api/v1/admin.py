@@ -24,31 +24,41 @@ router = APIRouter(prefix="/admin", tags=["Administration"])
 admin_required = require_role("admin")
 
 
-@router.get("/users", response_model=List[UserPublic], dependencies=[Depends(admin_required)])
-def list_users(db: Session = Depends(get_db)):
-    """List all registered system users with their roles and status.
+@router.get("/users", response_model=List[UserPublic])
+def list_users(
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(require_role("admin")),
+):
+    """List all registered system users within the administrator's workspace.
 
-    Admin access only.
+    Admin access only. Enforces multi-tenant workspace isolation.
     """
-    users = db.query(User).order_by(User.created_at.asc()).all()
+    query = db.query(User)
+    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
+        query = query.filter(User.workspace_name == current_admin.workspace_name)
+    users = query.order_by(User.created_at.asc()).all()
     return [UserPublic.model_validate(u) for u in users]
 
 
-@router.patch("/users/{user_id}", response_model=UserPublic, dependencies=[Depends(admin_required)])
+@router.patch("/users/{user_id}", response_model=UserPublic)
 def update_user(
     user_id: uuid.UUID,
     payload: UserUpdateRequest,
     db: Session = Depends(get_db),
+    current_admin: User = Depends(require_role("admin")),
 ):
-    """Update user role, active status, or display name.
+    """Update user role, active status, or display name within the tenant.
 
-    Admin access only. Enforces valid role transitions and active status flags.
+    Admin access only. Enforces tenant boundary so admins cannot modify users outside their workspace.
     """
-    user = db.query(User).filter(User.id == user_id).with_for_update().first()
+    query = db.query(User).filter(User.id == user_id)
+    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
+        query = query.filter(User.workspace_name == current_admin.workspace_name)
+    user = query.with_for_update().first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with ID {user_id} not found",
+            detail=f"User with ID {user_id} not found in workspace",
         )
 
     if payload.role is not None:
@@ -63,17 +73,21 @@ def update_user(
     return UserPublic.model_validate(user)
 
 
-@router.get("/audit-logs", dependencies=[Depends(admin_required)])
+@router.get("/audit-logs")
 def get_audit_logs(
     limit: int = 50,
     db: Session = Depends(get_db),
+    current_admin: User = Depends(require_role("admin")),
 ):
-    """Retrieve security and query execution audit logs.
+    """Retrieve security and query execution audit logs for the workspace.
 
     Admin access only. Returns metadata without exposing raw query datasets.
     """
+    query = db.query(QueryRun)
+    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
+        query = query.join(User, QueryRun.user_id == User.id).filter(User.workspace_name == current_admin.workspace_name)
     runs = (
-        db.query(QueryRun)
+        query
         .order_by(desc(QueryRun.created_at))
         .limit(limit)
         .all()
@@ -94,18 +108,21 @@ def get_audit_logs(
     ]
 
 
-@router.get("/access-requests", response_model=List[AccessRequestPublic], dependencies=[Depends(admin_required)])
+@router.get("/access-requests", response_model=List[AccessRequestPublic])
 def list_access_requests(
     status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
+    current_admin: User = Depends(require_role("admin")),
 ):
-    """Retrieve all access requests submitted from the public portal.
+    """Retrieve access requests submitted for the administrator's company.
 
     Admin access only. Ordered by newest request first.
     """
     query = db.query(AccessRequest)
     if status_filter:
         query = query.filter(AccessRequest.status == status_filter)
+    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
+        query = query.filter(AccessRequest.company.ilike(current_admin.workspace_name))
     requests = query.order_by(desc(AccessRequest.created_at)).all()
 
     return [
@@ -140,11 +157,14 @@ def review_access_request(
     If rejected:
     - Updates request status to 'rejected' and marks reviewer metadata.
     """
-    req = db.query(AccessRequest).filter(AccessRequest.id == request_id).with_for_update().first()
+    req_query = db.query(AccessRequest).filter(AccessRequest.id == request_id)
+    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
+        req_query = req_query.filter(AccessRequest.company.ilike(current_admin.workspace_name))
+    req = req_query.with_for_update().first()
     if not req:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Access request with ID {request_id} not found",
+            detail=f"Access request with ID {request_id} not found in your organization",
         )
 
     now = datetime.now(timezone.utc)

@@ -239,7 +239,18 @@ export const AdminView: React.FC = () => {
         <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--qt-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Users size={18} style={{ color: 'var(--qt-accent)' }} />
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Who can do what ({users.length})</h3>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
+                  ? `${currentUser.workspace_name} — Team Members (${users.length})`
+                  : `Who can do what (${users.length})`}
+              </h3>
+              {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace' && (
+                <p style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', margin: 0 }}>
+                  Workspace isolated: Only teammates provisioned under {currentUser.workspace_name} appear here.
+                </p>
+              )}
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <ExplainButton
@@ -360,7 +371,11 @@ export const AdminView: React.FC = () => {
             <UserPlus size={18} style={{ color: 'var(--qt-accent)' }} />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Access requests ({accessRequests.length})</h3>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                  {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
+                    ? `${currentUser.workspace_name} — Access Requests (${accessRequests.length})`
+                    : `Access requests (${accessRequests.length})`}
+                </h3>
                 {accessRequests.filter((r) => r.status === 'pending').length > 0 && (
                   <span className="badge badge-warning" style={{ fontSize: '0.7rem', padding: '2px 7px' }}>
                     {accessRequests.filter((r) => r.status === 'pending').length} pending review
@@ -368,7 +383,9 @@ export const AdminView: React.FC = () => {
                 )}
               </div>
               <p style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', margin: 0 }}>
-                Requests submitted from the public sign-in portal. Approving instantly provisions their account.
+                {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
+                  ? `Prospective requests submitted for ${currentUser.workspace_name}. Approving provisions their account.`
+                  : 'Requests submitted from the public sign-in portal. Approving instantly provisions their account.'}
               </p>
             </div>
           </div>
@@ -405,7 +422,11 @@ export const AdminView: React.FC = () => {
               ) : accessRequests.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem' }}>
-                    <p className="text-muted" style={{ margin: 0 }}>No prospective access requests received yet.</p>
+                    <p className="text-muted" style={{ margin: 0 }}>
+                      {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
+                        ? `No pending access requests for ${currentUser.workspace_name} yet.`
+                        : 'No prospective access requests received yet.'}
+                    </p>
                   </td>
                 </tr>
               ) : (

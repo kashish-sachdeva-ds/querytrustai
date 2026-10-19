@@ -16,6 +16,7 @@ import {
   ArrowRight,
   X,
   Info,
+  Database,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -31,6 +32,7 @@ export type ActiveTab =
   | 'overview'
   | 'devices'
   | 'ask-data'
+  | 'data-sources'
   | 'data-quality'
   | 'anomalies'
   | 'history'
@@ -373,6 +375,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
           <Server size={18} />
           {!isCollapsed && <span>Equipment</span>}
         </button>
+
+        {/* Data sources: Live enterprise database & sandbox */}
+        {(isAdmin || canAsk) && (
+          <button
+            type="button"
+            className={`nav-item ${activeTab === 'data-sources' ? 'active' : ''}`}
+            onClick={() => onSelectTab('data-sources')}
+            title="Data sources - Live enterprise database & sandbox"
+            aria-current={activeTab === 'data-sources' ? 'page' : undefined}
+          >
+            <Database size={18} />
+            {!isCollapsed && <span>Data sources</span>}
+          </button>
+        )}
 
         {/* Rule 4: Data health amber badge with tooltip */}
         <button

@@ -11,6 +11,7 @@ import {
   Users,
   Moon,
   Sparkles,
+  Database,
 } from 'lucide-react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { useTheme } from './context/ThemeContext'
@@ -24,6 +25,7 @@ import { OverviewView } from './components/OverviewView'
 import { DevicesView } from './components/DevicesView'
 import { AdminView } from './components/AdminView'
 import { AskDataView } from './components/AskDataView'
+import { DataSourcesView } from './components/DataSourcesView'
 import { QueryHistoryView } from './components/QueryHistoryView'
 import { DataQualityView } from './components/DataQualityView'
 import { AnomalyMonitorView } from './components/AnomalyMonitorView'
@@ -39,6 +41,7 @@ const tabs: ActiveTab[] = [
   'overview',
   'devices',
   'ask-data',
+  'data-sources',
   'data-quality',
   'anomalies',
   'history',
@@ -120,6 +123,7 @@ const AppShell: React.FC = () => {
       { id: 'overview', label: 'Open fleet overview', description: 'Live inventory and service summary', icon: LayoutDashboard, keywords: ['dashboard', 'home'], run: () => selectTab('overview') },
       { id: 'devices', label: 'Open device explorer', description: 'Search and inspect network assets', icon: Server, keywords: ['inventory', 'assets'], run: () => selectTab('devices') },
       { id: 'ask-data', label: 'Ask governed data', description: 'Create a read-only analytics preview', icon: MessageSquareText, keywords: ['query', 'analytics', 'sql'], run: () => selectTab('ask-data') },
+      { id: 'data-sources', label: 'Open data sources & connections', description: 'Connect live databases or switch to demo sandbox', icon: Database, keywords: ['database', 'postgres', 'connection', 'byod', 'schema'], run: () => selectTab('data-sources') },
       { id: 'data-quality', label: 'Open data quality', description: 'Review read-only diagnostic findings', icon: ShieldCheck, keywords: ['diagnostics', 'findings'], run: () => selectTab('data-quality') },
       { id: 'anomalies', label: 'Open anomaly monitor', description: 'Review synthetic telemetry outliers', icon: Activity, keywords: ['telemetry', 'isolation forest'], run: () => selectTab('anomalies') },
       { id: 'history', label: 'Open query history', description: 'Review your governed query activity', icon: History, keywords: ['audit', 'queries'], run: () => selectTab('history') },
@@ -186,6 +190,7 @@ const AppShell: React.FC = () => {
             )}
             {activeTab === 'devices' && <DevicesView onAskQuestion={openAskQuestion} />}
             {activeTab === 'ask-data' && <AskDataView initialQuestion={pendingAskQuestion} />}
+            {activeTab === 'data-sources' && <DataSourcesView />}
             {activeTab === 'admin' && <AdminView />}
 
             {activeTab === 'data-quality' && <DataQualityView />}

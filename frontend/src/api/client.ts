@@ -1081,3 +1081,152 @@ export async function fetchEvaluationDetail(id: string): Promise<any> {
   return res.json()
 }
 
+// ==========================================
+// DATA SOURCES & BYOD (BRING YOUR OWN DB)
+// ==========================================
+
+export interface DataSourceColumnInfo {
+  name: string
+  data_type: string
+  is_nullable: boolean
+}
+
+export interface DataSourceTableInfo {
+  table_name: string
+  columns: DataSourceColumnInfo[]
+  row_count_estimate?: number | null
+}
+
+export interface DataSourcePublic {
+  id: string
+  workspace_name: string
+  name: string
+  db_type: string
+  host: string
+  port: number
+  database_name: string
+  username: string
+  ssl_mode: string
+  status: string
+  last_error?: string | null
+  is_active: boolean
+  is_default: boolean
+  table_count: number
+  column_count: number
+  tables: string[]
+  last_synced_at?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ActiveDataSourceResponse {
+  mode: 'sandbox' | 'connected'
+  workspace_name: string
+  source_id?: string | null
+  name: string
+  db_type: string
+  host?: string | null
+  database_name?: string | null
+  table_count: number
+  tables: string[]
+  last_synced_at?: string | null
+}
+
+export interface DataSourceTestRequest {
+  db_type: 'postgresql'
+  host: string
+  port: number
+  database_name: string
+  username: string
+  password: string
+  ssl_mode: 'disable' | 'prefer' | 'require'
+}
+
+export interface DataSourceTestResponse {
+  success: boolean
+  latency_ms?: number | null
+  server_version?: string | null
+  tables_found: number
+  tables: string[]
+  error_message?: string | null
+}
+
+export interface DataSourceCreateRequest {
+  name: string
+  db_type: 'postgresql'
+  host: string
+  port: number
+  database_name: string
+  username: string
+  password: string
+  ssl_mode: 'disable' | 'prefer' | 'require'
+  set_as_active?: boolean
+}
+
+export async function fetchActiveDataSource(): Promise<ActiveDataSourceResponse> {
+  const res = await authFetch(`${API_BASE}/data-sources/active`)
+  if (!res.ok) throw new Error(`Failed to fetch active data source: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchDataSources(): Promise<DataSourcePublic[]> {
+  const res = await authFetch(`${API_BASE}/data-sources`)
+  if (!res.ok) throw new Error(`Failed to fetch data sources: ${res.status}`)
+  return res.json()
+}
+
+export async function testDataSourceConnection(payload: DataSourceTestRequest): Promise<DataSourceTestResponse> {
+  const res = await authFetch(`${API_BASE}/data-sources/test`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiRequestError(err.detail || `Test connection failed: ${res.status}`, res.status)
+  }
+  return res.json()
+}
+
+export async function createDataSource(payload: DataSourceCreateRequest): Promise<DataSourcePublic> {
+  const res = await authFetch(`${API_BASE}/data-sources`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiRequestError(err.detail || `Failed to create data source: ${res.status}`, res.status)
+  }
+  return res.json()
+}
+
+export async function activateDataSource(sourceId: string): Promise<ActiveDataSourceResponse> {
+  const res = await authFetch(`${API_BASE}/data-sources/${sourceId}/activate`, {
+    method: 'POST',
+  })
+  if (!res.ok) throw new Error(`Failed to activate data source: ${res.status}`)
+  return res.json()
+}
+
+export async function activateSandboxDataSource(): Promise<ActiveDataSourceResponse> {
+  const res = await authFetch(`${API_BASE}/data-sources/activate-sandbox`, {
+    method: 'POST',
+  })
+  if (!res.ok) throw new Error(`Failed to activate sandbox: ${res.status}`)
+  return res.json()
+}
+
+export async function syncDataSourceSchema(sourceId: string): Promise<DataSourcePublic> {
+  const res = await authFetch(`${API_BASE}/data-sources/${sourceId}/sync`, {
+    method: 'POST',
+  })
+  if (!res.ok) throw new Error(`Failed to sync data source schema: ${res.status}`)
+  return res.json()
+}
+
+export async function deleteDataSource(sourceId: string): Promise<void> {
+  const res = await authFetch(`${API_BASE}/data-sources/${sourceId}`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) throw new Error(`Failed to delete data source: ${res.status}`)
+}
+

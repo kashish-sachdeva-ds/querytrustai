@@ -1,13 +1,13 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 19 — Enterprise Multi-Tenant Workspace Governance, Dynamic Admin Role Assignment & Viewport Polish
-**Overall status:** Complete enterprise SaaS authentication, multi-tenant workspace isolation, and access governance workflow.
-- Aligned workspace creation logic with enterprise SaaS conventions: creating a company workspace permanently assigns the creator the **Workspace Administrator & Owner** role, removing confusing role choices from registration.
-- Dynamic Admin Role Assignment: Workspace Admins approving pending employee access requests in `People & access` now have an inline role selector (`[Analyst ▼]`, `[Viewer ▼]`, `[Admin ▼]`) to provision employees with the exact role needed, passing `assigned_role` through `PATCH /api/v1/admin/access-requests/{id}` and assigning them to the administrator's company tenant.
-- Tenant Profile Isolation: Fixed profile dropdown to hide "Switch demo role" sandboxes when authenticated into a custom company workspace, and added an active company workspace pill (`🏢 {user.workspace_name}`) in the main topbar.
-- Viewport & Layout Polish: Eliminated vertical scrolling overflow on login/registration views by scoping quick-fill demo cards strictly to the Sign In tab.
-All 118 pytest backend tests pass, and frontend production build compiles with 0 TypeScript errors.
+**Current milestone:** 20 — Bring Your Own Database (BYOD): Data Sources, Schema Introspection & Dual Target Execution
+**Overall status:** Complete enterprise commercial data platform architecture implemented:
+- **Bring Your Own Database (BYOD) Engine:** Workspaces can now register custom external PostgreSQL databases (`data_sources` table) with Fernet AES-symmetric encrypted credential storage, automated connection testing (measuring latency & database version with zero credentials logged), and public table/column schema introspection.
+- **Dual-Target Execution:** Workspaces seamlessly toggle between the **Evaluator Demo Sandbox** (synthetic Cisco telemetry & assets for instant zero-setup evaluation) and their **Active Enterprise Database**.
+- **Dynamic AST Governance:** Enhanced `validate_and_sanitize_sql` to dynamically accept `allowed_tables` extracted from the active data source's schema, enforcing SELECT-only constraints, row clamping, and read-only isolation across custom enterprise databases.
+- **Data Sources Frontend:** Integrated dedicated "Data sources" workbench with connection status badges, discovered tables tag clouds, quick sandbox toggling, and interactive connection testing modal.
+All 124 pytest backend tests pass in 8.30s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 

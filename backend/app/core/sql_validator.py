@@ -101,10 +101,14 @@ class SQLValidationResult:
         }
 
 
-def validate_and_sanitize_sql(sql_query: str) -> SQLValidationResult:
+def validate_and_sanitize_sql(
+    sql_query: str,
+    allowed_tables: Optional[Set[str]] = None,
+) -> SQLValidationResult:
     """Parses and validates a candidate SQL query against strict read-only governance rules.
 
     Fails closed: any parse ambiguity or unexpected node results in validation failure.
+    Supports dynamic table allowlists for custom connected databases.
     """
     if not sql_query or not sql_query.strip():
         return SQLValidationResult(
@@ -112,6 +116,8 @@ def validate_and_sanitize_sql(sql_query: str) -> SQLValidationResult:
             violations=["Empty SQL query."],
             checks=list(STANDARD_CHECKS),
         )
+
+    target_allowed = set(t.lower() for t in allowed_tables) if allowed_tables else ALLOWED_TABLES
 
     # 1. Parse using SQLGlot in PostgreSQL dialect
     try:
@@ -198,9 +204,9 @@ def validate_and_sanitize_sql(sql_query: str) -> SQLValidationResult:
 
             # Ignore CTE aliases
             if table_name not in cte_aliases and table_name:
-                if table_name not in ALLOWED_TABLES:
+                if table_name not in target_allowed:
                     violations.append(
-                        f"Table '{table_name}' is not in the approved analytics allowlist ({', '.join(sorted(ALLOWED_TABLES))})."
+                        f"Table '{table_name}' is not in the approved analytics allowlist ({', '.join(sorted(target_allowed))})."
                     )
                 else:
                     tables_found.add(table_name)

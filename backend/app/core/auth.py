@@ -121,19 +121,24 @@ def get_current_user(
     return user
 
 
-def require_role(*allowed_roles: str):
+def require_role(*allowed_roles):
     """Factory that returns a FastAPI dependency enforcing role-based access.
 
-    Usage:
-        @router.get("/admin-only", dependencies=[Depends(require_role("admin"))])
-        def admin_endpoint(current_user: User = Depends(get_current_user)):
-            ...
+    Supports both require_role("admin", "analyst") and require_role(["admin", "analyst"]).
     """
+    flattened = []
+    for r in allowed_roles:
+        if isinstance(r, (list, tuple, set)):
+            flattened.extend(r)
+        else:
+            flattened.append(r)
+    role_set = set(flattened)
+
     def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role not in allowed_roles:
+        if current_user.role not in role_set:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Insufficient permissions. Required role: {', '.join(allowed_roles)} (current: {current_user.role})",
+                detail=f"Insufficient permissions. Required role: {', '.join(sorted(role_set))} (current: {current_user.role})",
             )
         return current_user
     return role_checker

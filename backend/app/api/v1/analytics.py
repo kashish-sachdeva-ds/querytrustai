@@ -24,6 +24,8 @@ from app.core.auth import get_current_user
 from app.models.user import User
 from app.models.query_run import QueryRun, QueryFeedback
 from app.models.chat import ChatSession, ChatMessage
+from app.models.data_source import DataSource
+from sqlalchemy import create_engine
 from app.schemas.analytics import (
     PreviewRequest,
     PreviewResponse,
@@ -200,7 +202,16 @@ async def preview_natural_language_query(
     sanitized_sql = None
 
     if llm_resp.intent_status == "ready" and llm_resp.sql:
-        val_res: SQLValidationResult = validate_and_sanitize_sql(llm_resp.sql)
+        # Check active data source for current workspace
+        workspace = current_user.workspace_name or "Default Workspace"
+        active_ds = (
+            db.query(DataSource)
+            .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
+            .first()
+        )
+        custom_tables = set(active_ds.schema_cache.get("table_names", [])) if (active_ds and active_ds.schema_cache) else None
+
+        val_res: SQLValidationResult = validate_and_sanitize_sql(llm_resp.sql, allowed_tables=custom_tables)
         validation_detail = ValidationDetail(
             passed=val_res.is_valid,
             checks=val_res.checks,
@@ -371,8 +382,17 @@ def execute_previewed_query(
             detail="Only a validated, ready preview can be executed.",
         )
 
-    # Re-validate stored SQL at execution time
-    val_res = validate_and_sanitize_sql(query_run.generated_sql)
+    # Look up active data source for current workspace
+    workspace = current_user.workspace_name or "Default Workspace"
+    active_ds = (
+        db.query(DataSource)
+        .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
+        .first()
+    )
+    custom_tables = set(active_ds.schema_cache.get("table_names", [])) if (active_ds and active_ds.schema_cache) else None
+
+    # Re-validate stored SQL at execution time against active target
+    val_res = validate_and_sanitize_sql(query_run.generated_sql, allowed_tables=custom_tables)
     if not val_res.is_valid:
         query_run.status = "blocked"
         query_run.error_category = "REVALIDATION_FAILURE"
@@ -391,21 +411,36 @@ def execute_previewed_query(
     query_run.status = "executing"
     db.commit()
 
-    # Execute via dedicated analytics_reader role in read-only transaction
+    # Execute via dedicated analytics_reader role or active connected database in read-only transaction
     start_time = time.perf_counter()
     rows: List[Dict[str, Any]] = []
     columns: List[str] = []
     truncated = False
+    custom_engine = None
 
     try:
-        try:
-            conn = readonly_engine.connect()
-        except Exception as conn_err:
-            logger.warning(
-                f"Dedicated readonly_engine connection failed ({conn_err}); "
-                "falling back to primary engine with SET TRANSACTION READ ONLY."
+        if active_ds:
+            from app.services.data_source_service import decrypt_secret, build_connection_uri
+            pw = decrypt_secret(active_ds.encrypted_password)
+            uri = build_connection_uri(
+                host=active_ds.host,
+                port=active_ds.port,
+                database_name=active_ds.database_name,
+                username=active_ds.username,
+                password=pw,
+                ssl_mode=active_ds.ssl_mode,
             )
-            conn = engine.connect()
+            custom_engine = create_engine(uri, connect_args={"connect_timeout": 5})
+            conn = custom_engine.connect()
+        else:
+            try:
+                conn = readonly_engine.connect()
+            except Exception as conn_err:
+                logger.warning(
+                    f"Dedicated readonly_engine connection failed ({conn_err}); "
+                    "falling back to primary engine with SET TRANSACTION READ ONLY."
+                )
+                conn = engine.connect()
 
         with conn:
             # Set statement timeout to configured limit (default 5s)
@@ -468,6 +503,9 @@ def execute_previewed_query(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to execute query in read-only transaction.",
         )
+    finally:
+        if custom_engine is not None:
+            custom_engine.dispose()
 
 
 @router.post("/feedback", response_model=FeedbackResponse)

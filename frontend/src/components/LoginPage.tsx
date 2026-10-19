@@ -38,8 +38,11 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
-  const { login } = useAuth()
+  const { login, register } = useAuth()
   const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
+
+  // Auth Mode: 'signin' | 'register'
+  const [authMode, setAuthMode] = useState<'signin' | 'register'>('signin')
 
   // Unique IDs for accessibility
   const emailInputId = useId()
@@ -47,12 +50,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   const emailErrorId = useId()
   const passwordErrorId = useId()
 
-  // Form State
+  // Sign In Form State
   const [formValues, setFormValues] = useState<LoginFormValues>({
     email: '',
     password: '',
     rememberMe: false,
   })
+
+  // Register Form State (Create Company Workspace)
+  const [registerValues, setRegisterValues] = useState({
+    fullName: '',
+    workspaceName: '',
+    email: '',
+    password: '',
+    role: 'analyst' as 'admin' | 'analyst' | 'viewer',
+  })
+  const [registerErrors, setRegisterErrors] = useState<{
+    fullName?: string
+    workspaceName?: string
+    email?: string
+    password?: string
+  }>({})
+  const [registerLoading, setRegisterLoading] = useState(false)
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
 
   // UI Interactive States
   const [showPassword, setShowPassword] = useState(false)
@@ -93,6 +113,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
   // Dynamic Password Strength
   const passwordStrength = calculatePasswordStrength(formValues.password)
+  const registerPasswordStrength = calculatePasswordStrength(registerValues.password)
 
   // Real-time Field Handlers
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,6 +221,64 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Register Form Submission (Create Workspace)
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const newErrors: Record<string, string> = {}
+    if (!registerValues.workspaceName.trim()) {
+      newErrors.workspaceName = 'Company or workspace name is required.'
+    }
+    if (!registerValues.fullName.trim()) {
+      newErrors.fullName = 'Full name is required.'
+    }
+    const emailErr = validateEmail(registerValues.email)
+    if (emailErr) {
+      newErrors.email = emailErr
+    }
+    if (!registerValues.password || registerValues.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters.'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setRegisterErrors(newErrors)
+      setGlobalError({
+        type: 'invalid_credentials',
+        message: 'Please complete all required fields to register your workspace.',
+      })
+      return
+    }
+
+    setRegisterLoading(true)
+    setGlobalError(null)
+    setRegisterErrors({})
+
+    try {
+      await register({
+        full_name: registerValues.fullName.trim(),
+        workspace_name: registerValues.workspaceName.trim(),
+        email: registerValues.email.trim(),
+        password: registerValues.password,
+        role: registerValues.role,
+      })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Registration failed.'
+      setGlobalError({
+        type: 'invalid_credentials',
+        message: msg,
+        actionLabel: msg.includes('already exists') ? 'Sign in with this email →' : undefined,
+        onAction: msg.includes('already exists')
+          ? () => {
+              setAuthMode('signin')
+              setFormValues((prev) => ({ ...prev, email: registerValues.email }))
+              setGlobalError(null)
+            }
+          : undefined,
+      })
+    } finally {
+      setRegisterLoading(false)
     }
   }
 
@@ -351,9 +430,44 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             </button>
           )}
 
+          {/* Top Auth Mode Tabs: Sign In vs Create Workspace */}
+          <div className="auth-mode-tabs" role="tablist" aria-label="Authentication Options">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={authMode === 'signin'}
+              className={`auth-tab-btn ${authMode === 'signin' ? 'active' : ''}`}
+              onClick={() => {
+                setAuthMode('signin')
+                setGlobalError(null)
+              }}
+            >
+              <KeyRound size={14} />
+              <span>Sign In</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={authMode === 'register'}
+              className={`auth-tab-btn ${authMode === 'register' ? 'active' : ''}`}
+              onClick={() => {
+                setAuthMode('register')
+                setGlobalError(null)
+                setStatusNotice(null)
+              }}
+            >
+              <Building size={14} />
+              <span>Create Workspace</span>
+            </button>
+          </div>
+
           <header className="login-card-header">
-            <h2>Sign in to workspace</h2>
-            <p>Sign in with your work email to access safe network analytics.</p>
+            <h2>{authMode === 'signin' ? 'Sign in to workspace' : 'Create company workspace'}</h2>
+            <p>
+              {authMode === 'signin'
+                ? 'Sign in with your work email to access safe read-only analytics.'
+                : 'Register your organization. Accounts and salted bcrypt password hashes are stored in PostgreSQL.'}
+            </p>
           </header>
 
           {/* Status Notice (e.g. Access Request Pending) */}
@@ -409,124 +523,333 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             </div>
           )}
 
-          {/* Authentication Form */}
-          <form onSubmit={handleSubmit} className="login-form" noValidate>
-            {/* Email Field */}
-            <div className={`form-group ${errors.email ? 'has-error' : ''}`}>
-              <label htmlFor={emailInputId} className="form-label">
-                Work email
-              </label>
-              <div className="input-with-icon">
-                <Mail size={16} className="input-icon" aria-hidden="true" />
-                <input
-                  id={emailInputId}
-                  type="email"
-                  value={formValues.email}
-                  onChange={handleEmailChange}
-                  onBlur={handleEmailBlur}
-                  placeholder="name@querytrust.local"
-                  className="form-input"
-                  autoComplete="username"
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? emailErrorId : undefined}
-                  required
-                />
-              </div>
-              {errors.email && (
-                <div id={emailErrorId} className="inline-field-error" role="alert">
-                  <span className="error-bullet" />
-                  <span>{errors.email}</span>
+          {/* Create Workspace / Registration Form */}
+          {authMode === 'register' && (
+            <form onSubmit={handleRegisterSubmit} className="login-form" noValidate>
+              {/* Workspace / Company Name */}
+              <div className={`form-group ${registerErrors.workspaceName ? 'has-error' : ''}`}>
+                <label className="form-label">Company or workspace name</label>
+                <div className="input-with-icon">
+                  <Building size={16} className="input-icon" aria-hidden="true" />
+                  <input
+                    type="text"
+                    value={registerValues.workspaceName}
+                    onChange={(e) => {
+                      setRegisterValues((prev) => ({ ...prev, workspaceName: e.target.value }))
+                      if (registerErrors.workspaceName) setRegisterErrors((p) => ({ ...p, workspaceName: undefined }))
+                    }}
+                    placeholder="e.g., Acme Networks, Cisco Labs, Tech Corp"
+                    className="form-input"
+                    required
+                  />
                 </div>
-              )}
-            </div>
-
-            {/* Password Field */}
-            <div className={`form-group ${errors.password ? 'has-error' : ''}`}>
-              <div className="form-label-row">
-                <label htmlFor={passwordInputId} className="form-label">
-                  Password
-                </label>
+                {registerErrors.workspaceName && (
+                  <div className="inline-field-error" role="alert">
+                    <span className="error-bullet" />
+                    <span>{registerErrors.workspaceName}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="input-with-icon">
-                <Lock size={16} className="input-icon" aria-hidden="true" />
-                <input
-                  id={passwordInputId}
-                  type={showPassword ? 'text' : 'password'}
-                  value={formValues.password}
-                  onChange={handlePasswordChange}
-                  onBlur={handlePasswordBlur}
-                  placeholder="Password"
-                  className="form-input"
-                  autoComplete="current-password"
-                  aria-invalid={!!errors.password}
-                  aria-describedby={errors.password ? passwordErrorId : undefined}
-                  required
+              {/* Full Name */}
+              <div className={`form-group ${registerErrors.fullName ? 'has-error' : ''}`}>
+                <label className="form-label">Full name</label>
+                <div className="input-with-icon">
+                  <UserIcon size={16} className="input-icon" aria-hidden="true" />
+                  <input
+                    type="text"
+                    value={registerValues.fullName}
+                    onChange={(e) => {
+                      setRegisterValues((prev) => ({ ...prev, fullName: e.target.value }))
+                      if (registerErrors.fullName) setRegisterErrors((p) => ({ ...p, fullName: undefined }))
+                    }}
+                    placeholder="e.g., Alex Carter"
+                    className="form-input"
+                    required
+                  />
+                </div>
+                {registerErrors.fullName && (
+                  <div className="inline-field-error" role="alert">
+                    <span className="error-bullet" />
+                    <span>{registerErrors.fullName}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Work Email */}
+              <div className={`form-group ${registerErrors.email ? 'has-error' : ''}`}>
+                <label className="form-label">Work email</label>
+                <div className="input-with-icon">
+                  <Mail size={16} className="input-icon" aria-hidden="true" />
+                  <input
+                    type="email"
+                    value={registerValues.email}
+                    onChange={(e) => {
+                      setRegisterValues((prev) => ({ ...prev, email: e.target.value }))
+                      if (registerErrors.email) setRegisterErrors((p) => ({ ...p, email: undefined }))
+                    }}
+                    placeholder="name@company.com"
+                    className="form-input"
+                    required
+                  />
+                </div>
+                {registerErrors.email && (
+                  <div className="inline-field-error" role="alert">
+                    <span className="error-bullet" />
+                    <span>{registerErrors.email}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Password */}
+              <div className={`form-group ${registerErrors.password ? 'has-error' : ''}`}>
+                <label className="form-label">Password</label>
+                <div className="input-with-icon">
+                  <Lock size={16} className="input-icon" aria-hidden="true" />
+                  <input
+                    type={showRegisterPassword ? 'text' : 'password'}
+                    value={registerValues.password}
+                    onChange={(e) => {
+                      setRegisterValues((prev) => ({ ...prev, password: e.target.value }))
+                      if (registerErrors.password) setRegisterErrors((p) => ({ ...p, password: undefined }))
+                    }}
+                    placeholder="Create a strong password (min 6 chars)"
+                    className="form-input"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                    title={showRegisterPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showRegisterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {registerErrors.password && (
+                  <div className="inline-field-error" role="alert">
+                    <span className="error-bullet" />
+                    <span>{registerErrors.password}</span>
+                  </div>
+                )}
+                <PasswordStrengthMeter
+                  strength={registerPasswordStrength}
+                  passwordLength={registerValues.password.length}
                 />
+              </div>
+
+              {/* Initial Role */}
+              <div className="form-group">
+                <label className="form-label">Initial workspace role</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setRegisterValues((p) => ({ ...p, role: 'analyst' }))}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: `1px solid ${registerValues.role === 'analyst' ? 'var(--qt-primary)' : 'var(--qt-border)'}`,
+                      background: registerValues.role === 'analyst' ? 'var(--qt-primary-soft, rgba(59, 130, 246, 0.12))' : 'var(--qt-surface)',
+                      color: registerValues.role === 'analyst' ? 'var(--qt-primary)' : 'var(--qt-text)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    Analyst (Recommended)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegisterValues((p) => ({ ...p, role: 'admin' }))}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: `1px solid ${registerValues.role === 'admin' ? 'var(--qt-primary)' : 'var(--qt-border)'}`,
+                      background: registerValues.role === 'admin' ? 'var(--qt-primary-soft, rgba(59, 130, 246, 0.12))' : 'var(--qt-surface)',
+                      color: registerValues.role === 'admin' ? 'var(--qt-primary)' : 'var(--qt-text)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    Admin (Workspace Owner)
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={registerLoading}
+                className="login-submit-btn"
+              >
+                {registerLoading ? (
+                  <>
+                    <span className="loading-spinner-inline" aria-hidden="true" />
+                    <span>Creating workspace…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Create workspace & Sign In</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+
+              <div className="login-request-access-row" style={{ marginTop: '0.75rem' }}>
+                Already have an account?{' '}
                 <button
                   type="button"
-                  className="password-toggle-btn"
-                  onClick={() => setShowPassword(!showPassword)}
-                  title={showPassword ? 'Hide password' : 'Show password'}
-                  aria-label={showPassword ? 'Hide password characters' : 'Show password characters'}
+                  className="login-request-access-btn"
+                  onClick={() => {
+                    setAuthMode('signin')
+                    setGlobalError(null)
+                  }}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  Sign in instead
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Sign In Form */}
+          {authMode === 'signin' && (
+            <>
+              <form onSubmit={handleSubmit} className="login-form" noValidate>
+                {/* Email Field */}
+                <div className={`form-group ${errors.email ? 'has-error' : ''}`}>
+                  <label htmlFor={emailInputId} className="form-label">
+                    Work email
+                  </label>
+                  <div className="input-with-icon">
+                    <Mail size={16} className="input-icon" aria-hidden="true" />
+                    <input
+                      id={emailInputId}
+                      type="email"
+                      value={formValues.email}
+                      onChange={handleEmailChange}
+                      onBlur={handleEmailBlur}
+                      placeholder="name@querytrust.local"
+                      className="form-input"
+                      autoComplete="username"
+                      aria-invalid={!!errors.email}
+                      aria-describedby={errors.email ? emailErrorId : undefined}
+                      required
+                    />
+                  </div>
+                  {errors.email && (
+                    <div id={emailErrorId} className="inline-field-error" role="alert">
+                      <span className="error-bullet" />
+                      <span>{errors.email}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Password Field */}
+                <div className={`form-group ${errors.password ? 'has-error' : ''}`}>
+                  <div className="form-label-row">
+                    <label htmlFor={passwordInputId} className="form-label">
+                      Password
+                    </label>
+                  </div>
+
+                  <div className="input-with-icon">
+                    <Lock size={16} className="input-icon" aria-hidden="true" />
+                    <input
+                      id={passwordInputId}
+                      type={showPassword ? 'text' : 'password'}
+                      value={formValues.password}
+                      onChange={handlePasswordChange}
+                      onBlur={handlePasswordBlur}
+                      placeholder="Password"
+                      className="form-input"
+                      autoComplete="current-password"
+                      aria-invalid={!!errors.password}
+                      aria-describedby={errors.password ? passwordErrorId : undefined}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowPassword(!showPassword)}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                      aria-label={showPassword ? 'Hide password characters' : 'Show password characters'}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+
+                  {errors.password && (
+                    <div id={passwordErrorId} className="inline-field-error" role="alert">
+                      <span className="error-bullet" />
+                      <span>{errors.password}</span>
+                    </div>
+                  )}
+
+                  {/* Dynamic Password Strength Meter */}
+                  <PasswordStrengthMeter
+                    strength={passwordStrength}
+                    passwordLength={formValues.password.length}
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitDisabled}
+                  className="login-submit-btn"
+                  id="login-submit-button"
+                >
+                  {loading ? (
+                    <>
+                      <span className="loading-spinner-inline" aria-hidden="true" />
+                      <span>Signing in…</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign in</span>
+                      <ArrowRight size={16} />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Action Links */}
+              <div className="login-request-access-row">
+                <span>Need a new company workspace? </span>
+                <button
+                  type="button"
+                  className="login-request-access-btn"
+                  onClick={() => {
+                    setAuthMode('register')
+                    setGlobalError(null)
+                  }}
+                >
+                  Create workspace →
                 </button>
               </div>
 
-              {errors.password && (
-                <div id={passwordErrorId} className="inline-field-error" role="alert">
-                  <span className="error-bullet" />
-                  <span>{errors.password}</span>
-                </div>
-              )}
-
-              {/* Dynamic Password Strength Meter */}
-              <PasswordStrengthMeter
-                strength={passwordStrength}
-                passwordLength={formValues.password.length}
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitDisabled}
-              className="login-submit-btn"
-              id="login-submit-button"
-            >
-              {loading ? (
-                <>
-                  <span className="loading-spinner-inline" aria-hidden="true" />
-                  <span>Signing in…</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign in</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Request Access Row */}
-          <div className="login-request-access-row">
-            Need an account?{' '}
-            <button
-              type="button"
-              className="login-request-access-btn"
-              onClick={() => {
-                setShowRequestAccess(true)
-                setRequestSubmitted(false)
-                setRequestError(null)
-                if (formValues.email) {
-                  setRequestForm((prev) => ({ ...prev, email: prev.email || formValues.email }))
-                }
-              }}
-            >
-              Request access
-            </button>
-          </div>
+              <div className="login-request-access-row" style={{ marginTop: '0.25rem', fontSize: '0.75rem', opacity: 0.85 }}>
+                Joining an existing organization?{' '}
+                <button
+                  type="button"
+                  className="login-request-access-btn"
+                  onClick={() => {
+                    setShowRequestAccess(true)
+                    setRequestSubmitted(false)
+                    setRequestError(null)
+                    if (formValues.email) {
+                      setRequestForm((prev) => ({ ...prev, email: prev.email || formValues.email }))
+                    }
+                  }}
+                >
+                  Request access
+                </button>
+              </div>
+            </>
+          )}
 
           {/* ─── 1-Click Fast Demo Credentials ─── */}
           {isDemoMode && (

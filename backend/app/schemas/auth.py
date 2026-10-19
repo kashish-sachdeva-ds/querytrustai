@@ -23,6 +23,29 @@ class LoginRequest(StrictRequestModel):
         if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
             raise ValueError("Email address is invalid")
         return normalized
+ 
+ 
+class RegisterRequest(StrictRequestModel):
+    full_name: str = Field(..., min_length=2, max_length=255, description="User full name")
+    email: str = Field(..., min_length=3, max_length=255, description="Work email address")
+    password: str = Field(..., min_length=6, max_length=255, description="Password (min 6 characters)")
+    workspace_name: str = Field(..., min_length=2, max_length=255, description="Company or workspace name")
+    role: Optional[Literal["admin", "analyst", "viewer"]] = Field("analyst", description="Desired initial role")
+
+    @field_validator("email")
+    @classmethod
+    def email_must_be_well_formed(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
+            raise ValueError("Email address is invalid")
+        return normalized
+
+    @field_validator("password")
+    @classmethod
+    def password_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Password must not be blank")
+        return value
 
 
 class UserPublic(BaseModel):
@@ -31,6 +54,7 @@ class UserPublic(BaseModel):
     email: str
     display_name: str
     role: str
+    workspace_name: Optional[str] = "Default Workspace"
     is_active: bool
 
     class Config:
@@ -49,6 +73,7 @@ class UserMeResponse(BaseModel):
     email: str
     display_name: str
     role: str
+    workspace_name: Optional[str] = "Default Workspace"
     is_active: bool
     environment: str
     llm_provider: str

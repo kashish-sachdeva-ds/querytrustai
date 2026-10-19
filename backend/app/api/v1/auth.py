@@ -6,11 +6,12 @@ from app.config import get_settings, Settings
 from app.database import get_db
 from app.models.user import User
 from app.models.access_request import AccessRequest
-from app.core.security import verify_password
+from app.core.security import verify_password, get_password_hash
 from app.core.auth import create_access_token, get_current_user
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
+    RegisterRequest,
     UserMeResponse,
     UserPublic,
     AccessRequestCreate,
@@ -107,6 +108,64 @@ def login(
     )
 
 
+@router.post("/register", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
+def register(
+    request: RegisterRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    """Register a new user account with their company workspace, hashed password, and issue JWT."""
+    clean_email = request.email.strip().lower()
+    existing = db.query(User).filter(func.lower(User.email) == clean_email).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email address already exists. Please sign in instead.",
+        )
+
+    # Hash the user's chosen password with bcrypt
+    hashed = get_password_hash(request.password)
+    new_user = User(
+        email=clean_email,
+        display_name=request.full_name.strip(),
+        password_hash=hashed,
+        role=request.role or "analyst",
+        workspace_name=request.workspace_name.strip(),
+        is_active=True,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    # Clean up any pending access request for this email
+    pending = db.query(AccessRequest).filter(func.lower(AccessRequest.email) == clean_email).first()
+    if pending:
+        pending.status = "approved"
+        db.commit()
+
+    # Automatically log the user in with a signed JWT
+    access_token = create_access_token(
+        user_id=str(new_user.id),
+        role=new_user.role,
+        settings=settings,
+    )
+    response.set_cookie(
+        key="querytrust_access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.ENVIRONMENT != "development",
+        samesite="strict",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        path="/api/v1",
+    )
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserPublic.model_validate(new_user),
+    )
+
+
 @router.get("/me", response_model=UserMeResponse)
 def get_current_user_profile(
     current_user: User = Depends(get_current_user),
@@ -118,6 +177,7 @@ def get_current_user_profile(
         email=current_user.email,
         display_name=current_user.display_name,
         role=current_user.role,
+        workspace_name=current_user.workspace_name or "Default Workspace",
         is_active=current_user.is_active,
         environment=settings.ENVIRONMENT,
         llm_provider=settings.LLM_PROVIDER,

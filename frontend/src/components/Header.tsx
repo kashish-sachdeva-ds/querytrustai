@@ -14,6 +14,7 @@ import {
   Check,
   Loader2,
   UserCheck,
+  Building,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -313,9 +314,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
               {initials}
             </div>
 
-            {/* Rule 2: Show user name only (no role tag in top bar) */}
+            {/* Rule 2: Show user name and workspace */}
             <div className="user-info-text">
               <span className="user-name">{user?.display_name || 'User'}</span>
+              {user?.workspace_name && (
+                <span className="user-workspace-badge" style={{ fontSize: '0.6875rem', color: 'var(--qt-muted)', display: 'block', lineHeight: 1.2 }}>
+                  {user.workspace_name}
+                </span>
+              )}
             </div>
 
             <ChevronDown
@@ -352,6 +358,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
                     </div>
                     {/* Rule 2: Normal font for email */}
                     <p className="dropdown-email">{user?.email}</p>
+                    {user?.workspace_name && (
+                      <p className="dropdown-workspace" style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--qt-primary)', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
+                        <Building size={12} />
+                        <span>{user.workspace_name}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

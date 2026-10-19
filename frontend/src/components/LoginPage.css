@@ -309,6 +309,61 @@
   color: #ff5a14;
 }
 
+/* ─── Mode Tabs: Sign In vs Create Workspace ─── */
+.auth-mode-tabs {
+  display: flex;
+  background: var(--qt-surface, #141722);
+  border: 1px solid var(--qt-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--qt-radius-control, 8px);
+  padding: 4px;
+  margin-bottom: clamp(0.75rem, 1.5vh, 1.25rem);
+  gap: 4px;
+  width: 100%;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: calc(var(--qt-radius-control, 8px) - 2px);
+  border: none;
+  background: transparent;
+  color: var(--qt-muted, #94a3b8);
+  cursor: pointer;
+  transition: all 140ms ease;
+  font-family: inherit;
+}
+
+.auth-tab-btn:hover {
+  color: var(--qt-ink, #ffffff);
+}
+
+.auth-tab-btn.active {
+  background: var(--qt-surface-elevated, #242938);
+  color: var(--qt-ink, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="light"] .auth-mode-tabs {
+  background: #f1ede4;
+  border-color: #e5dfd3;
+}
+
+[data-theme="light"] .auth-tab-btn {
+  color: #64748b;
+}
+
+[data-theme="light"] .auth-tab-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .login-card-header {
   margin-bottom: clamp(0.75rem, 1.4vh, 1.15rem);
   padding-top: 0.25rem;

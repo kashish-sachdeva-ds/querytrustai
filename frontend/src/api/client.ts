@@ -43,6 +43,7 @@ export interface UserPublic {
   email: string
   display_name: string
   role: 'admin' | 'analyst' | 'viewer'
+  workspace_name?: string
   is_active: boolean
 }
 
@@ -51,6 +52,7 @@ export interface UserMeResponse {
   email: string
   display_name: string
   role: 'admin' | 'analyst' | 'viewer'
+  workspace_name?: string
   is_active: boolean
   environment: string
   llm_provider: string
@@ -418,6 +420,49 @@ export async function apiLogin(email: string, password: string): Promise<LoginRe
     }
     return data
   })
+}
+
+export interface RegisterPayload {
+  full_name: string
+  email: string
+  password: string
+  workspace_name: string
+  role?: 'admin' | 'analyst' | 'viewer'
+}
+
+export async function apiRegister(payload: RegisterPayload): Promise<LoginResponse> {
+  const cleanEmail = requireText(payload.email, 'Email', 3, 255).toLowerCase()
+  const cleanPassword = requireText(payload.password, 'Password', 6, 255)
+  const cleanName = requireText(payload.full_name, 'Full Name', 2, 255)
+  const cleanWorkspace = requireText(payload.workspace_name, 'Workspace Name', 2, 255)
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    throw new ApiRequestError('Enter a valid work email address.')
+  }
+
+  const res = await requestWithTimeout(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: cleanEmail,
+      password: cleanPassword,
+      full_name: cleanName,
+      workspace_name: cleanWorkspace,
+      role: payload.role || 'analyst',
+    }),
+    credentials: 'same-origin',
+  })
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new ApiRequestError(errorData.detail || 'Registration failed.', res.status, res.status >= 500)
+  }
+
+  const data: LoginResponse = await res.json()
+  if (data.access_token) {
+    setStoredToken(data.access_token)
+  }
+  return data
 }
 
 export async function apiGetMe(): Promise<UserMeResponse> {

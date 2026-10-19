@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import {
   type UserMeResponse,
+  type RegisterPayload,
   apiGetMe,
   apiLogin,
+  apiRegister,
   apiLogout,
   clearStoredToken,
 } from '../api/client'
@@ -13,6 +15,7 @@ interface AuthContextType {
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
+  register: (payload: RegisterPayload) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -84,6 +87,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const register = async (payload: RegisterPayload) => {
+    setError(null)
+    try {
+      await apiRegister(payload)
+      const me = await apiGetMe()
+      setUser(me)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Registration failed'
+      setError(msg)
+      throw err
+    }
+  }
+
   const logout = async () => {
     setIsLoading(true)
     try {
@@ -103,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         error,
         login,
+        register,
         logout,
         refreshUser,
       }}

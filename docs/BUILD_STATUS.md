@@ -928,3 +928,35 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
    - Enhanced `_recommend_chart` to support 2-column distributions up to 100 rows for bar charts.
    - Added candidate dimension suggestions (`x_axis`) and descriptive titles on multi-attribute queries so the frontend receives backend dimension recommendations while preserving default table viewing for raw record queries.
    - Added natural-language intent detection for query prompts containing `chart`, `graph`, `breakdown`, or `distribution` to automatically initialize the view mode to `chart`.
+
+## Milestone 18 — Self-Serve Company Workspace Creation, PostgreSQL Bcrypt Hashing & Unified Authentication Portal — 2026-10-19
+
+**Status:** Completed — 117 backend tests passing, frontend production build verified (`tsc -b && vite build` passing with 0 errors), end-to-end browser verification verified with subagent recording.
+
+### Summary of Enhancements:
+1. **Self-Serve Company Workspace Creation & Direct Registration Backend (`models/user.py`, `schemas/auth.py`, `api/v1/auth.py`):**
+   - Added `workspace_name` column to `users` PostgreSQL table (`VARCHAR(255) DEFAULT 'Default Workspace'`).
+   - Implemented `RegisterRequest` schema supporting `workspace_name`, `email`, `full_name`, `password` (minimum 8 characters), and `role` (`analyst` or `viewer`).
+   - Implemented `POST /api/v1/auth/register` endpoint:
+     - Enforces email uniqueness across the platform.
+     - Hashes user password with industry-standard salted bcrypt (`rounds=12`) via Passlib/Bcrypt.
+     - Inserts the new user into PostgreSQL with active status (`is_active = True`).
+     - Auto-resolves any prior pending access requests for the registered email to `approved`.
+     - Issues an authenticated `HttpOnly`, `SameSite=Strict` JWT session cookie and returns full `UserMeResponse` with `workspace_name`.
+2. **Automated Backend Regression Test Suite (`tests/test_auth.py`):**
+   - Added `test_register_creates_account_with_hashed_password` verifying user record creation, active status, bcrypt password hash format (`$2b$12$...`), workspace name persistence, and instant authenticated login response.
+   - All 117 tests in the backend test suite pass cleanly (`117 passed in 4.90s`).
+3. **Unified Authentication Portal (`LoginPage.tsx`, `LoginPage.css`):**
+   - Redesigned the authentication screen with a two-tab switcher:
+     - **Tab 1: "Sign In"**: Direct work email + password sign-in, with 1-click demo persona quick-fills (`Analyst`, `Viewer`, `Admin`) for rapid evaluator inspection.
+     - **Tab 2: "Create Workspace"**: Full self-serve company onboarding form featuring Company/Workspace Name, Full Name, Work Email, Role Selection, and Password with dynamic real-time strength meter.
+   - Submitting workspace creation immediately provisions the workspace and account in PostgreSQL, logs the user in, and redirects to their new workspace dashboard.
+4. **Active Workspace Identity in Header (`Header.tsx`):**
+   - Displays the active company workspace name in a dedicated pill badge in the top utility header (`[Building2 icon] Workspace: {user.workspace_name}`).
+   - Displays workspace name inside the user profile dropdown menu for persistent operational clarity.
+5. **End-to-End Browser Subagent Verification:**
+   - Navigated to `http://localhost:5173/?tab=login`.
+   - Selected "Create Workspace" tab and registered `"Cisco Networks Lab"` for `"Kashish Sachdeva"` (`kashish.sachdeva@ciscolabs.internal`).
+   - Verified immediate login into dashboard overview with `"Workspace: Cisco Networks Lab"` displayed in the header.
+   - Tested sign out and verified subsequent sign in with newly created email and password from PostgreSQL.
+

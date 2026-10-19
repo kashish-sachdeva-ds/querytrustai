@@ -1,12 +1,19 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-10-19  
-**Current milestone:** 23 — Dynamic Schema-Aware Starter Prompts & Connected Workspace Intelligence
-**Overall status:** ThoughtSpot & Snowflake Cortex-grade conversational data discovery implemented:
-- **Dynamic Schema-Aware Prompts (`AskDataView.tsx`):** Conversational starter chips now dynamically introspect the active data source (`fetchActiveDataSource`). When connected to a custom company database, queries auto-tailor to discovered business tables (e.g., sample table rows, record counts, and multi-table insights) instead of hardcoding Cisco router queries.
-- **Dynamic Safety Proof Banner:** The "Try to break it" destructive injection demo automatically targets the active schema table, proving AST safety against both custom enterprise tables and demo fixtures.
-- **Enterprise Workspace Overview (`OverviewView.tsx`):** Added a top enterprise workspace hero card displaying connection status, discovered table counts, engine type, and 1-click query shortcuts.
-All 127 pytest backend tests pass in 11.37s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Last updated:** 2026-10-20  
+**Current milestone:** 24 — Enterprise B2B SaaS Parity Suite (ThoughtSpot, Metabase, Snowflake Cortex, Seek AI)  
+**Overall status:** Complete implementation of all 9 B2B enterprise tasks:
+1. ✅ **Auth Hygiene:** Removed password strength meter from Sign In; isolated strictly to account creation.
+2. ✅ **Employee Onboarding (`auth.py`):** Implemented `POST /api/v1/auth/join-workspace` for team member onboarding into existing company workspaces as Analyst or Viewer.
+3. ✅ **Team Invite Drawer (`AdminView.tsx`, `admin.py`):** Added `+ Invite Member` modal in People & Access generating 1-click shareable onboarding URLs (`?join=WorkspaceName`).
+4. ✅ **Enterprise Auth Aesthetics (`LoginPage.tsx`):** Converted demo quick-fills into an unobtrusive collapsible disclosure accordion (`✨ Explore Demo Sandbox Personas [3 pre-seeded roles] ▾`).
+5. ✅ **Data Catalog & Interactive Schema Explorer (`DevicesView.tsx`, `Sidebar.tsx`):** Renamed "Equipment" to "Data catalog" with segmented toggle (`[ 🏢 Hardware & Asset Inventory ]` | `[ 📑 Schema & Data Model ]`), column data types, PK/FK indicators, and 1-click "Query this table" shortcuts.
+6. ✅ **Enterprise Workspace Hero Banner (`OverviewView.tsx`):** Active database target awareness on Home overview with live connection pulse, table/column counts, and 1-click query suggestions.
+7. ✅ **Schema-Aware Dynamic Prompts (`AskDataView.tsx`):** Dynamic natural language starter chips and destructive injection demo adapting in real-time to active database tables.
+8. ✅ **Enterprise Role Governance (`Header.tsx`):** Client-side role switching restricted strictly to `@querytrust.local` demo sandbox personas; company workspace members receive verified enterprise governance badges.
+9. ✅ **Sidebar Flex & Responsive Scroll Layout (`Sidebar.tsx`, `design-system.css`, `index.css`):** Pinned Brand header/CTA and Safety Shield footer with independent `.sidebar-scrollable-body` container.
+
+**Automated Test Pass:** 127/127 pytest backend tests pass in 11.41s. Frontend production build compiles with 0 TypeScript/Vite errors in 4.26s.
 
 ---
 

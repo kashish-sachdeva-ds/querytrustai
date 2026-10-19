@@ -384,8 +384,9 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 320px;
-  min-width: 310px;
+  width: 350px;
+  min-width: 320px;
+  max-width: min(390px, calc(100vw - 1.5rem));
   background: var(--qt-surface);
   border: 1px solid var(--qt-border);
   border-radius: var(--qt-radius-inner, 8px);
@@ -507,18 +508,31 @@
   background: var(--qt-canvas, #FAF8F5);
   border: 1px solid var(--qt-border);
   border-radius: 6px;
-  padding: 0.55rem 0.65rem;
+  padding: 0.65rem 0.75rem;
   margin-top: 0.35rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.45rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .dropdown-permissions-panel {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .dropdown-permissions-title {
   font-family: var(--font-sans);
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.73rem;
+  font-weight: 700;
   color: var(--qt-ink);
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .dropdown-permissions-list {
@@ -527,17 +541,35 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.45rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dropdown-permission-item {
   display: flex;
   align-items: flex-start;
-  gap: 0.4rem;
+  gap: 0.45rem;
   font-family: var(--font-sans);
-  font-size: 0.71rem;
+  font-size: 0.72rem;
   color: var(--qt-text, #4B5563);
-  line-height: 1.35;
+  line-height: 1.4;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: normal !important;
+}
+
+[data-theme="dark"] .dropdown-permission-item {
+  color: #a8a29e;
+}
+
+.dropdown-permission-item span {
+  flex: 1;
+  min-width: 0;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.4;
 }
 
 .perm-check-icon {

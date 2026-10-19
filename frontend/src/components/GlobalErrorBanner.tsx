@@ -13,6 +13,8 @@ export interface GlobalErrorBannerProps {
   message?: string
   onDismiss?: () => void
   onRetry?: () => void
+  actionLabel?: string
+  onAction?: () => void
 }
 
 const ERROR_CONFIGS: Record<
@@ -50,6 +52,8 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
   message,
   onDismiss,
   onRetry,
+  actionLabel,
+  onAction,
 }) => {
   const config = type !== 'custom' ? ERROR_CONFIGS[type] : null
   const displayTitle = config ? config.title : 'Authentication Notice'
@@ -70,17 +74,42 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
         <h4 className="banner-title">{displayTitle}</h4>
         <p className="banner-message">{displayMessage}</p>
 
-        {onRetry && (
-          <button
-            type="button"
-            className="banner-retry-btn"
-            onClick={onRetry}
-            aria-label="Retry authentication"
-          >
-            <RefreshCw size={12} className="spin-on-hover" />
-            <span>Retry Connection</span>
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: onAction || onRetry ? '0.5rem' : 0, flexWrap: 'wrap' }}>
+          {onAction && actionLabel && (
+            <button
+              type="button"
+              className="banner-action-btn"
+              onClick={onAction}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '4px 10px',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                color: '#fff',
+                backgroundColor: 'var(--qt-accent, #ff5a14)',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              <span>{actionLabel}</span>
+            </button>
+          )}
+
+          {onRetry && (
+            <button
+              type="button"
+              className="banner-retry-btn"
+              onClick={onRetry}
+              aria-label="Retry authentication"
+            >
+              <RefreshCw size={12} className="spin-on-hover" />
+              <span>Retry Connection</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {onDismiss && (

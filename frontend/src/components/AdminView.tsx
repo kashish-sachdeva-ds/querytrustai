@@ -125,7 +125,7 @@ export const AdminView: React.FC = () => {
         setUsers(usersData)
         setNotification({
           type: 'success',
-          message: `Approved access for ${updated.full_name} (${updated.email}). Provisioned ${updated.role_requested} account with hashed password.`,
+          message: `Approved access for ${updated.full_name} (${updated.email}). Provisioned ${updated.role_requested} account (initial password: WelcomePass123!).`,
         })
       } else {
         setNotification({

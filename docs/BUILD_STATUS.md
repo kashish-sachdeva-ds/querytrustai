@@ -1,8 +1,8 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 14 — Production Cloud Read-Only Resiliency & Header UI Polish
-**Overall status:** Complete enterprise SaaS authentication, read-only analytics execution, and governance workflow. Fixed cloud deployment read-only database reader connection fallback for platforms like Render/Neon/Supabase where dedicated `analytics_reader` roles are not pre-configured. Resolved user profile dropdown permissions accordion text overflow. All 117 pytest backend tests pass in 11.40s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Current milestone:** 15 — Seamless Enterprise Login Flow, Unregistered Email Guidance, and Request Access UX Elevation
+**Overall status:** Complete enterprise SaaS authentication, read-only analytics execution, and governance workflow. Resolved login form unmounting issue so failed authentication displays persistent, actionable error banners with immediate 1-click Request Access guidance. Refined Request Access modal by removing awkward top banner and adding dedicated success card with requester summary. Verified end-to-end user request lifecycle in People & access with admin approval, salted bcrypt password hashing (`bcrypt.gensalt(12)`), and instant user account login. All 117 pytest backend tests pass in 6.36s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 
@@ -874,3 +874,22 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 2. **Header User Dropdown Menu Overflow Polish (`index.css`):**
    - Fixed text overflow in "What can an Admin do?" permissions accordion panel in user profile dropdown menu.
    - Constrained `.dropdown-permissions-panel` with responsive width, `overflow: hidden`, and `word-break: break-word` / `overflow-wrap: anywhere` so descriptions never exceed the card border or viewport in light and dark themes.
+
+## Milestone 15 — Seamless Enterprise Login Flow, Unregistered Email Guidance, and Request Access UX Elevation — 2026-10-19
+
+**Status:** Completed — 117 backend tests passing, frontend production build verified (`tsc -b && vite build` passing with 0 errors).
+
+### Summary of Enhancements:
+1. **Prevented Login Page Unmounting on Auth Failure (`AuthContext.tsx`):**
+   - Removed `setIsLoading(true)` during `login(...)` calls in `AuthContext`. Previously, toggling global `isLoading` caused `App.tsx` to unmount `LoginPage` during credential validation, wiping user inputs and dropping error states upon component remount.
+   - Preserved local button loading indicator in `LoginPage` while keeping all inputs, validation errors, and banners persistent.
+2. **Actionable Unregistered User Error Guidance (`GlobalErrorBanner.tsx` & `LoginPage.tsx`):**
+   - Added support for `actionLabel` and `onAction` in `GlobalErrorBanner`.
+   - When an unauthenticated or unrecognized user submits credentials, the banner clearly states: *"Invalid work credentials. If you are new to QueryTrust AI or do not have an approved account yet, please request access below."*
+   - Embedded an instant `"Request access for this email →"` action button right inside the error banner, which directly opens the Request Access modal with their email already populated.
+3. **Elevated Request Access Modal Design (`LoginPage.tsx`):**
+   - Removed the awkward informational banner at the top of the unfilled form.
+   - Refined the modal header with a clear subtitle: *"Submit your work details. Workspace administrators review and approve all new accounts."*
+   - Transformed the submission result into a dedicated, clear success state with a green checkmark, request summary, request ID, and a clean "Return to Sign In" button.
+4. **Admin Approval Feedback Clarity (`AdminView.tsx`):**
+   - Updated success notification on access request approval to explicitly show the provisioned temporary password (`WelcomePass123!`). Verified end-to-end user provisioning with salted bcrypt hashes (`$2b$12$...`) in PostgreSQL and validated newly approved account login.

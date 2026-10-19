@@ -49,7 +49,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true)
     setError(null)
     try {
       await apiLogin(email, password)
@@ -82,8 +81,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const msg = err instanceof Error ? err.message : 'Login failed'
       setError(msg)
       throw err
-    } finally {
-      setIsLoading(false)
     }
   }
 

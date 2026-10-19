@@ -65,6 +65,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   const [globalError, setGlobalError] = useState<{
     type: ErrorBannerType
     message?: string
+    actionLabel?: string
+    onAction?: () => void
   } | null>(null)
 
   // Request Access Modal State
@@ -158,7 +160,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       } else {
         setGlobalError({
           type: 'invalid_credentials',
-          message: err instanceof Error ? err.message : 'Invalid work credentials. Please check your email and password.',
+          message: 'Invalid work credentials. If you are new to QueryTrust AI or do not have an approved account yet, please request access below.',
+          actionLabel: 'Request access for this email →',
+          onAction: () => {
+            setShowRequestAccess(true)
+            setRequestSubmitted(false)
+            setRequestError(null)
+            setRequestForm((prev) => ({ ...prev, email: sanitizedEmail }))
+          },
         })
       }
     } finally {
@@ -310,6 +319,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               <GlobalErrorBanner
                 type={globalError.type}
                 message={globalError.message}
+                actionLabel={globalError.actionLabel}
+                onAction={globalError.onAction}
                 onDismiss={() => setGlobalError(null)}
                 onRetry={() => { void handleSubmit({ preventDefault: () => {} } as React.FormEvent) }}
               />
@@ -425,6 +436,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               onClick={() => {
                 setShowRequestAccess(true)
                 setRequestSubmitted(false)
+                setRequestError(null)
+                if (formValues.email) {
+                  setRequestForm((prev) => ({ ...prev, email: prev.email || formValues.email }))
+                }
               }}
             >
               Request access
@@ -505,14 +520,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       {showRequestAccess && (
         <div className="login-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="request-modal-title">
           <div className="login-modal-card">
-            <div className="request-preview-banner" role="status">
-              Submitted requests are stored in the database for administrator review.
-            </div>
-
             <div className="login-modal-header">
               <div className="modal-title-wrap">
                 <Building size={20} className="text-accent" />
-                <h3 id="request-modal-title">Request access</h3>
+                <div>
+                  <h3 id="request-modal-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Request access</h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--qt-muted)' }}>
+                    Submit your work details. Workspace administrators review and approve all new accounts.
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
@@ -525,18 +541,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             </div>
 
             {requestSubmitted ? (
-              <div className="login-modal-success">
-                <CheckCircle2 size={36} className="text-emerald" />
-                <h4>Access Request Submitted</h4>
-                <p>
-                  Your access request has been recorded in the database. Workspace administrators can now review and approve your account from the administration portal.
+              <div className="login-modal-success" style={{ textAlign: 'center', padding: '1.5rem 1rem' }}>
+                <CheckCircle2 size={40} style={{ color: 'var(--qt-success, #22c55e)', margin: '0 auto 0.75rem' }} />
+                <h4 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', fontWeight: 700 }}>Access Request Submitted</h4>
+                <p style={{ fontSize: '0.84rem', color: 'var(--qt-ink-muted)', lineHeight: 1.5, margin: '0 0 1rem' }}>
+                  Your access request has been recorded in the database. Workspace administrators can now review and approve your account from <strong>People &amp; access</strong>.
                 </p>
-                <div className="preview-role-summary" style={{ textAlign: 'left', margin: '0.85rem 0', padding: '0.75rem', background: 'rgba(255,255,255,0.04)', borderRadius: 6, fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div>Requested role: <strong>{requestForm.roleRequested}</strong></div>
+                <div className="preview-role-summary" style={{ textAlign: 'left', margin: '0 0 1.25rem', padding: '0.85rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--qt-border)', borderRadius: 8, fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div>Requester: <strong>{requestForm.name} ({requestForm.company})</strong></div>
                   <div>Work email: <strong>{requestForm.email}</strong></div>
+                  <div>Requested role: <span className="badge badge-primary" style={{ textTransform: 'capitalize', marginLeft: 4 }}>{requestForm.roleRequested}</span></div>
                   {submittedRequestId && (
-                    <div style={{ fontSize: '0.7rem', color: 'var(--qt-muted)' }}>Request ID: {submittedRequestId}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', fontFamily: 'var(--font-mono, monospace)', marginTop: 4 }}>
+                      Request ID: {submittedRequestId}
+                    </div>
                   )}
                 </div>
                 <button

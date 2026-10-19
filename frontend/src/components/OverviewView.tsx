@@ -14,11 +14,14 @@ import {
 import {
   type DashboardSummaryResponse,
   type DataQualityRunSummary,
+  type ActiveDataSourceResponse,
   apiLogin,
   fetchDashboardSummary,
   fetchDataQualityFindings,
   fetchDataQualitySummary,
+  fetchActiveDataSource,
 } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
@@ -150,7 +153,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   onOpenDevice,
 }) => {
   const { mode } = useTheme()
+  const { user } = useAuth()
   const [data, setData] = useState<DashboardSummaryResponse | null>(null)
+  const [activeSource, setActiveSource] = useState<ActiveDataSourceResponse | null>(null)
   const [dataHealth, setDataHealth] = useState<DataQualityRunSummary | null>(null)
   const [typeFormattingIssues, setTypeFormattingIssues] = useState<number | null>(null)
   const [question, setQuestion] = useState('')
@@ -170,13 +175,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     else setLoading(true)
     setError(null)
     try {
-      const [summary, healthResult, findingsResult] = await Promise.all([
+      const [summary, healthResult, findingsResult, activeSrc] = await Promise.all([
         fetchDashboardSummary(),
         fetchDataQualitySummary().catch(() => null),
         fetchDataQualityFindings(undefined, 'devices', 1, 50).catch(() => null),
+        fetchActiveDataSource().catch(() => null),
       ])
       setData(summary)
       setDataHealth(healthResult)
+      setActiveSource(activeSrc)
       const typeFinding = findingsResult?.findings.find(
         (finding) => finding.rule_id === 'DQ-004' || finding.column_name === 'device_type'
       )
@@ -351,9 +358,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     <div className="overview-command-center">
       {/* ─── 1. PAGE TITLE & HEADER (Unified Inter Typography) ─── */}
       <PageHeader
-        title="Fleet overview"
-        description="Your equipment at a glance. Preview safe, read-only analytics before any query runs."
-        helpText="Summarizes your network hardware inventory, upcoming warranty expirations, and open repair requests. Click any card to filter equipment or ask a question."
+        title={activeSource?.mode === 'connected' ? 'Workspace analytics' : 'Fleet overview'}
+        description={
+          activeSource?.mode === 'connected'
+            ? `Safe read-only analytics for workspace '${user?.workspace_name || 'Enterprise'}'. All queries execute with AST safety.`
+            : 'Your equipment at a glance. Preview safe, read-only analytics before any query runs.'
+        }
+        helpText="Summarizes your active data sources, hardware inventory, and recent service requests. Click any card to filter data or ask a natural-language question."
         actions={
           <div className="overview-hero-actions">
             {lastUpdated && (
@@ -377,6 +388,43 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
         }
       />
+
+      {/* ─── 2. ENTERPRISE WORKSPACE HERO BANNER (When Connected Database Active) ─── */}
+      {activeSource?.mode === 'connected' && (
+        <div className="workspace-hero-banner">
+          <div className="workspace-hero-left">
+            <div className="workspace-hero-status">
+              <span className="workspace-pulse-dot" />
+              <span className="workspace-badge-text">Connected Enterprise Database</span>
+              <span className="workspace-name-badge">{activeSource.name}</span>
+            </div>
+            <h2 className="workspace-hero-title">
+              {user?.workspace_name || 'Enterprise Workspace'} &bull; Live Analytics
+            </h2>
+            <p className="workspace-hero-desc">
+              Natural-language queries execute in PostgreSQL read-only isolation with AST safety against <strong>{activeSource.table_count} tables</strong> and <strong>{activeSource.column_count ?? 0} columns</strong>.
+            </p>
+          </div>
+          <div className="workspace-hero-actions">
+            <button
+              type="button"
+              className="workspace-hero-btn primary"
+              onClick={() => onAskQuestion(`What are the tables and key metrics in ${activeSource.name}?`)}
+            >
+              <Send size={14} />
+              <span>Ask Question</span>
+            </button>
+            <button
+              type="button"
+              className="workspace-hero-btn secondary"
+              onClick={() => onNavigate('devices')}
+            >
+              <Database size={14} />
+              <span>Explore Data Catalog</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ─── 2. HERO ASK BOX (Squint-test Anchor: Hero, Larger, Starter Chips) ─── */}
       <section className="overview-prompt-card hero-ask-box" aria-label="Ask equipment AI">

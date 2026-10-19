@@ -36,6 +36,7 @@ export const AdminView: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [assignedRoles, setAssignedRoles] = useState<Record<string, 'admin' | 'analyst' | 'viewer'>>({})
 
   const loadData = async () => {
     setLoading(true)
@@ -114,18 +115,23 @@ export const AdminView: React.FC = () => {
     }
   }
 
-  const handleReviewRequest = async (requestId: string, decision: 'approved' | 'rejected') => {
+  const handleReviewRequest = async (
+    requestId: string,
+    decision: 'approved' | 'rejected',
+    roleToAssign?: 'admin' | 'analyst' | 'viewer'
+  ) => {
     setUpdatingId(requestId)
     setNotification(null)
     try {
-      const updated = await reviewAdminAccessRequest(requestId, decision)
+      const updated = await reviewAdminAccessRequest(requestId, decision, roleToAssign)
       setAccessRequests((prev) => prev.map((r) => (r.id === requestId ? updated : r)))
       if (decision === 'approved') {
         const usersData = await fetchAdminUsers()
         setUsers(usersData)
+        const finalRole = roleToAssign || updated.role_requested
         setNotification({
           type: 'success',
-          message: `Approved access for ${updated.full_name} (${updated.email}). Provisioned ${updated.role_requested} account (initial password: WelcomePass123!).`,
+          message: `Approved access for ${updated.full_name} (${updated.email}). Provisioned as ${finalRole} in workspace '${currentUser?.workspace_name || 'your workspace'}' (initial password: WelcomePass123!).`,
         })
       } else {
         setNotification({
@@ -380,7 +386,7 @@ export const AdminView: React.FC = () => {
               <tr>
                 <th>Requester Name / Company</th>
                 <th>Work Email</th>
-                <th>Requested Role</th>
+                <th>Role to Assign</th>
                 <th>Date Submitted</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -423,9 +429,43 @@ export const AdminView: React.FC = () => {
                         {req.email}
                       </td>
                       <td>
-                        <span className={`badge ${req.role_requested === 'analyst' ? 'badge-primary' : 'badge-neutral'}`} style={{ textTransform: 'capitalize' }}>
-                          {req.role_requested}
-                        </span>
+                        {isPending ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            <select
+                              value={assignedRoles[req.id] || req.role_requested}
+                              onChange={(e) =>
+                                setAssignedRoles((prev) => ({
+                                  ...prev,
+                                  [req.id]: e.target.value as 'admin' | 'analyst' | 'viewer',
+                                }))
+                              }
+                              className="role-dropdown-select"
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: 'var(--qt-radius-control, 6px)',
+                                border: '1px solid var(--qt-border)',
+                                background: 'var(--qt-surface)',
+                                fontSize: '0.78rem',
+                                fontFamily: 'inherit',
+                              }}
+                              aria-label={`Select role to assign for ${req.full_name}`}
+                            >
+                              <option value="analyst">Analyst (Queries &amp; Diagnostics)</option>
+                              <option value="viewer">Viewer (Read-only, No SQL)</option>
+                              <option value="admin">Admin (Full Control)</option>
+                            </select>
+                            <span style={{ fontSize: '0.68rem', color: 'var(--qt-muted)' }}>
+                              Requested: <strong style={{ textTransform: 'capitalize' }}>{req.role_requested}</strong>
+                            </span>
+                          </div>
+                        ) : (
+                          <span
+                            className={`badge ${req.role_requested === 'analyst' ? 'badge-primary' : 'badge-neutral'}`}
+                            style={{ textTransform: 'capitalize' }}
+                          >
+                            {req.role_requested}
+                          </span>
+                        )}
                       </td>
                       <td>
                         <HumanDate iso={req.created_at} />
@@ -452,7 +492,13 @@ export const AdminView: React.FC = () => {
                               type="button"
                               className="btn btn-primary btn-sm"
                               disabled={isUpdating}
-                              onClick={() => handleReviewRequest(req.id, 'approved')}
+                              onClick={() =>
+                                handleReviewRequest(
+                                  req.id,
+                                  'approved',
+                                  assignedRoles[req.id] || (req.role_requested as 'admin' | 'analyst' | 'viewer')
+                                )
+                              }
                               style={{ fontSize: '0.72rem', padding: '3px 9px' }}
                               title="Approve request and provision user"
                             >

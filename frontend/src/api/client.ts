@@ -631,13 +631,20 @@ export async function fetchAdminAccessRequests(statusFilter?: string): Promise<A
 
 export async function reviewAdminAccessRequest(
   id: string,
-  decision: 'approved' | 'rejected'
+  decision: 'approved' | 'rejected',
+  assignedRole?: 'admin' | 'analyst' | 'viewer'
 ): Promise<AccessRequestItem> {
   requireUuid(id, 'Access Request ID')
+  const body: { status: 'approved' | 'rejected'; assigned_role?: 'admin' | 'analyst' | 'viewer' } = {
+    status: decision,
+  }
+  if (assignedRole) {
+    body.assigned_role = assignedRole
+  }
   const res = await authFetch(`${API_BASE}/admin/access-requests/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: decision }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}))

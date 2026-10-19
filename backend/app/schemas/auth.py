@@ -30,7 +30,7 @@ class RegisterRequest(StrictRequestModel):
     email: str = Field(..., min_length=3, max_length=255, description="Work email address")
     password: str = Field(..., min_length=6, max_length=255, description="Password (min 6 characters)")
     workspace_name: str = Field(..., min_length=2, max_length=255, description="Company or workspace name")
-    role: Optional[Literal["admin", "analyst", "viewer"]] = Field("analyst", description="Desired initial role")
+    role: Optional[Literal["admin", "analyst", "viewer"]] = Field("admin", description="Desired initial role (defaults to admin for workspace creators)")
 
     @field_validator("email")
     @classmethod
@@ -126,3 +126,5 @@ class AccessRequestPublic(BaseModel):
 class AccessRequestReview(StrictRequestModel):
     """Admin review payload for an access request."""
     status: Literal["approved", "rejected"] = Field(..., description="Decision status: approved or rejected")
+    assigned_role: Optional[Literal["admin", "analyst", "viewer"]] = Field(None, description="Role assigned by workspace admin upon approval")
+

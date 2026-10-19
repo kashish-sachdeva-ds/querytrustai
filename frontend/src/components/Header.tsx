@@ -103,6 +103,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
     import.meta.env.DEV ||
     import.meta.env.VITE_DEMO_MODE !== 'false'
 
+  const isDemoUser =
+    !user?.workspace_name ||
+    user?.workspace_name === 'Default Workspace' ||
+    Boolean(user?.email?.endsWith('@querytrust.local'))
+
   const userRole = (user?.role || 'viewer').toLowerCase()
   const initials = getInitials(user?.display_name, user?.email)
   const roleDisplay = formatRole(user?.role)
@@ -262,14 +267,36 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
 
       {/* Right: Demo data pill + Single Guide Button + User Menu */}
       <div className="header-right">
-        {/* Single small Demo data pill */}
-        <div
-          className="topbar-demo-pill"
-          title="Synthetic educational data — no customer records or real network credentials"
-        >
-          <Database size={12} className="topbar-demo-icon" aria-hidden="true" />
-          <span>Demo data</span>
-        </div>
+        {/* Workspace or Demo Indicator */}
+        {isDemoUser ? (
+          <div
+            className="topbar-demo-pill"
+            title="Synthetic educational data — no customer records or real network credentials"
+          >
+            <Database size={12} className="topbar-demo-icon" aria-hidden="true" />
+            <span>Demo data</span>
+          </div>
+        ) : (
+          <div
+            className="topbar-workspace-pill"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '3px 10px',
+              borderRadius: 20,
+              background: 'rgba(255, 90, 20, 0.08)',
+              border: '1px solid rgba(255, 90, 20, 0.25)',
+              color: 'var(--qt-accent, #ff5a14)',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+            }}
+            title={`Active Workspace: ${user?.workspace_name}`}
+          >
+            <Building size={12} aria-hidden="true" />
+            <span>{user?.workspace_name}</span>
+          </div>
+        )}
 
         {/* Rule 4: ONE tour entry point in top bar ("Guide") */}
         {onOpenOnboarding && (
@@ -487,14 +514,14 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
                 </div>
               </div>
 
-              {/* Rule 8: Switch Demo Role (only when VITE_DEMO_MODE=true) */}
-              {isDemoMode && (
+              {/* Switch Demo Role (only for demo sandbox accounts) */}
+              {isDemoMode && isDemoUser && (
                 <>
                   <div className="dropdown-divider" />
                   <div className="dropdown-menu-section">
                     <div className="dropdown-section-title">
                       <UserCheck size={12} className="text-secondary" aria-hidden="true" />
-                      <span>Switch demo role</span>
+                      <span>Switch demo sandbox role</span>
                     </div>
                     <div className="demo-role-switcher" role="group" aria-label="Switch demo account">
                       {(['admin', 'analyst', 'viewer'] as DemoRoleKey[]).map((roleKey) => {

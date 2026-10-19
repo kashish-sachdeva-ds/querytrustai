@@ -63,7 +63,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     workspaceName: '',
     email: '',
     password: '',
-    role: 'analyst' as 'admin' | 'analyst' | 'viewer',
+    role: 'admin' as 'admin' | 'analyst' | 'viewer',
   })
   const [registerErrors, setRegisterErrors] = useState<{
     fullName?: string
@@ -638,44 +638,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 />
               </div>
 
-              {/* Initial Role */}
-              <div className="form-group">
-                <label className="form-label">Initial workspace role</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setRegisterValues((p) => ({ ...p, role: 'analyst' }))}
-                    style={{
-                      flex: 1,
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: `1px solid ${registerValues.role === 'analyst' ? 'var(--qt-primary)' : 'var(--qt-border)'}`,
-                      background: registerValues.role === 'analyst' ? 'var(--qt-primary-soft, rgba(59, 130, 246, 0.12))' : 'var(--qt-surface)',
-                      color: registerValues.role === 'analyst' ? 'var(--qt-primary)' : 'var(--qt-text)',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    Analyst (Recommended)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRegisterValues((p) => ({ ...p, role: 'admin' }))}
-                    style={{
-                      flex: 1,
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: `1px solid ${registerValues.role === 'admin' ? 'var(--qt-primary)' : 'var(--qt-border)'}`,
-                      background: registerValues.role === 'admin' ? 'var(--qt-primary-soft, rgba(59, 130, 246, 0.12))' : 'var(--qt-surface)',
-                      color: registerValues.role === 'admin' ? 'var(--qt-primary)' : 'var(--qt-text)',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    Admin (Workspace Owner)
-                  </button>
+              {/* Workspace Administrator Privileges Callout */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 10,
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  background: 'rgba(255, 90, 20, 0.08)',
+                  border: '1px solid rgba(255, 90, 20, 0.22)',
+                  alignItems: 'flex-start',
+                  margin: '4px 0 10px',
+                }}
+              >
+                <ShieldCheck size={18} style={{ color: 'var(--qt-accent, #ff5a14)', flexShrink: 0, marginTop: 2 }} />
+                <div style={{ fontSize: '0.75rem', color: 'var(--qt-ink-muted, #d1d5db)', lineHeight: 1.45 }}>
+                  <strong style={{ color: 'var(--qt-ink, #ffffff)', display: 'block', marginBottom: 2 }}>
+                    Workspace Administrator &amp; Owner
+                  </strong>
+                  As the workspace creator, you will have Administrator privileges to manage fleet data, invite team members, and review access requests.
                 </div>
               </div>
 
@@ -848,69 +829,69 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                   Request access
                 </button>
               </div>
+
+              {/* ─── 1-Click Fast Demo Credentials (ONLY shown in Sign In mode) ─── */}
+              {isDemoMode && (
+                <section className="demo-credentials-section" aria-label="1-Click Evaluation Roles">
+                  <div className="demo-credentials-header">
+                    <KeyRound size={14} className="text-accent" />
+                    <span>Demo Persona Quick-Fills (Pre-configured Evaluation Accounts)</span>
+                  </div>
+                  <div className="demo-chips-grid">
+                    {/* 1. Analyst first */}
+                    <button
+                      type="button"
+                      className="demo-chip chip-analyst"
+                      disabled={loading}
+                      onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
+                      title="Sign in as Analyst"
+                      aria-label="Instant login as Analyst"
+                    >
+                      <div className="demo-chip-action-row">
+                        <span className="role-tag role-analyst">Analyst</span>
+                        <span className="demo-chip-btn-label">Try as Analyst &rarr;</span>
+                      </div>
+                      <span className="demo-chip-email">analyst@querytrust.local</span>
+                      <span className="demo-chip-desc">Natural-language equipment questions, health checks, & telemetry anomalies</span>
+                    </button>
+
+                    {/* 2. Viewer second */}
+                    <button
+                      type="button"
+                      className="demo-chip chip-viewer"
+                      disabled={loading}
+                      onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
+                      title="Sign in as Viewer"
+                      aria-label="Instant login as Viewer"
+                    >
+                      <div className="demo-chip-action-row">
+                        <span className="role-tag role-viewer">Viewer</span>
+                        <span className="demo-chip-btn-label">Try as Viewer &rarr;</span>
+                      </div>
+                      <span className="demo-chip-email">viewer@querytrust.local</span>
+                      <span className="demo-chip-desc">Read-only: equipment, data health and unusual activity.</span>
+                    </button>
+
+                    {/* 3. Admin third */}
+                    <button
+                      type="button"
+                      className="demo-chip chip-admin"
+                      disabled={loading}
+                      onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
+                      title="Sign in as Admin"
+                      aria-label="Instant login as Admin"
+                    >
+                      <div className="demo-chip-action-row">
+                        <span className="role-tag role-admin">Admin</span>
+                        <span className="demo-chip-btn-label">Try as Admin &rarr;</span>
+                      </div>
+                      <span className="demo-chip-email">admin@querytrust.local</span>
+                      <span className="demo-chip-desc">Full governance, security audit logs, safety rules, & user management</span>
+                    </button>
+                  </div>
+                </section>
+              )}
             </>
-          )}
-
-          {/* ─── 1-Click Fast Demo Credentials ─── */}
-          {isDemoMode && (
-            <section className="demo-credentials-section" aria-label="1-Click Evaluation Roles">
-              <div className="demo-credentials-header">
-                <KeyRound size={14} className="text-accent" />
-                <span>1-Click Instant Evaluation Roles</span>
-              </div>
-              <div className="demo-chips-grid">
-                {/* 1. Analyst first */}
-                <button
-                  type="button"
-                  className="demo-chip chip-analyst"
-                  disabled={loading}
-                  onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
-                  title="Sign in as Analyst"
-                  aria-label="Instant login as Analyst"
-                >
-                  <div className="demo-chip-action-row">
-                    <span className="role-tag role-analyst">Analyst</span>
-                    <span className="demo-chip-btn-label">Try as Analyst &rarr;</span>
-                  </div>
-                  <span className="demo-chip-email">analyst@querytrust.local</span>
-                  <span className="demo-chip-desc">Natural-language equipment questions, health checks, & telemetry anomalies</span>
-                </button>
-
-                {/* 2. Viewer second */}
-                <button
-                  type="button"
-                  className="demo-chip chip-viewer"
-                  disabled={loading}
-                  onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
-                  title="Sign in as Viewer"
-                  aria-label="Instant login as Viewer"
-                >
-                  <div className="demo-chip-action-row">
-                    <span className="role-tag role-viewer">Viewer</span>
-                    <span className="demo-chip-btn-label">Try as Viewer &rarr;</span>
-                  </div>
-                  <span className="demo-chip-email">viewer@querytrust.local</span>
-                  <span className="demo-chip-desc">Read-only: equipment, data health and unusual activity.</span>
-                </button>
-
-                {/* 3. Admin third */}
-                <button
-                  type="button"
-                  className="demo-chip chip-admin"
-                  disabled={loading}
-                  onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
-                  title="Sign in as Admin"
-                  aria-label="Instant login as Admin"
-                >
-                  <div className="demo-chip-action-row">
-                    <span className="role-tag role-admin">Admin</span>
-                    <span className="demo-chip-btn-label">Try as Admin &rarr;</span>
-                  </div>
-                  <span className="demo-chip-email">admin@querytrust.local</span>
-                  <span className="demo-chip-desc">Full governance, security audit logs, safety rules, & user management</span>
-                </button>
-              </div>
-            </section>
           )}
 
           {/* Footer Security Note */}
@@ -929,9 +910,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               <div className="modal-title-wrap">
                 <Building size={20} className="text-accent" />
                 <div>
-                  <h3 id="request-modal-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Request access</h3>
+                  <h3 id="request-modal-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Request access to workspace</h3>
                   <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--qt-muted)' }}>
-                    Submit your work details. Workspace administrators review and approve all new accounts.
+                    Submit your details to join your company's workspace. Workspace administrators review requests in People &amp; access and assign your Analyst or Viewer role.
                   </p>
                 </div>
               </div>

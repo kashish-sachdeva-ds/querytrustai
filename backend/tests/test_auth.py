@@ -160,9 +160,15 @@ def test_admin_audit_logs_access(client, admin_headers, viewer_headers):
 
 def test_register_creates_account_with_hashed_password(client, db_session):
     """User can self-register their company workspace, password is stored as bcrypt hash, and session is issued."""
+    from app.models.user import User
+    test_email = "sarah_test@cyberdyne-net.com"
+    # Ensure clean slate
+    db_session.query(User).filter(User.email == test_email).delete()
+    db_session.commit()
+
     payload = {
         "full_name": "Sarah Connor",
-        "email": "sarah@cyberdyne-net.com",
+        "email": test_email,
         "password": "StrongPassword99!",
         "workspace_name": "Cyberdyne Systems",
         "role": "analyst",
@@ -171,20 +177,19 @@ def test_register_creates_account_with_hashed_password(client, db_session):
     assert resp.status_code == 201
     data = resp.json()
     assert "access_token" in data
-    assert data["user"]["email"] == "sarah@cyberdyne-net.com"
+    assert data["user"]["email"] == test_email
     assert data["user"]["display_name"] == "Sarah Connor"
     assert data["user"]["workspace_name"] == "Cyberdyne Systems"
     assert data["user"]["role"] == "analyst"
 
     # Verify password hash in database starts with bcrypt identifier $2b$
-    from app.models.user import User
-    user = db_session.query(User).filter(User.email == "sarah@cyberdyne-net.com").first()
+    user = db_session.query(User).filter(User.email == test_email).first()
     assert user is not None
     assert user.password_hash.startswith("$2b$")
     assert user.password_hash != "StrongPassword99!"
 
     # Verify the user can immediately sign in with their password
-    login_resp = client.post("/api/v1/auth/login", json={"email": "sarah@cyberdyne-net.com", "password": "StrongPassword99!"})
+    login_resp = client.post("/api/v1/auth/login", json={"email": test_email, "password": "StrongPassword99!"})
     assert login_resp.status_code == 200
     assert login_resp.json()["user"]["workspace_name"] == "Cyberdyne Systems"
 
@@ -192,4 +197,8 @@ def test_register_creates_account_with_hashed_password(client, db_session):
     dup_resp = client.post("/api/v1/auth/register", json=payload)
     assert dup_resp.status_code == 400
     assert "already exists" in dup_resp.json()["detail"]
+
+    # Clean up
+    db_session.query(User).filter(User.email == test_email).delete()
+    db_session.commit()
 

@@ -1,8 +1,13 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 17 — Dynamic Categorical Chart Visualizations & Multi-Attribute Aggregations
-**Overall status:** Complete enterprise SaaS authentication, read-only analytics execution, and governance workflow. Fixed missing chart visualization on multi-column table results: when users toggle to or request Chart view on tabular records (e.g. 200 devices across 7 attributes), `VisualChart` now intelligently detects candidate categorical dimensions (such as `device_type`, `region`, `status`, `site_name`, `model`), provides interactive breakdown pills (`Group by:`), supports instant switching between neutral Bar and multi-color Donut views, and provides safe number/fallback handling instead of rendering an empty container. All 117 pytest backend tests pass in 6.41s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Current milestone:** 19 — Enterprise Multi-Tenant Workspace Governance, Dynamic Admin Role Assignment & Viewport Polish
+**Overall status:** Complete enterprise SaaS authentication, multi-tenant workspace isolation, and access governance workflow.
+- Aligned workspace creation logic with enterprise SaaS conventions: creating a company workspace permanently assigns the creator the **Workspace Administrator & Owner** role, removing confusing role choices from registration.
+- Dynamic Admin Role Assignment: Workspace Admins approving pending employee access requests in `People & access` now have an inline role selector (`[Analyst ▼]`, `[Viewer ▼]`, `[Admin ▼]`) to provision employees with the exact role needed, passing `assigned_role` through `PATCH /api/v1/admin/access-requests/{id}` and assigning them to the administrator's company tenant.
+- Tenant Profile Isolation: Fixed profile dropdown to hide "Switch demo role" sandboxes when authenticated into a custom company workspace, and added an active company workspace pill (`🏢 {user.workspace_name}`) in the main topbar.
+- Viewport & Layout Polish: Eliminated vertical scrolling overflow on login/registration views by scoping quick-fill demo cards strictly to the Sign In tab.
+All 118 pytest backend tests pass, and frontend production build compiles with 0 TypeScript errors.
 
 ---
 

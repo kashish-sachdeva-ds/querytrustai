@@ -153,6 +153,8 @@ def review_access_request(
     req.reviewed_at = now
 
     if payload.status == "approved":
+        target_role = payload.assigned_role or req.role_requested
+        target_workspace = current_admin.workspace_name or req.company or "Default Workspace"
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == req.email.lower()).first()
         if not existing_user:
@@ -163,14 +165,17 @@ def review_access_request(
                 email=req.email.lower(),
                 display_name=req.full_name,
                 password_hash=initial_password_hash,
-                role=req.role_requested,
+                role=target_role,
+                workspace_name=target_workspace,
                 is_active=True,
             )
             db.add(new_user)
         else:
             # If user existed but was deactivated, reactivate and set role
             existing_user.is_active = True
-            existing_user.role = req.role_requested
+            existing_user.role = target_role
+            if current_admin.workspace_name:
+                existing_user.workspace_name = current_admin.workspace_name
 
     db.commit()
     db.refresh(req)

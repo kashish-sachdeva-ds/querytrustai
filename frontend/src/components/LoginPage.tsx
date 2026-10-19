@@ -15,6 +15,8 @@ import {
   Users,
   CheckCircle2,
   Clock,
+  ChevronDown,
+  Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
@@ -94,6 +96,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
   // UI Interactive States
   const [showPassword, setShowPassword] = useState(false)
+  const [showDemoPersonas, setShowDemoPersonas] = useState(false)
   const [loading, setLoading] = useState(false)
 
   // Validation States
@@ -1138,65 +1141,86 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 </button>
               </div>
 
-              {/* ─── 1-Click Fast Demo Credentials (ONLY shown in Sign In mode) ─── */}
+              {/* ─── Collapsible Demo Sandbox Quick-Fills (Enterprise Disclosure) ─── */}
               {isDemoMode && (
-                <section className="demo-credentials-section" aria-label="1-Click Evaluation Roles">
-                  <div className="demo-credentials-header">
-                    <KeyRound size={14} className="text-accent" />
-                    <span>Demo Persona Quick-Fills (Pre-configured Evaluation Accounts)</span>
-                  </div>
-                  <div className="demo-chips-grid">
-                    {/* 1. Analyst first */}
-                    <button
-                      type="button"
-                      className="demo-chip chip-analyst"
-                      disabled={loading}
-                      onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
-                      title="Sign in as Analyst"
-                      aria-label="Instant login as Analyst"
-                    >
-                      <div className="demo-chip-action-row">
-                        <span className="role-tag role-analyst">Analyst</span>
-                        <span className="demo-chip-btn-label">Try as Analyst &rarr;</span>
-                      </div>
-                      <span className="demo-chip-email">analyst@querytrust.local</span>
-                      <span className="demo-chip-desc">Natural-language equipment questions, health checks, & telemetry anomalies</span>
-                    </button>
+                <section className="demo-credentials-section" aria-label="Demo Sandbox Quick Access">
+                  <button
+                    type="button"
+                    className="demo-sandbox-toggle"
+                    onClick={() => setShowDemoPersonas((prev) => !prev)}
+                    aria-expanded={showDemoPersonas}
+                    id="demo-sandbox-toggle-btn"
+                  >
+                    <div className="demo-toggle-left">
+                      <Sparkles size={13} className="text-accent" />
+                      <span>Explore Demo Sandbox Personas</span>
+                      <span className="demo-toggle-badge">3 pre-seeded roles</span>
+                    </div>
+                    <ChevronDown
+                      size={14}
+                      className={`demo-toggle-arrow ${showDemoPersonas ? 'open' : ''}`}
+                    />
+                  </button>
 
-                    {/* 2. Viewer second */}
-                    <button
-                      type="button"
-                      className="demo-chip chip-viewer"
-                      disabled={loading}
-                      onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
-                      title="Sign in as Viewer"
-                      aria-label="Instant login as Viewer"
-                    >
-                      <div className="demo-chip-action-row">
-                        <span className="role-tag role-viewer">Viewer</span>
-                        <span className="demo-chip-btn-label">Try as Viewer &rarr;</span>
-                      </div>
-                      <span className="demo-chip-email">viewer@querytrust.local</span>
-                      <span className="demo-chip-desc">Read-only: equipment, data health and unusual activity.</span>
-                    </button>
+                  {showDemoPersonas && (
+                    <div className="demo-chips-container">
+                      <p className="demo-disclosure-hint">
+                        Instant zero-password sandbox evaluation with synthetic equipment data:
+                      </p>
+                      <div className="demo-chips-grid">
+                        {/* 1. Analyst first */}
+                        <button
+                          type="button"
+                          className="demo-chip chip-analyst"
+                          disabled={loading}
+                          onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
+                          title="Sign in as Analyst"
+                          aria-label="Instant login as Analyst"
+                        >
+                          <div className="demo-chip-action-row">
+                            <span className="role-tag role-analyst">Analyst</span>
+                            <span className="demo-chip-btn-label">Try as Analyst &rarr;</span>
+                          </div>
+                          <span className="demo-chip-email">analyst@querytrust.local</span>
+                          <span className="demo-chip-desc">Natural-language questions, health checks, & telemetry anomalies</span>
+                        </button>
 
-                    {/* 3. Admin third */}
-                    <button
-                      type="button"
-                      className="demo-chip chip-admin"
-                      disabled={loading}
-                      onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
-                      title="Sign in as Admin"
-                      aria-label="Instant login as Admin"
-                    >
-                      <div className="demo-chip-action-row">
-                        <span className="role-tag role-admin">Admin</span>
-                        <span className="demo-chip-btn-label">Try as Admin &rarr;</span>
+                        {/* 2. Viewer second */}
+                        <button
+                          type="button"
+                          className="demo-chip chip-viewer"
+                          disabled={loading}
+                          onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
+                          title="Sign in as Viewer"
+                          aria-label="Instant login as Viewer"
+                        >
+                          <div className="demo-chip-action-row">
+                            <span className="role-tag role-viewer">Viewer</span>
+                            <span className="demo-chip-btn-label">Try as Viewer &rarr;</span>
+                          </div>
+                          <span className="demo-chip-email">viewer@querytrust.local</span>
+                          <span className="demo-chip-desc">Read-only: equipment catalog, data health and telemetry alerts</span>
+                        </button>
+
+                        {/* 3. Admin third */}
+                        <button
+                          type="button"
+                          className="demo-chip chip-admin"
+                          disabled={loading}
+                          onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
+                          title="Sign in as Admin"
+                          aria-label="Instant login as Admin"
+                        >
+                          <div className="demo-chip-action-row">
+                            <span className="role-tag role-admin">Admin</span>
+                            <span className="demo-chip-btn-label">Try as Admin &rarr;</span>
+                          </div>
+                          <span className="demo-chip-email">admin@querytrust.local</span>
+                          <span className="demo-chip-desc">Full governance, security audit logs, BYOD sources, & team invites</span>
+                        </button>
                       </div>
-                      <span className="demo-chip-email">admin@querytrust.local</span>
-                      <span className="demo-chip-desc">Full governance, security audit logs, safety rules, & user management</span>
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </section>
               )}
             </>

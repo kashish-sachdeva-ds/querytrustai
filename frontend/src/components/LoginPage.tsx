@@ -111,8 +111,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     justification: '',
   })
 
-  // Dynamic Password Strength
-  const passwordStrength = calculatePasswordStrength(formValues.password)
+  // Dynamic Password Strength (for Registration & Password Creation)
   const registerPasswordStrength = calculatePasswordStrength(registerValues.password)
 
   // Real-time Field Handlers
@@ -776,12 +775,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                       <span>{errors.password}</span>
                     </div>
                   )}
-
-                  {/* Dynamic Password Strength Meter */}
-                  <PasswordStrengthMeter
-                    strength={passwordStrength}
-                    passwordLength={formValues.password.length}
-                  />
                 </div>
 
                 {/* Submit Button */}

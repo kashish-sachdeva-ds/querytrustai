@@ -1192,6 +1192,18 @@ export interface DataSourcePublic {
   updated_at: string
 }
 
+export interface DataSourceColumnInfo {
+  name: string
+  data_type: string
+  is_nullable: boolean
+}
+
+export interface DataSourceTableInfo {
+  table_name: string
+  columns: DataSourceColumnInfo[]
+  row_count_estimate?: number | null
+}
+
 export interface ActiveDataSourceResponse {
   mode: 'sandbox' | 'connected'
   workspace_name: string
@@ -1201,7 +1213,9 @@ export interface ActiveDataSourceResponse {
   host?: string | null
   database_name?: string | null
   table_count: number
+  column_count?: number
   tables: string[]
+  schema_details?: DataSourceTableInfo[]
   last_synced_at?: string | null
 }
 

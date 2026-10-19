@@ -1,12 +1,13 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-19  
-**Current milestone:** 21 — Multi-User Workspace Onboarding: Self-Serve Join Flow & Admin Team Provisioning
-**Overall status:** Enterprise team collaboration and employee onboarding capabilities implemented:
-- **Join Workspace Flow:** Employees can now join their company's existing workspace (`POST /api/v1/auth/join-workspace`) by workspace name or invite link (`?join=WorkspaceName`), claim pre-provisioned invites, or self-register as an Analyst or Viewer under strict RBAC isolation.
-- **Admin Team Invite System:** Workspace admins can invite members via `POST /api/v1/admin/invite` with direct credential provisioning or 1-click shareable join URLs.
-- **Sign In Password Evaluation Fix:** Removed password strength evaluation from the Sign In form, preserving it strictly for registration/onboarding flows.
-All 127 pytest backend tests pass in 11.55s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
+**Current milestone:** 22 — Data Catalog & Schema Explorer: Interactive Schema Inspection & Dynamic BYOD Data Modeling
+**Overall status:** ThoughtSpot & Metabase-grade data catalog and schema modeling architecture implemented:
+- **Data Catalog Navigation:** Replaced IoT-specific "Equipment" tab with generalized "Data catalog" (`Sidebar.tsx`), aligning navigation with modern BI and AI analytics platforms (Metabase, ThoughtSpot, Snowflake Cortex).
+- **Segmented Catalog Switcher:** Unified `[ Hardware & Asset Inventory ]` and `[ Schema & Data Model ]` into a segmented dual-mode workbench (`DevicesView.tsx`).
+- **Interactive Schema Inspector:** Master-detail visual catalog showing all database tables with column counts and row estimates, interactive column breakdown table (column names with PK/FK icons, color-coded SQL data types, nullability badges, and constraints), and 1-click "Query this table" prompt generation.
+- **Enterprise Auth Disclosure:** Converted giant demo persona cards into a clean, collapsible accordion ("Explore Demo Sandbox Personas") so production login remains enterprise-grade and uncluttered.
+All 127 pytest backend tests pass in 11.62s, and frontend production build compiles cleanly with 0 TypeScript/Vite errors.
 
 ---
 

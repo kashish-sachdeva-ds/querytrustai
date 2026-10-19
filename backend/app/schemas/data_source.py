@@ -95,5 +95,8 @@ class ActiveDataSourceResponse(BaseModel):
     host: Optional[str] = None
     database_name: Optional[str] = None
     table_count: int
+    column_count: int = 0
     tables: List[str]
+    schema_details: Optional[List[DataSourceTableInfo]] = None
     last_synced_at: Optional[str] = None
+

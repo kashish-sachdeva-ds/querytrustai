@@ -17,6 +17,8 @@ from app.schemas.data_source import (
     DataSourceTestResponse,
     DataSourcePublic,
     ActiveDataSourceResponse,
+    DataSourceTableInfo,
+    DataSourceColumnInfo,
 )
 from app.services.data_source_service import (
     encrypt_secret,
@@ -30,27 +32,93 @@ logger = logging.getLogger("querytrust.api.data_sources")
 router = APIRouter(prefix="/data-sources", tags=["Data Sources"])
 
 
-@router.get("/active", response_model=ActiveDataSourceResponse)
-def get_active_data_source(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Retrieve the currently active data source for the caller's workspace.
+def get_sandbox_schema_catalog() -> List[DataSourceTableInfo]:
+    """Return structured schema definitions for the synthetic networking sandbox database."""
+    return [
+        DataSourceTableInfo(
+            table_name="devices",
+            columns=[
+                DataSourceColumnInfo(name="id", data_type="integer", is_nullable=False),
+                DataSourceColumnInfo(name="asset_tag", data_type="character varying(50)", is_nullable=False),
+                DataSourceColumnInfo(name="device_type", data_type="character varying(50)", is_nullable=False),
+                DataSourceColumnInfo(name="vendor", data_type="character varying(100)", is_nullable=False),
+                DataSourceColumnInfo(name="model", data_type="character varying(100)", is_nullable=False),
+                DataSourceColumnInfo(name="firmware_version", data_type="character varying(50)", is_nullable=False),
+                DataSourceColumnInfo(name="site_id", data_type="integer", is_nullable=False),
+                DataSourceColumnInfo(name="status", data_type="character varying(30)", is_nullable=False),
+                DataSourceColumnInfo(name="installed_at", data_type="timestamp with time zone", is_nullable=False),
+                DataSourceColumnInfo(name="warranty_expiry", data_type="timestamp with time zone", is_nullable=True),
+                DataSourceColumnInfo(name="serial_number", data_type="character varying(100)", is_nullable=True),
+            ],
+            row_count_estimate=5000,
+        ),
+        DataSourceTableInfo(
+            table_name="sites",
+            columns=[
+                DataSourceColumnInfo(name="id", data_type="integer", is_nullable=False),
+                DataSourceColumnInfo(name="name", data_type="character varying(100)", is_nullable=False),
+                DataSourceColumnInfo(name="site_code", data_type="character varying(20)", is_nullable=False),
+                DataSourceColumnInfo(name="region", data_type="character varying(50)", is_nullable=False),
+                DataSourceColumnInfo(name="timezone", data_type="character varying(50)", is_nullable=False),
+            ],
+            row_count_estimate=50,
+        ),
+        DataSourceTableInfo(
+            table_name="service_events",
+            columns=[
+                DataSourceColumnInfo(name="id", data_type="integer", is_nullable=False),
+                DataSourceColumnInfo(name="device_id", data_type="integer", is_nullable=False),
+                DataSourceColumnInfo(name="event_type", data_type="character varying(50)", is_nullable=False),
+                DataSourceColumnInfo(name="severity", data_type="character varying(20)", is_nullable=False),
+                DataSourceColumnInfo(name="description", data_type="text", is_nullable=False),
+                DataSourceColumnInfo(name="started_at", data_type="timestamp with time zone", is_nullable=False),
+                DataSourceColumnInfo(name="resolved_at", data_type="timestamp with time zone", is_nullable=True),
+            ],
+            row_count_estimate=320,
+        ),
+        DataSourceTableInfo(
+            table_name="telemetry_readings",
+            columns=[
+                DataSourceColumnInfo(name="id", data_type="integer", is_nullable=False),
+                DataSourceColumnInfo(name="device_id", data_type="integer", is_nullable=False),
+                DataSourceColumnInfo(name="recorded_at", data_type="timestamp with time zone", is_nullable=False),
+                DataSourceColumnInfo(name="cpu_utilization_pct", data_type="double precision", is_nullable=False),
+                DataSourceColumnInfo(name="memory_utilization_pct", data_type="double precision", is_nullable=False),
+                DataSourceColumnInfo(name="temperature_celsius", data_type="double precision", is_nullable=False),
+                DataSourceColumnInfo(name="packet_loss_pct", data_type="double precision", is_nullable=False),
+                DataSourceColumnInfo(name="error_rate", data_type="double precision", is_nullable=False),
+            ],
+            row_count_estimate=25000,
+        ),
+    ]
 
-    Returns whether the workspace is operating against the Demo Sandbox or a connected enterprise database.
-    """
-    workspace = current_user.workspace_name or "Default Workspace"
 
-    # Find active custom data source for this workspace
-    active_ds = (
-        db.query(DataSource)
-        .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
-        .first()
-    )
-
+def build_active_response(workspace: str, active_ds: Optional[DataSource]) -> ActiveDataSourceResponse:
+    """Format ActiveDataSourceResponse with full table and column schema introspection."""
     if active_ds and active_ds.schema_cache:
-        tables = active_ds.schema_cache.get("table_names", [])
+        raw_tables = active_ds.schema_cache.get("tables", [])
+        tables = active_ds.schema_cache.get("table_names", [t.get("table_name") for t in raw_tables])
         table_count = active_ds.schema_cache.get("table_count", len(tables))
+
+        schema_details = [
+            DataSourceTableInfo(
+                table_name=t.get("table_name", ""),
+                columns=[
+                    DataSourceColumnInfo(
+                        name=c.get("name", ""),
+                        data_type=c.get("data_type", "unknown"),
+                        is_nullable=bool(c.get("is_nullable", True)),
+                    )
+                    for c in t.get("columns", [])
+                ],
+                row_count_estimate=t.get("row_count_estimate"),
+            )
+            for t in raw_tables
+        ]
+        total_cols = active_ds.schema_cache.get(
+            "column_count", sum(len(t.columns) for t in schema_details)
+        )
+
         return ActiveDataSourceResponse(
             mode="connected",
             workspace_name=workspace,
@@ -60,11 +128,14 @@ def get_active_data_source(
             host=active_ds.host,
             database_name=active_ds.database_name,
             table_count=table_count,
+            column_count=total_cols,
             tables=tables,
+            schema_details=schema_details,
             last_synced_at=active_ds.last_synced_at.isoformat() if active_ds.last_synced_at else None,
         )
 
-    # Fallback to Sandbox Demo Database
+    # Sandbox fallback
+    sandbox_tables = get_sandbox_schema_catalog()
     return ActiveDataSourceResponse(
         mode="sandbox",
         workspace_name=workspace,
@@ -73,10 +144,31 @@ def get_active_data_source(
         db_type="postgresql",
         host="localhost (Built-in)",
         database_name="querytrust",
-        table_count=3,
-        tables=["devices", "sites", "service_events"],
+        table_count=len(sandbox_tables),
+        column_count=sum(len(t.columns) for t in sandbox_tables),
+        tables=[t.table_name for t in sandbox_tables],
+        schema_details=sandbox_tables,
         last_synced_at=None,
     )
+
+
+@router.get("/active", response_model=ActiveDataSourceResponse)
+def get_active_data_source(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Retrieve the currently active data source for the caller's workspace.
+
+    Returns whether the workspace is operating against the Demo Sandbox or a connected enterprise database,
+    along with full schema and column definitions for Schema Explorer & Ask Data.
+    """
+    workspace = current_user.workspace_name or "Default Workspace"
+    active_ds = (
+        db.query(DataSource)
+        .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
+        .first()
+    )
+    return build_active_response(workspace, active_ds)
 
 
 @router.get("", response_model=List[DataSourcePublic])
@@ -248,21 +340,7 @@ def activate_data_source(
     db.commit()
     db.refresh(ds)
 
-    tables = ds.schema_cache.get("table_names", []) if ds.schema_cache else []
-    table_count = ds.schema_cache.get("table_count", len(tables)) if ds.schema_cache else 0
-
-    return ActiveDataSourceResponse(
-        mode="connected",
-        workspace_name=workspace,
-        source_id=ds.id,
-        name=ds.name,
-        db_type=ds.db_type,
-        host=ds.host,
-        database_name=ds.database_name,
-        table_count=table_count,
-        tables=tables,
-        last_synced_at=ds.last_synced_at.isoformat() if ds.last_synced_at else None,
-    )
+    return build_active_response(workspace, ds)
 
 
 @router.post("/activate-sandbox", response_model=ActiveDataSourceResponse)
@@ -278,18 +356,7 @@ def activate_sandbox(
     db.query(DataSource).filter(DataSource.workspace_name == workspace).update({"is_active": False})
     db.commit()
 
-    return ActiveDataSourceResponse(
-        mode="sandbox",
-        workspace_name=workspace,
-        source_id=None,
-        name="Synthetic Networking Sandbox (PostgreSQL)",
-        db_type="postgresql",
-        host="localhost (Built-in)",
-        database_name="querytrust",
-        table_count=3,
-        tables=["devices", "sites", "service_events"],
-        last_synced_at=None,
-    )
+    return build_active_response(workspace, None)
 
 
 @router.post("/{source_id}/sync", response_model=DataSourcePublic)

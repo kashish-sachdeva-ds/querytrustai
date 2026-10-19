@@ -8,15 +8,23 @@ import {
   RefreshCw,
   ChevronDown,
   AlertTriangle,
+  Database,
+  Table,
+  Columns,
+  Key,
+  ArrowRight,
 } from 'lucide-react'
 import {
   type DeviceSummary,
   type DeviceDetail,
   type SiteSummary,
   type DeviceCountsResponse,
+  type ActiveDataSourceResponse,
+  type DataSourceTableInfo,
   fetchDevices,
   fetchDeviceCounts,
   fetchSites,
+  fetchActiveDataSource,
 } from '../api/client'
 import { withLayoutTransition } from '../motion'
 import { readUrlParam, replaceUrlParams } from '../urlState'
@@ -150,13 +158,30 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<number | null>(null)
   const lastFocusedElementRef = useRef<HTMLElement | null>(null)
 
-  // Load sites and quick counts once on mount
+  // Active Data Source & Schema Catalog States
+  const [activeSource, setActiveSource] = useState<ActiveDataSourceResponse | null>(null)
+  const [catalogTab, setCatalogTab] = useState<'inventory' | 'schema'>('inventory')
+  const [selectedSchemaTable, setSelectedSchemaTable] = useState<string | null>(null)
+  const [schemaSearch, setSchemaSearch] = useState<string>('')
+
+  // Load sites, quick counts, and active data source on mount
   useEffect(() => {
     fetchSites()
       .then((res) => setSites(res.items))
       .catch(() => {})
     fetchDeviceCounts()
       .then((counts) => setDeviceCounts(counts))
+      .catch(() => {})
+    fetchActiveDataSource()
+      .then((src) => {
+        setActiveSource(src)
+        if (src.mode === 'connected' && !src.tables.includes('devices')) {
+          setCatalogTab('schema')
+        }
+        if (src.schema_details && src.schema_details.length > 0) {
+          setSelectedSchemaTable(src.schema_details[0].table_name)
+        }
+      })
       .catch(() => {})
   }, [])
 
@@ -315,39 +340,317 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
     )
   }
 
+  // Filtered tables for schema view
+  const schemaTables: DataSourceTableInfo[] = activeSource?.schema_details ?? [
+    {
+      table_name: 'devices',
+      columns: [
+        { name: 'id', data_type: 'integer', is_nullable: false },
+        { name: 'asset_tag', data_type: 'varchar(50)', is_nullable: false },
+        { name: 'device_type', data_type: 'varchar(50)', is_nullable: false },
+        { name: 'vendor', data_type: 'varchar(100)', is_nullable: false },
+        { name: 'model', data_type: 'varchar(100)', is_nullable: false },
+        { name: 'firmware_version', data_type: 'varchar(50)', is_nullable: false },
+        { name: 'site_id', data_type: 'integer', is_nullable: false },
+        { name: 'status', data_type: 'varchar(30)', is_nullable: false },
+        { name: 'installed_at', data_type: 'timestamp with time zone', is_nullable: false },
+        { name: 'warranty_expiry', data_type: 'timestamp with time zone', is_nullable: true },
+        { name: 'serial_number', data_type: 'varchar(100)', is_nullable: true },
+      ],
+      row_count_estimate: 5000,
+    },
+    {
+      table_name: 'sites',
+      columns: [
+        { name: 'id', data_type: 'integer', is_nullable: false },
+        { name: 'name', data_type: 'varchar(100)', is_nullable: false },
+        { name: 'site_code', data_type: 'varchar(20)', is_nullable: false },
+        { name: 'region', data_type: 'varchar(50)', is_nullable: false },
+        { name: 'timezone', data_type: 'varchar(50)', is_nullable: false },
+      ],
+      row_count_estimate: 50,
+    },
+    {
+      table_name: 'service_events',
+      columns: [
+        { name: 'id', data_type: 'integer', is_nullable: false },
+        { name: 'device_id', data_type: 'integer', is_nullable: false },
+        { name: 'event_type', data_type: 'varchar(50)', is_nullable: false },
+        { name: 'severity', data_type: 'varchar(20)', is_nullable: false },
+        { name: 'description', data_type: 'text', is_nullable: false },
+        { name: 'started_at', data_type: 'timestamp with time zone', is_nullable: false },
+        { name: 'resolved_at', data_type: 'timestamp with time zone', is_nullable: true },
+      ],
+      row_count_estimate: 320,
+    },
+    {
+      table_name: 'telemetry_readings',
+      columns: [
+        { name: 'id', data_type: 'integer', is_nullable: false },
+        { name: 'device_id', data_type: 'integer', is_nullable: false },
+        { name: 'recorded_at', data_type: 'timestamp with time zone', is_nullable: false },
+        { name: 'cpu_utilization_pct', data_type: 'double precision', is_nullable: false },
+        { name: 'memory_utilization_pct', data_type: 'double precision', is_nullable: false },
+        { name: 'temperature_celsius', data_type: 'double precision', is_nullable: false },
+        { name: 'packet_loss_pct', data_type: 'double precision', is_nullable: false },
+        { name: 'error_rate', data_type: 'double precision', is_nullable: false },
+      ],
+      row_count_estimate: 25000,
+    },
+  ]
+
+  const tablesFiltered = schemaTables.filter((t) =>
+    t.table_name.toLowerCase().includes(schemaSearch.toLowerCase()) ||
+    t.columns.some((c) => c.name.toLowerCase().includes(schemaSearch.toLowerCase()))
+  )
+
+  const activeTableDetail =
+    schemaTables.find((t) => t.table_name === (selectedSchemaTable || schemaTables[0]?.table_name)) ||
+    schemaTables[0]
+
   return (
     <div className="devices-view-container">
-      {/* 1. Standard Unified Header */}
+      {/* 1. Unified Responsive Header */}
       <PageHeader
-        title="Equipment explorer"
-        description="Search and inspect 5,000 synthetic network devices across all operating sites."
-        helpText="Filter devices by model, vendor, location, status, or warranty. Click any row to view full hardware specs, location details, warranty horizon, and maintenance events."
+        title={catalogTab === 'schema' ? 'Data catalog & schema explorer' : 'Hardware & asset catalog'}
+        description={
+          activeSource?.mode === 'connected'
+            ? `Connected to database '${activeSource.name}' (${activeSource.table_count} tables, ${activeSource.column_count ?? 0} columns). All natural-language queries run against this schema.`
+            : 'Search and inspect 5,000 synthetic network devices, operating sites, and schema definitions across your workspace.'
+        }
+        helpText="Toggle between Hardware & Asset Inventory and Schema & Data Model. Click any table to inspect column data types, nullability, and run instant natural-language questions."
         actions={
           <div className="devices-hero-actions">
             <span className="devices-count-pill">
-              <Server size={12} />
-              <span>{total.toLocaleString()} assets</span>
+              {catalogTab === 'schema' ? <Database size={12} /> : <Server size={12} />}
+              <span>
+                {catalogTab === 'schema'
+                  ? `${activeSource?.table_count ?? 4} tables · ${activeSource?.column_count ?? 28} columns`
+                  : `${total.toLocaleString()} assets`}
+              </span>
             </span>
             <button
               type="button"
               className="devices-refresh-btn"
-              onClick={() => loadDevices()}
+              onClick={() => {
+                loadDevices()
+                fetchActiveDataSource().then(setActiveSource).catch(() => {})
+              }}
               disabled={loading}
-              title="Refresh device inventory"
+              title="Refresh catalog inventory and schema"
             >
               <RefreshCw size={13} className={loading ? 'spin-icon' : ''} />
               <span>Refresh</span>
             </button>
             <ExplainButton
-              title="Hardware Inventory"
-              explanation="A read-only catalog of all network devices across all operating sites, with live status and maintenance history."
+              title="Data Catalog & Schema Explorer"
+              explanation="QueryTrust AI automatically catalogues and introspects registered databases. In demo mode, it models 5,000 synthetic devices; when BYOD is connected, it explores your actual tables and columns with SELECT-only safety."
             />
           </div>
         }
       />
 
-      {/* 2. QUICK FILTER CHIPS with server-sourced counts */}
-      <div className="devices-quick-chips" role="group" aria-label="Quick filters">
+      {/* 2. Top-level Segmented Control: [ Asset Inventory ] vs [ Schema & Data Model ] */}
+      <div className="catalog-tab-switcher" role="tablist" aria-label="Catalog views">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={catalogTab === 'inventory'}
+          className={`catalog-tab-btn ${catalogTab === 'inventory' ? 'active' : ''}`}
+          onClick={() => setCatalogTab('inventory')}
+        >
+          <Server size={14} />
+          <span>Hardware & Asset Inventory</span>
+          {activeSource?.mode === 'sandbox' && <span className="catalog-tab-pill">5,000</span>}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={catalogTab === 'schema'}
+          className={`catalog-tab-btn ${catalogTab === 'schema' ? 'active' : ''}`}
+          onClick={() => setCatalogTab('schema')}
+        >
+          <Database size={14} />
+          <span>Schema & Data Model</span>
+          <span className="catalog-tab-pill">{activeSource?.table_count ?? 4} tables</span>
+        </button>
+      </div>
+
+      {catalogTab === 'schema' ? (
+        <div className="schema-model-view">
+          {/* Active Data Source Summary Banner */}
+          <div className="schema-source-card">
+            <div className="schema-source-info">
+              <div className="schema-source-header">
+                <span className={`schema-status-badge ${activeSource?.mode === 'connected' ? 'connected' : 'sandbox'}`}>
+                  <span className="status-dot-indicator" />
+                  {activeSource?.mode === 'connected' ? 'Active Enterprise Database' : 'Demo Sandbox Catalog'}
+                </span>
+                <span className="schema-source-title">{activeSource?.name ?? 'Synthetic Networking Sandbox'}</span>
+              </div>
+              <p className="schema-source-meta">
+                Database: <code>{activeSource?.database_name ?? 'querytrust'}</code> &bull; Engine: <code>{activeSource?.db_type ?? 'postgresql'}</code> &bull; Tables: <strong>{activeSource?.table_count ?? 4}</strong> &bull; Columns: <strong>{activeSource?.column_count ?? 28}</strong>
+              </p>
+            </div>
+            {onAskQuestion && (
+              <button
+                type="button"
+                className="schema-ask-btn"
+                onClick={() => onAskQuestion(selectedSchemaTable ? `What are the columns and sample data in table ${selectedSchemaTable}?` : 'Show me what data is available')}
+              >
+                <ArrowRight size={13} />
+                <span>Ask question about schema &rarr;</span>
+              </button>
+            )}
+          </div>
+
+          {/* Master-Detail Layout: Table List (Left) + Column Inspector (Right) */}
+          <div className="schema-layout-grid">
+            {/* Left Column: Tables List */}
+            <aside className="schema-sidebar-panel">
+              <div className="schema-sidebar-header">
+                <div className="schema-search-box">
+                  <Search size={14} className="schema-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search tables..."
+                    value={schemaSearch}
+                    onChange={(e) => setSchemaSearch(e.target.value)}
+                    className="schema-search-input"
+                  />
+                  {schemaSearch && (
+                    <button type="button" onClick={() => setSchemaSearch('')} className="schema-search-clear">
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="schema-table-items" role="listbox">
+                {tablesFiltered.map((tbl) => {
+                  const isSelected = (selectedSchemaTable || schemaTables[0]?.table_name) === tbl.table_name
+                  return (
+                    <button
+                      key={tbl.table_name}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      className={`schema-table-item ${isSelected ? 'active' : ''}`}
+                      onClick={() => setSelectedSchemaTable(tbl.table_name)}
+                    >
+                      <div className="schema-table-item-name">
+                        <Table size={14} className="text-secondary" />
+                        <span>{tbl.table_name}</span>
+                      </div>
+                      <div className="schema-table-item-meta">
+                        <span className="schema-col-count">{tbl.columns.length} cols</span>
+                        {tbl.row_count_estimate !== undefined && tbl.row_count_estimate !== null && (
+                          <span className="schema-row-estimate">~{tbl.row_count_estimate.toLocaleString()} rows</span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </aside>
+
+            {/* Right Column: Columns & Details for Active Table */}
+            <section className="schema-content-panel">
+              {activeTableDetail ? (
+                <>
+                  <div className="schema-detail-header">
+                    <div>
+                      <h3 className="schema-table-heading">
+                        <Table size={18} className="text-accent" />
+                        <span>public.{activeTableDetail.table_name}</span>
+                      </h3>
+                      <p className="schema-table-sub">
+                        {activeTableDetail.columns.length} columns defined &bull; Read-only SELECT access enforced
+                      </p>
+                    </div>
+                    {onAskQuestion && (
+                      <button
+                        type="button"
+                        className="schema-query-table-btn"
+                        onClick={() => onAskQuestion(`Show sample rows from table ${activeTableDetail.table_name}`)}
+                      >
+                        Query this table &rarr;
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="schema-columns-table-wrapper">
+                    <table className="schema-columns-table">
+                      <thead>
+                        <tr>
+                          <th>Column Name</th>
+                          <th>Data Type</th>
+                          <th>Nullable</th>
+                          <th>Constraints / Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeTableDetail.columns.map((col) => {
+                          const isPk = col.name === 'id' || col.name.endsWith('_id')
+                          return (
+                            <tr key={col.name}>
+                              <td className="schema-col-name-cell">
+                                <div className="schema-col-name-wrapper">
+                                  {isPk ? (
+                                    <Key size={13} className={col.name === 'id' ? 'text-accent' : 'text-secondary'} />
+                                  ) : (
+                                    <Columns size={13} className="text-muted" />
+                                  )}
+                                  <code>{col.name}</code>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="schema-type-pill">{col.data_type}</span>
+                              </td>
+                              <td>
+                                {col.is_nullable ? (
+                                  <span className="schema-null-pill nullable">NULL</span>
+                                ) : (
+                                  <span className="schema-null-pill not-null">NOT NULL</span>
+                                )}
+                              </td>
+                              <td className="schema-notes-cell">
+                                {col.name === 'id' ? 'Primary Key (Serial)' : isPk ? 'Foreign Key Reference' : '—'}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : (
+                <div className="schema-empty-state">
+                  <Table size={32} className="text-secondary" />
+                  <h4>Select a table to inspect schema</h4>
+                  <p>Choose a table from the list on the left to see its columns, data types, and nullability.</p>
+                </div>
+              )}
+            </section>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Notice banner if operating against external DB without devices table */}
+          {activeSource?.mode === 'connected' && !activeSource.tables.includes('devices') && (
+            <div className="connected-notice-banner">
+              <Database size={16} className="text-accent" />
+              <div>
+                <strong>Operating against external database '{activeSource.name}'</strong>
+                <p>This database contains {activeSource.table_count} business tables ({activeSource.tables.slice(0, 5).join(', ')}...). To inspect their columns, switch to the <strong>Schema & Data Model</strong> tab above or ask natural-language questions in 'Ask data'. To view synthetic Cisco hardware inventory, switch back to the Demo Sandbox in 'Data sources'.</p>
+              </div>
+              <button type="button" className="schema-switch-btn" onClick={() => setCatalogTab('schema')}>
+                Switch to Schema View &rarr;
+              </button>
+            </div>
+          )}
+
+          {/* 2. QUICK FILTER CHIPS with server-sourced counts */}
+          <div className="devices-quick-chips" role="group" aria-label="Quick filters">
         <button
           type="button"
           className={`quick-chip ${quickFilter === 'all' ? 'active' : ''}`}
@@ -756,6 +1059,8 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
           </div>
         </div>
       </div>
+        </>
+      )}
 
       {/* 6. ASSET INSPECT SLIDE-OVER DRAWER */}
       <DeviceDetailDrawer

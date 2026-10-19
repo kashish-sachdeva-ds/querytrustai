@@ -352,7 +352,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
         </div>
       )}
 
-      {/* Main Navigation List: Destinations (Home, Equipment, Data health, Unusual activity, Safety proof, People & access) */}
+      {/* Main Navigation List: Destinations (Home, Data catalog, Data sources, Data health, Unusual activity, Safety proof, People & access) */}
       <nav className="nav-menu" aria-label="Main Navigation">
         <button
           type="button"
@@ -369,11 +369,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
           type="button"
           className={`nav-item ${activeTab === 'devices' ? 'active' : ''}`}
           onClick={() => onSelectTab('devices')}
-          title="Equipment - Hardware explorer"
+          title="Data catalog - Schema & table explorer"
           aria-current={activeTab === 'devices' ? 'page' : undefined}
         >
           <Server size={18} />
-          {!isCollapsed && <span>Equipment</span>}
+          {!isCollapsed && <span>Data catalog</span>}
         </button>
 
         {/* Data sources: Live enterprise database & sandbox */}

@@ -642,6 +642,38 @@
   cursor: not-allowed;
 }
 
+.dropdown-enterprise-governance {
+  padding: 0.6rem 0.75rem;
+  background: var(--qt-canvas, #FAF8F5);
+  border: 1px solid var(--qt-border);
+  border-radius: 6px;
+  margin: 0.25rem 0;
+}
+
+[data-theme="dark"] .dropdown-enterprise-governance {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.enterprise-governance-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--qt-ink);
+}
+
+.enterprise-governance-note {
+  font-family: var(--font-sans);
+  font-size: 0.71rem;
+  color: var(--qt-muted, #71706B);
+  margin: 0.3rem 0 0 0;
+  line-height: 1.35;
+}
+
+
 /* Rule 7: Neutral Sign out with red tint ONLY on hover/focus */
 .dropdown-logout-btn {
   width: 100%;

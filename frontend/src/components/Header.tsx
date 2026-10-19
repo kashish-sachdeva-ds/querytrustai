@@ -103,10 +103,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
     import.meta.env.DEV ||
     import.meta.env.VITE_DEMO_MODE !== 'false'
 
-  const isDemoUser =
-    !user?.workspace_name ||
-    user?.workspace_name === 'Default Workspace' ||
-    Boolean(user?.email?.endsWith('@querytrust.local'))
+  const isDemoUser = Boolean(user?.email?.endsWith('@querytrust.local'))
 
   const userRole = (user?.role || 'viewer').toLowerCase()
   const initials = getInitials(user?.display_name, user?.email)
@@ -514,8 +511,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
                 </div>
               </div>
 
-              {/* Switch Demo Role (only for demo sandbox accounts) */}
-              {isDemoMode && isDemoUser && (
+              {/* Switch Demo Role (only for demo sandbox accounts) or Enterprise Governance Card */}
+              {isDemoMode && isDemoUser ? (
                 <>
                   <div className="dropdown-divider" />
                   <div className="dropdown-menu-section">
@@ -545,6 +542,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
                         )
                       })}
                     </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="dropdown-divider" />
+                  <div className="dropdown-enterprise-governance">
+                    <div className="enterprise-governance-header">
+                      <Building size={13} style={{ color: 'var(--qt-accent, #ff5a14)' }} />
+                      <span>Enterprise Organization Member</span>
+                    </div>
+                    <p className="enterprise-governance-note">
+                      Role privileges ({roleDisplay}) are cryptographically governed by <strong>{user?.workspace_name || 'Organization'}</strong> policies.
+                    </p>
                   </div>
                 </>
               )}

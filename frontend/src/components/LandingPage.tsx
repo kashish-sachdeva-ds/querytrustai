@@ -24,6 +24,8 @@ import {
   FileCheck,
   Cpu,
   Radio,
+  Copy,
+  CheckCheck,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
@@ -126,11 +128,11 @@ const SANDBOX_SCENARIOS: SandboxScenario[] = [
   },
   {
     id: 'attack_drop',
-    title: 'Malicious DDL Exploit',
+    title: 'DDL Drop Exploit',
     icon: '💥',
     category: 'AST Interception Guard',
-    question: 'DROP TABLE devices; -- Bypass check and wipe production table',
-    sql: `DROP TABLE devices;`,
+    question: 'DROP TABLE devices CASCADE; -- Wipe production table',
+    sql: `DROP TABLE devices CASCADE;`,
     isAttack: true,
     astChecks: {
       singleStatement: true,
@@ -142,6 +144,60 @@ const SANDBOX_SCENARIOS: SandboxScenario[] = [
     },
     rejectionReason: `🚨 BLOCKED BY SQLGLOT AST ENGINE: Statement type 'Drop' is strictly prohibited. The system enforces zero-mutation invariants. Rejection status 400 emitted. Database execution aborted before connection.`,
   },
+  {
+    id: 'attack_piggyback',
+    title: 'Multi-Statement Chain',
+    icon: '💉',
+    category: 'AST Interception Guard',
+    question: 'SELECT * FROM devices; TRUNCATE audit_logs; -- Chained destructive command',
+    sql: `SELECT * FROM devices; TRUNCATE audit_logs;`,
+    isAttack: true,
+    astChecks: {
+      singleStatement: false,
+      readOnlySelect: false,
+      catalogWhitelist: false,
+      safeFunctions: true,
+      noSystemCatalogs: true,
+      rowClamp: false,
+    },
+    rejectionReason: `🚨 BLOCKED BY SQLGLOT MULTI-STATEMENT GUARD: Multiple SQL statements detected (2 expressions). Exactly 1 single read-only SELECT statement is permitted. Secondary command 'TRUNCATE' rejected.`,
+  },
+  {
+    id: 'attack_catalog',
+    title: 'Catalog Snoop Exploit',
+    icon: '🕵️',
+    category: 'AST Interception Guard',
+    question: 'SELECT usename, passwd FROM pg_shadow; -- Dump database user credentials',
+    sql: `SELECT usename, passwd FROM pg_shadow;`,
+    isAttack: true,
+    astChecks: {
+      singleStatement: true,
+      readOnlySelect: true,
+      catalogWhitelist: false,
+      safeFunctions: true,
+      noSystemCatalogs: false,
+      rowClamp: false,
+    },
+    rejectionReason: `🚨 BLOCKED BY SCHEMA CATALOG WHITELIST: System catalog 'pg_shadow' access is prohibited. Queries are strictly restricted to approved hardware catalog tables (devices, sites, telemetry).`,
+  },
+  {
+    id: 'attack_update',
+    title: 'Silent Telemetry Update',
+    icon: '🛑',
+    category: 'AST Interception Guard',
+    question: 'UPDATE telemetry SET packet_drop_rate = 0.0 WHERE device_id = 42; -- Alter hardware telemetry',
+    sql: `UPDATE telemetry SET packet_drop_rate = 0.0 WHERE device_id = 42;`,
+    isAttack: true,
+    astChecks: {
+      singleStatement: true,
+      readOnlySelect: false,
+      catalogWhitelist: true,
+      safeFunctions: true,
+      noSystemCatalogs: true,
+      rowClamp: false,
+    },
+    rejectionReason: `🚨 BLOCKED BY DUAL DEFENSE LAYERS: Statement type 'Update' rejected by SQLGlot AST parser. Even if bypassed, the underlying database connection is strictly bound to PostgreSQL 'analytics_reader' SELECT-only role.`,
+  },
 ]
 
 interface AttackVector {
@@ -150,9 +206,13 @@ interface AttackVector {
   payload: string
   vectorType: string
   severity: 'CRITICAL' | 'HIGH'
+  cwe: string
   blockedBy: string
   astRule: string
   description: string
+  scenarioId: string
+  astNodeTrigger: string
+  pythonDefenseSnippet: string
 }
 
 const ATTACK_VECTORS: AttackVector[] = [
@@ -162,9 +222,18 @@ const ATTACK_VECTORS: AttackVector[] = [
     payload: `DROP TABLE devices CASCADE;`,
     vectorType: 'DDL Mutation',
     severity: 'CRITICAL',
+    cwe: 'CWE-89: DDL Injection',
     blockedBy: 'AST Parser (exp.Drop rejection)',
     astRule: 'Rule 2: Read-Only AST Validation (Only exp.Select allowed)',
     description: 'Attempts to erase hardware records. Caught at AST root before query reaches PostgreSQL.',
+    scenarioId: 'attack_drop',
+    astNodeTrigger: 'exp.Drop(this=Table[devices], cascade=True)',
+    pythonDefenseSnippet: `# app/core/sql_validator.py
+if not isinstance(root, exp.Select):
+    return SQLValidationResult(
+        is_valid=False,
+        violations=[f"Prohibited statement type '{type(root).__name__}'. Only read-only SELECT permitted."]
+    )`,
   },
   {
     id: 'piggyback_injection',
@@ -172,9 +241,19 @@ const ATTACK_VECTORS: AttackVector[] = [
     payload: `SELECT * FROM devices; TRUNCATE audit_logs;`,
     vectorType: 'SQL Injection / Chaining',
     severity: 'CRITICAL',
+    cwe: 'CWE-89: Multi-Statement Chaining',
     blockedBy: 'SQLGlot Multi-Statement Guard',
     astRule: 'Rule 1: Strict Single Statement Enforcement',
     description: 'Tacks on a second destructive command behind a valid SELECT. Rejected immediately.',
+    scenarioId: 'attack_piggyback',
+    astNodeTrigger: 'len(statements) == 2 (exp.Select, exp.Command[TRUNCATE])',
+    pythonDefenseSnippet: `# app/core/sql_validator.py
+statements = sqlglot.parse(sql_query, read="postgres")
+if len(statements) != 1:
+    return SQLValidationResult(
+        is_valid=False,
+        violations=[f"Multiple statements detected ({len(statements)} found). Exactly 1 statement allowed."]
+    )`,
   },
   {
     id: 'catalog_snoop',
@@ -182,9 +261,17 @@ const ATTACK_VECTORS: AttackVector[] = [
     payload: `SELECT usename, passwd FROM pg_shadow;`,
     vectorType: 'Privilege Reconnaissance',
     severity: 'HIGH',
+    cwe: 'CWE-200: Info Exposure',
     blockedBy: 'Schema Catalog Whitelist',
     astRule: 'Rule 5: System Catalogs Blocklist (pg_*, information_schema)',
     description: 'Attempts to dump database user hashes. AST rejects unwhitelisted internal catalogs.',
+    scenarioId: 'attack_catalog',
+    astNodeTrigger: 'exp.Table(this="pg_shadow") not in ALLOWED_TABLES',
+    pythonDefenseSnippet: `# app/core/sql_validator.py
+for node in root.walk():
+    if isinstance(node, exp.Table):
+        if node.name.lower() in DISALLOWED_SCHEMAS or node.name.lower() not in ALLOWED_TABLES:
+            violations.append(f"Access to prohibited schema/table '{node.name}' is blocked.")`,
   },
   {
     id: 'silent_update',
@@ -192,9 +279,16 @@ const ATTACK_VECTORS: AttackVector[] = [
     payload: `UPDATE telemetry SET packet_drop_rate = 0.0 WHERE device_id = 42;`,
     vectorType: 'Data Modification',
     severity: 'CRITICAL',
+    cwe: 'CWE-284: Unauthorized Mutation',
     blockedBy: 'AST Parser + DB Reader Role',
     astRule: 'Rule 2: Read-Only AST + Dedicated SELECT-only DB Role',
     description: 'Tries to conceal failing hardware. Blocked by both AST check and PostgreSQL role privilege.',
+    scenarioId: 'attack_update',
+    astNodeTrigger: 'exp.Update(this=Table[telemetry], where=...)',
+    pythonDefenseSnippet: `# app/core/sql_validator.py & database.py
+if isinstance(node, (exp.Insert, exp.Update, exp.Delete)):
+    violations.append(f"Prohibited SQL operation '{type(node).__name__}' found in query AST.")
+# Database level defense: role analytics_reader has REVOKE ALL; GRANT SELECT ONLY;`,
   },
 ]
 
@@ -261,6 +355,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
   }
 
 
+  const [copiedPayloadId, setCopiedPayloadId] = useState<string | null>(null)
+
+  const handleCopyPayload = (id: string, payload: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    navigator.clipboard.writeText(payload)
+    setCopiedPayloadId(id)
+    setTimeout(() => setCopiedPayloadId(null), 2000)
+  }
+
+  const handleTestInTerminal = (scenarioId: string) => {
+    setActiveAttack(null)
+    setIsSimulating(true)
+    setSelectedScenarioId(scenarioId)
+    setTerminalTab('ast')
+
+    const el = document.getElementById('interactive-sandbox')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const terminalEl = el.querySelector('.sandbox-terminal-frame')
+      if (terminalEl) {
+        terminalEl.classList.remove('terminal-pulse-alert')
+        void (terminalEl as HTMLElement).offsetWidth
+        terminalEl.classList.add('terminal-pulse-alert')
+        setTimeout(() => terminalEl.classList.remove('terminal-pulse-alert'), 2400)
+      }
+    }
+
+    setTimeout(() => {
+      setIsSimulating(false)
+    }, 280)
+  }
+
   const launchAttackSimulation = (attack: AttackVector) => {
     setActiveAttack(attack)
     setAttackSimulationState('analyzing')
@@ -287,7 +413,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
             <QueryTrustLogo size={34} />
             <div className="landing-brand-meta">
               <span className="landing-brand-title">QueryTrust AI</span>
-              <span className="landing-brand-badge">Hardware Intelligence</span>
+              <span className="landing-brand-badge">Equipment intelligence</span>
             </div>
           </div>
 
@@ -1006,26 +1132,67 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
           {ATTACK_VECTORS.map((attack) => (
             <div key={attack.id} className="attack-card">
               <div className="attack-card-top">
-                <span className="attack-severity-tag">{attack.severity}</span>
+                <div className="attack-tags-group">
+                  <span className="attack-severity-tag">{attack.severity}</span>
+                  <span className="attack-cwe-tag">{attack.cwe}</span>
+                </div>
                 <span className="attack-type-tag">{attack.vectorType}</span>
               </div>
+
               <h3 className="attack-name">{attack.name}</h3>
               <p className="attack-desc">{attack.description}</p>
+
               <div className="attack-payload-preview">
+                <div className="payload-code-header">
+                  <span className="payload-tag-label">EXPLOIT PAYLOAD</span>
+                  <button
+                    type="button"
+                    className="btn-copy-mini"
+                    onClick={(e) => handleCopyPayload(attack.id, attack.payload, e)}
+                    title="Copy attack payload to clipboard"
+                    aria-label="Copy attack payload"
+                  >
+                    {copiedPayloadId === attack.id ? (
+                      <>
+                        <CheckCheck size={12} className="text-success" />
+                        <span>Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={12} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
                 <code>{attack.payload}</code>
               </div>
+
               <div className="attack-protection-note">
                 <ShieldCheck size={13} className="text-success" />
                 <span>Blocked by: {attack.blockedBy}</span>
               </div>
-              <button
-                type="button"
-                className="btn-test-attack"
-                onClick={() => launchAttackSimulation(attack)}
-              >
-                <Flame size={14} />
-                <span>Simulate Attack Interception</span>
-              </button>
+
+              <div className="attack-card-actions">
+                <button
+                  type="button"
+                  className="btn-inspect-ast"
+                  onClick={() => launchAttackSimulation(attack)}
+                  title="Inspect deep syntax tree parsing and security invariants"
+                >
+                  <Flame size={14} />
+                  <span>Inspect AST Trace</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-load-sandbox"
+                  onClick={() => handleTestInTerminal(attack.scenarioId)}
+                  title="Load this exploit into the interactive terminal sandbox above"
+                >
+                  <Terminal size={14} />
+                  <span>Test in Sandbox ↑</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -1203,7 +1370,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
         </div>
       </footer>
 
-      {/* ─── Attack Simulation Modal ─── */}
+      {/* ─── Production DevTools Security AST Inspector Modal ─── */}
       {activeAttack && (
         <div className="modal-backdrop-blur" onClick={() => setActiveAttack(null)}>
           <div
@@ -1215,12 +1382,16 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
           >
             <div className="modal-dialog-header">
               <div className="modal-title-left">
-                <Flame size={20} className="text-danger" />
+                <ShieldAlert size={22} className="text-danger" />
                 <div>
+                  <div className="modal-badge-row">
+                    <span className="attack-severity-tag">{activeAttack.severity}</span>
+                    <span className="attack-cwe-tag">{activeAttack.cwe}</span>
+                    <span className="modal-gate-pill">GATE 2: AST BOUNDARY</span>
+                  </div>
                   <h3 id="attack-dialog-title" className="modal-dialog-heading">
                     {activeAttack.name}
                   </h3>
-                  <span className="modal-dialog-sub">Security Interceptor Simulation</span>
                 </div>
               </div>
               <button
@@ -1234,67 +1405,153 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_re
             </div>
 
             <div className="modal-dialog-body">
-              <div className="attack-payload-display">
-                <span className="code-header-tag">Target Attack SQL:</span>
-                <code className="danger-code-line">{activeAttack.payload}</code>
-              </div>
-
               {attackSimulationState === 'analyzing' ? (
                 <div className="simulation-evaluating-box">
                   <div className="eval-spinner" />
-                  <p>SQLGlot parsing syntax tree and evaluating invariant gates…</p>
+                  <p>SQLGlot constructing syntax tree &amp; walking AST nodes in PostgreSQL dialect…</p>
                 </div>
               ) : (
-                <div className="simulation-blocked-box">
-                  <div className="blocked-alert-banner">
-                    <ShieldAlert size={22} className="text-danger" />
-                    <div>
-                      <h4 className="blocked-heading">ATTACK INTERCEPTED &amp; BLOCKED</h4>
-                      <p className="blocked-rule-text">{activeAttack.astRule}</p>
+                <div className="ast-modal-grid">
+                  {/* Left Column: Intercepted Query, Interception Alert, and 4-Stage Trace */}
+                  <div className="ast-modal-col-left">
+                    <div className="attack-payload-display">
+                      <div className="payload-display-header">
+                        <span className="code-header-tag">Target Attack SQL Payload</span>
+                        <button
+                          type="button"
+                          className="btn-copy-mini"
+                          onClick={(e) => handleCopyPayload('modal-payload', activeAttack.payload, e)}
+                          aria-label="Copy attack payload"
+                        >
+                          {copiedPayloadId === 'modal-payload' ? (
+                            <>
+                              <CheckCheck size={12} className="text-success" />
+                              <span>Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={12} />
+                              <span>Copy Payload</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <code className="danger-code-line">{activeAttack.payload}</code>
+                    </div>
+
+                    <div className="blocked-alert-banner">
+                      <ShieldAlert size={20} className="text-danger" />
+                      <div>
+                        <h4 className="blocked-heading">ATTACK INTERCEPTED &amp; BLOCKED PRE-FLIGHT</h4>
+                        <p className="blocked-rule-text">{activeAttack.astRule}</p>
+                      </div>
+                    </div>
+
+                    {/* 4-Stage Execution Trace */}
+                    <div className="ast-trace-timeline">
+                      <div className="trace-step done">
+                        <div className="trace-step-number">1</div>
+                        <div className="trace-step-text">
+                          <strong>Lexical Tokenization:</strong> Dissected query string into typed PostgreSQL tokens.
+                        </div>
+                      </div>
+                      <div className="trace-step active">
+                        <div className="trace-step-number">2</div>
+                        <div className="trace-step-text">
+                          <strong>AST Syntax Walker:</strong> Prohibited node trigger tripped: <code className="trace-code-highlight">{activeAttack.astNodeTrigger}</code>
+                        </div>
+                      </div>
+                      <div className="trace-step done">
+                        <div className="trace-step-number">3</div>
+                        <div className="trace-step-text">
+                          <strong>Safety Invariant Guard:</strong> Disallowed operation detected. Emitted HTTP 400 rejection pre-execution.
+                        </div>
+                      </div>
+                      <div className="trace-step safe">
+                        <div className="trace-step-number">4</div>
+                        <div className="trace-step-text">
+                          <strong>PostgreSQL Socket Protection:</strong> 0 bytes dispatched to port 5432. Database remains in pristine state.
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="interception-reasons-grid">
-                    <div className="reason-item">
-                      <span className="reason-key">Defense Mechanism:</span>
-                      <span className="reason-val">{activeAttack.blockedBy}</span>
+                  {/* Right Column: Backend Python Invariant Enforcement Snippet & Telemetry Evidence */}
+                  <div className="ast-modal-col-right">
+                    <div className="python-code-box">
+                      <div className="python-code-header">
+                        <span className="python-code-label">PROVEN IN BACKEND ENGINE (app/core/sql_validator.py)</span>
+                        <span className="python-code-badge">SQLGlot AST Guard</span>
+                      </div>
+                      <pre className="python-code-pre">
+                        <code>{activeAttack.pythonDefenseSnippet}</code>
+                      </pre>
                     </div>
-                    <div className="reason-item">
-                      <span className="reason-key">HTTP Status:</span>
-                      <span className="reason-val danger">400 Bad Request (Safety Invariant Violated)</span>
-                    </div>
-                    <div className="reason-item">
-                      <span className="reason-key">PostgreSQL Execution:</span>
-                      <span className="reason-val success">0 Rows Affected (Blocked Pre-Execution)</span>
-                    </div>
-                    <div className="reason-item">
-                      <span className="reason-key">Audit Log Record:</span>
-                      <span className="reason-val">Logged to audit_trail with client IP &amp; AST hash</span>
-                    </div>
-                  </div>
 
-                  <div className="modal-actions-bar">
-                    <button
-                      type="button"
-                      className="btn-modal-close"
-                      onClick={() => setActiveAttack(null)}
-                    >
-                      Close Inspector
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-modal-try"
-                      onClick={() => {
-                        setActiveAttack(null)
-                        onGoToLogin()
-                      }}
-                    >
-                      <span>Sign In to Test Live</span>
-                      <ArrowRight size={13} />
-                    </button>
+                    <div className="interception-reasons-grid">
+                      <div className="reason-item">
+                        <span className="reason-key">Defense Mechanism:</span>
+                        <span className="reason-val">{activeAttack.blockedBy}</span>
+                      </div>
+                      <div className="reason-item">
+                        <span className="reason-key">HTTP Status:</span>
+                        <span className="reason-val danger">400 Bad Request (Safety Invariant Violated)</span>
+                      </div>
+                      <div className="reason-item">
+                        <span className="reason-key">PostgreSQL Execution:</span>
+                        <span className="reason-val success">0 Rows Affected (Blocked Pre-Execution)</span>
+                      </div>
+                      <div className="reason-item">
+                        <span className="reason-key">Audit Log Record:</span>
+                        <span className="reason-val">Logged to audit_trail with client IP &amp; AST hash</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Modal Dialog Footer */}
+            <div className="modal-dialog-footer">
+              <div className="modal-footer-proof">
+                <ShieldCheck size={14} className="text-success" />
+                <span>Zero database socket dispatch &bull; Read-only reader role preserved</span>
+              </div>
+              <div className="modal-actions-bar">
+                <button
+                  type="button"
+                  className="btn-modal-close"
+                  onClick={() => setActiveAttack(null)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn-modal-copy"
+                  onClick={(e) => handleCopyPayload('modal-payload-footer', activeAttack.payload, e)}
+                >
+                  {copiedPayloadId === 'modal-payload-footer' ? (
+                    <>
+                      <CheckCheck size={14} className="text-success" />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} />
+                      <span>Copy Exploit SQL</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn-modal-sandbox"
+                  onClick={() => handleTestInTerminal(activeAttack.scenarioId)}
+                  title="Load this exploit into the interactive terminal sandbox above"
+                >
+                  <Terminal size={14} />
+                  <span>Test in Sandbox ↑</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

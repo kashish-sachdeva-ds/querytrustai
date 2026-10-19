@@ -13,8 +13,6 @@ import {
   Building,
   User as UserIcon,
   CheckCircle2,
-  HelpCircle,
-  Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
@@ -44,7 +42,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   // Unique IDs for accessibility
   const emailInputId = useId()
   const passwordInputId = useId()
-  const rememberMeId = useId()
   const emailErrorId = useId()
   const passwordErrorId = useId()
 
@@ -69,11 +66,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     message?: string
   } | null>(null)
 
-  // Modals
-  const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
-  const [forgotPasswordSubmitted, setForgotPasswordSubmitted] = useState(false)
-
+  // Request Access Modal State
   const [showRequestAccess, setShowRequestAccess] = useState(false)
   const [requestSubmitted, setRequestSubmitted] = useState(false)
   const [requestForm, setRequestForm] = useState({
@@ -136,7 +129,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     const formErrors = validateLoginForm({
       email: sanitizedEmail,
       password: sanitizedPassword,
-      rememberMe: formValues.rememberMe,
+      rememberMe: false,
     })
 
     if (Object.keys(formErrors).length > 0) {
@@ -158,10 +151,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       const errorMsg = err instanceof Error ? err.message.toLowerCase() : ''
       if (errorMsg.includes('locked') || errorMsg.includes('too many')) {
         setGlobalError({ type: 'account_locked' })
-      } else if (errorMsg.includes('server') || errorMsg.includes('500') || errorMsg.includes('503')) {
-        setGlobalError({ type: 'server_error' })
-      } else if (errorMsg.includes('network') || errorMsg.includes('fetch') || errorMsg.includes('failed to fetch')) {
-        setGlobalError({ type: 'network_offline' })
       } else {
         setGlobalError({
           type: 'invalid_credentials',
@@ -172,7 +161,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       setLoading(false)
     }
   }
-
 
   // 1-Click Demo Login
   const loginAsDemo = async (demoEmail: string, demoPass: string) => {
@@ -193,14 +181,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     }
   }
 
-  // Forgot Password handler
-  const handleForgotPasswordSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateEmail(forgotPasswordEmail)) {
-      setForgotPasswordSubmitted(true)
-    }
-  }
-
   // Request Access handler
   const handleRequestSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -212,20 +192,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   return (
     <div className="login-split-page" data-testid="login-page">
       {/* ─── Left Brand Panel ─── */}
-      <aside className="login-brand-panel" aria-label="Brand Overview and Security Commitments">
+      <aside className="login-brand-panel" aria-label="Brand Overview and Safety Guarantees">
         <div className="login-brand-content">
           <div className="login-brand-header">
             <QueryTrustLogo size={42} />
             <div>
               <div className="login-brand-title">QueryTrust AI</div>
-              <span className="login-brand-subtitle">Enterprise Equipment Governance</span>
+              <span className="login-brand-subtitle">Equipment intelligence</span>
             </div>
           </div>
 
           <h2 className="login-brand-tagline">
             Ask your equipment anything, in plain English.{' '}
-            <span className="accent-gradient-text">The AI can never break your data.</span>
+            <span className="accent-gradient-text">The AI can't change your data.</span>
           </h2>
+
+          {/* Decorative Animated Safety Shield Demo */}
+          <div className="login-shield-visual" aria-hidden="true">
+            <div className="shield-graphic-wrap">
+              <div className="shield-ring shield-ring-3" />
+              <div className="shield-ring shield-ring-2" />
+              <div className="shield-ring shield-ring-1" />
+              <div className="shield-center-core">
+                <ShieldCheck size={28} className="shield-core-icon" />
+              </div>
+            </div>
+            <div className="shield-legend">
+              <span className="shield-pulse-dot" />
+              <span>6 automated safety checks active</span>
+            </div>
+          </div>
 
           <div className="login-feature-list">
             <div className="login-feature-item">
@@ -233,8 +229,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 <ShieldCheck size={18} />
               </div>
               <div className="login-feature-text">
-                <h4>6 Automated AST Safety Checks</h4>
-                <p>Every natural-language question is parsed via SQLGlot AST before touching database infrastructure.</p>
+                <h4>6 safety checks on every question</h4>
+                <p>Each question is checked before it touches your data.</p>
               </div>
             </div>
 
@@ -243,8 +239,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 <Database size={18} />
               </div>
               <div className="login-feature-text">
-                <h4>Dedicated SELECT-Only DB Role</h4>
-                <p>Executed strictly through PostgreSQL analytics_reader. Mutations and drops are physically impossible.</p>
+                <h4>Read-only by design</h4>
+                <p>The database login can only read. It cannot change or delete anything.</p>
               </div>
             </div>
 
@@ -253,21 +249,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 <ShieldAlert size={18} />
               </div>
               <div className="login-feature-text">
-                <h4>Schema-Bounded Semantics</h4>
-                <p>Translates verified table inventory and telemetry without hallucinations or speculative SQL.</p>
+                <h4>Only your equipment data</h4>
+                <p>Questions stay inside the equipment tables, so answers can't wander off-topic.</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* System Trust & Education Badge */}
+        {/* Honest Notice */}
         <div className="login-synthetic-notice">
-          <div className="synthetic-notice-badge">
-            <span className="live-status-dot" aria-hidden="true" />
-            <span>SOC2 / ISO-27001 Ready Governance</span>
-          </div>
-          <p>
-            <strong>Synthetic Educational Environment:</strong> This system operates on 5,000 synthetic devices, 50 sites, and 25,000 telemetry readings. No connection to real customer or vendor infrastructure.
+          <p className="login-synthetic-text">
+            Demo workspace: 5,000 made-up devices, 50 sites, 25,000 readings. No real company data.
           </p>
         </div>
       </aside>
@@ -288,14 +280,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           )}
 
           <header className="login-card-header">
-            <div className="login-header-badge">
-              <Sparkles size={13} className="text-accent" />
-              <span>Authorized Enterprise Access</span>
-            </div>
             <h2>Sign in to workspace</h2>
-            <p>Enter your enterprise credentials to access safe network analytics.</p>
+            <p>Sign in with your work email to access safe network analytics.</p>
           </header>
-
 
           {/* Global Error Banner */}
           {globalError && (
@@ -314,7 +301,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             {/* Email Field */}
             <div className={`form-group ${errors.email ? 'has-error' : ''}`}>
               <label htmlFor={emailInputId} className="form-label">
-                Work Email or Username
+                Work email
               </label>
               <div className="input-with-icon">
                 <Mail size={16} className="input-icon" aria-hidden="true" />
@@ -346,18 +333,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 <label htmlFor={passwordInputId} className="form-label">
                   Password
                 </label>
-                <button
-                  type="button"
-                  className="forgot-password-link"
-                  onClick={() => {
-                    setShowForgotPassword(true)
-                    setForgotPasswordSubmitted(false)
-                    setForgotPasswordEmail(formValues.email)
-                  }}
-                  tabIndex={0}
-                >
-                  Forgot password?
-                </button>
               </div>
 
               <div className="input-with-icon">
@@ -368,7 +343,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                   value={formValues.password}
                   onChange={handlePasswordChange}
                   onBlur={handlePasswordBlur}
-                  placeholder="Enter your security password"
+                  placeholder="Password"
                   className="form-input"
                   autoComplete="current-password"
                   aria-invalid={!!errors.password}
@@ -400,21 +375,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               />
             </div>
 
-            {/* Remember Me Checkbox */}
-            <div className="remember-me-row">
-              <label htmlFor={rememberMeId} className="checkbox-custom-label">
-                <input
-                  id={rememberMeId}
-                  type="checkbox"
-                  checked={formValues.rememberMe}
-                  onChange={(e) => setFormValues((prev) => ({ ...prev, rememberMe: e.target.checked }))}
-                  className="checkbox-input"
-                />
-                <span className="checkbox-box" aria-hidden="true" />
-                <span className="checkbox-text">Remember this workstation for 30 days</span>
-              </label>
-            </div>
-
             {/* Submit Button */}
             <button
               type="submit"
@@ -425,20 +385,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               {loading ? (
                 <>
                   <span className="loading-spinner-inline" aria-hidden="true" />
-                  <span>Authenticating secure session…</span>
+                  <span>Signing in…</span>
                 </>
               ) : (
                 <>
-                  <span>Sign In to Workspace</span>
+                  <span>Sign in</span>
                   <ArrowRight size={16} />
                 </>
               )}
             </button>
           </form>
 
-          {/* Sign Up / Request Access Row */}
+          {/* Request Access Row */}
           <div className="login-request-access-row">
-            Don't have an enterprise account?{' '}
+            Need an account?{' '}
             <button
               type="button"
               className="login-request-access-btn"
@@ -447,7 +407,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 setRequestSubmitted(false)
               }}
             >
-              Sign up / Request Access
+              Request access
             </button>
           </div>
 
@@ -459,49 +419,55 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 <span>1-Click Instant Evaluation Roles</span>
               </div>
               <div className="demo-chips-grid">
+                {/* 1. Analyst first */}
                 <button
                   type="button"
                   className="demo-chip chip-analyst"
                   disabled={loading}
                   onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
-                  title="Sign in as Analyst: Natural language queries & telemetry"
+                  title="Sign in as Analyst"
                   aria-label="Instant login as Analyst"
                 >
-                  <div className="demo-chip-title">
+                  <div className="demo-chip-action-row">
                     <span className="role-tag role-analyst">Analyst</span>
-                    <span className="demo-chip-email">analyst@querytrust.local</span>
+                    <span className="demo-chip-btn-label">Try as Analyst &rarr;</span>
                   </div>
-                  <span className="demo-chip-desc">Natural language SQL queries, health profiler, & ML anomalies</span>
+                  <span className="demo-chip-email">analyst@querytrust.local</span>
+                  <span className="demo-chip-desc">Natural-language equipment questions, health checks, & telemetry anomalies</span>
                 </button>
 
-                <button
-                  type="button"
-                  className="demo-chip chip-admin"
-                  disabled={loading}
-                  onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
-                  title="Sign in as Admin: Full governance, audit logs & users"
-                  aria-label="Instant login as Admin"
-                >
-                  <div className="demo-chip-title">
-                    <span className="role-tag role-admin">Admin</span>
-                    <span className="demo-chip-email">admin@querytrust.local</span>
-                  </div>
-                  <span className="demo-chip-desc">Full governance, security audit logs, AST policy, & user management</span>
-                </button>
-
+                {/* 2. Viewer second */}
                 <button
                   type="button"
                   className="demo-chip chip-viewer"
                   disabled={loading}
                   onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
-                  title="Sign in as Viewer: Read-only monitoring & catalog"
+                  title="Sign in as Viewer"
                   aria-label="Instant login as Viewer"
                 >
-                  <div className="demo-chip-title">
+                  <div className="demo-chip-action-row">
                     <span className="role-tag role-viewer">Viewer</span>
-                    <span className="demo-chip-email">viewer@querytrust.local</span>
+                    <span className="demo-chip-btn-label">Try as Viewer &rarr;</span>
                   </div>
-                  <span className="demo-chip-desc">Read-only equipment catalog, saved questions, & metric cards</span>
+                  <span className="demo-chip-email">viewer@querytrust.local</span>
+                  <span className="demo-chip-desc">Read-only: equipment, data health and unusual activity.</span>
+                </button>
+
+                {/* 3. Admin third */}
+                <button
+                  type="button"
+                  className="demo-chip chip-admin"
+                  disabled={loading}
+                  onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
+                  title="Sign in as Admin"
+                  aria-label="Instant login as Admin"
+                >
+                  <div className="demo-chip-action-row">
+                    <span className="role-tag role-admin">Admin</span>
+                    <span className="demo-chip-btn-label">Try as Admin &rarr;</span>
+                  </div>
+                  <span className="demo-chip-email">admin@querytrust.local</span>
+                  <span className="demo-chip-desc">Full governance, security audit logs, safety rules, & user management</span>
                 </button>
               </div>
             </section>
@@ -510,90 +476,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           {/* Footer Security Note */}
           <footer className="login-footer">
             <ShieldCheck size={14} className="text-secondary" />
-            <span>SELECT-Only Database Role &bull; SQLGlot AST Enforced &bull; Zero Mutations</span>
+            <span>Read-only access &bull; 6 safety checks &bull; No changes to your data</span>
           </footer>
         </div>
       </main>
 
-      {/* ─── Forgot Password Modal ─── */}
-      {showForgotPassword && (
-        <div className="login-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="forgot-modal-title">
-          <div className="login-modal-card">
-            <div className="login-modal-header">
-              <div className="modal-title-wrap">
-                <HelpCircle size={20} className="text-accent" />
-                <h3 id="forgot-modal-title">Reset Your Password</h3>
-              </div>
-              <button
-                type="button"
-                className="login-modal-close"
-                onClick={() => setShowForgotPassword(false)}
-                aria-label="Close password reset modal"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {forgotPasswordSubmitted ? (
-              <div className="login-modal-success">
-                <CheckCircle2 size={36} className="text-emerald" />
-                <h4>Reset Link Dispatched</h4>
-                <p>
-                  If an enterprise directory account exists for <strong>{forgotPasswordEmail}</strong>, password reset instructions have been dispatched.
-                </p>
-                <button
-                  type="button"
-                  className="login-submit-btn"
-                  onClick={() => setShowForgotPassword(false)}
-                >
-                  Return to Sign In
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleForgotPasswordSubmit} className="modal-form">
-                <p className="modal-intro">
-                  Enter your registered work email. We'll send a time-bounded cryptographic token to reset your password.
-                </p>
-                <div className="form-group">
-                  <label htmlFor="forgot-email" className="form-label">
-                    Work Email
-                  </label>
-                  <input
-                    id="forgot-email"
-                    type="email"
-                    value={forgotPasswordEmail}
-                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                    placeholder="name@querytrust.local"
-                    className="form-input"
-                    required
-                  />
-                </div>
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowForgotPassword(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="login-submit-btn">
-                    Send Reset Link
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ─── Request Access / Sign Up Modal ─── */}
+      {/* ─── Request Access Modal (Preview Only) ─── */}
       {showRequestAccess && (
         <div className="login-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="request-modal-title">
           <div className="login-modal-card">
+            <div className="request-preview-banner" role="status">
+              Preview only. Nothing is saved or sent.
+            </div>
+
             <div className="login-modal-header">
               <div className="modal-title-wrap">
                 <Building size={20} className="text-accent" />
-                <h3 id="request-modal-title">Request Enterprise Access</h3>
+                <h3 id="request-modal-title">Request access</h3>
               </div>
               <button
                 type="button"
@@ -608,10 +507,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             {requestSubmitted ? (
               <div className="login-modal-success">
                 <CheckCircle2 size={36} className="text-emerald" />
-                <h4>Access Request Submitted</h4>
+                <h4>Access Request Preview</h4>
                 <p>
-                  Thank you, <strong>{requestForm.name}</strong>. Your provisioning request for{' '}
-                  <strong>{requestForm.roleRequested}</strong> role has been queued for security review.
+                  This is a demonstration preview. In a production workspace, your administrator would receive this request. No personal data was saved or sent.
+                </p>
+                <p className="preview-role-summary">
+                  Requested role: <strong>{requestForm.roleRequested}</strong> for <strong>{requestForm.name || 'User'}</strong>
                 </p>
                 <button
                   type="button"
@@ -625,7 +526,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               <form onSubmit={handleRequestSubmit} className="modal-form">
                 <div className="form-group">
                   <label htmlFor="req-name" className="form-label">
-                    Full Name
+                    Full name <span className="req-star" aria-hidden="true">*</span>
                   </label>
                   <div className="input-with-icon">
                     <UserIcon size={16} className="input-icon" />
@@ -643,7 +544,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
                 <div className="form-group">
                   <label htmlFor="req-email" className="form-label">
-                    Work Email
+                    Work email <span className="req-star" aria-hidden="true">*</span>
                   </label>
                   <div className="input-with-icon">
                     <Mail size={16} className="input-icon" />
@@ -661,7 +562,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
                 <div className="form-group">
                   <label htmlFor="req-company" className="form-label">
-                    Organization / Company
+                    Organization / Company <span className="req-star" aria-hidden="true">*</span>
                   </label>
                   <div className="input-with-icon">
                     <Building size={16} className="input-icon" />
@@ -679,7 +580,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
                 <div className="form-group">
                   <label htmlFor="req-role" className="form-label">
-                    Requested Access Role
+                    Requested role <span className="req-star" aria-hidden="true">*</span>
                   </label>
                   <select
                     id="req-role"
@@ -687,22 +588,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                     onChange={(e) => setRequestForm({ ...requestForm, roleRequested: e.target.value })}
                     className="form-input"
                   >
-                    <option value="Analyst">Analyst (Natural Language Queries & Telemetry)</option>
-                    <option value="Admin">Administrator (Audit Logs, Governance, & Policies)</option>
-                    <option value="Viewer">Viewer (Read-Only Dashboards & Catalog)</option>
+                    <option value="Viewer">Viewer (Read-only dashboards)</option>
+                    <option value="Analyst">Analyst (Plain English queries)</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label htmlFor="req-justification" className="form-label">
-                    Business Justification
+                    Business justification <span className="req-star" aria-hidden="true">*</span>
                   </label>
                   <textarea
                     id="req-justification"
                     rows={2}
                     value={requestForm.justification}
                     onChange={(e) => setRequestForm({ ...requestForm, justification: e.target.value })}
-                    placeholder="Briefly state your equipment monitoring workflow or telemetry audit use case."
+                    placeholder="Briefly state your equipment monitoring workflow."
                     className="form-input"
                     required
                   />

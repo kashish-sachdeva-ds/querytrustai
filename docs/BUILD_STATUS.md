@@ -827,6 +827,37 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
    - Visual charts: bar charts strictly use neutral slate `#71706b` / `#8a8884` data bars; metric single-value display uses high-contrast neutral ink; donut charts use balanced 8-color categorical palette (teal, indigo, amber, slate).
    - Thumbs up/down feedback card with optional evaluation notes logging to backend API.
 
+## Milestone 13 — Login & Request-Access Trust and Honesty Overhaul — 2026-10-19
 
+**Status:** Completed — 112 backend tests passing, frontend production build verified (tsc -b && vite build passing).
 
-
+### Summary of Enhancements:
+1. **Removed False / Inflated Claims:**
+   - Removed all SOC2 / ISO-27001 Ready Governance labels and compliance assertions across the codebase.
+   - Standardized honest disclaimer: "Demo workspace: 5,000 made-up devices, 50 sites, 25,000 readings. No real company data."
+   - Replaced inflated terminology ("Authorized enterprise access", "enterprise credentials", "enterprise account") with direct plain English ("Sign in to workspace", "Work email", "Request access").
+   - Removed unsupported mock features ("Forgot password?" and "Remember this workstation for 30 days").
+2. **Plain English Feature Cards (Zero Jargon):**
+   - Card 1: "6 safety checks on every question" — Each question is checked before it touches your data.
+   - Card 2: "Read-only by design" — The database login can only read. It cannot change or delete anything.
+   - Card 3: "Only your equipment data" — Questions stay inside the equipment tables, so answers cannot wander off-topic.
+   - Removed jargon (AST, SQLGlot, analytics_reader, schema-bounded, hallucinations, speculative SQL) from public login view.
+3. **Unified Brand Identity & Taglines:**
+   - Standardized logo subtitle: "Equipment intelligence" in sentence case across Landing, Login, and Sidebar.
+   - Standardized tagline headline: "Ask your equipment anything, in plain English. The AI cannot change your data."
+   - Synchronized browser tab title in index.html: "QueryTrust AI — The AI cannot change your data".
+4. **High-Contrast Sign-In Button & Demo Role Ordering:**
+   - Primary CTA: solid #ff5a14 with white text when valid; clearly styled inactive border/tint when empty/loading (WCAG AA compliant).
+   - 1-Click Demo Roles ordered: Analyst, Viewer, Admin.
+   - Viewer description: "Read-only: equipment, data health and unusual activity."
+   - Admin description: "Full governance, security audit logs, safety rules, and user management".
+5. **Request Access Form (Preview Guarantee):**
+   - Added persistent top banner: "Preview only. Nothing is saved or sent."
+   - Restricted role selection to Viewer and Analyst (NO Admin option).
+   - Added required field markers (*) and friendly confirmation dialog clarifying demonstration preview.
+7. **Security AST Inspector Modal Widescreen Elevation (DevTools Architecture):**
+   - Transformed narrow, tall, single-column modal (`max-width: 540px`) into a widescreen 2-column DevTools security inspector (`width: min(94vw, 1040px); max-height: min(88vh, 740px)`).
+   - **Left Column:** Displays target attack SQL payload, pre-flight block banner, and 4-stage lexical & syntax walker execution timeline.
+   - **Right Column:** Displays backend engine code proof (`app/core/sql_validator.py` with SQLGlot AST Guard badge) and 4-point security telemetry evidence grid (Defense Mechanism, HTTP 400 Bad Request, 0 Rows Affected, Audit Log record).
+   - **Sticky Footer:** Features database safety assurance pill (`Zero database socket dispatch • Read-only reader role preserved`), `[Close]`, `[Copy Exploit SQL]`, and prominent `[Test in Sandbox ↑]` action button.
+   - **Viewport Fit:** Entire modal fits comfortably within a single view at normal and zoomed desktop resolutions without requiring zoom out or vertical scrolling. Breakpoint at `860px` gracefully falls back to stacked single column on mobile.

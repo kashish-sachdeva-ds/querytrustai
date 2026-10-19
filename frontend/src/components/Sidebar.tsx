@@ -13,7 +13,6 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
-  Check,
   ArrowRight,
   X,
   Info,
@@ -288,21 +287,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
             type="button"
             className={`sidebar-ask-cta ${activeTab === 'ask-data' ? 'is-current-page' : ''}`}
             onClick={() => onSelectTab('ask-data')}
-            title="Ask a question (⌘K)"
+            title="Ask a question (Ctrl+K)"
             aria-label={isCollapsed ? 'Ask a question' : undefined}
             aria-current={activeTab === 'ask-data' ? 'page' : undefined}
           >
             <MessageSquareText size={17} className="sidebar-ask-icon" aria-hidden="true" />
             {!isCollapsed && (
               <>
-                <span className="sidebar-ask-text">Ask a question</span>
-                {activeTab === 'ask-data' ? (
-                  <span className="sidebar-ask-here-badge" title="You're currently on Ask">
-                    <Check size={11} strokeWidth={3} />
-                    <span>Here</span>
-                  </span>
-                ) : null}
-                <kbd className="sidebar-ask-kbd" aria-hidden="true">⌘K</kbd>
+                <span className="sidebar-ask-text">
+                  <span className="sidebar-ask-label">Ask a question</span>
+                  {activeTab === 'ask-data' && (
+                    <span className="sidebar-ask-live-dot" title="Active page" aria-hidden="true" />
+                  )}
+                </span>
+                <kbd className="sidebar-ask-kbd" aria-label="Keyboard shortcut: Control K" title="Shortcut: Ctrl+K">
+                  <span className="kbd-mod">Ctrl</span>
+                  <span className="kbd-key">K</span>
+                </kbd>
               </>
             )}
           </button>

@@ -915,17 +915,25 @@ body.command-palette-open { overflow: hidden; }
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden !important;
+  max-height: 100vh;
+  overflow: hidden !important;
   box-sizing: border-box;
   z-index: 50;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar--collapsed {
   width: 68px !important;
   padding: 1.25rem 0.5rem !important;
-  overflow-x: hidden !important;
+  overflow: hidden !important;
   box-sizing: border-box;
+}
+
+.sidebar--collapsed .sidebar-scrollable-body {
+  margin: 0.5rem 0 0 0;
+  padding: 0;
+  align-items: center;
 }
 
 .brand-section {

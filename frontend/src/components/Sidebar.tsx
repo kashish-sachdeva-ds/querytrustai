@@ -312,159 +312,162 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
         </div>
       )}
 
-      {/* Rule 2 & Rule 8: Recent questions (sentence case, max 3, status icons, click reopens) */}
-      {canAsk && !isCollapsed && recentQuestions.length > 0 && (
-        <div className="sidebar-recent-section" aria-label="Recent questions">
-          <div className="sidebar-recent-header">
-            <span className="sidebar-recent-title">Recent questions</span>
+      {/* Independent scrollable body: Recent questions + Navigation destinations */}
+      <div className="sidebar-scrollable-body">
+        {/* Rule 2 & Rule 8: Recent questions (sentence case, max 3, status icons, click reopens) */}
+        {canAsk && !isCollapsed && recentQuestions.length > 0 && (
+          <div className="sidebar-recent-section" aria-label="Recent questions">
+            <div className="sidebar-recent-header">
+              <span className="sidebar-recent-title">Recent questions</span>
+              <button
+                type="button"
+                className="sidebar-recent-all-btn"
+                onClick={() => onSelectTab('history')}
+                title="View all question history"
+              >
+                All
+              </button>
+            </div>
+            <div className="sidebar-recent-list">
+              {recentQuestions.map((q) => {
+                const statusInfo = getQuestionStatus(q)
+                const StatusIcon = statusInfo.icon
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    className={`sidebar-recent-item sidebar-recent-item--${statusInfo.type}`}
+                    onClick={() => handleRecentQuestionClick(q)}
+                    title={`${q.question}\nStatus: ${statusInfo.label}`}
+                  >
+                    <StatusIcon
+                      size={12}
+                      className="sidebar-recent-icon"
+                      style={{ color: statusInfo.color }}
+                      aria-hidden="true"
+                    />
+                    <span className="sidebar-recent-text">{q.question}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Main Navigation List: Destinations (Home, Data catalog, Data sources, Data health, Unusual activity, Safety proof, People & access) */}
+        <nav className="nav-menu" aria-label="Main Navigation">
+          <button
+            type="button"
+            className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => onSelectTab('overview')}
+            title="Home - Fleet overview"
+            aria-current={activeTab === 'overview' ? 'page' : undefined}
+          >
+            <LayoutDashboard size={18} />
+            {!isCollapsed && <span>Home</span>}
+          </button>
+
+          <button
+            type="button"
+            className={`nav-item ${activeTab === 'devices' ? 'active' : ''}`}
+            onClick={() => onSelectTab('devices')}
+            title="Data catalog - Schema & table explorer"
+            aria-current={activeTab === 'devices' ? 'page' : undefined}
+          >
+            <Server size={18} />
+            {!isCollapsed && <span>Data catalog</span>}
+          </button>
+
+          {/* Data sources: Live enterprise database & sandbox */}
+          {(isAdmin || canAsk) && (
             <button
               type="button"
-              className="sidebar-recent-all-btn"
-              onClick={() => onSelectTab('history')}
-              title="View all question history"
+              className={`nav-item ${activeTab === 'data-sources' ? 'active' : ''}`}
+              onClick={() => onSelectTab('data-sources')}
+              title="Data sources - Live enterprise database & sandbox"
+              aria-current={activeTab === 'data-sources' ? 'page' : undefined}
             >
-              All
+              <Database size={18} />
+              {!isCollapsed && <span>Data sources</span>}
             </button>
-          </div>
-          <div className="sidebar-recent-list">
-            {recentQuestions.map((q) => {
-              const statusInfo = getQuestionStatus(q)
-              const StatusIcon = statusInfo.icon
-              return (
-                <button
-                  key={q.id}
-                  type="button"
-                  className={`sidebar-recent-item sidebar-recent-item--${statusInfo.type}`}
-                  onClick={() => handleRecentQuestionClick(q)}
-                  title={`${q.question}\nStatus: ${statusInfo.label}`}
-                >
-                  <StatusIcon
-                    size={12}
-                    className="sidebar-recent-icon"
-                    style={{ color: statusInfo.color }}
-                    aria-hidden="true"
-                  />
-                  <span className="sidebar-recent-text">{q.question}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* Main Navigation List: Destinations (Home, Data catalog, Data sources, Data health, Unusual activity, Safety proof, People & access) */}
-      <nav className="nav-menu" aria-label="Main Navigation">
-        <button
-          type="button"
-          className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => onSelectTab('overview')}
-          title="Home - Fleet overview"
-          aria-current={activeTab === 'overview' ? 'page' : undefined}
-        >
-          <LayoutDashboard size={18} />
-          {!isCollapsed && <span>Home</span>}
-        </button>
-
-        <button
-          type="button"
-          className={`nav-item ${activeTab === 'devices' ? 'active' : ''}`}
-          onClick={() => onSelectTab('devices')}
-          title="Data catalog - Schema & table explorer"
-          aria-current={activeTab === 'devices' ? 'page' : undefined}
-        >
-          <Server size={18} />
-          {!isCollapsed && <span>Data catalog</span>}
-        </button>
-
-        {/* Data sources: Live enterprise database & sandbox */}
-        {(isAdmin || canAsk) && (
+          {/* Rule 4: Data health amber badge with tooltip */}
           <button
             type="button"
-            className={`nav-item ${activeTab === 'data-sources' ? 'active' : ''}`}
-            onClick={() => onSelectTab('data-sources')}
-            title="Data sources - Live enterprise database & sandbox"
-            aria-current={activeTab === 'data-sources' ? 'page' : undefined}
+            className={`nav-item ${activeTab === 'data-quality' ? 'active' : ''}`}
+            onClick={() => onSelectTab('data-quality')}
+            title="Data health - Diagnostic findings"
+            aria-current={activeTab === 'data-quality' ? 'page' : undefined}
           >
-            <Database size={18} />
-            {!isCollapsed && <span>Data sources</span>}
+            <ShieldCheck size={18} />
+            {!isCollapsed && (
+              <>
+                <span>Data health</span>
+                {dataHealthCount !== null && (
+                  <span
+                    className="nav-count-badge warning"
+                    title={`${dataHealthCount} data problems to review`}
+                  >
+                    {dataHealthCount}
+                  </span>
+                )}
+              </>
+            )}
           </button>
-        )}
 
-        {/* Rule 4: Data health amber badge with tooltip */}
-        <button
-          type="button"
-          className={`nav-item ${activeTab === 'data-quality' ? 'active' : ''}`}
-          onClick={() => onSelectTab('data-quality')}
-          title="Data health - Diagnostic findings"
-          aria-current={activeTab === 'data-quality' ? 'page' : undefined}
-        >
-          <ShieldCheck size={18} />
-          {!isCollapsed && (
-            <>
-              <span>Data health</span>
-              {dataHealthCount !== null && (
-                <span
-                  className="nav-count-badge warning"
-                  title={`${dataHealthCount} data problems to review`}
-                >
-                  {dataHealthCount}
-                </span>
-              )}
-            </>
-          )}
-        </button>
-
-        {/* Rule 4: Unusual activity neutral badge with tooltip */}
-        <button
-          type="button"
-          className={`nav-item ${activeTab === 'anomalies' ? 'active' : ''}`}
-          onClick={() => onSelectTab('anomalies')}
-          title="Unusual activity - Outlier telemetry"
-          aria-current={activeTab === 'anomalies' ? 'page' : undefined}
-        >
-          <Activity size={18} />
-          {!isCollapsed && (
-            <>
-              <span>Unusual activity</span>
-              {anomaliesCount !== null && (
-                <span
-                  className="nav-count-badge neutral"
-                  title={`${anomaliesCount} readings flagged as unusual`}
-                >
-                  {anomaliesCount}
-                </span>
-              )}
-            </>
-          )}
-        </button>
-
-        {/* Safety proof: The Automated Evaluation & Benchmark Lab */}
-        <button
-          type="button"
-          className={`nav-item ${activeTab === 'evaluations' ? 'active' : ''}`}
-          onClick={() => onSelectTab('evaluations')}
-          title="Safety proof - Automated benchmark lab & regression test suites"
-          aria-current={activeTab === 'evaluations' ? 'page' : undefined}
-        >
-          <FlaskConical size={18} />
-          {!isCollapsed && <span>Safety proof</span>}
-        </button>
-
-        {/* Rule 8: People & access: Admin only */}
-        {isAdmin && (
+          {/* Rule 4: Unusual activity neutral badge with tooltip */}
           <button
             type="button"
-            className={`nav-item nav-item--admin ${activeTab === 'admin' ? 'active' : ''}`}
-            onClick={() => onSelectTab('admin')}
-            title="People & access - Users & audit log"
-            aria-current={activeTab === 'admin' ? 'page' : undefined}
-            style={{ marginTop: 'auto' }}
+            className={`nav-item ${activeTab === 'anomalies' ? 'active' : ''}`}
+            onClick={() => onSelectTab('anomalies')}
+            title="Unusual activity - Outlier telemetry"
+            aria-current={activeTab === 'anomalies' ? 'page' : undefined}
           >
-            <Users size={18} />
-            {!isCollapsed && <span>People & access</span>}
+            <Activity size={18} />
+            {!isCollapsed && (
+              <>
+                <span>Unusual activity</span>
+                {anomaliesCount !== null && (
+                  <span
+                    className="nav-count-badge neutral"
+                    title={`${anomaliesCount} readings flagged as unusual`}
+                  >
+                    {anomaliesCount}
+                  </span>
+                )}
+              </>
+            )}
           </button>
-        )}
-      </nav>
+
+          {/* Safety proof: The Automated Evaluation & Benchmark Lab */}
+          <button
+            type="button"
+            className={`nav-item ${activeTab === 'evaluations' ? 'active' : ''}`}
+            onClick={() => onSelectTab('evaluations')}
+            title="Safety proof - Automated benchmark lab & regression test suites"
+            aria-current={activeTab === 'evaluations' ? 'page' : undefined}
+          >
+            <FlaskConical size={18} />
+            {!isCollapsed && <span>Safety proof</span>}
+          </button>
+
+          {/* Rule 8: People & access: Admin only */}
+          {isAdmin && (
+            <button
+              type="button"
+              className={`nav-item nav-item--admin ${activeTab === 'admin' ? 'active' : ''}`}
+              onClick={() => onSelectTab('admin')}
+              title="People & access - Users & audit log"
+              aria-current={activeTab === 'admin' ? 'page' : undefined}
+              style={{ marginTop: 'auto' }}
+            >
+              <Users size={18} />
+              {!isCollapsed && <span>People & access</span>}
+            </button>
+          )}
+        </nav>
+      </div>
 
       {/* Safety Shield Sentinel Card & Contextual Popover (Linear / Stripe Pattern) */}
       <div className="sidebar-footer" ref={popoverRef}>

@@ -1465,16 +1465,112 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Modal Drawer --------------------------------------------------------- */
+/* --- Modal Drawer & Modal Dialogs ----------------------------------------- */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(25,24,23,.35);
-  backdrop-filter: blur(2px);
+  background: rgba(10, 14, 23, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
   justify-content: flex-end;
   animation: backdrop-in 180ms cubic-bezier(.16,1,.3,1);
+}
+
+.modal-backdrop-centered {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 23, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+  animation: backdrop-in 180ms cubic-bezier(.16,1,.3,1);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 620px;
+  background: var(--qt-surface);
+  border: 1px solid var(--qt-border);
+  border-radius: 12px;
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 1051;
+  animation: modal-card-pop 200ms cubic-bezier(.16, 1, .3, 1);
+}
+
+@keyframes modal-card-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: var(--qt-canvas);
+  border: 1px solid var(--qt-border);
+  border-radius: var(--qt-radius-control, 6px);
+  color: var(--qt-ink);
+  font-size: 0.875rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--qt-accent, #ff5c00);
+  box-shadow: 0 0 0 3px rgba(255, 92, 0, 0.18);
+  background: var(--qt-surface);
+}
+
+.form-control::placeholder {
+  color: var(--qt-muted);
+  opacity: 0.75;
+}
+
+input[type="number"].form-control,
+input[type="number"].form-input {
+  background-color: var(--qt-canvas) !important;
+  color: var(--qt-ink) !important;
+}
+
+select.form-control,
+select.form-input {
+  appearance: none;
+  background-color: var(--qt-canvas);
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 14px 14px;
+  padding-right: 2.2rem;
+  cursor: pointer;
+  color: var(--qt-ink);
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--qt-border);
+  background: var(--qt-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 @keyframes backdrop-in {

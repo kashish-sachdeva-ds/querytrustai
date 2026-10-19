@@ -557,18 +557,34 @@ export const DataSourcesView: React.FC = () => {
 
       {/* Connect Database Modal */}
       {showConnectModal && (
-        <div className="modal-backdrop" onClick={() => setShowConnectModal(false)}>
+        <div className="modal-backdrop-centered" onClick={() => setShowConnectModal(false)}>
           <div
             className="modal-card"
-            style={{ maxWidth: 640, width: '90%' }}
+            style={{ maxWidth: 620, width: '100%' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Database size={20} style={{ color: 'var(--qt-accent)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 8,
+                    background: 'rgba(255, 92, 0, 0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--qt-accent)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Database size={20} />
+                </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Connect PostgreSQL Database</h3>
-                  <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--qt-muted)' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--qt-ink)' }}>
+                    Connect PostgreSQL Database
+                  </h3>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: 'var(--qt-muted)' }}>
                     Extract tables and enable natural language analytics over your company data.
                   </p>
                 </div>
@@ -578,6 +594,7 @@ export const DataSourcesView: React.FC = () => {
                 className="btn btn-icon btn-sm"
                 onClick={() => setShowConnectModal(false)}
                 aria-label="Close"
+                style={{ fontSize: '1.1rem', lineHeight: 1 }}
               >
                 ✕
               </button>

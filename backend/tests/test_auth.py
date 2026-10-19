@@ -237,3 +237,66 @@ def test_admin_workspace_isolation(client, db_session):
     db_session.query(User).filter(User.email == admin_email).delete()
     db_session.commit()
 
+
+def test_claim_provisioned_access_request_account(client, db_session):
+    """A user provisioned with temporary WelcomePass123! can claim their account via Create Workspace."""
+    from app.models.user import User
+    from app.core.security import get_password_hash, verify_password
+
+    claimed_email = "provisioned_user@acme-enterprises.com"
+    db_session.query(User).filter(User.email == claimed_email).delete()
+    db_session.commit()
+
+    # Pre-provision with WelcomePass123!
+    provisioned = User(
+        email=claimed_email,
+        display_name="Prospect User",
+        password_hash=get_password_hash("WelcomePass123!"),
+        role="viewer",
+        workspace_name="Default Workspace",
+        is_active=True,
+    )
+    db_session.add(provisioned)
+    db_session.commit()
+
+    # 1. Logging in with wrong password should return informative prompt about WelcomePass123!
+    wrong_login = client.post("/api/v1/auth/login", json={"email": claimed_email, "password": "MyCustomPass99!"})
+    assert wrong_login.status_code == 401
+    assert "WelcomePass123!" in wrong_login.json()["detail"]
+
+    # 2. Registering via Create Workspace should CLAIM the account, update password, workspace, and role
+    claim_payload = {
+        "full_name": "Kashish Sachdeva",
+        "email": claimed_email,
+        "password": "MyCustomPass99!",
+        "workspace_name": "Kashish private limited",
+        "role": "admin",
+    }
+    claim_resp = client.post("/api/v1/auth/register", json=claim_payload)
+    assert claim_resp.status_code == 201
+    data = claim_resp.json()
+    assert data["user"]["email"] == claimed_email
+    assert data["user"]["display_name"] == "Kashish Sachdeva"
+    assert data["user"]["workspace_name"] == "Kashish private limited"
+    assert data["user"]["role"] == "admin"
+
+    # Verify password hash updated in DB
+    updated = db_session.query(User).filter(User.email == claimed_email).first()
+    assert verify_password("MyCustomPass99!", updated.password_hash) is True
+    assert verify_password("WelcomePass123!", updated.password_hash) is False
+
+    # 3. Subsequent registration now fails with duplicate error
+    dup_resp = client.post("/api/v1/auth/register", json=claim_payload)
+    assert dup_resp.status_code == 400
+    assert "already exists" in dup_resp.json()["detail"]
+
+    # 4. Logging in with the newly claimed password succeeds
+    good_login = client.post("/api/v1/auth/login", json={"email": claimed_email, "password": "MyCustomPass99!"})
+    assert good_login.status_code == 200
+    assert good_login.json()["user"]["workspace_name"] == "Kashish private limited"
+
+    # Clean up
+    db_session.query(User).filter(User.email == claimed_email).delete()
+    db_session.commit()
+
+

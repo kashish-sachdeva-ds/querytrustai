@@ -201,15 +201,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           type: 'invalid_credentials',
           message: rawErrorMsg || 'Your access request was declined by workspace administrators.',
         })
-      } else if (lower.includes('locked') || lower.includes('too many')) {
+      } else if (lower.includes('welcomepass') || lower.includes('temporary password')) {
         setStatusNotice(null)
-        setGlobalError({ type: 'account_locked' })
+        setGlobalError({
+          type: 'invalid_credentials',
+          message: rawErrorMsg,
+          actionLabel: 'Use "WelcomePass123!" & Sign In →',
+          onAction: () => {
+            setFormValues((prev) => ({ ...prev, password: 'WelcomePass123!' }))
+            setGlobalError(null)
+          },
+        })
       } else {
         setStatusNotice(null)
         setGlobalError({
           type: 'invalid_credentials',
-          message: 'Invalid work credentials. If you are new to QueryTrust AI or do not have an approved account yet, please request access below.',
-          actionLabel: 'Request access for this email →',
+          message: rawErrorMsg || 'Invalid work credentials. Please verify your email and password.',
+          actionLabel: 'Need access? Request access →',
           onAction: () => {
             setShowRequestAccess(true)
             setRequestSubmitted(false)

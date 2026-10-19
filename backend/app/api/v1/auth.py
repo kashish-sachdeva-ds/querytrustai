@@ -71,6 +71,12 @@ def login(
         )
 
     if not verify_password(request.password, user.password_hash):
+        if verify_password("WelcomePass123!", user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Your account was approved with the temporary password 'WelcomePass123!'. Sign in with 'WelcomePass123!' or use Create Workspace to set your password.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -119,6 +125,43 @@ def register(
     clean_email = request.email.strip().lower()
     existing = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if existing:
+        # Check if this user was provisioned via an approved Access Request with the initial temporary password
+        if verify_password("WelcomePass123!", existing.password_hash):
+            # Claim the account and configure their new password & company workspace
+            existing.display_name = request.full_name.strip() or existing.display_name
+            existing.password_hash = get_password_hash(request.password)
+            existing.workspace_name = request.workspace_name.strip() or existing.workspace_name
+            existing.role = request.role or "admin"
+            existing.is_active = True
+
+            # Mark any pending access request as approved
+            pending = db.query(AccessRequest).filter(func.lower(AccessRequest.email) == clean_email).first()
+            if pending:
+                pending.status = "approved"
+
+            db.commit()
+            db.refresh(existing)
+
+            access_token = create_access_token(
+                user_id=str(existing.id),
+                role=existing.role,
+                settings=settings,
+            )
+            response.set_cookie(
+                key="querytrust_access_token",
+                value=access_token,
+                httponly=True,
+                secure=settings.ENVIRONMENT != "development",
+                samesite="strict",
+                max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+                path="/api/v1",
+            )
+            return LoginResponse(
+                access_token=access_token,
+                token_type="bearer",
+                user=UserPublic.model_validate(existing),
+            )
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An account with this email address already exists. Please sign in instead.",

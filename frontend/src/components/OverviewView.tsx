@@ -440,60 +440,60 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       {/* ─── 2. ENTERPRISE ONBOARDING CARD (When Workspace Has No Data Connected) ─── */}
       {isUnconfigured && (
         <div className="workspace-onboarding-card">
-          <div className="onboarding-badge-strip">
-            <span className="onboarding-badge">🏢 New Workspace</span>
-            <span className="onboarding-workspace-name">{user?.workspace_name || 'Organization'}</span>
-            <span className="onboarding-status-pill">&bull; Ready for Configuration</span>
+          <div className="workspace-onboarding-badge-strip">
+            <span className="workspace-onboarding-badge">🏢 New Workspace</span>
+            <span className="workspace-onboarding-workspace-name">{user?.workspace_name || 'Organization'}</span>
+            <span className="workspace-onboarding-status-pill">&bull; Ready for Configuration</span>
           </div>
 
-          <div className="onboarding-body">
-            <div className="onboarding-icon-box">
-              <Database size={28} className="onboarding-icon" />
+          <div className="workspace-onboarding-body">
+            <div className="workspace-onboarding-icon-box">
+              <Database size={28} className="workspace-onboarding-icon" />
             </div>
-            <div className="onboarding-text">
-              <h2 className="onboarding-title">
+            <div className="workspace-onboarding-text">
+              <h2 className="workspace-onboarding-title">
                 Welcome to {user?.workspace_name || 'your workspace'}
               </h2>
-              <p className="onboarding-subtitle">
+              <p className="workspace-onboarding-subtitle">
                 Your workspace is provisioned with strict tenant isolation. No data is shared with default sandbox demo fixtures. Connect your organization&apos;s PostgreSQL database to start analyzing, or load sample educational telemetry to explore the platform.
               </p>
 
-              <div className="onboarding-options-grid">
-                <div className="onboarding-option-card">
-                  <div className="option-header">
-                    <span className="option-tag">Recommended for Production</span>
+              <div className="workspace-onboarding-options-grid">
+                <div className="workspace-onboarding-option-card">
+                  <div className="workspace-onboarding-option-header">
+                    <span className="workspace-onboarding-option-tag">Recommended for Production</span>
                     <h3>Connect Enterprise Database</h3>
                   </div>
-                  <p className="option-desc">
+                  <p className="workspace-onboarding-option-desc">
                     Link your existing PostgreSQL instance via read-only SELECT credentials. QueryTrust compiles safe queries and validates execution with SQLGlot AST inspection.
                   </p>
                   {user?.role === 'admin' ? (
                     <button
                       type="button"
-                      className="onboarding-action-btn primary"
+                      className="workspace-onboarding-action-btn primary"
                       onClick={() => onNavigate('data-sources')}
                     >
                       <span>Configure in Data Sources</span>
                       <ArrowRight size={14} />
                     </button>
                   ) : (
-                    <div className="onboarding-role-notice">
+                    <div className="workspace-onboarding-role-notice">
                       Requires Workspace Admin privileges. Ask your organization&apos;s admin to link a data source.
                     </div>
                   )}
                 </div>
 
-                <div className="onboarding-option-card">
-                  <div className="option-header">
-                    <span className="option-tag sample">Instant Sandbox</span>
+                <div className="workspace-onboarding-option-card">
+                  <div className="workspace-onboarding-option-header">
+                    <span className="workspace-onboarding-option-tag sample">Instant Sandbox</span>
                     <h3>Load Sample Sandbox Data</h3>
                   </div>
-                  <p className="option-desc">
+                  <p className="workspace-onboarding-option-desc">
                     Preload 5,000 synthetic devices, telemetry signals, and maintenance requests into your workspace to test natural-language queries, data hygiene, and anomaly detection.
                   </p>
                   <button
                     type="button"
-                    className="onboarding-action-btn secondary"
+                    className="workspace-onboarding-action-btn secondary"
                     onClick={handleSeedSandbox}
                     disabled={seeding}
                   >

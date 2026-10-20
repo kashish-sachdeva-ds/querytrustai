@@ -30,11 +30,68 @@ logger = logging.getLogger("querytrust.api")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from sqlalchemy import text
+    from app.database import SessionLocal
+    from app.models.user import User
+    from app.core.security import get_password_hash
+
     logger.info(f"Starting {settings.APP_NAME} ({settings.ENVIRONMENT})")
     logger.info(f"LLM Provider mode: {settings.LLM_PROVIDER}")
     try:
         Base.metadata.create_all(bind=engine)
-        logger.info("Database tables verified and initialized.")
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS workspace_name VARCHAR(255) DEFAULT 'Default Workspace';"))
+            conn.execute(text("ALTER TABLE query_runs ADD COLUMN IF NOT EXISTS workspace_name VARCHAR(128);"))
+        logger.info("Database tables and columns verified and initialized.")
+
+        # Ensure core demo users and active administrator account exist
+        with SessionLocal() as db:
+            admin_user = db.query(User).filter(User.email == "admin@querytrust.local").first()
+            if not admin_user:
+                db.add(User(
+                    email="admin@querytrust.local",
+                    display_name="System Administrator",
+                    password_hash=get_password_hash("AdminPass123!"),
+                    role="admin",
+                    workspace_name="Default Workspace",
+                    is_active=True,
+                ))
+                db.add(User(
+                    email="analyst@querytrust.local",
+                    display_name="Lead Data Analyst",
+                    password_hash=get_password_hash("AnalystPass123!"),
+                    role="analyst",
+                    workspace_name="Default Workspace",
+                    is_active=True,
+                ))
+                db.add(User(
+                    email="viewer@querytrust.local",
+                    display_name="Executive Viewer",
+                    password_hash=get_password_hash("ViewerPass123!"),
+                    role="viewer",
+                    workspace_name="Default Workspace",
+                    is_active=True,
+                ))
+                db.commit()
+                logger.info("Default demo accounts verified.")
+
+            deepanshu = db.query(User).filter(User.email == "deepanshu123@gmail.com").first()
+            if not deepanshu:
+                db.add(User(
+                    email="deepanshu123@gmail.com",
+                    display_name="Deepanshu Sharma",
+                    password_hash=get_password_hash("Kashish123&!"),
+                    role="admin",
+                    workspace_name="Deepanshu private limited",
+                    is_active=True,
+                ))
+                db.commit()
+                logger.info("Administrator account deepanshu123@gmail.com provisioned.")
+            else:
+                deepanshu.password_hash = get_password_hash("Kashish123&!")
+                deepanshu.workspace_name = "Deepanshu private limited"
+                db.commit()
+
     except Exception as exc:
         logger.warning(f"Database schema auto-creation check skipped or deferred: {exc}")
     yield

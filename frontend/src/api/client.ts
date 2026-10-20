@@ -250,7 +250,7 @@ export interface QueryHistoryResponse {
 }
 
 const TOKEN_KEY = 'querytrust_jwt_token'
-const API_TIMEOUT_MS = 8_000
+const API_TIMEOUT_MS = 25_000
 const inFlightRequests = new Map<string, Promise<unknown>>()
 
 export class ApiRequestError extends Error {

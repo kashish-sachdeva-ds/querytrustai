@@ -520,9 +520,13 @@ class GeminiLLMProvider(BaseLLMProvider):
                 parsed = json.loads(raw_text)
                 return StructuredLLMResponse(**parsed)
             except Exception as e:
-                logger.error(f"Gemini API generation failed: {e}; falling back to demo provider.")
+                logger.error(f"Gemini API generation failed: {e}; falling back to demo provider with honest labeling.")
                 demo = DemoLLMProvider()
-                return await demo.generate_sql_preview(question, history, schema_context)
+                fallback_resp = await demo.generate_sql_preview(question, history, schema_context)
+                fallback_resp.assumptions.insert(
+                    0, f"[NOTICE] Live Gemini generation failed ({type(e).__name__}). Query preview generated via local offline governance templates."
+                )
+                return fallback_resp
 
 
 class OpenAICompatibleLLMProvider(BaseLLMProvider):
@@ -584,9 +588,13 @@ class OpenAICompatibleLLMProvider(BaseLLMProvider):
                 parsed = json.loads(raw_text)
                 return StructuredLLMResponse(**parsed)
             except Exception as e:
-                logger.error(f"OpenAI compatible generation failed: {e}; falling back to demo provider.")
+                logger.error(f"OpenAI compatible generation failed: {e}; falling back to demo provider with honest labeling.")
                 demo = DemoLLMProvider()
-                return await demo.generate_sql_preview(question, history, schema_context)
+                fallback_resp = await demo.generate_sql_preview(question, history, schema_context)
+                fallback_resp.assumptions.insert(
+                    0, f"[NOTICE] Live LLM generation failed ({type(e).__name__}). Query preview generated via local offline governance templates."
+                )
+                return fallback_resp
 
 
 def get_llm_provider(settings: Optional[Settings] = None) -> BaseLLMProvider:

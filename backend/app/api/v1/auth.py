@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.access_request import AccessRequest
 from app.core.security import verify_password, get_password_hash
 from app.core.auth import create_access_token, get_current_user
+from app.core.rate_limiter import rate_limit
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -17,12 +18,13 @@ from app.schemas.auth import (
     AccessRequestCreate,
     AccessRequestPublic,
     JoinWorkspaceRequest,
+    ChangePasswordRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post("/login", response_model=LoginResponse, dependencies=[Depends(rate_limit(max_requests=15, window_seconds=60))])
 def login(
     request: LoginRequest,
     response: Response,
@@ -31,25 +33,26 @@ def login(
 ):
     """Authenticate with email and password, issuing a signed JWT access token.
 
-    Note: Error messages do not distinguish between invalid email vs password
-    to prevent user enumeration.
+    Security: Error messages do not distinguish between invalid email vs password
+    to prevent user enumeration. Demo login shortcuts are gated behind DEMO_MODE.
     """
     clean_email = request.email.strip().lower()
 
-    # Development convenience: resolve single-word role aliases to demo accounts
-    if settings.ENVIRONMENT == "development":
+    # Demo convenience shortcuts — only active when DEMO_MODE is explicitly true.
+    # This prevents accidental exposure when ENVIRONMENT happens to be 'development'.
+    if settings.DEMO_MODE:
         if clean_email in {"admin", "admin@querytrust.local"}:
             clean_email = "admin@querytrust.local"
             if request.password in {"admin", "admin123"}:
-                request.password = "AdminPass123!"
+                request.password = settings.DEMO_ADMIN_PASSWORD
         elif clean_email in {"analyst", "analyst@querytrust.local"}:
             clean_email = "analyst@querytrust.local"
             if request.password in {"analyst", "analyst123"}:
-                request.password = "AnalystPass123!"
+                request.password = settings.DEMO_ANALYST_PASSWORD
         elif clean_email in {"viewer", "viewer@querytrust.local"}:
             clean_email = "viewer@querytrust.local"
             if request.password in {"viewer", "viewer123"}:
-                request.password = "ViewerPass123!"
+                request.password = settings.DEMO_VIEWER_PASSWORD
 
     user = (
         db.query(User)
@@ -57,8 +60,17 @@ def login(
         .first()
     )
 
+    # Security: return identical error for all failure modes to prevent user enumeration.
+    # The only exception is pending access requests, which the user submitted themselves.
+    generic_auth_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid email or password",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     if not user:
-        # Check if an access request is pending administrator review
+        # Check if an access request is pending — this is safe because the user
+        # themselves submitted the request and knows the email.
         pending = (
             db.query(AccessRequest)
             .filter(func.lower(AccessRequest.email) == clean_email, AccessRequest.status == "pending")
@@ -67,38 +79,18 @@ def login(
         if pending:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access request for {clean_email} is pending administrator review. You will be able to sign in once approved in People & access.",
+                detail="Your access request is pending administrator review. You will be able to sign in once approved.",
             )
-
-        rejected = (
-            db.query(AccessRequest)
-            .filter(func.lower(AccessRequest.email) == clean_email, AccessRequest.status == "rejected")
-            .first()
-        )
-        if rejected:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access request for {clean_email} was declined by workspace administrators.",
-            )
-
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise generic_auth_error
 
     if not verify_password(request.password, user.password_hash):
-        if verify_password("WelcomePass123!", user.password_hash):
+        if settings.DEMO_MODE and settings.DEFAULT_TEMP_PASSWORD and verify_password(settings.DEFAULT_TEMP_PASSWORD, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Your account was approved with the temporary password 'WelcomePass123!'. Sign in with 'WelcomePass123!' or use Create Workspace to set your password.",
+                detail=f"Your account has been provisioned. Please sign in using temporary password '{settings.DEFAULT_TEMP_PASSWORD}' or claim your account via 'Create Workspace'.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise generic_auth_error
 
     if not user.is_active:
         raise HTTPException(
@@ -122,7 +114,7 @@ def login(
         secure=settings.ENVIRONMENT != "development",
         samesite="strict",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/api/v1",
+        path="/",
     )
     return LoginResponse(
         access_token=access_token,
@@ -138,20 +130,25 @@ def register(
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ):
-    """Register a new user account with their company workspace, hashed password, and issue JWT."""
+    """Register a new user account with their company workspace, hashed password, and issue JWT.
+
+    Security invariants:
+    - Email must be globally unique.
+    - Pre-provisioned / invited accounts with DEFAULT_TEMP_PASSWORD can be claimed by their owner.
+    """
     clean_email = request.email.strip().lower()
+    clean_workspace = request.workspace_name.strip()
+
     existing = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if existing:
         # Check if this user was provisioned via an approved Access Request with the initial temporary password
-        if verify_password("WelcomePass123!", existing.password_hash):
-            # Claim the account and configure their new password & company workspace
+        if settings.DEFAULT_TEMP_PASSWORD and verify_password(settings.DEFAULT_TEMP_PASSWORD, existing.password_hash):
             existing.display_name = request.full_name.strip() or existing.display_name
             existing.password_hash = get_password_hash(request.password)
-            existing.workspace_name = request.workspace_name.strip() or existing.workspace_name
+            existing.workspace_name = clean_workspace or existing.workspace_name
             existing.role = request.role or "admin"
             existing.is_active = True
 
-            # Mark any pending access request as approved
             pending = db.query(AccessRequest).filter(func.lower(AccessRequest.email) == clean_email).first()
             if pending:
                 pending.status = "approved"
@@ -171,7 +168,7 @@ def register(
                 secure=settings.ENVIRONMENT != "development",
                 samesite="strict",
                 max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-                path="/api/v1",
+                path="/",
             )
             return LoginResponse(
                 access_token=access_token,
@@ -184,14 +181,24 @@ def register(
             detail=f"An account with this email address ({clean_email}) already exists. Please sign in instead.",
         )
 
-    # Hash the user's chosen password with bcrypt
+    # Determine role: first user in workspace gets admin, others get capped role
+    workspace_exists = (
+        db.query(User)
+        .filter(func.lower(User.workspace_name) == clean_workspace.lower())
+        .first()
+    )
+    if workspace_exists:
+        effective_role = request.role if request.role in ("analyst", "viewer") else "analyst"
+    else:
+        effective_role = request.role or "admin"
+
     hashed = get_password_hash(request.password)
     new_user = User(
         email=clean_email,
         display_name=request.full_name.strip(),
         password_hash=hashed,
-        role=request.role or "admin",
-        workspace_name=request.workspace_name.strip(),
+        role=effective_role,
+        workspace_name=clean_workspace,
         is_active=True,
     )
     db.add(new_user)
@@ -217,7 +224,7 @@ def register(
         secure=settings.ENVIRONMENT != "development",
         samesite="strict",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/api/v1",
+        path="/",
     )
     return LoginResponse(
         access_token=access_token,
@@ -233,7 +240,11 @@ def join_workspace(
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ):
-    """Allow an employee to join an existing company workspace."""
+    """Allow an employee to join an existing company workspace.
+
+    Security: joining users are always capped at 'analyst' role. They cannot
+    self-escalate to admin by manipulating the request payload.
+    """
     clean_workspace = request.workspace_name.strip()
     clean_email = request.email.strip().lower()
 
@@ -255,7 +266,7 @@ def join_workspace(
     existing = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if existing:
         # If user was pre-provisioned with temporary password, claim their account!
-        if verify_password("WelcomePass123!", existing.password_hash):
+        if settings.DEFAULT_TEMP_PASSWORD and verify_password(settings.DEFAULT_TEMP_PASSWORD, existing.password_hash):
             existing.display_name = request.full_name.strip() or existing.display_name
             existing.password_hash = get_password_hash(request.password)
             existing.workspace_name = canonical_workspace_name
@@ -276,7 +287,7 @@ def join_workspace(
                 secure=settings.ENVIRONMENT != "development",
                 samesite="strict",
                 max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-                path="/api/v1",
+                path="/",
             )
             return LoginResponse(
                 access_token=access_token,
@@ -289,12 +300,40 @@ def join_workspace(
             detail=f"An account with this email address ({clean_email}) already exists. Please sign in instead.",
         )
 
-    # 3. Provision new member into the existing workspace
+    # 3. Tenant authorization check: prevent uninvited / unauthorized tenant infiltration (VULN-04)
+    # Joining an existing private workspace requires matching the company's verified corporate domain
+    # or having an approved access request from the organization admin.
+    caller_domain = clean_email.split("@")[-1]
+    anchor_domain = workspace_anchor.email.split("@")[-1]
+
+    PUBLIC_DOMAINS = {"gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "protonmail.com", "aol.com", "mail.com"}
+    approved_access = (
+        db.query(AccessRequest)
+        .filter(
+            func.lower(AccessRequest.email) == clean_email,
+            AccessRequest.status == "approved",
+        )
+        .first()
+    )
+
+    domain_authorized = (
+        anchor_domain not in PUBLIC_DOMAINS
+        and caller_domain == anchor_domain
+    )
+
+    if not approved_access and not domain_authorized:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Email domain '@{caller_domain}' is not authorized to join '{canonical_workspace_name}'. Please request access or contact your workspace administrator for an invitation.",
+        )
+
+    # 4. Provision new member — role is capped at analyst (never admin via self-service)
+    effective_role = request.role if request.role in ("analyst", "viewer") else "analyst"
     new_user = User(
         email=clean_email,
         display_name=request.full_name.strip(),
         password_hash=get_password_hash(request.password),
-        role=request.role or "analyst",
+        role=effective_role,
         workspace_name=canonical_workspace_name,
         is_active=True,
     )
@@ -320,7 +359,7 @@ def join_workspace(
         secure=settings.ENVIRONMENT != "development",
         samesite="strict",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        path="/api/v1",
+        path="/",
     )
     return LoginResponse(
         access_token=access_token,
@@ -350,7 +389,7 @@ def get_current_user_profile(
 @router.post("/logout")
 def logout(response: Response):
     """Client-side token disposal endpoint."""
-    response.delete_cookie(key="querytrust_access_token", path="/api/v1", samesite="strict")
+    response.delete_cookie(key="querytrust_access_token", path="/", samesite="strict")
     return {"message": "Logged out successfully"}
 
 
@@ -415,4 +454,25 @@ def request_access(
         reviewed_at=new_request.reviewed_at.isoformat() if new_request.reviewed_at else None,
         created_at=new_request.created_at.isoformat(),
     )
+
+
+@router.post("/change-password", status_code=status.HTTP_200_OK)
+def change_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Securely update password for the currently authenticated user.
+    Requires proving knowledge of current password before replacing with new password.
+    """
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
+
+    current_user.password_hash = get_password_hash(payload.new_password)
+    db.commit()
+    return {"message": "Password updated successfully."}
+
 

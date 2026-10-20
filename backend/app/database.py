@@ -9,6 +9,7 @@ settings = get_settings()
 engine = create_engine(
     settings.sqlalchemy_database_url,
     pool_pre_ping=True,
+    pool_recycle=1800,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
 )
@@ -19,6 +20,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 readonly_engine = create_engine(
     settings.sqlalchemy_readonly_database_url,
     pool_pre_ping=True,
+    pool_recycle=1800,
     execution_options={"isolation_level": "AUTOCOMMIT"},
 )
 

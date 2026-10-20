@@ -145,3 +145,52 @@ def test_empty_query_blocked():
     res = validate_and_sanitize_sql("   ")
     assert res.is_valid is False
     assert "Empty SQL query." in res.violations
+
+
+def test_schema_qualified_prohibited_function_blocked():
+    """Schema-qualified calls like pg_catalog.pg_sleep must be blocked."""
+    sql = "SELECT id, pg_catalog.pg_sleep(5) FROM devices;"
+    res = validate_and_sanitize_sql(sql)
+    assert res.is_valid is False
+    assert any("prohibited function 'pg_sleep'" in v or "prohibited schema 'pg_catalog'" in v for v in res.violations)
+
+
+def test_schema_qualified_disallowed_schema_function_blocked():
+    """Accessing any function in pg_catalog or information_schema must be blocked."""
+    sql = "SELECT pg_catalog.version() FROM devices;"
+    res = validate_and_sanitize_sql(sql)
+    assert res.is_valid is False
+    assert any("prohibited schema 'pg_catalog'" in v or "prohibited function 'version'" in v for v in res.violations)
+
+
+def test_prohibited_function_current_setting_blocked():
+    sql = "SELECT current_setting('server_version') FROM devices;"
+    res = validate_and_sanitize_sql(sql)
+    assert res.is_valid is False
+    assert any("prohibited function 'current_setting'" in v for v in res.violations)
+
+
+def test_cte_shadow_table_allowlist_bypass_blocked():
+    """VULN-01: CTE named after prohibited table trying to access public.users must be blocked."""
+    sql = "WITH users AS (SELECT 1) SELECT id, email, role, password_hash FROM public.users LIMIT 5;"
+    res = validate_and_sanitize_sql(sql)
+    assert res.is_valid is False
+    assert any("prohibited because it shadows internal protected tables" in v or "not in the approved analytics allowlist" in v for v in res.violations)
+
+
+def test_cte_shadow_data_sources_blocked():
+    """VULN-01: CTE shadowing data_sources must be blocked."""
+    sql = "WITH data_sources AS (SELECT 1) SELECT * FROM public.data_sources;"
+    res = validate_and_sanitize_sql(sql)
+    assert res.is_valid is False
+    assert any("prohibited because it shadows internal protected tables" in v or "not in the approved analytics allowlist" in v for v in res.violations)
+
+
+def test_cte_shadow_pg_roles_blocked():
+    """VULN-01: CTE shadowing pg_roles must be blocked."""
+    sql = "WITH pg_roles AS (SELECT 1) SELECT * FROM pg_roles;"
+    res = validate_and_sanitize_sql(sql)
+    assert res.is_valid is False
+    assert any("prohibited because it shadows internal protected tables" in v or "not in the approved analytics allowlist" in v for v in res.violations)
+
+

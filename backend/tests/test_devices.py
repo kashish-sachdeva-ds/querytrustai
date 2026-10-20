@@ -112,3 +112,38 @@ def test_devices_filter_by_needs_data_fix(client, viewer_headers):
     assert data["total"] > 0
     assert len(data["items"]) > 0
 
+
+def test_device_detail_workspace_isolation(client, db_session):
+    """Non-demo workspace user without active connected database cannot access sandbox device details (404)."""
+    from app.models.user import User
+
+    test_email = "isolated_user@isolated-corp.com"
+    db_session.query(User).filter(User.email == test_email).delete()
+    db_session.commit()
+
+    reg_payload = {
+        "full_name": "Isolated Analyst",
+        "email": test_email,
+        "password": "IsolatedPass123!",
+        "workspace_name": "Isolated Corp",
+        "role": "analyst",
+    }
+    reg_res = client.post("/api/v1/auth/register", json=reg_payload)
+    assert reg_res.status_code == 201
+    token = reg_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Calling device detail for device 1 must return 404
+    detail_res = client.get("/api/v1/devices/1", headers=headers)
+    assert detail_res.status_code == 404
+
+    # Calling devices list must return 0 items
+    list_res = client.get("/api/v1/devices", headers=headers)
+    assert list_res.status_code == 200
+    assert list_res.json()["total"] == 0
+
+    # Clean up
+    db_session.query(User).filter(User.email == test_email).delete()
+    db_session.commit()
+
+

@@ -27,6 +27,7 @@ from app.services.data_source_service import (
     introspect_database_schema,
     sanitize_db_error,
 )
+from app.core.rate_limiter import rate_limit
 
 logger = logging.getLogger("querytrust.api.data_sources")
 router = APIRouter(prefix="/data-sources", tags=["Data Sources"])
@@ -289,7 +290,7 @@ def list_data_sources(
     return result
 
 
-@router.post("/test", response_model=DataSourceTestResponse)
+@router.post("/test", response_model=DataSourceTestResponse, dependencies=[Depends(rate_limit(max_requests=10, window_seconds=60))])
 def test_connection_candidate(
     payload: DataSourceTestRequest,
     current_admin: User = Depends(require_role("admin")),
@@ -312,6 +313,16 @@ def create_data_source(
     Admin access only. Immediately introspects schema and stores encrypted credentials.
     """
     workspace = current_admin.workspace_name or "Default Workspace"
+
+    # SSRF guard: ensure host is not a restricted internal / metadata endpoint
+    from app.services.data_source_service import validate_datasource_host
+    try:
+        validate_datasource_host(payload.host)
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
 
     # Introspect schema to confirm validity
     schema_catalog = None

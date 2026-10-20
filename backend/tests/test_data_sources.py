@@ -186,3 +186,64 @@ def test_data_sources_workspace_isolation(client, db_session):
     for email in ["admin_alpha@corp-a.com", "admin_beta@corp-b.com"]:
         db_session.query(User).filter(User.email == email).delete()
     db_session.commit()
+
+
+def test_data_source_ssrf_blocked_cloud_metadata(client, admin_headers):
+    """Attempting to target AWS/GCP cloud metadata endpoints must be rejected."""
+    test_payload = {
+        "db_type": "postgresql",
+        "host": "169.254.169.254",
+        "port": 5432,
+        "database_name": "metadata",
+        "username": "root",
+        "password": "password",
+        "ssl_mode": "disable",
+    }
+    resp = client.post("/api/v1/data-sources/test", json=test_payload, headers=admin_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is False
+    assert "prohibited cloud metadata endpoint" in data["error_message"].lower() or "ssrf" in data["error_message"].lower()
+
+    # Also test create endpoint
+    create_payload = {
+        "name": "Malicious Metadata",
+        "db_type": "postgresql",
+        "host": "169.254.169.254",
+        "port": 5432,
+        "database_name": "metadata",
+        "username": "root",
+        "password": "password",
+        "ssl_mode": "disable",
+    }
+    create_resp = client.post("/api/v1/data-sources", json=create_payload, headers=admin_headers)
+    assert create_resp.status_code == 400
+    assert "prohibited" in create_resp.json()["detail"].lower() or "ssrf" in create_resp.json()["detail"].lower()
+
+
+def test_credential_encryption_versioning_and_rotation(monkeypatch):
+    """Encrypted credentials include v1: version header and support rotation fallbacks."""
+    from app.services.data_source_service import encrypt_secret, decrypt_secret
+    from app.config import get_settings
+
+    # 1. New ciphertext is prefixed with v1:
+    encrypted = encrypt_secret("DatabaseSecret123!")
+    assert encrypted.startswith("v1:")
+
+    # 2. Can be decrypted back cleanly
+    decrypted = decrypt_secret(encrypted)
+    assert decrypted == "DatabaseSecret123!"
+
+    # 3. Key rotation scenario: simulate primary key rotating while keeping old key in fallbacks
+    settings = get_settings()
+    current_key = settings.DATA_SOURCE_ENCRYPTION_KEY or settings.SECRET_KEY
+
+    # Rotate primary key to a new random secret, placing current_key into fallbacks
+    monkeypatch.setattr(settings, "DATA_SOURCE_ENCRYPTION_KEY", "brand-new-rotated-key-2027")
+    monkeypatch.setattr(settings, "DATA_SOURCE_KEY_ROTATION_FALLBACKS", current_key)
+
+    # Previously encrypted token still decrypts successfully via rotation fallback!
+    decrypted_after_rotation = decrypt_secret(encrypted)
+    assert decrypted_after_rotation == "DatabaseSecret123!"
+
+

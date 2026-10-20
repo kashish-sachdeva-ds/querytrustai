@@ -158,7 +158,6 @@ class InviteMemberRequest(StrictRequestModel):
     email: str = Field(..., min_length=3, max_length=255, description="Work email of the member to invite")
     full_name: str = Field(..., min_length=2, max_length=255, description="Full name of the member")
     role: Literal["analyst", "viewer"] = Field("analyst", description="Role to assign")
-    temporary_password: Optional[str] = Field("WelcomePass123!", min_length=6, max_length=255, description="Initial temporary password")
 
     @field_validator("email")
     @classmethod
@@ -167,5 +166,18 @@ class InviteMemberRequest(StrictRequestModel):
         if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", normalized):
             raise ValueError("Email address is invalid")
         return normalized
+
+
+class ChangePasswordRequest(StrictRequestModel):
+    """Payload to update password for authenticated user."""
+    current_password: str = Field(..., min_length=1, max_length=255, description="Current user password")
+    new_password: str = Field(..., min_length=6, max_length=255, description="New password (min 6 characters)")
+
+    @field_validator("new_password")
+    @classmethod
+    def new_password_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("New password must not be blank")
+        return value
 
 

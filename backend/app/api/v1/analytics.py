@@ -40,6 +40,7 @@ from app.schemas.analytics import (
 )
 from app.core.sql_validator import validate_and_sanitize_sql, SQLValidationResult, STANDARD_CHECKS
 from app.core.llm_provider import get_llm_provider
+from app.core.rate_limiter import rate_limit
 
 logger = logging.getLogger("querytrust.analytics")
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
@@ -143,7 +144,7 @@ def _generate_result_summary(columns: List[str], row_count: int, truncated: bool
     return f"Retrieved {row_count} matching record{'s' if row_count != 1 else ''}{trunc_msg} across {len(columns)} attributes."
 
 
-@router.post("/preview", response_model=PreviewResponse)
+@router.post("/preview", response_model=PreviewResponse, dependencies=[Depends(rate_limit(max_requests=30, window_seconds=60))])
 async def preview_natural_language_query(
     payload: PreviewRequest,
     current_user: User = Depends(get_current_user),
@@ -488,9 +489,9 @@ def execute_previewed_query(
 
     try:
         if active_ds:
-            from app.services.data_source_service import decrypt_secret, build_connection_uri
+            from app.services.data_source_service import decrypt_secret, DataSourceConnectionManager
             pw = decrypt_secret(active_ds.encrypted_password)
-            uri = build_connection_uri(
+            pooled_engine = DataSourceConnectionManager.get_engine(
                 host=active_ds.host,
                 port=active_ds.port,
                 database_name=active_ds.database_name,
@@ -498,8 +499,7 @@ def execute_previewed_query(
                 password=pw,
                 ssl_mode=active_ds.ssl_mode,
             )
-            custom_engine = create_engine(uri, connect_args={"connect_timeout": 5})
-            conn = custom_engine.connect()
+            conn = pooled_engine.connect()
         else:
             try:
                 conn = readonly_engine.connect()
@@ -571,9 +571,6 @@ def execute_previewed_query(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to execute query in read-only transaction.",
         )
-    finally:
-        if custom_engine is not None:
-            custom_engine.dispose()
 
 
 @router.post("/feedback", response_model=FeedbackResponse)

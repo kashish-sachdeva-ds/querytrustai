@@ -37,27 +37,54 @@ PROHIBITED_COMMANDS = (
 
 DANGEROUS_FUNCTIONS: Set[str] = {
     "pg_sleep",
+    "pg_sleep_for",
+    "pg_sleep_until",
     "pg_read_file",
     "pg_write_file",
     "pg_read_binary_file",
     "pg_ls_dir",
     "system",
     "query_to_xml",
+    "table_to_xml",
+    "cursor_to_xml",
     "pg_terminate_backend",
     "pg_cancel_backend",
+    "pg_backend_pid",
     "dblink",
     "dblink_exec",
+    "dblink_connect",
     "set_config",
+    "current_setting",
     "inet_client_addr",
     "inet_server_addr",
     "pg_stat_file",
     "version",
+    "lo_export",
+    "lo_import",
+    "lo_unlink",
+    "lo_create",
 }
 
 DISALLOWED_SCHEMAS: Set[str] = {
     "pg_catalog",
     "information_schema",
     "pg_toast",
+}
+
+PROHIBITED_SHADOW_NAMES: Set[str] = {
+    "users",
+    "data_sources",
+    "access_requests",
+    "query_runs",
+    "chat_sessions",
+    "chat_messages",
+    "query_feedback",
+    "pg_roles",
+    "pg_tables",
+    "pg_class",
+    "pg_user",
+    "pg_shadow",
+    "pg_database",
 }
 
 DEFAULT_LIMIT = 200
@@ -157,12 +184,16 @@ def validate_and_sanitize_sql(
     warnings: List[str] = []
     tables_found: Set[str] = set()
 
-    # Collect CTE aliases defined in the query
-    cte_aliases = {
-        cte.alias_or_name.lower()
-        for cte in root.find_all(exp.CTE)
-        if cte.alias_or_name
-    }
+    # Collect CTE aliases defined in the query and block malicious shadowing of protected tables
+    cte_aliases: Set[str] = set()
+    for cte in root.find_all(exp.CTE):
+        cte_name = cte.alias_or_name.lower() if cte.alias_or_name else ""
+        if cte_name:
+            if cte_name in PROHIBITED_SHADOW_NAMES:
+                violations.append(
+                    f"CTE alias '{cte_name}' is prohibited because it shadows internal protected tables."
+                )
+            cte_aliases.add(cte_name)
 
     # 4. AST deep inspection: forbid prohibited commands, side-effects, schemas, functions
     for node in root.walk():
@@ -180,7 +211,13 @@ def validate_and_sanitize_sql(
             if not isinstance(cte_query, (exp.Select, exp.Union)):
                 violations.append(f"Prohibited non-SELECT operation inside CTE '{node.alias_or_name}'.")
 
-        # Check function calls
+        # Check schema references on Dot expressions (e.g. pg_catalog.pg_sleep, information_schema.columns)
+        if isinstance(node, exp.Dot):
+            left_part = str(node.this).strip('"\'').lower()
+            if left_part in DISALLOWED_SCHEMAS:
+                violations.append(f"Access to prohibited schema '{left_part}' is blocked.")
+
+        # Check function calls (including schema-qualified functions)
         if isinstance(node, (exp.Anonymous, exp.Func)):
             func_name = ""
             if isinstance(node, exp.Anonymous):
@@ -188,8 +225,9 @@ def validate_and_sanitize_sql(
             else:
                 func_name = node.key.lower() if hasattr(node, "key") else ""
 
-            if func_name in DANGEROUS_FUNCTIONS:
-                violations.append(f"Call to prohibited function '{func_name}' is blocked.")
+            bare_name = func_name.split(".")[-1] if func_name else ""
+            if bare_name in DANGEROUS_FUNCTIONS or func_name in DANGEROUS_FUNCTIONS:
+                violations.append(f"Call to prohibited function '{bare_name}' is blocked.")
 
         # Check table references
         if isinstance(node, exp.Table):
@@ -202,8 +240,11 @@ def validate_and_sanitize_sql(
             elif db_schema and db_schema != "public":
                 violations.append(f"Access to non-public schema '{db_schema}' is blocked.")
 
-            # Ignore CTE aliases
-            if table_name not in cte_aliases and table_name:
+            # In PostgreSQL, schema qualification (e.g. public.users) targets physical tables, NEVER a CTE!
+            # A CTE alias can NEVER be schema-qualified.
+            is_cte_reference = (not db_schema) and (table_name in cte_aliases)
+
+            if not is_cte_reference and table_name:
                 if table_name not in target_allowed:
                     violations.append(
                         f"Table '{table_name}' is not in the approved analytics allowlist ({', '.join(sorted(target_allowed))})."

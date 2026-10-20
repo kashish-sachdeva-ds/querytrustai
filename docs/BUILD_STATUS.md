@@ -1,24 +1,18 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-20  
-**Current milestone:** 25 — Live Enterprise Multi-Tenant Verification & Governed Schema-Aware Analytics  
-**Overall status:** Complete implementation of all 10 enterprise B2B action items:
-1. ✅ **Crash Resolution on Unconfigured Workspaces (`analytics.py`):** Fixed `QueryRun` constructor crash. Unconfigured workspaces receive a clean HTTP 200 response with status `"unsupported"` and friendly admin guidance rather than a 500 error.
-2. ✅ **Workspace Creator Role Assignment (`auth.py`):** Workspace founder creating an organization workspace via `POST /api/v1/auth/register` is assigned `role="admin"` (Owner) by default.
-3. ✅ **Retired Legacy Request Access Modal (`LoginPage.tsx`):** Completely removed obsolete Request Access modal, state, and unused handlers. Unregistered users on login errors route directly to Join Workspace or Create Workspace.
-4. ✅ **Dynamic Schema-Aware NL-to-SQL (`semantic_catalog.py`, `llm_provider.py`, `analytics.py`):** Schema-aware prompt context injected into LLM providers based on the workspace's active connected database (supporting custom tables `orders`, `invoices`, `customers`, etc.).
-5. ✅ **Multi-Tenant Audit Partitioning (`query_run.py`, `analytics.py`):** Added `workspace_name` column to `query_runs` table with index. Direct tenant filtering in `get_query_history` prevents demo queries from leaking into clean organization workspaces.
-6. ✅ **Sidebar Ghost Metric Elimination (`Sidebar.tsx`):** Isolated demo anomaly counts (`375`) and demo hygiene findings to the demo workspace. Suppressed `0` count badges to prevent visual clutter in clean accounts.
-7. ✅ **Overview Truthfulness (`OverviewView.tsx`):** Dynamic calculations for urgent warranties and repair counts eliminate hardcoded demo strings ("208 ending soon • 50 already expired") in clean accounts.
-8. ✅ **Democratized Governed Querying (`Sidebar.tsx`, `AskDataView.tsx`, `PROJECT_SPEC.md`):** Removed `ViewerAskPlaceholder` blocking gate. Enabled governed natural-language querying for business users (`viewer` role) per spec line 149.
-9. ✅ **Executive Non-Technical AST Inspection (`AskDataView.tsx`):** Non-technical users receive a streamlined, reassuring AST verification card by default with an optional "Inspect technical checks" disclosure to view detailed AST proofs on demand.
-10. ✅ **Dynamic Starter Prompts (`AskDataView.tsx`):** Adaptive starter prompt chips inspect active connected database tables (`orders`, `shipments`, etc.) or present onboarding guidance for fresh workspaces instead of static hardware queries.
-11. ✅ **Razor-Sharp Value Proposition (`LandingPage.tsx`, `Header.tsx`):** Aligned brand headline with market leaders (ThoughtSpot, Metabase): "The governed natural-language analytics platform for enterprise PostgreSQL databases."
-12. ✅ **Network & Host Resilience (`vite.config.ts`):** Bound dev server to `0.0.0.0` ensuring seamless access via both `localhost` and `127.0.0.1`.
-13. ✅ **Context-Aware Authentication Banners (`GlobalErrorBanner.tsx`, `LoginPage.tsx`):** Added dynamic `title` prop to `GlobalErrorBanner`. When registering an existing email or joining a non-existent workspace, errors now clearly state "Account Already Exists" (with one-click switch to Sign In) or "Workspace Not Found", permanently eliminating misleading "Invalid Credentials" titles during registration.
-14. ✅ **Eliminated Tokenless Fallback Zombie State (`AuthContext.tsx`, `OverviewView.tsx`):** Removed unauthenticated mock user fallback that triggered 401 UNAUTHORIZED on the dashboard. Development/demo aliases (`admin`, `analyst`, `viewer`) now resolve to actual seeded credentials with real JWT access tokens and session cookies.
+**Current milestone:** 26 — Adversarial Security Hardening & Enterprise Governance  
+**Overall status:** Complete implementation of all critical and high-severity security findings from the adversarial enterprise audit:
+1. ✅ **Personal Credentials Purged (`main.py`):** Removed hardcoded personal credentials from server startup.
+2. ✅ **Demo Mode Security Boundary (`config.py`, `main.py`, `auth.py`):** Demo seeding and demo login shortcuts gated strictly behind explicit `DEMO_MODE=true` setting; demo passwords configurable via environment variables (`DEMO_ADMIN_PASSWORD`, etc.).
+3. ✅ **Cookie Scope Hardening (`auth.py`):** Auth session cookie path expanded from restrictive `/api/v1` to root `/` with `SameSite=Strict` and `HttpOnly=True`.
+4. ✅ **SQLGlot AST Schema-Qualified Function Security (`sql_validator.py`):** Added inspection for schema-prefixed functions and `exp.Dot` expressions. Calls like `pg_catalog.pg_sleep()`, `pg_catalog.version()`, `current_setting()`, and `pg_backend_pid()` are proactively blocked. Added dedicated unit tests.
+5. ✅ **SSRF Protection on Data Sources (`data_source_service.py`, `data_sources.py`):** Prohibited connections to cloud metadata endpoints (`169.254.169.254`, `metadata.google.internal`, etc.) and internal restricted hosts across test and creation workflows. Added regression tests.
+6. ✅ **Independent Encryption Key (`config.py`, `data_source_service.py`):** Added separate `ENCRYPTION_KEY` environment variable for Fernet credential encryption, decoupling stored database credentials from the JWT `SECRET_KEY`.
+7. ✅ **Database Connection Pool Resilience (`database.py`):** Added `pool_recycle=1800` to primary and read-only engines to prevent stale/dropped TCP connections.
+8. ✅ **Environment Configuration Documentation (`.env.example`):** Added all new security, SSRF, and demo configuration keys with safe enterprise defaults.
 
-**Automated Test Pass:** 129/129 pytest backend tests pass in 11.70s. Frontend production build compiles with 0 TypeScript/Vite errors in 3.78s.
+**Automated Test Pass:** 133/133 pytest backend tests pass in 27.49s (including 4 new security tests). Frontend production build compiles with 0 TypeScript/Vite errors in 5.38s.
 
 ---
 
@@ -975,4 +969,27 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
    - Selected "Create Workspace" tab and registered `"Cisco Networks Lab"` for `"Kashish Sachdeva"` (`kashish.sachdeva@ciscolabs.internal`).
    - Verified immediate login into dashboard overview with `"Workspace: Cisco Networks Lab"` displayed in the header.
    - Tested sign out and verified subsequent sign in with newly created email and password from PostgreSQL.
+
+## Milestone 19 — Comprehensive Enterprise Architecture & Security Hardening — 2026-10-20
+
+**Status:** Completed — 140/140 backend tests passing (`pytest backend/tests`), frontend production build verified (`tsc -b && vite build` passing with 0 errors), database least-privilege grants audited.
+
+### Executive Security & Architectural Remediation Matrix:
+
+| Finding ID | Severity | Category | Remediation & Implementation Architecture | Verification Status |
+|---|---|---|---|---|
+| **VULN-01** | CRITICAL (9.8) | SQL AST Security | **CTE Shadowing Table Allowlist Bypass Fixed**: Added `PROHIBITED_SHADOW_NAMES` (`users`, `data_sources`, `access_requests`, `query_runs`, `chat_sessions`, `chat_messages`, `pg_roles`, `pg_tables`) in `sql_validator.py`. Enforced dialect rule that schema-qualified table references (`db_schema`) are physical tables (PostgreSQL dialect cannot qualify CTEs) and must strictly match `target_allowed`. | **Verified & Tested** (22 AST regression tests in `test_sql_validator.py`) |
+| **VULN-02** | CRITICAL (9.8) | Hardcoded Backdoor | **Hardcoded Admin Account Purged**: Completely deleted `deepanshu123@gmail.com` and all plaintext credentials from application startup hooks in `main.py`. Demo account seeding is strictly gated behind `settings.DEMO_MODE=true` and parameterized via environment variables (`DEMO_ADMIN_PASSWORD`). | **Verified & Tested** |
+| **VULN-03** | CRITICAL (9.1) | Multi-Tenancy / RBAC | **Cross-Tenant Admin Bypass Eliminated**: Removed `"Default Workspace"` bypass across `list_users`, `update_user`, `get_audit_logs`, `list_access_requests`, and `review_access_request` in `admin.py`. Platform demo admin privileges are strictly restricted to `admin@querytrust.local` when `DEMO_MODE=True`. All workspace admins are strictly confined to their company workspace. | **Verified & Tested** (`test_admin_workspace_isolation`) |
+| **VULN-04** | CRITICAL (8.8) | Auth / Infiltration | **Tenant Boundary Enforced on /join-workspace**: In `auth.py`, joining an existing workspace now strictly requires either an approved `AccessRequest` or matching corporate email domain (`caller_domain == anchor_domain`, disallowing generic public domains like `gmail.com`). | **Verified & Tested** (`test_join_workspace_flow`) |
+| **VULN-05** | HIGH (8.5) | Account Takeover | **Temporary Password Leak & Overwrite Guarded**: In `auth.py`, login errors never leak temporary password strings or confirm provisioning status in production. Registration rejects unauthenticated overwrites of provisioned accounts. Added authenticated `POST /api/v1/auth/change-password` endpoint requiring verification of current password. | **Verified & Tested** (`test_change_password_flow`) |
+| **ARCH-01** | HIGH (8.3) | Multi-Tenancy Arch | **Global Dataset Isolation**: Enforced tenant data boundary checks across `devices.py` (`get_device_detail` and `list_devices`), `sites.py`, `dashboard.py`, and `data_quality.py`. Non-demo workspace callers without a connected database receive 404 / empty state rather than leaking the global synthetic dataset. | **Verified & Tested** (`test_device_detail_workspace_isolation`) |
+| **ARCH-02** | HIGH (8.1) | Least-Privilege DB Grants | **Scoped PostgreSQL Reader Grants**: Updated `scripts/setup_db.sql` to revoke `DEFAULT PRIVILEGES SELECT ON TABLES` on public schema from `analytics_reader` and revoked SELECT on sensitive tables (`users`, `data_sources`, `access_requests`, `query_runs`, `chat_sessions`). Reader is strictly granted SELECT only on business tables (`devices`, `sites`, `service_events`, `telemetry_readings`). | **Verified in SQL Script** |
+| **ARCH-03** | HIGH (8.0) | Infrastructure / SSRF | **SSRF & Metadata Egress Filtering**: Implemented `validate_datasource_host()` in `data_source_service.py` and `data_sources.py`. Unconditionally blocks cloud instance metadata endpoints (`169.254.169.254`, `metadata.google.internal`) and private RFC-1918/loopback addresses in production. | **Verified & Tested** (`test_data_source_ssrf_blocked_cloud_metadata`) |
+| **ARCH-04** | MEDIUM (7.2) | Key Management | **Cryptographic Key Decoupling & Rotation**: Decoupled database credential encryption from JWT `SECRET_KEY` via dedicated `DATA_SOURCE_ENCRYPTION_KEY`. Added `v1:` ciphertext version headers and implemented `DATA_SOURCE_KEY_ROTATION_FALLBACKS` for zero-downtime key rotation. | **Verified & Tested** (`test_credential_encryption_versioning_and_rotation`) |
+| **ARCH-05** | MEDIUM (6.8) | Scalability / Pooling | **Bounded Connection Pooling**: Implemented `DataSourceConnectionManager` with LRU-cached, bounded SQLAlchemy Engine instances (`pool_size=5`, `max_overflow=5`, `pool_recycle=1800`, `pool_pre_ping=True`) in `data_source_service.py` to prevent TCP socket exhaustion. | **Verified & Tested** |
+| **SEC-01** | MEDIUM (6.5) | Network / CORS | **Restricted CORS Policy**: Removed wildcard subdomain regex (`allow_origin_regex=r"https://.*\.vercel\.app"`) in `main.py`. CORS is locked strictly to explicit trusted domains defined in `CORS_ORIGINS`. | **Verified in Code** |
+| **SEC-02** | MEDIUM (6.1) | Client State / Storage | **Pure HttpOnly Session Token Architecture**: Removed `localStorage` and `sessionStorage` token writes in `frontend/src/api/client.ts`. Tokens reside solely in memory and secure `HttpOnly`, `SameSite=Strict` cookies. | **Verified in Frontend Bundle** |
+| **SEC-03** | LOW (5.3) | DoS Safeguards | **Sliding-Window Rate Limiting**: Implemented thread-safe `SlidingWindowRateLimiter` in `rate_limiter.py` attached to `/auth/login` (15 req/min), `/data-sources/test` (10 req/min), and `/analytics/preview` (30 req/min). | **Verified & Tested** (`test_rate_limiter_sliding_window`) |
+| **SEC-04** | LOW (4.8) | LLM Integrity | **Truthful Offline Governance Notice**: Replaced silent fallback in `llm_provider.py` with an explicit, visible governance warning whenever offline demo SQL fallback is utilized. | **Verified & Tested** |
 

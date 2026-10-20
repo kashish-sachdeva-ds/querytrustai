@@ -317,27 +317,22 @@ function requireFiniteNumber(value: number, label: string, min: number, max: num
   return value
 }
 
+// Token memory storage — tokens are kept in volatile memory only during the active runtime session.
+// Persistent authentication is handled exclusively by the server-issued HttpOnly, SameSite=Strict cookie
+// to eliminate XSS token theft vectors from localStorage / sessionStorage (SEC-02).
 let inMemoryToken: string | null = null
 
 export function getStoredToken(): string | null {
-  if (inMemoryToken) return inMemoryToken
-  try {
-    const token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY)
-    if (token) inMemoryToken = token
-    return token
-  } catch {
-    return null
-  }
+  return inMemoryToken
 }
 
 export function setStoredToken(token: string): void {
   inMemoryToken = token
+  // Purge any legacy tokens from web storage
   try {
-    sessionStorage.setItem(TOKEN_KEY, token)
-    localStorage.setItem(TOKEN_KEY, token)
-  } catch {
-    // Ignore storage quota errors
-  }
+    sessionStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+  } catch {}
 }
 
 export function clearStoredToken(): void {
@@ -345,9 +340,7 @@ export function clearStoredToken(): void {
   try {
     sessionStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(TOKEN_KEY)
-  } catch {
-    // Ignore
-  }
+  } catch {}
 }
 
 async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {

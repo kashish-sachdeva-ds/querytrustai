@@ -422,4 +422,67 @@ def test_admin_invite_team_member(client, db_session):
     db_session.commit()
 
 
+def test_change_password_flow(client, viewer_headers, db_session):
+    """Authenticated user can change their password after verifying current password."""
+    # 1. Invalid current password fails
+    bad_res = client.post(
+        "/api/v1/auth/change-password",
+        headers=viewer_headers,
+        json={"current_password": "WrongPassword123!", "new_password": "NewViewerPass123!"},
+    )
+    assert bad_res.status_code == 400
+    assert "incorrect" in bad_res.json()["detail"].lower()
+
+    # 2. Correct current password succeeds
+    good_res = client.post(
+        "/api/v1/auth/change-password",
+        headers=viewer_headers,
+        json={"current_password": "ViewerPass123!", "new_password": "NewViewerPass123!"},
+    )
+    assert good_res.status_code == 200
+    assert "successfully" in good_res.json()["message"].lower()
+
+    # 3. Can log in with new password
+    login_res = client.post(
+        "/api/v1/auth/login",
+        json={"email": "viewer@querytrust.local", "password": "NewViewerPass123!"},
+    )
+    assert login_res.status_code == 200
+
+    # Reset password back to ViewerPass123! for test idempotence
+    reset_res = client.post(
+        "/api/v1/auth/change-password",
+        headers={"Authorization": f"Bearer {login_res.json()['access_token']}"},
+        json={"current_password": "NewViewerPass123!", "new_password": "ViewerPass123!"},
+    )
+    assert reset_res.status_code == 200
+
+
+def test_rate_limiter_sliding_window():
+    """Sliding-window rate limiter blocks requests exceeding quota and calculates retry_after."""
+    from app.core.rate_limiter import SlidingWindowRateLimiter
+
+    test_limiter = SlidingWindowRateLimiter()
+    key = "test:client:127.0.0.1"
+
+    # Allow up to 3 requests in 10-second window
+    allowed1, _ = test_limiter.is_allowed(key, max_requests=3, window_seconds=10)
+    allowed2, _ = test_limiter.is_allowed(key, max_requests=3, window_seconds=10)
+    allowed3, _ = test_limiter.is_allowed(key, max_requests=3, window_seconds=10)
+    assert allowed1 is True
+    assert allowed2 is True
+    assert allowed3 is True
+
+    # 4th request must be rejected
+    allowed4, retry_after = test_limiter.is_allowed(key, max_requests=3, window_seconds=10)
+    assert allowed4 is False
+    assert retry_after > 0
+    assert retry_after <= 10
+
+    # Reset allows again
+    test_limiter.reset()
+    allowed_post_reset, _ = test_limiter.is_allowed(key, max_requests=3, window_seconds=10)
+    assert allowed_post_reset is True
+
+
 

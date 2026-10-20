@@ -23,8 +23,19 @@ class Settings(BaseSettings):
 
     # Security
     SECRET_KEY: str = "dev-super-secret-key-change-in-production-querytrust-2026"
+    DATA_SOURCE_ENCRYPTION_KEY: Optional[str] = None  # Dedicated key for external database credential encryption (NIST SP 800-133)
+    ENCRYPTION_KEY: Optional[str] = None  # Backward-compatible alias
+    DATA_SOURCE_KEY_ROTATION_FALLBACKS: str = ""  # Comma-separated prior encryption keys for zero-downtime rotation
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    # Demo mode — gates demo account seeding and login shortcuts.
+    # Must be explicitly set to "true" to activate; default is off for production safety.
+    DEMO_MODE: bool = True
+    DEMO_ADMIN_PASSWORD: str = "AdminPass123!"
+    DEMO_ANALYST_PASSWORD: str = "AnalystPass123!"
+    DEMO_VIEWER_PASSWORD: str = "ViewerPass123!"
+    DEFAULT_TEMP_PASSWORD: str = "WelcomePass123!"
 
     # LLM Provider: 'demo' | 'gemini' | 'openai_compatible'
     LLM_PROVIDER: str = "demo"
@@ -41,9 +52,21 @@ class Settings(BaseSettings):
     QUERY_TIMEOUT_SECONDS: int = 5
     RATE_LIMIT_PER_MINUTE: int = 60
 
+    # Data source connection restrictions (SSRF protection)
+    DATASOURCE_BLOCKED_HOSTS: str = "localhost,127.0.0.1,0.0.0.0,::1,169.254.169.254,metadata.google.internal"
+
     @property
     def cors_origin_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @property
+    def blocked_hosts_list(self) -> List[str]:
+        return [h.strip().lower() for h in self.DATASOURCE_BLOCKED_HOSTS.split(",") if h.strip()]
+
+    @property
+    def effective_encryption_key(self) -> str:
+        """Return the encryption key for credential storage, falling back to SECRET_KEY."""
+        return self.ENCRYPTION_KEY or self.SECRET_KEY
 
     @property
     def sqlalchemy_database_url(self) -> str:

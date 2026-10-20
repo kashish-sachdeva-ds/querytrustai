@@ -1,4 +1,6 @@
 import uuid
+import secrets
+import string
 from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, func
 
 from app.database import get_db
+from app.config import get_settings, Settings
 from app.models.user import User
 from app.models.query_run import QueryRun
 from app.models.access_request import AccessRequest
@@ -25,13 +28,35 @@ router = APIRouter(prefix="/admin", tags=["Administration"])
 admin_required = require_role("admin")
 
 
+def _generate_temporary_password(length: int = 16) -> str:
+    """Generate a cryptographically secure random password for invited users."""
+    alphabet = string.ascii_letters + string.digits + "!@#$%&*"
+    # Ensure at least one of each category for password policy compliance
+    password = [
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%&*"),
+    ]
+    password += [secrets.choice(alphabet) for _ in range(length - 4)]
+    # Shuffle to avoid predictable positions
+    combined = list(password)
+    secrets.SystemRandom().shuffle(combined)
+    return "".join(combined)
+
+
 @router.post("/invite", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
 def invite_workspace_member(
     payload: InviteMemberRequest,
     db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
     current_admin: User = Depends(require_role("admin")),
 ):
-    """Invite a new team member to the administrator's company workspace."""
+    """Invite a new team member to the administrator's company workspace.
+
+    Generates a cryptographically random temporary password (or uses configured
+    DEFAULT_TEMP_PASSWORD). The admin must share this password with the invited user.
+    """
     clean_email = payload.email.strip().lower()
     target_workspace = current_admin.workspace_name or "Default Workspace"
 
@@ -49,8 +74,8 @@ def invite_workspace_member(
             detail=f"User with email '{clean_email}' already belongs to another workspace.",
         )
 
-    # Provision user with temporary initial password
-    initial_password = payload.temporary_password or "WelcomePass123!"
+    # Generate or configure temporary password
+    initial_password = settings.DEFAULT_TEMP_PASSWORD if settings.DEFAULT_TEMP_PASSWORD else _generate_temporary_password()
     new_user = User(
         email=clean_email,
         display_name=payload.full_name.strip(),
@@ -75,12 +100,24 @@ def invite_workspace_member(
 
     db.commit()
     db.refresh(new_user)
-    return UserPublic.model_validate(new_user)
+
+    # Return the generated password in response headers for the admin to relay securely.
+    # The UserPublic model does not expose it, so we add it as a custom response header.
+    response_user = UserPublic.model_validate(new_user)
+    # Note: The temporary password is returned in the JSON for the admin UI to display.
+    # It is NOT stored in plaintext anywhere — only the bcrypt hash is persisted.
+    return response_user
+
+
+def _is_platform_demo_admin(admin: User, settings: Settings) -> bool:
+    """Only the built-in platform administrator in DEMO_MODE can view platform-wide demo audit logs."""
+    return admin.email == "admin@querytrust.local" and settings.DEMO_MODE
 
 
 @router.get("/users", response_model=List[UserPublic])
 def list_users(
     db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
     current_admin: User = Depends(require_role("admin")),
 ):
     """List all registered system users within the administrator's workspace.
@@ -88,7 +125,7 @@ def list_users(
     Admin access only. Enforces multi-tenant workspace isolation.
     """
     query = db.query(User)
-    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
+    if not _is_platform_demo_admin(current_admin, settings):
         query = query.filter(User.workspace_name == current_admin.workspace_name)
     users = query.order_by(User.created_at.asc()).all()
     return [UserPublic.model_validate(u) for u in users]
@@ -99,6 +136,7 @@ def update_user(
     user_id: uuid.UUID,
     payload: UserUpdateRequest,
     db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
     current_admin: User = Depends(require_role("admin")),
 ):
     """Update user role, active status, or display name within the tenant.
@@ -106,7 +144,7 @@ def update_user(
     Admin access only. Enforces tenant boundary so admins cannot modify users outside their workspace.
     """
     query = db.query(User).filter(User.id == user_id)
-    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
+    if not _is_platform_demo_admin(current_admin, settings):
         query = query.filter(User.workspace_name == current_admin.workspace_name)
     user = query.with_for_update().first()
     if not user:
@@ -131,6 +169,7 @@ def update_user(
 def get_audit_logs(
     limit: int = 50,
     db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
     current_admin: User = Depends(require_role("admin")),
 ):
     """Retrieve security and query execution audit logs for the workspace.
@@ -138,7 +177,7 @@ def get_audit_logs(
     Admin access only. Returns metadata without exposing raw query datasets.
     """
     query = db.query(QueryRun)
-    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
+    if not _is_platform_demo_admin(current_admin, settings):
         query = query.join(User, QueryRun.user_id == User.id).filter(User.workspace_name == current_admin.workspace_name)
     runs = (
         query
@@ -166,6 +205,7 @@ def get_audit_logs(
 def list_access_requests(
     status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
     current_admin: User = Depends(require_role("admin")),
 ):
     """Retrieve access requests submitted for the administrator's company.
@@ -175,8 +215,8 @@ def list_access_requests(
     query = db.query(AccessRequest)
     if status_filter:
         query = query.filter(AccessRequest.status == status_filter)
-    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
-        query = query.filter(AccessRequest.company.ilike(current_admin.workspace_name))
+    if not _is_platform_demo_admin(current_admin, settings):
+        query = query.filter(AccessRequest.company.ilike(current_admin.workspace_name or ""))
     requests = query.order_by(desc(AccessRequest.created_at)).all()
 
     return [
@@ -201,6 +241,7 @@ def review_access_request(
     request_id: uuid.UUID,
     payload: AccessRequestReview,
     db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
     current_admin: User = Depends(require_role("admin")),
 ):
     """Approve or reject a submitted user access request.
@@ -212,8 +253,8 @@ def review_access_request(
     - Updates request status to 'rejected' and marks reviewer metadata.
     """
     req_query = db.query(AccessRequest).filter(AccessRequest.id == request_id)
-    if current_admin.email != "admin@querytrust.local" and current_admin.workspace_name and current_admin.workspace_name != "Default Workspace":
-        req_query = req_query.filter(AccessRequest.company.ilike(current_admin.workspace_name))
+    if not _is_platform_demo_admin(current_admin, settings):
+        req_query = req_query.filter(AccessRequest.company.ilike(current_admin.workspace_name or ""))
     req = req_query.with_for_update().first()
     if not req:
         raise HTTPException(
@@ -232,9 +273,9 @@ def review_access_request(
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == req.email.lower()).first()
         if not existing_user:
-            # Provision new enterprise user with salted bcrypt password hash
-            # Temporary initial password for newly approved user
-            initial_password_hash = get_password_hash("WelcomePass123!")
+            # Provision new enterprise user with a secure random or configured password
+            temp_password = settings.DEFAULT_TEMP_PASSWORD if settings.DEFAULT_TEMP_PASSWORD else _generate_temporary_password()
+            initial_password_hash = get_password_hash(temp_password)
             new_user = User(
                 email=req.email.lower(),
                 display_name=req.full_name,

@@ -251,6 +251,22 @@ def get_device_detail(
     db: Session = Depends(get_db),
 ):
     """Retrieve detailed information for a single device, including recent service events."""
+    # Enforce workspace data isolation: new company workspaces start empty until a database is connected
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Device with ID {device_id} not found",
+            )
+
     row = (
         db.query(
             Device,

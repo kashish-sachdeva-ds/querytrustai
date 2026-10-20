@@ -18,27 +18,115 @@ from app.schemas.data_source import (
     DataSourceSchemaCatalog,
 )
 
+import socket
+import ipaddress
+
 logger = logging.getLogger("querytrust.data_source_service")
-settings = get_settings()
+
+# Cloud metadata and link-local endpoints that are unconditionally blocked in ALL environments
+ALWAYS_BLOCKED_HOSTS = {
+    "169.254.169.254",
+    "metadata.google.internal",
+    "169.254.169.253",
+    "instance-data",
+    "fd00::",
+}
 
 
-def _get_cipher() -> Fernet:
-    """Derive a Fernet encryption key deterministically from settings.SECRET_KEY."""
-    raw_key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
-    b64_key = base64.urlsafe_b64encode(raw_key)
-    return Fernet(b64_key)
+def validate_datasource_host(host: str) -> None:
+    """Validates that a database host is not a dangerous SSRF target.
+
+    Checks:
+    1. Unconditionally blocks cloud instance metadata endpoints (169.254.169.254, GCP metadata, etc.)
+    2. In production: blocks loopback, link-local, and reserved IP ranges.
+    """
+    clean_host = host.strip().lower()
+    current_settings = get_settings()
+
+    if clean_host in ALWAYS_BLOCKED_HOSTS:
+        raise ValueError(f"Host '{host}' is a prohibited cloud metadata endpoint (SSRF protection).")
+
+    # If configured in blocked_hosts_list
+    if clean_host in current_settings.blocked_hosts_list:
+        if current_settings.ENVIRONMENT == "production":
+            raise ValueError(f"Host '{host}' is in the restricted hosts blocklist.")
+
+    if current_settings.ENVIRONMENT == "production":
+        try:
+            addr_info = socket.getaddrinfo(clean_host, None)
+            for item in addr_info:
+                ip_str = item[4][0]
+                ip_obj = ipaddress.ip_address(ip_str)
+                if ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_reserved:
+                    raise ValueError(f"Host '{host}' resolves to restricted IP address '{ip_str}'.")
+        except socket.gaierror:
+            raise ValueError(f"Cannot resolve host '{host}': DNS lookup failed.")
+
+
+def _derive_fernet_key(secret: str) -> bytes:
+    raw_key = hashlib.sha256(secret.encode()).digest()
+    return base64.urlsafe_b64encode(raw_key)
+
+
+def _get_primary_cipher() -> Fernet:
+    """Derive primary Fernet encryption key from dedicated DATA_SOURCE_ENCRYPTION_KEY (or ENCRYPTION_KEY or SECRET_KEY)."""
+    current_settings = get_settings()
+    key_src = (
+        current_settings.DATA_SOURCE_ENCRYPTION_KEY
+        or current_settings.ENCRYPTION_KEY
+        or current_settings.SECRET_KEY
+    )
+    return Fernet(_derive_fernet_key(key_src))
+
+
+def _get_all_ciphers() -> list[Fernet]:
+    """Returns primary cipher followed by any fallback/rotation ciphers and legacy derivations."""
+    current_settings = get_settings()
+    ciphers = [_get_primary_cipher()]
+
+    # Configured fallback keys for key rotation
+    fallbacks = getattr(current_settings, "DATA_SOURCE_KEY_ROTATION_FALLBACKS", "")
+    if fallbacks:
+        for k in fallbacks.split(","):
+            if k.strip():
+                ciphers.append(Fernet(_derive_fernet_key(k.strip())))
+
+    # Legacy derivations for backwards compatibility with pre-existing database rows
+    for legacy_src in [
+        current_settings.DATA_SOURCE_ENCRYPTION_KEY,
+        current_settings.ENCRYPTION_KEY,
+        current_settings.SECRET_KEY,
+        f"datasource-cipher-{current_settings.SECRET_KEY}",
+    ]:
+        if legacy_src:
+            ciphers.append(Fernet(_derive_fernet_key(legacy_src)))
+
+    return ciphers
 
 
 def encrypt_secret(plain_text: str) -> str:
-    """Encrypt a secret string into a safe stored token."""
-    cipher = _get_cipher()
-    return cipher.encrypt(plain_text.encode()).decode()
+    """Encrypt a secret string into a versioned stored token ('v1:...')."""
+    cipher = _get_primary_cipher()
+    encrypted = cipher.encrypt(plain_text.encode()).decode()
+    return f"v1:{encrypted}"
 
 
 def decrypt_secret(cipher_token: str) -> str:
-    """Decrypt a stored cipher token back into plaintext."""
-    cipher = _get_cipher()
-    return cipher.decrypt(cipher_token.encode()).decode()
+    """Decrypt a stored cipher token back into plaintext, supporting version prefixes and rotation fallbacks."""
+    token = cipher_token
+    if token.startswith("v1:"):
+        token = token[3:]
+
+    # Attempt decryption across candidate ciphers (primary -> fallbacks -> legacy)
+    last_err = None
+    for cipher in _get_all_ciphers():
+        try:
+            return cipher.decrypt(token.encode()).decode()
+        except Exception as e:
+            last_err = e
+            continue
+
+    raise ValueError(f"Failed to decrypt stored credential with available keys: {last_err}")
 
 
 def sanitize_db_error(error: Exception) -> str:
@@ -77,6 +165,14 @@ def build_connection_uri(
 
 def test_database_connection(req: DataSourceTestRequest) -> DataSourceTestResponse:
     """Test connectivity to an external PostgreSQL database with a strict 4-second timeout."""
+    try:
+        validate_datasource_host(req.host)
+    except ValueError as val_err:
+        return DataSourceTestResponse(
+            success=False,
+            error_message=str(val_err),
+        )
+
     uri = build_connection_uri(
         host=req.host,
         port=req.port,
@@ -142,6 +238,7 @@ def introspect_database_schema(
     ssl_mode: str = "prefer",
 ) -> Dict[str, Any]:
     """Extract schema details (tables, columns, types) from an external PostgreSQL database."""
+    validate_datasource_host(host)
     uri = build_connection_uri(
         host=host,
         port=port,
@@ -203,3 +300,49 @@ def introspect_database_schema(
     finally:
         if transient_engine is not None:
             transient_engine.dispose()
+
+
+class DataSourceConnectionManager:
+    """Maintains a bounded, cached connection pool for active external data sources.
+
+    Eliminates socket exhaustion and TLS handshake overhead caused by
+    instantiating new create_engine instances on every analytics query (ARCH-05).
+    """
+    _engines: Dict[str, Any] = {}
+
+    @classmethod
+    def get_engine(
+        cls,
+        host: str,
+        port: int,
+        database_name: str,
+        username: str,
+        password: str,
+        ssl_mode: str = "prefer",
+    ):
+        key = f"{username}@{host}:{port}/{database_name}?sslmode={ssl_mode}"
+        if key not in cls._engines:
+            uri = build_connection_uri(host, port, database_name, username, password, ssl_mode)
+            engine = create_engine(
+                uri,
+                connect_args={"connect_timeout": 5},
+                pool_size=5,
+                max_overflow=5,
+                pool_recycle=1800,
+                pool_pre_ping=True,
+            )
+            cls._engines[key] = engine
+        return cls._engines[key]
+
+    @classmethod
+    def evict(cls, host: str, port: int, database_name: str, username: str):
+        prefix = f"{username}@{host}:{port}/{database_name}"
+        keys_to_remove = [k for k in cls._engines if k.startswith(prefix)]
+        for k in keys_to_remove:
+            eng = cls._engines.pop(k, None)
+            if eng:
+                try:
+                    eng.dispose()
+                except Exception:
+                    pass
+

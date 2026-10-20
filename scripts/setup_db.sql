@@ -37,4 +37,11 @@ GRANT ALL ON SCHEMA public TO app_user;
 ALTER SCHEMA public OWNER TO app_user;
 
 GRANT USAGE ON SCHEMA public TO analytics_reader;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO analytics_reader;
+
+-- Enforce least privilege: revoke blanket SELECT on all tables (ARCH-02)
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM analytics_reader;
+REVOKE SELECT ON ALL TABLES IN SCHEMA public FROM analytics_reader;
+
+-- Grant strictly on approved analytics business tables:
+GRANT SELECT ON TABLE devices, sites, service_events, telemetry_readings TO analytics_reader;
+

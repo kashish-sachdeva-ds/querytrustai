@@ -20,6 +20,7 @@ import {
   fetchDataQualityFindings,
   fetchDataQualitySummary,
   fetchActiveDataSource,
+  seedWorkspaceSandbox,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -164,6 +165,23 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState('')
   const [activeBentoTab, setActiveBentoTab] = useState<'warranty' | 'severity'>('warranty')
+  const [seeding, setSeeding] = useState(false)
+
+  const isDemo = !user?.workspace_name || user.workspace_name === 'Default Workspace' || (user.email ? user.email.endsWith('@querytrust.local') : false)
+  const isUnconfigured = !isDemo && (activeSource?.mode === 'unconfigured' || (data?.total_devices === 0 && !activeSource))
+
+  const handleSeedSandbox = async () => {
+    setSeeding(true)
+    setError(null)
+    try {
+      await seedWorkspaceSandbox()
+      await loadData(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to seed sample data.')
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   // Refs for keyboard shortcuts & smooth scrolling
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -192,7 +210,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     } catch (err) {
       const is401 = err instanceof Error && (err.message.includes('401') || err.message.includes('UNAUTHORIZED'))
       const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
-      if (is401 && isDemoMode) {
+      if (is401 && isDemoMode && (!user || user.email.endsWith('@querytrust.local'))) {
         try {
           await apiLogin('analyst@querytrust.local', 'AnalystPass123!')
           const [summary, healthResult, findingsResult] = await Promise.all([
@@ -300,12 +318,26 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     return normalizedFleetBreakdown.reduce((sum, item) => sum + item.value, 0)
   }, [normalizedFleetBreakdown])
 
-  // Rule 4: Total urgent warranties (208 ending soon + 50 already expired = 258)
+  // Rule 4: Total urgent warranties (calculated dynamically from buckets)
   const urgentWarrantyCount = useMemo(
     () =>
       data?.warranties_by_bucket
         .filter((bucket) => ['already expired', '0 - 30 days'].includes(bucket.name.toLowerCase()))
         .reduce((total, bucket) => total + bucket.value, 0) ?? 0,
+    [data]
+  )
+
+  const endingSoonCount = useMemo(
+    () =>
+      data?.warranties_by_bucket
+        .find((b) => b.name.toLowerCase() === '0 - 30 days')?.value ?? 0,
+    [data]
+  )
+
+  const alreadyExpiredCount = useMemo(
+    () =>
+      data?.warranties_by_bucket
+        .find((b) => b.name.toLowerCase() === 'already expired')?.value ?? 0,
     [data]
   )
 
@@ -358,9 +390,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     <div className="overview-command-center">
       {/* ─── 1. PAGE TITLE & HEADER (Unified Inter Typography) ─── */}
       <PageHeader
-        title={activeSource?.mode === 'connected' ? 'Workspace analytics' : 'Fleet overview'}
+        title={
+          isUnconfigured
+            ? `${user?.workspace_name || 'Company'} Workspace`
+            : activeSource?.mode === 'connected'
+            ? 'Workspace analytics'
+            : 'Fleet overview'
+        }
         description={
-          activeSource?.mode === 'connected'
+          isUnconfigured
+            ? `Clean, isolated workspace for '${user?.workspace_name || 'Your Organization'}'. Connect your PostgreSQL database or load sample data.`
+            : activeSource?.mode === 'connected'
             ? `Safe read-only analytics for workspace '${user?.workspace_name || 'Enterprise'}'. All queries execute with AST safety.`
             : 'Your equipment at a glance. Preview safe, read-only analytics before any query runs.'
         }
@@ -388,6 +428,76 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
         }
       />
+
+      {/* ─── 2. ENTERPRISE ONBOARDING CARD (When Workspace Has No Data Connected) ─── */}
+      {isUnconfigured && (
+        <div className="workspace-onboarding-card">
+          <div className="onboarding-badge-strip">
+            <span className="onboarding-badge">🏢 New Workspace</span>
+            <span className="onboarding-workspace-name">{user?.workspace_name || 'Organization'}</span>
+            <span className="onboarding-status-pill">&bull; Ready for Configuration</span>
+          </div>
+
+          <div className="onboarding-body">
+            <div className="onboarding-icon-box">
+              <Database size={28} className="onboarding-icon" />
+            </div>
+            <div className="onboarding-text">
+              <h2 className="onboarding-title">
+                Welcome to {user?.workspace_name || 'your workspace'}
+              </h2>
+              <p className="onboarding-subtitle">
+                Your workspace is provisioned with strict tenant isolation. No data is shared with default sandbox demo fixtures. Connect your organization&apos;s PostgreSQL database to start analyzing, or load sample educational telemetry to explore the platform.
+              </p>
+
+              <div className="onboarding-options-grid">
+                <div className="onboarding-option-card">
+                  <div className="option-header">
+                    <span className="option-tag">Recommended for Production</span>
+                    <h3>Connect Enterprise Database</h3>
+                  </div>
+                  <p className="option-desc">
+                    Link your existing PostgreSQL instance via read-only SELECT credentials. QueryTrust compiles safe queries and validates execution with SQLGlot AST inspection.
+                  </p>
+                  {user?.role === 'admin' ? (
+                    <button
+                      type="button"
+                      className="onboarding-action-btn primary"
+                      onClick={() => onNavigate('data-sources')}
+                    >
+                      <span>Configure in Data Sources</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  ) : (
+                    <div className="onboarding-role-notice">
+                      Requires Workspace Admin privileges. Ask your organization&apos;s admin to link a data source.
+                    </div>
+                  )}
+                </div>
+
+                <div className="onboarding-option-card">
+                  <div className="option-header">
+                    <span className="option-tag sample">Instant Sandbox</span>
+                    <h3>Load Sample Sandbox Data</h3>
+                  </div>
+                  <p className="option-desc">
+                    Preload 5,000 synthetic devices, telemetry signals, and maintenance requests into your workspace to test natural-language queries, data hygiene, and anomaly detection.
+                  </p>
+                  <button
+                    type="button"
+                    className="onboarding-action-btn secondary"
+                    onClick={handleSeedSandbox}
+                    disabled={seeding}
+                  >
+                    <RefreshCw size={14} className={seeding ? 'spin-icon' : ''} />
+                    <span>{seeding ? 'Seeding Isolated Sandbox...' : 'Load Sample Data (1-Click)'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── 2. ENTERPRISE WORKSPACE HERO BANNER (When Connected Database Active) ─── */}
       {activeSource?.mode === 'connected' && (
@@ -434,32 +544,39 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             ref={searchInputRef}
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Ask equipment AI in plain English... e.g., 'Which devices have warranties ending in the next 30 days?'"
+            placeholder={
+              isUnconfigured
+                ? "No database connected yet. Connect a database or click 'Load Sample Data' above to run AI queries..."
+                : "Ask equipment AI in plain English... e.g., 'Which devices have warranties ending in the next 30 days?'"
+            }
             aria-label="Ask equipment intelligence question"
+            disabled={isUnconfigured}
           />
           <kbd className="prompt-slash-kbd" title="Press / anywhere to focus search" aria-hidden="true">/</kbd>
-          <button type="submit" className="prompt-submit-btn" disabled={!question.trim()}>
+          <button type="submit" className="prompt-submit-btn" disabled={!question.trim() || isUnconfigured}>
             <span>Ask</span>
             <Send size={13} aria-hidden="true" />
           </button>
         </form>
-        <div className="overview-suggestion-row" aria-label="Suggested starter queries">
-          <span className="prompt-suggestions-label">Suggestions:</span>
-          {SUGGESTED_QUESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              className="prompt-suggestion-pill"
-              onClick={() => onAskQuestion(suggestion)}
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
+        {!isUnconfigured && (
+          <div className="overview-suggestion-row" aria-label="Suggested starter queries">
+            <span className="prompt-suggestions-label">Suggestions:</span>
+            {SUGGESTED_QUESTIONS.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                className="prompt-suggestion-pill"
+                onClick={() => onAskQuestion(suggestion)}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ─── 3. MORNING OPERATIONAL BRIEFING (Ranked 1-3 with Urgent First & Why) ─── */}
-      {data && (
+      {!isUnconfigured && data && (
         <section className="morning-briefing-card" aria-label="Morning briefing">
           <div className="morning-briefing-header">
             <div className="morning-briefing-title-group">
@@ -511,7 +628,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   </span>
                 </div>
                 <div className="briefing-why-text">
-                  Why: 50 already expired; uncovered equipment risks unbudgeted replacement delays.
+                  {alreadyExpiredCount > 0
+                    ? `Why: ${formatNumber(alreadyExpiredCount)} already expired; uncovered equipment risks unbudgeted replacement delays.`
+                    : 'Why: Equipment nearing SLA expiry requires contract renewal review.'}
                 </div>
               </div>
               <ArrowRight size={14} className="morning-briefing-item-arrow" />
@@ -529,7 +648,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <div className="briefing-headline-row">
                   <span className="morning-briefing-item-badge badge-advisory">Data health</span>
                   <span className="briefing-metric-text">
-                    <strong><AnimatedNumber value={dataHealth?.total_findings ?? 6} /></strong> hygiene anomalies
+                    <strong><AnimatedNumber value={dataHealth?.total_findings ?? 0} /></strong> hygiene anomalies
                   </span>
                 </div>
                 <div className="briefing-why-text">
@@ -583,13 +702,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
           </div>
 
-          {/* Card 3: Warranties ending soon (Renamed, 258 headline, 208 ending soon - 50 already expired) */}
+          {/* Card 3: Warranties ending soon */}
           <div
             className="overview-kpi-card"
             onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
             role="button"
             tabIndex={0}
-            title="Review 258 urgent warranties (208 ending soon · 50 already expired)"
+            title={
+              urgentWarrantyCount > 0
+                ? `Review ${formatNumber(urgentWarrantyCount)} urgent warranties (${formatNumber(endingSoonCount)} ending soon · ${formatNumber(alreadyExpiredCount)} already expired)`
+                : 'All contracts up to date'
+            }
           >
             <div className="kpi-header">
               <span className="kpi-label">Warranties ending soon</span>
@@ -598,8 +721,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               </div>
             </div>
             <div className="kpi-value"><AnimatedNumber value={urgentWarrantyCount} /></div>
-            <div className="kpi-subtext kpi-subtext--warning">
-              <span>208 ending soon &bull; 50 already expired</span>
+            <div className={`kpi-subtext ${urgentWarrantyCount > 0 ? 'kpi-subtext--warning' : 'kpi-subtext--success'}`}>
+              <span>
+                {urgentWarrantyCount > 0
+                  ? `${formatNumber(endingSoonCount)} ending soon • ${formatNumber(alreadyExpiredCount)} already expired`
+                  : 'All contracts up to date'}
+              </span>
             </div>
           </div>
 
@@ -618,8 +745,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               </div>
             </div>
             <div className="kpi-value"><AnimatedNumber value={data.open_service_events} /></div>
-            <div className="kpi-subtext kpi-subtext--danger">
-              <span>Needs technician triage</span>
+            <div className={`kpi-subtext ${data.open_service_events > 0 ? 'kpi-subtext--danger' : 'kpi-subtext--success'}`}>
+              <span>{data.open_service_events > 0 ? 'Needs technician triage' : 'Zero open incidents'}</span>
             </div>
           </div>
         </section>
@@ -856,46 +983,48 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </section>
 
           {/* ─── 6.5 GLOBAL TOPOLOGY & NOC TELEMETRY VISUAL ─── */}
-          <section className="fleet-topology-banner-card" aria-label="Global equipment telemetry topology">
-            <div className="topology-card-header">
-              <div className="topology-header-left">
-                <div className="topology-live-dot" aria-hidden="true" />
-                <h3 className="topology-title">Global Fleet Telemetry & Edge Nodes</h3>
-                <span className="topology-region-badge">{data.total_sites} Monitored Sites</span>
+          {!isUnconfigured && data.total_devices > 0 && (
+            <section className="fleet-topology-banner-card" aria-label="Global equipment telemetry topology">
+              <div className="topology-card-header">
+                <div className="topology-header-left">
+                  <div className="topology-live-dot" aria-hidden="true" />
+                  <h3 className="topology-title">Global Fleet Telemetry & Edge Nodes</h3>
+                  <span className="topology-region-badge">{data.total_sites} Monitored Sites</span>
+                </div>
+                <div className="topology-header-right">
+                  <span className="topology-telemetry-stat">Telemetry Ingest: <strong className="tabular-nums">Active</strong></span>
+                  <span className="topology-telemetry-stat">Read-only Sync: <strong className="tabular-nums">Sub-second</strong></span>
+                </div>
               </div>
-              <div className="topology-header-right">
-                <span className="topology-telemetry-stat">Telemetry Ingest: <strong className="tabular-nums">Active</strong></span>
-                <span className="topology-telemetry-stat">Read-only Sync: <strong className="tabular-nums">Sub-second</strong></span>
-              </div>
-            </div>
-            <div className="topology-visual-frame">
-              <img
-                src="/images/fleet_topology.jpg"
-                alt="Global fleet operations telemetry map showing enterprise equipment nodes"
-                className="topology-visual-img"
-                loading="lazy"
-              />
-              <div className="topology-overlay-gradient">
-                <div className="topology-node-chips">
-                  <div className="topology-node-chip">
-                    <span className="node-chip-dot node-dot-green" />
-                    <span className="node-chip-region">Global Edge Fleet</span>
-                    <span className="node-chip-count tabular-nums">{formatNumber(data.total_devices)} assets across {data.total_sites} sites</span>
-                  </div>
-                  <div className="topology-node-chip">
-                    <span className="node-chip-dot node-dot-blue" />
-                    <span className="node-chip-region">Online Telemetry</span>
-                    <span className="node-chip-count tabular-nums">{formatNumber(data.active_devices)} operational nodes</span>
-                  </div>
-                  <div className="topology-node-chip">
-                    <span className="node-chip-dot node-dot-amber" />
-                    <span className="node-chip-region">Coverage Scope</span>
-                    <span className="node-chip-count tabular-nums">Americas &bull; EMEA &bull; APAC</span>
+              <div className="topology-visual-frame">
+                <img
+                  src="/images/fleet_topology.jpg"
+                  alt="Global fleet operations telemetry map showing enterprise equipment nodes"
+                  className="topology-visual-img"
+                  loading="lazy"
+                />
+                <div className="topology-overlay-gradient">
+                  <div className="topology-node-chips">
+                    <div className="topology-node-chip">
+                      <span className="node-chip-dot node-dot-green" />
+                      <span className="node-chip-region">Global Edge Fleet</span>
+                      <span className="node-chip-count tabular-nums">{formatNumber(data.total_devices)} assets across {data.total_sites} sites</span>
+                    </div>
+                    <div className="topology-node-chip">
+                      <span className="node-chip-dot node-dot-blue" />
+                      <span className="node-chip-region">Online Telemetry</span>
+                      <span className="node-chip-count tabular-nums">{formatNumber(data.active_devices)} operational nodes</span>
+                    </div>
+                    <div className="topology-node-chip">
+                      <span className="node-chip-dot node-dot-amber" />
+                      <span className="node-chip-region">Coverage Scope</span>
+                      <span className="node-chip-count tabular-nums">Americas &bull; EMEA &bull; APAC</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* ─── 7. RECENT REPAIR REQUESTS TABLE (Rule 5: 'repair requests' Unified Term) ─── */}
           <section

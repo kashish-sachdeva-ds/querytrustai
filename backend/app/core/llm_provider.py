@@ -22,7 +22,11 @@ import httpx
 from pydantic import BaseModel, Field
 
 from app.config import Settings, get_settings
-from app.core.semantic_catalog import SEMANTIC_CATALOG, get_catalog_prompt_context
+from app.core.semantic_catalog import (
+    SEMANTIC_CATALOG,
+    get_catalog_prompt_context,
+    get_dynamic_schema_prompt_context,
+)
 
 logger = logging.getLogger("querytrust.llm")
 
@@ -45,7 +49,10 @@ class BaseLLMProvider(ABC):
 
     @abstractmethod
     async def generate_sql_preview(
-        self, question: str, history: Optional[List[Dict[str, str]]] = None
+        self,
+        question: str,
+        history: Optional[List[Dict[str, str]]] = None,
+        schema_context: Optional[Dict[str, Any]] = None,
     ) -> StructuredLLMResponse:
         pass
 
@@ -61,11 +68,126 @@ class DemoLLMProvider(BaseLLMProvider):
         super().__init__(name="demo", model="deterministic-rule-v1", is_demo=True)
 
     async def generate_sql_preview(
-        self, question: str, history: Optional[List[Dict[str, str]]] = None
+        self,
+        question: str,
+        history: Optional[List[Dict[str, str]]] = None,
+        schema_context: Optional[Dict[str, Any]] = None,
     ) -> StructuredLLMResponse:
         q_lower = question.strip().lower()
 
-        # 1. Check for unsupported domain concepts
+        # 0. Check for security test injections FIRST (always produce attack SQL to exercise AST guard)
+        if "drop table" in q_lower or "drop database" in q_lower:
+            target_tbl = "devices"
+            if schema_context and schema_context.get("table_names"):
+                target_tbl = schema_context["table_names"][0]
+            return StructuredLLMResponse(
+                intent_status="ready",
+                interpreted_question="Attempted table drop instruction.",
+                sql=f"DROP TABLE {target_tbl};",
+                assumptions=["Testing DDL rejection."],
+                business_terms_used=[],
+            )
+
+        if "delete from" in q_lower:
+            target_tbl = "devices"
+            if schema_context and schema_context.get("table_names"):
+                target_tbl = schema_context["table_names"][0]
+            return StructuredLLMResponse(
+                intent_status="ready",
+                interpreted_question="Attempted row deletion instruction.",
+                sql=f"DELETE FROM {target_tbl} WHERE id = 1;",
+                assumptions=["Testing DML delete rejection."],
+                business_terms_used=[],
+            )
+
+        if "update " in q_lower and "set" in q_lower:
+            target_tbl = "devices"
+            if schema_context and schema_context.get("table_names"):
+                target_tbl = schema_context["table_names"][0]
+            return StructuredLLMResponse(
+                intent_status="ready",
+                interpreted_question="Attempted row update instruction.",
+                sql=f"UPDATE {target_tbl} SET status = 'Offline' WHERE id = 1;",
+                assumptions=["Testing DML update rejection."],
+                business_terms_used=[],
+            )
+
+        if "pg_sleep" in q_lower or "sleep" in q_lower:
+            return StructuredLLMResponse(
+                intent_status="ready",
+                interpreted_question="Attempted sleep injection.",
+                sql="SELECT pg_sleep(5);",
+                assumptions=["Testing dangerous function rejection."],
+                business_terms_used=[],
+            )
+
+        # 1. Custom enterprise database schema handling (when connected to a custom company database)
+        if schema_context and schema_context.get("tables"):
+            tables = schema_context.get("tables", [])
+            custom_table_names = schema_context.get("table_names", [t.get("table_name") for t in tables if isinstance(t, dict)])
+            is_custom_db = any(t not in {"devices", "sites", "service_events", "telemetry_readings"} for t in custom_table_names)
+
+            if is_custom_db:
+                # Find matching table
+                matched_table = None
+                matched_cols = []
+                for t in tables:
+                    tname = t.get("table_name", "") if isinstance(t, dict) else ""
+                    if tname.lower() in q_lower or tname.lower().rstrip("s") in q_lower or (tname.lower() + "s") in q_lower:
+                        matched_table = tname
+                        matched_cols = t.get("columns", []) if isinstance(t, dict) else []
+                        break
+
+                if not matched_table and tables:
+                    first_tbl = tables[0]
+                    matched_table = first_tbl.get("table_name", "") if isinstance(first_tbl, dict) else ""
+                    matched_cols = first_tbl.get("columns", []) if isinstance(first_tbl, dict) else []
+
+                if matched_table:
+                    col_names = [c.get("name") for c in matched_cols if isinstance(c, dict) and c.get("name")]
+
+                    # Check for count / aggregation
+                    if any(w in q_lower for w in ["how many", "count", "total", "number of"]):
+                        return StructuredLLMResponse(
+                            intent_status="ready",
+                            interpreted_question=f"Count total records in enterprise table '{matched_table}'.",
+                            sql=f"SELECT COUNT(*) AS total_count FROM {matched_table};",
+                            assumptions=[f"Targeting active connected table '{matched_table}'."],
+                            business_terms_used=[matched_table],
+                        )
+
+                    # Check for breakdown / group by
+                    dim_col = None
+                    for cname in col_names:
+                        c_lower = cname.lower()
+                        if c_lower in q_lower or ("by " + c_lower) in q_lower:
+                            dim_col = cname
+                            break
+                    if not dim_col and any(w in q_lower for w in ["breakdown", "group by", "distribution", "by"]):
+                        for cname in col_names:
+                            if any(k in cname.lower() for k in ["status", "type", "category", "region", "vendor", "severity", "role"]):
+                                dim_col = cname
+                                break
+
+                    if dim_col:
+                        return StructuredLLMResponse(
+                            intent_status="ready",
+                            interpreted_question=f"Aggregate distribution of '{matched_table}' grouped by '{dim_col}'.",
+                            sql=f"SELECT {dim_col}, COUNT(*) AS count\nFROM {matched_table}\nGROUP BY {dim_col}\nORDER BY count DESC\nLIMIT 200;",
+                            assumptions=[f"Targeting active connected table '{matched_table}' grouped by '{dim_col}'."],
+                            business_terms_used=[matched_table, dim_col],
+                        )
+
+                    # Default clean SELECT on custom table
+                    return StructuredLLMResponse(
+                        intent_status="ready",
+                        interpreted_question=f"Retrieve records from enterprise table '{matched_table}'.",
+                        sql=f"SELECT * FROM {matched_table}\nLIMIT 200;",
+                        assumptions=[f"Safe read-only sample query from active table '{matched_table}'."],
+                        business_terms_used=[matched_table],
+                    )
+
+        # 2. Check for unsupported domain concepts (for default demo sandbox)
         for unsupported in SEMANTIC_CATALOG["unsupported_concepts"]:
             if re.search(rf"\b{re.escape(unsupported)}\b", q_lower):
                 return StructuredLLMResponse(
@@ -78,7 +200,7 @@ class DemoLLMProvider(BaseLLMProvider):
                     business_terms_used=[],
                 )
 
-        # 2. Check for ambiguous operational terms requiring clarification
+        # 3. Check for ambiguous operational terms requiring clarification
         if any(term in q_lower for term in ["high risk", "high-risk", "at risk", "riskiest"]):
             rule = SEMANTIC_CATALOG["ambiguity_rules"]["high_risk"]
             return StructuredLLMResponse(
@@ -99,25 +221,6 @@ class DemoLLMProvider(BaseLLMProvider):
                 sql=None,
                 assumptions=["'unhealthy' can signify offline status or open critical service events."],
                 business_terms_used=["unhealthy"],
-            )
-
-        # 3. Security test injections: generate candidate SQL matching the prompt so AST validator intercepts it
-        if "drop table" in q_lower or "drop database" in q_lower:
-            return StructuredLLMResponse(
-                intent_status="ready",
-                interpreted_question="Attempted table drop instruction.",
-                sql="DROP TABLE devices;",
-                assumptions=["Testing DDL rejection."],
-                business_terms_used=[],
-            )
-
-        if "delete from" in q_lower:
-            return StructuredLLMResponse(
-                intent_status="ready",
-                interpreted_question="Attempted row deletion instruction.",
-                sql="DELETE FROM devices WHERE id = 1;",
-                assumptions=["Testing DML delete rejection."],
-                business_terms_used=[],
             )
 
         if "update " in q_lower and "set" in q_lower:
@@ -367,8 +470,17 @@ class GeminiLLMProvider(BaseLLMProvider):
             f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
         )
 
-    def _build_prompt(self, question: str, history: Optional[List[Dict[str, str]]] = None) -> str:
-        catalog_context = get_catalog_prompt_context()
+    def _build_prompt(
+        self,
+        question: str,
+        history: Optional[List[Dict[str, str]]] = None,
+        schema_context: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        if schema_context and schema_context.get("tables"):
+            catalog_context = get_dynamic_schema_prompt_context(schema_context)
+        else:
+            catalog_context = get_catalog_prompt_context()
+
         system_instruction = (
             "You are an enterprise SQL generation assistant for QueryTrust AI.\n"
             "You MUST respond ONLY with a single valid JSON object adhering strictly to this schema:\n"
@@ -385,9 +497,12 @@ class GeminiLLMProvider(BaseLLMProvider):
         return f"{system_instruction}\nUser Question: {question}"
 
     async def generate_sql_preview(
-        self, question: str, history: Optional[List[Dict[str, str]]] = None
+        self,
+        question: str,
+        history: Optional[List[Dict[str, str]]] = None,
+        schema_context: Optional[Dict[str, Any]] = None,
     ) -> StructuredLLMResponse:
-        prompt = self._build_prompt(question, history)
+        prompt = self._build_prompt(question, history, schema_context)
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
@@ -407,7 +522,7 @@ class GeminiLLMProvider(BaseLLMProvider):
             except Exception as e:
                 logger.error(f"Gemini API generation failed: {e}; falling back to demo provider.")
                 demo = DemoLLMProvider()
-                return await demo.generate_sql_preview(question, history)
+                return await demo.generate_sql_preview(question, history, schema_context)
 
 
 class OpenAICompatibleLLMProvider(BaseLLMProvider):
@@ -419,9 +534,16 @@ class OpenAICompatibleLLMProvider(BaseLLMProvider):
         self.base_url = (base_url or "https://api.openai.com/v1").rstrip("/")
 
     async def generate_sql_preview(
-        self, question: str, history: Optional[List[Dict[str, str]]] = None
+        self,
+        question: str,
+        history: Optional[List[Dict[str, str]]] = None,
+        schema_context: Optional[Dict[str, Any]] = None,
     ) -> StructuredLLMResponse:
-        catalog_context = get_catalog_prompt_context()
+        if schema_context and schema_context.get("tables"):
+            catalog_context = get_dynamic_schema_prompt_context(schema_context)
+        else:
+            catalog_context = get_catalog_prompt_context()
+
         system_instruction = (
             "You are an enterprise SQL generation assistant for QueryTrust AI.\n"
             "You MUST respond ONLY with a single valid JSON object adhering strictly to this schema:\n"
@@ -464,7 +586,7 @@ class OpenAICompatibleLLMProvider(BaseLLMProvider):
             except Exception as e:
                 logger.error(f"OpenAI compatible generation failed: {e}; falling back to demo provider.")
                 demo = DemoLLMProvider()
-                return await demo.generate_sql_preview(question, history)
+                return await demo.generate_sql_preview(question, history, schema_context)
 
 
 def get_llm_provider(settings: Optional[Settings] = None) -> BaseLLMProvider:

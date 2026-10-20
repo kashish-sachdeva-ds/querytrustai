@@ -13,7 +13,6 @@ import {
   Building,
   User as UserIcon,
   Users,
-  CheckCircle2,
   Clock,
   ChevronDown,
   Sparkles,
@@ -23,7 +22,6 @@ import { QueryTrustLogo } from './QueryTrustLogo'
 import { GlobalErrorBanner } from './GlobalErrorBanner'
 import type { ErrorBannerType } from './GlobalErrorBanner'
 import { PasswordStrengthMeter } from './PasswordStrengthMeter'
-import { submitAccessRequest } from '../api/client'
 import {
   sanitizeInput,
   validateEmail,
@@ -133,19 +131,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     email?: string
   } | null>(null)
 
-  // Request Access Modal State
-  const [showRequestAccess, setShowRequestAccess] = useState(false)
-  const [requestLoading, setRequestLoading] = useState(false)
-  const [requestError, setRequestError] = useState<string | null>(null)
-  const [requestSubmitted, setRequestSubmitted] = useState(false)
-  const [submittedRequestId, setSubmittedRequestId] = useState<string | null>(null)
-  const [requestForm, setRequestForm] = useState({
-    name: '',
-    email: '',
-    company: '',
-    roleRequested: 'Analyst',
-    justification: '',
-  })
 
   // Dynamic Password Strength (for Registration & Password Creation)
   const registerPasswordStrength = calculatePasswordStrength(registerValues.password)
@@ -265,13 +250,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         setGlobalError({
           type: 'invalid_credentials',
           message: rawErrorMsg || 'Invalid work credentials. Please verify your email and password.',
-          actionLabel: 'Need access? Request access →',
+          actionLabel: 'Joining a team? Join workspace →',
           onAction: () => {
-            setShowRequestAccess(true)
-            setRequestSubmitted(false)
-            setRequestError(null)
+            setAuthMode('join')
+            setJoinValues((prev) => ({ ...prev, email: sanitizedEmail }))
             setGlobalError(null)
-            setRequestForm((prev) => ({ ...prev, email: sanitizedEmail }))
           },
         })
       }
@@ -415,42 +398,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     }
   }
 
-  // Request Access handler
-  const handleRequestSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setRequestLoading(true)
-    setRequestError(null)
-    try {
-      const res = await submitAccessRequest({
-        full_name: requestForm.name,
-        email: requestForm.email,
-        company: requestForm.company,
-        role_requested: requestForm.roleRequested.toLowerCase() as 'analyst' | 'viewer',
-        use_case: requestForm.justification,
-      })
-      setSubmittedRequestId(res.id)
-      setRequestSubmitted(true)
-    } catch (err) {
-      setRequestError(err instanceof Error ? err.message : 'Failed to submit access request. Please verify inputs.')
-    } finally {
-      setRequestLoading(false)
-    }
-  }
 
-  const handleReturnToSignIn = () => {
-    const submittedEmail = (requestForm.email || formValues.email).toLowerCase().trim()
-    setShowRequestAccess(false)
-    setRequestSubmitted(false)
-    setRequestError(null)
-    setGlobalError(null)
-    setFormValues((prev) => ({ ...prev, email: submittedEmail, password: '' }))
-    setStatusNotice({
-      title: 'Status: Access Request Pending Review',
-      message: `Your access request for ${submittedEmail} has been recorded in the database. Workspace administrators can review and approve your account in People & access. You will be able to sign in once approved.`,
-      email: submittedEmail,
-    })
-    setRequestForm({ name: '', email: '', company: '', roleRequested: 'Analyst', justification: '' })
-  }
 
   const isSubmitDisabled = loading || !formValues.email.trim() || !formValues.password
 
@@ -1269,164 +1217,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         </div>
       </main>
 
-      {/* ─── Request Access Modal (Database Stored) ─── */}
-      {showRequestAccess && (
-        <div className="login-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="request-modal-title">
-          <div className="login-modal-card">
-            <div className="login-modal-header">
-              <div className="modal-title-wrap">
-                <Building size={20} className="text-accent" />
-                <div>
-                  <h3 id="request-modal-title" style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>Request access to workspace</h3>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--qt-muted)' }}>
-                    Submit your details to join your company's workspace. Workspace administrators review requests in People &amp; access and assign your Analyst or Viewer role.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="login-modal-close"
-                onClick={requestSubmitted ? handleReturnToSignIn : () => setShowRequestAccess(false)}
-                aria-label="Close request access modal"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {requestSubmitted ? (
-              <div className="login-modal-success" style={{ textAlign: 'center', padding: '1.5rem 1rem' }}>
-                <CheckCircle2 size={40} style={{ color: 'var(--qt-success, #22c55e)', margin: '0 auto 0.75rem' }} />
-                <h4 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', fontWeight: 700 }}>Access Request Submitted</h4>
-                <p style={{ fontSize: '0.84rem', color: 'var(--qt-ink-muted)', lineHeight: 1.5, margin: '0 0 1rem' }}>
-                  Your access request has been recorded in the database. Workspace administrators can now review and approve your account from <strong>People &amp; access</strong>.
-                </p>
-                <div className="preview-role-summary" style={{ textAlign: 'left', margin: '0 0 1.25rem', padding: '0.85rem', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--qt-border)', borderRadius: 8, fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div>Requester: <strong>{requestForm.name} ({requestForm.company})</strong></div>
-                  <div>Work email: <strong>{requestForm.email}</strong></div>
-                  <div>Requested role: <span className="badge badge-primary" style={{ textTransform: 'capitalize', marginLeft: 4 }}>{requestForm.roleRequested}</span></div>
-                  {submittedRequestId && (
-                    <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', fontFamily: 'var(--font-mono, monospace)', marginTop: 4 }}>
-                      Request ID: {submittedRequestId}
-                    </div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="login-submit-btn"
-                  onClick={handleReturnToSignIn}
-                >
-                  Return to Sign In
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleRequestSubmit} className="modal-form">
-                {requestError && (
-                  <div role="alert" style={{ marginBottom: '0.75rem', padding: '0.65rem 0.85rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 6, color: '#f87171', fontSize: '0.78rem' }}>
-                    {requestError}
-                  </div>
-                )}
-                <div className="form-group">
-                  <label htmlFor="req-name" className="form-label">
-                    Full name <span className="req-star" aria-hidden="true">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <UserIcon size={16} className="input-icon" />
-                    <input
-                      id="req-name"
-                      type="text"
-                      value={requestForm.name}
-                      onChange={(e) => setRequestForm({ ...requestForm, name: e.target.value })}
-                      placeholder="Jane Doe"
-                      className="form-input"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="req-email" className="form-label">
-                    Work email <span className="req-star" aria-hidden="true">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <Mail size={16} className="input-icon" />
-                    <input
-                      id="req-email"
-                      type="email"
-                      value={requestForm.email}
-                      onChange={(e) => setRequestForm({ ...requestForm, email: e.target.value })}
-                      placeholder="jane.doe@enterprise.com"
-                      className="form-input"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="req-company" className="form-label">
-                    Organization / Company <span className="req-star" aria-hidden="true">*</span>
-                  </label>
-                  <div className="input-with-icon">
-                    <Building size={16} className="input-icon" />
-                    <input
-                      id="req-company"
-                      type="text"
-                      value={requestForm.company}
-                      onChange={(e) => setRequestForm({ ...requestForm, company: e.target.value })}
-                      placeholder="Acme Telecom Networks"
-                      className="form-input"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="req-role" className="form-label">
-                    Requested role <span className="req-star" aria-hidden="true">*</span>
-                  </label>
-                  <select
-                    id="req-role"
-                    value={requestForm.roleRequested}
-                    onChange={(e) => setRequestForm({ ...requestForm, roleRequested: e.target.value })}
-                    className="form-input"
-                  >
-                    <option value="Viewer">Viewer (Read-only dashboards)</option>
-                    <option value="Analyst">Analyst (Plain English queries)</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="req-justification" className="form-label">
-                    Business justification <span className="req-star" aria-hidden="true">*</span>
-                  </label>
-                  <textarea
-                    id="req-justification"
-                    rows={2}
-                    value={requestForm.justification}
-                    onChange={(e) => setRequestForm({ ...requestForm, justification: e.target.value })}
-                    placeholder="Briefly state your equipment monitoring workflow."
-                    className="form-input"
-                    required
-                  />
-                </div>
-
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowRequestAccess(false)}
-                    disabled={requestLoading}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="login-submit-btn" disabled={requestLoading}>
-                    {requestLoading ? 'Submitting to database…' : 'Submit Access Request'}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

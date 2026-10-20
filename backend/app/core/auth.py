@@ -142,3 +142,13 @@ def require_role(*allowed_roles):
             )
         return current_user
     return role_checker
+
+
+def is_demo_workspace(user: Optional[User]) -> bool:
+    """Return True if user is operating in the pre-seeded public demo sandbox."""
+    if not user:
+        return False
+    ws = (user.workspace_name or "").strip()
+    email = (user.email or "").strip().lower()
+    return ws in ("", "Default Workspace") or email.endswith("@querytrust.local")
+

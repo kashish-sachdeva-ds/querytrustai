@@ -18,7 +18,8 @@ from sqlalchemy import text
 
 from app.database import get_db
 from app.models.user import User
-from app.core.auth import get_current_user, require_role
+from app.models.data_source import DataSource
+from app.core.auth import get_current_user, require_role, is_demo_workspace
 from app.core.anomaly_detector import anomaly_detector
 from app.schemas.anomalies import (
     AnomalyScanRequest,
@@ -109,6 +110,25 @@ def get_current_unusual_activity(
     Viewers can inspect a fixed, read-only result set but cannot change scan
     sensitivity or row limits, nor trigger an operator-controlled scan.
     """
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            return AnomalyScanResponse(
+                model_version="none",
+                algorithm="IsolationForest",
+                total_telemetry_scanned=0,
+                anomalies_detected=0,
+                scan_time_ms=0.0,
+                top_anomalies=[],
+            )
+
     try:
         return _to_scan_response(anomaly_detector.scan_telemetry(db=db, limit=50, threshold=0.65))
     except Exception as e:
@@ -129,6 +149,25 @@ def run_telemetry_anomaly_scan(
 
     Returns the top-ranked statistical outliers sorted by anomaly score.
     """
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            return AnomalyScanResponse(
+                model_version="none",
+                algorithm="IsolationForest",
+                total_telemetry_scanned=0,
+                anomalies_detected=0,
+                scan_time_ms=0.0,
+                top_anomalies=[],
+            )
+
     try:
         scan_results = anomaly_detector.scan_telemetry(
             db=db,

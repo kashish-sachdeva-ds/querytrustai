@@ -8,6 +8,8 @@ Implements:
 """
 
 import logging
+import uuid
+from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -16,8 +18,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
 from app.models.user import User
+from app.models.data_source import DataSource
 from app.models.data_quality import DataQualityRun, DataQualityFinding
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, is_demo_workspace
 from app.core.data_quality import DataQualityProfiler
 from app.schemas.data_quality import (
     DataQualityRunSummary,
@@ -80,6 +83,31 @@ def get_data_quality_summary(
 
     If no run exists yet, initiates an initial baseline profiling run automatically.
     """
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            return DataQualityRunSummary(
+                id=uuid.uuid4(),
+                triggered_by=current_user.id,
+                status="completed",
+                total_findings=0,
+                critical_count=0,
+                high_count=0,
+                medium_count=0,
+                low_count=0,
+                total_records_analyzed=0,
+                overall_health_score=100.0,
+                created_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(timezone.utc),
+            )
+
     latest_run = (
         db.query(DataQualityRun)
         .filter(DataQualityRun.status == "completed")
@@ -158,6 +186,23 @@ def get_data_quality_findings(
     db: Session = Depends(get_db),
 ):
     """Retrieves paginated findings from the latest completed data quality run."""
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            return DataQualityFindingsResponse(
+                total=0,
+                page=page,
+                limit=limit,
+                findings=[],
+            )
+
     latest_run = (
         db.query(DataQualityRun)
         .filter(DataQualityRun.status == "completed")

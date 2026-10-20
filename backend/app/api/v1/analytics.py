@@ -20,7 +20,7 @@ from sqlalchemy import text, func, desc
 
 from app.database import get_db, engine, readonly_engine
 from app.config import get_settings
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, is_demo_workspace
 from app.models.user import User
 from app.models.query_run import QueryRun, QueryFeedback
 from app.models.chat import ChatSession, ChatMessage
@@ -185,10 +185,81 @@ async def preview_natural_language_query(
             for m in reversed(recent_messages)
         ]
 
+    # For custom workspaces, check if a data source has been connected
+    if not is_demo_workspace(current_user):
+        workspace = current_user.workspace_name or ""
+        active_ds = (
+            db.query(DataSource)
+            .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
+            .first()
+        )
+        if not active_ds:
+            query_run = QueryRun(
+                user_id=current_user.id,
+                workspace_name=current_user.workspace_name,
+                session_id=session.id if session else None,
+                question=question,
+                interpreted_question="No database connected to this workspace.",
+                generated_sql="",
+                status="unsupported",
+                error_category="DATA_SOURCE_UNCONFIGURED",
+                error_message="No database is connected to this workspace. Please connect a database in Data Sources or load sample data.",
+                provider="System",
+                model="SchemaRouter",
+            )
+            db.add(query_run)
+            db.commit()
+            db.refresh(query_run)
+            if session:
+                user_msg = ChatMessage(session_id=session.id, role="user", content=question)
+                assistant_msg = ChatMessage(
+                    session_id=session.id,
+                    role="assistant",
+                    content="Your workspace currently has no active database connected. An administrator can connect your company database in Data Sources or load sample data.",
+                    metadata_json={"query_run_id": str(query_run.id), "status": "unsupported"},
+                )
+                db.add_all([user_msg, assistant_msg])
+                session.updated_at = datetime.now(timezone.utc)
+                db.commit()
+
+            return PreviewResponse(
+                query_run_id=query_run.id,
+                session_id=session.id if session else None,
+                status="unsupported",
+                intent_status="unsupported",
+                interpreted_question="No database connected to this workspace.",
+                clarification_question="Your workspace currently has no active database connection. A workspace admin can connect your organization's database in Data Sources or load sample data.",
+                sql_preview=None,
+                validation=ValidationDetail(
+                    passed=False,
+                    checks=list(STANDARD_CHECKS),
+                    violations=["Workspace database not connected."],
+                    warnings=[],
+                    tables_referenced=[],
+                ),
+                assumptions=[],
+                business_terms_used=[],
+                can_execute=False,
+                provider="System",
+                model="SchemaRouter",
+                is_demo_mode=False,
+                created_at=query_run.created_at,
+            )
+
+    # Look up active data source and custom tables for current workspace
+    workspace = current_user.workspace_name or "Default Workspace"
+    active_ds = (
+        db.query(DataSource)
+        .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
+        .first()
+    )
+    schema_context = active_ds.schema_cache if (active_ds and active_ds.schema_cache) else None
+    custom_tables = set(schema_context.get("table_names", [])) if schema_context else None
+
     # Generate candidate structured response via configured LLM provider
     provider = get_llm_provider()
     try:
-        llm_resp = await provider.generate_sql_preview(question, history=history)
+        llm_resp = await provider.generate_sql_preview(question, history=history, schema_context=schema_context)
     except Exception as e:
         logger.error(f"Error during LLM preview generation: {e}", exc_info=True)
         raise HTTPException(
@@ -202,15 +273,6 @@ async def preview_natural_language_query(
     sanitized_sql = None
 
     if llm_resp.intent_status == "ready" and llm_resp.sql:
-        # Check active data source for current workspace
-        workspace = current_user.workspace_name or "Default Workspace"
-        active_ds = (
-            db.query(DataSource)
-            .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
-            .first()
-        )
-        custom_tables = set(active_ds.schema_cache.get("table_names", [])) if (active_ds and active_ds.schema_cache) else None
-
         val_res: SQLValidationResult = validate_and_sanitize_sql(llm_resp.sql, allowed_tables=custom_tables)
         validation_detail = ValidationDetail(
             passed=val_res.is_valid,
@@ -252,6 +314,7 @@ async def preview_natural_language_query(
     query_run = QueryRun(
         session_id=session.id if session else None,
         user_id=current_user.id,
+        workspace_name=current_user.workspace_name,
         question=question,
         interpreted_question=llm_resp.interpreted_question,
         generated_sql=sanitized_sql or llm_resp.sql or "",
@@ -389,6 +452,11 @@ def execute_previewed_query(
         .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
         .first()
     )
+    if not is_demo_workspace(current_user) and not active_ds:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot execute query: no database is connected to this workspace. Please connect a database in Data Sources or load sample data.",
+        )
     custom_tables = set(active_ds.schema_cache.get("table_names", [])) if (active_ds and active_ds.schema_cache) else None
 
     # Re-validate stored SQL at execution time against active target
@@ -587,7 +655,10 @@ def get_query_history(
         .outerjoin(QueryFeedback, QueryRun.id == QueryFeedback.query_run_id)
     )
 
-    # Ownership filter
+    # Multi-tenant workspace isolation & ownership filter
+    workspace = current_user.workspace_name or "Default Workspace"
+    query = query.filter(QueryRun.workspace_name == workspace)
+
     if current_user.role != "admin":
         query = query.filter(QueryRun.user_id == current_user.id)
 

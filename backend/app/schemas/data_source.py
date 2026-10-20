@@ -87,7 +87,7 @@ class DataSourcePublic(BaseModel):
 
 
 class ActiveDataSourceResponse(BaseModel):
-    mode: Literal["sandbox", "connected"]
+    mode: Literal["sandbox", "connected", "unconfigured"]
     workspace_name: str
     source_id: Optional[uuid.UUID] = None
     name: str

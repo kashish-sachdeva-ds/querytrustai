@@ -9,7 +9,7 @@ from sqlalchemy import desc
 from app.database import get_db
 from app.models.user import User
 from app.models.data_source import DataSource
-from app.core.auth import get_current_user, require_role
+from app.core.auth import get_current_user, require_role, is_demo_workspace
 from app.schemas.data_source import (
     DataSourceCreate,
     DataSourceUpdate,
@@ -134,7 +134,7 @@ def build_active_response(workspace: str, active_ds: Optional[DataSource]) -> Ac
             last_synced_at=active_ds.last_synced_at.isoformat() if active_ds.last_synced_at else None,
         )
 
-    # Sandbox fallback
+    # Sandbox fallback for default workspace
     sandbox_tables = get_sandbox_schema_catalog()
     return ActiveDataSourceResponse(
         mode="sandbox",
@@ -168,7 +168,77 @@ def get_active_data_source(
         .filter(DataSource.workspace_name == workspace, DataSource.is_active == True)
         .first()
     )
+    if not active_ds and not is_demo_workspace(current_user):
+        return ActiveDataSourceResponse(
+            mode="unconfigured",
+            workspace_name=workspace,
+            source_id=None,
+            name="No Database Connected",
+            db_type="none",
+            host="Not configured",
+            database_name="",
+            table_count=0,
+            column_count=0,
+            tables=[],
+            schema_details=[],
+            last_synced_at=None,
+        )
     return build_active_response(workspace, active_ds)
+
+
+@router.post("/seed-sandbox", response_model=ActiveDataSourceResponse)
+def seed_workspace_sandbox(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "analyst"])),
+):
+    """Enable sample sandbox data for testing within the caller's company workspace."""
+    workspace = current_user.workspace_name or "Default Workspace"
+    existing = (
+        db.query(DataSource)
+        .filter(DataSource.workspace_name == workspace, DataSource.name == "Synthetic Networking Sandbox")
+        .first()
+    )
+    sandbox_tables = get_sandbox_schema_catalog()
+    if not existing:
+        existing = DataSource(
+            workspace_name=workspace,
+            name="Synthetic Networking Sandbox",
+            db_type="postgresql",
+            host="localhost (Built-in)",
+            port=5432,
+            database_name="querytrust",
+            username="app_user",
+            encrypted_password=encrypt_secret("dummy"),
+            is_active=True,
+            status="connected",
+            schema_cache={
+                "tables": [t.model_dump() for t in sandbox_tables],
+                "table_names": [t.table_name for t in sandbox_tables],
+                "table_count": len(sandbox_tables),
+                "column_count": sum(len(t.columns) for t in sandbox_tables),
+            },
+            last_synced_at=datetime.now(timezone.utc),
+        )
+        db.add(existing)
+    else:
+        existing.is_active = True
+        existing.schema_cache = {
+            "tables": [t.model_dump() for t in sandbox_tables],
+            "table_names": [t.table_name for t in sandbox_tables],
+            "table_count": len(sandbox_tables),
+            "column_count": sum(len(t.columns) for t in sandbox_tables),
+        }
+        existing.last_synced_at = datetime.now(timezone.utc)
+
+    # Deactivate other sources
+    db.query(DataSource).filter(
+        DataSource.workspace_name == workspace,
+        DataSource.id != existing.id,
+    ).update({"is_active": False})
+
+    db.commit()
+    db.refresh(existing)
+    return build_active_response(workspace, existing)
 
 
 @router.get("", response_model=List[DataSourcePublic])

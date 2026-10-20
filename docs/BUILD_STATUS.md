@@ -1,19 +1,22 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-20  
-**Current milestone:** 24 — Enterprise B2B SaaS Parity Suite (ThoughtSpot, Metabase, Snowflake Cortex, Seek AI)  
-**Overall status:** Complete implementation of all 9 B2B enterprise tasks:
-1. ✅ **Auth Hygiene:** Removed password strength meter from Sign In; isolated strictly to account creation.
-2. ✅ **Employee Onboarding (`auth.py`):** Implemented `POST /api/v1/auth/join-workspace` for team member onboarding into existing company workspaces as Analyst or Viewer.
-3. ✅ **Team Invite Drawer (`AdminView.tsx`, `admin.py`):** Added `+ Invite Member` modal in People & Access generating 1-click shareable onboarding URLs (`?join=WorkspaceName`).
-4. ✅ **Enterprise Auth Aesthetics (`LoginPage.tsx`):** Converted demo quick-fills into an unobtrusive collapsible disclosure accordion (`✨ Explore Demo Sandbox Personas [3 pre-seeded roles] ▾`).
-5. ✅ **Data Catalog & Interactive Schema Explorer (`DevicesView.tsx`, `Sidebar.tsx`):** Renamed "Equipment" to "Data catalog" with segmented toggle (`[ 🏢 Hardware & Asset Inventory ]` | `[ 📑 Schema & Data Model ]`), column data types, PK/FK indicators, and 1-click "Query this table" shortcuts.
-6. ✅ **Enterprise Workspace Hero Banner (`OverviewView.tsx`):** Active database target awareness on Home overview with live connection pulse, table/column counts, and 1-click query suggestions.
-7. ✅ **Schema-Aware Dynamic Prompts (`AskDataView.tsx`):** Dynamic natural language starter chips and destructive injection demo adapting in real-time to active database tables.
-8. ✅ **Enterprise Role Governance (`Header.tsx`):** Client-side role switching restricted strictly to `@querytrust.local` demo sandbox personas; company workspace members receive verified enterprise governance badges.
-9. ✅ **Sidebar Flex & Responsive Scroll Layout (`Sidebar.tsx`, `design-system.css`, `index.css`):** Pinned Brand header/CTA and Safety Shield footer with independent `.sidebar-scrollable-body` container.
+**Current milestone:** 25 — Live Enterprise Multi-Tenant Verification & Governed Schema-Aware Analytics  
+**Overall status:** Complete implementation of all 10 enterprise B2B action items:
+1. ✅ **Crash Resolution on Unconfigured Workspaces (`analytics.py`):** Fixed `QueryRun` constructor crash. Unconfigured workspaces receive a clean HTTP 200 response with status `"unsupported"` and friendly admin guidance rather than a 500 error.
+2. ✅ **Workspace Creator Role Assignment (`auth.py`):** Workspace founder creating an organization workspace via `POST /api/v1/auth/register` is assigned `role="admin"` (Owner) by default.
+3. ✅ **Retired Legacy Request Access Modal (`LoginPage.tsx`):** Completely removed obsolete Request Access modal, state, and unused handlers. Unregistered users on login errors route directly to Join Workspace or Create Workspace.
+4. ✅ **Dynamic Schema-Aware NL-to-SQL (`semantic_catalog.py`, `llm_provider.py`, `analytics.py`):** Schema-aware prompt context injected into LLM providers based on the workspace's active connected database (supporting custom tables `orders`, `invoices`, `customers`, etc.).
+5. ✅ **Multi-Tenant Audit Partitioning (`query_run.py`, `analytics.py`):** Added `workspace_name` column to `query_runs` table with index. Direct tenant filtering in `get_query_history` prevents demo queries from leaking into clean organization workspaces.
+6. ✅ **Sidebar Ghost Metric Elimination (`Sidebar.tsx`):** Isolated demo anomaly counts (`375`) and demo hygiene findings to the demo workspace. Suppressed `0` count badges to prevent visual clutter in clean accounts.
+7. ✅ **Overview Truthfulness (`OverviewView.tsx`):** Dynamic calculations for urgent warranties and repair counts eliminate hardcoded demo strings ("208 ending soon • 50 already expired") in clean accounts.
+8. ✅ **Democratized Governed Querying (`Sidebar.tsx`, `AskDataView.tsx`, `PROJECT_SPEC.md`):** Removed `ViewerAskPlaceholder` blocking gate. Enabled governed natural-language querying for business users (`viewer` role) per spec line 149.
+9. ✅ **Executive Non-Technical AST Inspection (`AskDataView.tsx`):** Non-technical users receive a streamlined, reassuring AST verification card by default with an optional "Inspect technical checks" disclosure to view detailed AST proofs on demand.
+10. ✅ **Dynamic Starter Prompts (`AskDataView.tsx`):** Adaptive starter prompt chips inspect active connected database tables (`orders`, `shipments`, etc.) or present onboarding guidance for fresh workspaces instead of static hardware queries.
+11. ✅ **Razor-Sharp Value Proposition (`LandingPage.tsx`, `Header.tsx`):** Aligned brand headline with market leaders (ThoughtSpot, Metabase): "The governed natural-language analytics platform for enterprise PostgreSQL databases."
+12. ✅ **Network & Host Resilience (`vite.config.ts`):** Bound dev server to `0.0.0.0` ensuring seamless access via both `localhost` and `127.0.0.1`.
 
-**Automated Test Pass:** 127/127 pytest backend tests pass in 11.41s. Frontend production build compiles with 0 TypeScript/Vite errors in 4.26s.
+**Automated Test Pass:** 129/129 pytest backend tests pass in 12.27s. Frontend production build compiles with 0 TypeScript/Vite errors in 4.89s.
 
 ---
 

@@ -174,7 +174,7 @@ def register(
         email=clean_email,
         display_name=request.full_name.strip(),
         password_hash=hashed,
-        role=request.role or "analyst",
+        role=request.role or "admin",
         workspace_name=request.workspace_name.strip(),
         is_active=True,
     )

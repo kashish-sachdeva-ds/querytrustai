@@ -6,7 +6,8 @@ from sqlalchemy import func
 
 from app.database import get_db
 from app.models import Device, Site, ServiceEvent, User
-from app.core.auth import get_current_user
+from app.models.data_source import DataSource
+from app.core.auth import get_current_user, is_demo_workspace
 from app.schemas.dashboard import (
     DashboardSummaryResponse,
     MetricItem,
@@ -27,6 +28,31 @@ def get_dashboard_summary(
 
     Requires authenticated user (any role: Viewer, Analyst, Admin).
     """
+    # Enforce workspace data isolation: new company workspaces start empty until a database is connected or sample data is loaded
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            return DashboardSummaryResponse(
+                total_devices=0,
+                total_sites=0,
+                active_devices=0,
+                expiring_warranties_30d=0,
+                open_service_events=0,
+                devices_by_type=[],
+                devices_by_status=[],
+                events_by_severity=[],
+                recent_service_events=[],
+                warranties_by_bucket=[],
+                top_sites_by_expiring_warranties=[],
+            )
+
     # 1. Total devices
     total_devices = db.query(func.count(Device.id)).scalar() or 0
 

@@ -341,7 +341,9 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
   }
 
   // Filtered tables for schema view
-  const schemaTables: DataSourceTableInfo[] = activeSource?.schema_details ?? [
+  const schemaTables: DataSourceTableInfo[] = activeSource?.mode === 'unconfigured'
+    ? []
+    : (activeSource?.schema_details ?? [
     {
       table_name: 'devices',
       columns: [
@@ -397,7 +399,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
       ],
       row_count_estimate: 25000,
     },
-  ]
+  ])
 
   const tablesFiltered = schemaTables.filter((t) =>
     t.table_name.toLowerCase().includes(schemaSearch.toLowerCase()) ||
@@ -504,8 +506,17 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
             )}
           </div>
 
-          {/* Master-Detail Layout: Table List (Left) + Column Inspector (Right) */}
-          <div className="schema-layout-grid">
+          {schemaTables.length === 0 ? (
+            <div className="schema-empty-state" style={{ padding: '3.5rem 1.5rem', textAlign: 'center', background: 'var(--qt-surface)', borderRadius: '12px', border: '1px solid var(--qt-border)' }}>
+              <Database size={36} className="text-secondary" style={{ margin: '0 auto 0.75rem auto' }} />
+              <h4>No database tables discovered</h4>
+              <p style={{ maxWidth: '450px', margin: '0 auto' }}>
+                No schema metadata is available because no database is connected to this workspace yet. Connect an external database in Data Sources or load sample data.
+              </p>
+            </div>
+          ) : (
+            /* Master-Detail Layout: Table List (Left) + Column Inspector (Right) */
+            <div className="schema-layout-grid">
             {/* Left Column: Tables List */}
             <aside className="schema-sidebar-panel">
               <div className="schema-sidebar-header">
@@ -632,6 +643,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
               )}
             </section>
           </div>
+          )}
         </div>
       ) : (
         <>
@@ -872,10 +884,14 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
                   <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
                     <Server size={30} style={{ color: 'var(--qt-muted)', margin: '0 auto 0.5rem auto' }} />
                     <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--qt-ink)' }}>
-                      No devices match filters
+                      {activeSource?.mode === 'unconfigured' || (total === 0 && !search && !deviceType && !status)
+                        ? 'No equipment records in this workspace'
+                        : 'No devices match filters'}
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--qt-muted)', marginTop: '0.25rem' }}>
-                      Try clearing filters or broadening search parameters.
+                      {activeSource?.mode === 'unconfigured' || (total === 0 && !search && !deviceType && !status)
+                        ? 'Connect an external PostgreSQL database in Data Sources or load sample educational sandbox data.'
+                        : 'Try clearing filters or broadening search parameters.'}
                     </div>
                   </td>
                 </tr>

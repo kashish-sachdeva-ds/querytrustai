@@ -479,21 +479,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
           <div className="hero-status-pill">
             <span className="live-status-dot" />
             <ShieldCheck size={13} className="shield-icon" />
-            <span className="pill-text">Zero-Mutation Physical Infrastructure Intelligence</span>
+            <span className="pill-text">Governed Natural-Language Analytics Platform</span>
             <span className="pill-tag">AST Enforced</span>
           </div>
 
           {/* High-Contrast Hero Headline */}
           <h1 className="hero-primary-headline">
-            Ask your equipment anything, in plain English.{' '}
-            <span className="gradient-highlight-text">The AI can never break your data.</span>
+            Ask your enterprise data anything, in plain English.{' '}
+            <span className="gradient-highlight-text">The AI can never alter your data.</span>
           </h1>
 
           {/* High-Contrast Subtitle */}
           <p className="hero-supporting-description">
-            Zero-mutation natural-language analytics for networking switches, routers, and real-time telemetry.
-            Every generated query is parsed with SQLGlot AST, verified across 6 automated safety gates, and executed on a
-            SELECT-only PostgreSQL reader role. Database mutations and drops are physically impossible.
+            The governed natural-language analytics platform for enterprise PostgreSQL databases. Connect your company database, invite non-technical team members, and let them ask business questions in plain English — backed by 6-layer SQLGlot AST validation and a dedicated SELECT-only database reader. Database mutations and drops are physically impossible.
           </p>
 
           {/* Action CTAs */}

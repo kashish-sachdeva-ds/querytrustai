@@ -21,7 +21,6 @@ import {
   Trash2,
   Sparkles,
   Code2,
-  Lock,
   Search,
   BarChart3,
   PieChart,
@@ -579,74 +578,6 @@ const SafetyShieldDisplay: React.FC<SafetyShieldProps> = ({ preview }) => {
   )
 }
 
-// Viewer Friendly Read-Only Placeholder
-const ViewerAskPlaceholder: React.FC = () => {
-  return (
-    <div className="ask-viewer-placeholder" style={{ maxWidth: 880, margin: '2rem auto', padding: '0 1rem' }}>
-      <PageHeader
-        title="Ask governed data"
-        description="Natural-language querying and live analytics execution are reserved for Analysts and Administrators."
-        helpText="Viewers can inspect pre-computed dashboards, equipment lists, and data quality findings. Ask permissions can be requested from your administrator."
-      />
-
-      <div className="operations-panel" style={{ padding: '2rem', marginTop: '1.5rem', textAlign: 'center' }}>
-        <div
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: '50%',
-            background: 'var(--qt-accent-soft)',
-            color: 'var(--qt-accent)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.25rem auto',
-          }}
-        >
-          <Lock size={24} />
-        </div>
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--qt-ink)', marginBottom: '0.5rem' }}>
-          Ask is available to Analysts
-        </h2>
-        <p style={{ color: 'var(--qt-muted)', fontSize: '0.92rem', maxWidth: 540, margin: '0 auto 1.5rem auto', lineHeight: 1.6 }}>
-          You are currently signed in with the <strong>Viewer</strong> role. Viewers can monitor fleet health, inspect equipment, and review diagnostic findings. Interactive AI translation and SQL execution require an Analyst role.
-        </p>
-
-        <div style={{ textAlign: 'left', background: 'var(--qt-surface-muted)', border: '1px solid var(--qt-border)', borderRadius: 'var(--qt-radius-inner)', padding: '1.25rem', maxWidth: 650, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--qt-accent)', textTransform: 'none' }}>
-              Sample governed answer
-            </span>
-            <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
-              <ShieldCheck size={12} style={{ marginRight: 3, verticalAlign: 'middle' }} /> 6 of 6 checks passed
-            </span>
-          </div>
-          <div style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--qt-ink)', marginBottom: '0.4rem' }}>
-            "How many active devices are in each region?"
-          </div>
-          <p style={{ fontSize: '0.84rem', color: 'var(--qt-text)', marginBottom: '1rem', lineHeight: 1.5 }}>
-            Retrieved 3 regional aggregates across 5,000 devices in 14ms through a read-only database reader.
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-            <div style={{ background: 'var(--qt-surface)', border: '1px solid var(--qt-border)', padding: '0.75rem', borderRadius: 'var(--qt-radius-control)' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>Americas</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--qt-ink)' }}>1,840</div>
-            </div>
-            <div style={{ background: 'var(--qt-surface)', border: '1px solid var(--qt-border)', padding: '0.75rem', borderRadius: 'var(--qt-radius-control)' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>EMEA</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--qt-ink)' }}>1,620</div>
-            </div>
-            <div style={{ background: 'var(--qt-surface)', border: '1px solid var(--qt-border)', padding: '0.75rem', borderRadius: 'var(--qt-radius-control)' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>APAC</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--qt-ink)' }}>1,540</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // Skeleton loading placeholder
 const QueryLoadingSkeleton: React.FC = () => (
@@ -677,6 +608,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   const { mode } = useTheme()
   const { user } = useAuth()
   const isViewer = user?.role === 'viewer'
+  const isDemo = !user?.workspace_name || user.workspace_name === 'Default Workspace' || (user.email ? user.email.endsWith('@querytrust.local') : false)
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageItem[]>([])
@@ -685,6 +617,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [copiedQueryId, setCopiedQueryId] = useState<string | null>(null)
   const [expandedSqlMap, setExpandedSqlMap] = useState<Record<string, boolean>>({})
+  const [expandedShieldMap, setExpandedShieldMap] = useState<Record<string, boolean>>({})
   const [sessionSearchTerm, setSessionSearchTerm] = useState('')
 
   // Execution & Feedback States
@@ -702,10 +635,8 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   }, [initialQuestion])
 
   useEffect(() => {
-    if (!isViewer) {
-      loadSessions()
-    }
-  }, [isViewer])
+    loadSessions()
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -757,8 +688,27 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
       ]
     }
 
+    if (!isDemo && activeSource?.mode === 'unconfigured') {
+      return [
+        {
+          category: 'Workspace onboarding',
+          label: 'Connect organization database',
+          prompt: 'How do I connect my company PostgreSQL database to QueryTrust AI?',
+          badge: 'Setup Guide',
+          badgeClass: 'badge-primary',
+        },
+        {
+          category: 'Security Architecture',
+          label: 'How does AST read-only safety work?',
+          prompt: 'Explain the 6-layer SQLGlot AST safety checks.',
+          badge: 'Security Whitepaper',
+          badgeClass: 'badge-success',
+        },
+      ]
+    }
+
     return STARTER_PROMPTS
-  }, [activeSource])
+  }, [activeSource, isDemo])
 
   const filteredSessions = useMemo(() => {
     if (!sessionSearchTerm.trim()) return sessions
@@ -991,11 +941,6 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
       })
       setErrorMessage(`Feedback submission failed: ${err.message}`)
     }
-  }
-
-  // If user is a Viewer, show friendly read-only state
-  if (isViewer) {
-    return <ViewerAskPlaceholder />
   }
 
   return (
@@ -1264,7 +1209,67 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                         </div>
 
                         {/* Animated 6-Point Safety Shield Inspector */}
-                        {msg.previewData && <SafetyShieldDisplay preview={msg.previewData} />}
+                        {msg.previewData && (
+                          isViewer ? (
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '10px 14px',
+                                margin: '10px 0 14px',
+                                borderRadius: 8,
+                                background: msg.previewData.status === 'blocked'
+                                  ? 'rgba(239, 68, 68, 0.08)'
+                                  : 'rgba(16, 185, 129, 0.08)',
+                                border: `1px solid ${msg.previewData.status === 'blocked' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
+                                fontSize: '0.8rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {msg.previewData.status === 'blocked' ? (
+                                  <ShieldAlert size={16} style={{ color: '#ef4444', flexShrink: 0 }} />
+                                ) : (
+                                  <ShieldCheck size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                                )}
+                                <span>
+                                  <strong>{msg.previewData.status === 'blocked' ? 'AST Safety Guard Blocked:' : '6-Point AST Safety Verified:'}</strong>{' '}
+                                  {msg.previewData.status === 'blocked'
+                                    ? 'Potentially destructive query intercepted.'
+                                    : 'Guaranteed read-only SELECT execution.'}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedShieldMap((prev) => ({
+                                    ...prev,
+                                    [msg.previewData!.query_run_id]: !prev[msg.previewData!.query_run_id],
+                                  }))
+                                }
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: 'var(--qt-accent, #ff5a14)',
+                                  cursor: 'pointer',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <span>{expandedShieldMap[msg.previewData.query_run_id] ? 'Hide technical proof' : 'Inspect technical checks'}</span>
+                                {expandedShieldMap[msg.previewData.query_run_id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                              </button>
+                            </div>
+                          ) : (
+                            <SafetyShieldDisplay preview={msg.previewData} />
+                          )
+                        )}
+                        {msg.previewData && isViewer && expandedShieldMap[msg.previewData.query_run_id] && (
+                          <SafetyShieldDisplay preview={msg.previewData} />
+                        )}
 
                         {/* ThoughtSpot-Style Intent Breakdown */}
                         <div className="thoughtspot-intent-card">

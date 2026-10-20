@@ -1205,7 +1205,7 @@ export interface DataSourceTableInfo {
 }
 
 export interface ActiveDataSourceResponse {
-  mode: 'sandbox' | 'connected'
+  mode: 'sandbox' | 'connected' | 'unconfigured'
   workspace_name: string
   source_id?: string | null
   name: string
@@ -1315,5 +1315,16 @@ export async function deleteDataSource(sourceId: string): Promise<void> {
     method: 'DELETE',
   })
   if (!res.ok) throw new Error(`Failed to delete data source: ${res.status}`)
+}
+
+export async function seedWorkspaceSandbox(): Promise<ActiveDataSourceResponse> {
+  const res = await authFetch(`${API_BASE}/data-sources/seed-sandbox`, {
+    method: 'POST',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiRequestError(err.detail || `Failed to seed sandbox data: ${res.status}`, res.status)
+  }
+  return res.json()
 }
 

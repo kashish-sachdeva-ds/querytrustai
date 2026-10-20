@@ -9,7 +9,8 @@ from app.models.device import Device
 from app.models.site import Site
 from app.models.service_event import ServiceEvent
 from app.models.user import User
-from app.core.auth import get_current_user
+from app.models.data_source import DataSource
+from app.core.auth import get_current_user, is_demo_workspace
 from app.schemas.device import (
     DeviceCountsResponse,
     DeviceDetail,
@@ -53,6 +54,25 @@ def list_devices(
 
     Available to all authenticated users (Viewer, Analyst, Admin).
     """
+    # Enforce workspace data isolation: new company workspaces start empty until a database is connected or sample data is loaded
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            return DeviceListResponse(
+                items=[],
+                total=0,
+                page=page,
+                page_size=page_size,
+                total_pages=0,
+            )
+
     query = (
         db.query(
             Device,
@@ -169,6 +189,26 @@ def get_device_counts(
     Reuses the exact canonical status mapping and data quality rules.
     Available to all authenticated roles (Viewer, Analyst, Admin).
     """
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            return DeviceCountsResponse(
+                total=0,
+                active=0,
+                offline=0,
+                maintenance=0,
+                retired=0,
+                open_incidents=0,
+                needs_data_fix=0,
+            )
+
     from app.core.data_quality import device_needs_data_fix_filter
 
     total = db.query(func.count(Device.id)).scalar() or 0

@@ -54,12 +54,13 @@ const ROLE_PERMISSIONS: Record<string, { title: string; rules: string[] }> = {
     ],
   },
   viewer: {
-    title: 'Viewer permissions (enforced by server API)',
+    title: 'Business User / Viewer permissions (enforced by server API)',
     rules: [
-      'Read-only access to equipment inventory and fleet overview',
-      'View personal query history and pre-computed safety benchmark proofs',
-      'Cannot generate new SQL queries or trigger analytical preview execution',
-      'Cannot access user administration or trigger diagnostic runs',
+      'Ask governed natural-language questions in read-only isolation',
+      'Read-only access to data catalog, schema explorer, and executive overview',
+      'Inspect personal query history and interactive charts/tables',
+      'Cannot modify users, manage roles, or run diagnostic scans',
+      'Enforced read-only at database layer (SELECT-only connection pool)',
     ],
   },
 }

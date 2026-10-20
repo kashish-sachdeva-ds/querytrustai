@@ -7,7 +7,8 @@ from app.database import get_db
 from app.models.site import Site
 from app.models.device import Device
 from app.models.user import User
-from app.core.auth import get_current_user
+from app.models.data_source import DataSource
+from app.core.auth import get_current_user, is_demo_workspace
 from app.schemas.site import SiteListResponse, SiteSummary
 
 router = APIRouter(prefix="/sites", tags=["Sites"])
@@ -20,6 +21,18 @@ def list_sites(
     db: Session = Depends(get_db),
 ):
     """Retrieve sites and their device counts. Authenticated."""
+    if not is_demo_workspace(current_user):
+        active_ds = (
+            db.query(DataSource)
+            .filter(
+                DataSource.workspace_name == (current_user.workspace_name or ""),
+                DataSource.is_active == True,
+            )
+            .first()
+        )
+        if not active_ds:
+            return SiteListResponse(items=[], total=0)
+
     query = (
         db.query(
             Site,

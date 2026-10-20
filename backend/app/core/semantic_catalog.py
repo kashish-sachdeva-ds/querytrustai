@@ -136,3 +136,37 @@ def get_catalog_prompt_context() -> str:
     lines.append("- For unsupported concepts (revenue, churn, customer data), mark as unsupported.")
 
     return "\n".join(lines)
+
+
+def get_dynamic_schema_prompt_context(schema_cache: Dict[str, Any]) -> str:
+    """Format introspected external/company database tables and columns into a structured schema prompt for the LLM."""
+    tables = schema_cache.get("tables", [])
+    table_names = schema_cache.get("table_names", [t.get("table_name") for t in tables if isinstance(t, dict)])
+
+    lines = [
+        "### ACTIVE ENTERPRISE DATABASE SCHEMA:",
+        f"The connected company database contains the following tables: {', '.join(table_names)}.",
+        "You are strictly allowed to query ONLY these tables and their defined columns:\n",
+    ]
+
+    for tbl in tables:
+        if isinstance(tbl, dict):
+            tname = tbl.get("table_name", "")
+            cols = tbl.get("columns", [])
+            lines.append(f"Table: {tname}")
+            for c in cols:
+                cname = c.get("name", "") if isinstance(c, dict) else getattr(c, "name", str(c))
+                dtype = c.get("data_type", "") if isinstance(c, dict) else getattr(c, "data_type", "")
+                nullable = c.get("is_nullable", True) if isinstance(c, dict) else getattr(c, "is_nullable", True)
+                null_str = "nullable" if nullable else "NOT NULL"
+                lines.append(f"  - {cname} ({dtype}, {null_str})")
+            lines.append("")
+
+    lines.append("### SECURITY & QUERY RESTRICTIONS:")
+    lines.append(f"- Strictly query ONLY from: {', '.join(table_names)}.")
+    lines.append("- Never access pg_catalog, information_schema, or write/mutation statements.")
+    lines.append("- Always generate a single safe read-only SELECT query.")
+    lines.append("- Apply reasonable LIMIT (default 200) unless aggregating.")
+
+    return "\n".join(lines)
+

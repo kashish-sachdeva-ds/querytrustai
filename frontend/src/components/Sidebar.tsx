@@ -105,7 +105,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
   const isViewer = user?.role === 'viewer'
-  const canAsk = !isViewer // Rule 8: Ask only for Analyst and Admin
+  const canAsk = true // PROJECT_SPEC: Viewers, Analysts, and Admins can ask governed read-only questions
+  const isDemo = !user?.workspace_name || user.workspace_name === 'Default Workspace' || (user.email ? user.email.endsWith('@querytrust.local') : false)
 
   // Sidebar collapse state remembered in localStorage (Rule 7)
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
@@ -169,22 +170,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
     let isMounted = true
 
     async function loadSidebarData() {
-      // 1. Data health findings count
+      // 1. Data health findings count (only for demo sandbox or active workspace data)
       try {
         const dqSummary = await fetchDataQualitySummary()
-        if (isMounted) setDataHealthCount(dqSummary.total_findings)
+        if (isMounted) setDataHealthCount(isDemo ? dqSummary.total_findings : null)
       } catch {
         if (isMounted) setDataHealthCount(null)
       }
 
-      // 2. Telemetry anomalies count
+      // 2. Telemetry anomalies count (only for demo sandbox with preloaded telemetry)
       try {
         const anomalyMeta = await fetchAnomalySummary()
         const count =
           anomalyMeta.metrics?.detected_outliers_count ??
           anomalyMeta.metrics?.known_injected_outliers_count ??
           null
-        if (isMounted) setAnomaliesCount(count)
+        if (isMounted) setAnomaliesCount(isDemo ? count : null)
       } catch {
         if (isMounted) setAnomaliesCount(null)
       }
@@ -404,7 +405,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
             {!isCollapsed && (
               <>
                 <span>Data health</span>
-                {dataHealthCount !== null && (
+                {dataHealthCount !== null && dataHealthCount > 0 && (
                   <span
                     className="nav-count-badge warning"
                     title={`${dataHealthCount} data problems to review`}
@@ -428,7 +429,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
             {!isCollapsed && (
               <>
                 <span>Unusual activity</span>
-                {anomaliesCount !== null && (
+                {anomaliesCount !== null && anomaliesCount > 0 && (
                   <span
                     className="nav-count-badge neutral"
                     title={`${anomaliesCount} readings flagged as unusual`}

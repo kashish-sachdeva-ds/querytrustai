@@ -12,6 +12,7 @@ class QueryRun(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id = Column(UUID(as_uuid=True), ForeignKey("chat_sessions.id"), nullable=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    workspace_name = Column(String(128), nullable=True, index=True)
     question = Column(Text, nullable=False)
     interpreted_question = Column(Text, nullable=True)
     generated_sql = Column(Text, nullable=False)

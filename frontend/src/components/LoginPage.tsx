@@ -228,16 +228,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           message: rawErrorMsg || `An access request for ${sanitizedEmail} is currently pending review by workspace administrators in People & access.`,
           email: sanitizedEmail,
         })
+      } else if (lower.includes('failed to fetch') || lower.includes('network')) {
+        setStatusNotice(null)
+        setGlobalError({
+          type: 'server_error',
+          message: 'Backend API service is currently unavailable. Please verify the backend server is running on port 8000.',
+        })
       } else if (lower.includes('declined') || lower.includes('rejected')) {
         setStatusNotice(null)
         setGlobalError({
-          type: 'invalid_credentials',
+          type: 'custom',
           message: rawErrorMsg || 'Your access request was declined by workspace administrators.',
         })
       } else if (lower.includes('welcomepass') || lower.includes('temporary password')) {
         setStatusNotice(null)
         setGlobalError({
-          type: 'invalid_credentials',
+          type: 'custom',
           message: rawErrorMsg,
           actionLabel: 'Use "WelcomePass123!" & Sign In →',
           onAction: () => {
@@ -284,7 +290,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     if (Object.keys(newErrors).length > 0) {
       setRegisterErrors(newErrors)
       setGlobalError({
-        type: 'invalid_credentials',
+        type: 'custom',
         message: 'Please complete all required fields to register your workspace.',
       })
       return
@@ -304,9 +310,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Registration failed.'
+      const isNetwork = msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')
       setGlobalError({
-        type: 'invalid_credentials',
-        message: msg,
+        type: isNetwork ? 'server_error' : 'custom',
+        message: isNetwork
+          ? 'Backend API service is currently unavailable. Please ensure the backend server is running.'
+          : msg,
         actionLabel: msg.includes('already exists') ? 'Sign in with this email →' : undefined,
         onAction: msg.includes('already exists')
           ? () => {
@@ -342,7 +351,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     if (Object.keys(newErrors).length > 0) {
       setJoinErrors(newErrors)
       setGlobalError({
-        type: 'invalid_credentials',
+        type: 'custom',
         message: 'Please complete all required fields to join your company workspace.',
       })
       return
@@ -362,9 +371,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to join workspace.'
+      const isNetwork = msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')
       setGlobalError({
-        type: 'invalid_credentials',
-        message: msg,
+        type: isNetwork ? 'server_error' : 'custom',
+        message: isNetwork
+          ? 'Backend API service is currently unavailable. Please ensure the backend server is running.'
+          : msg,
         actionLabel: msg.includes('already exists') ? 'Sign in with this email →' : undefined,
         onAction: msg.includes('already exists')
           ? () => {

@@ -119,6 +119,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   // Global Error Banner State
   const [globalError, setGlobalError] = useState<{
     type: ErrorBannerType
+    title?: string
     message?: string
     actionLabel?: string
     onAction?: () => void
@@ -207,8 +208,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       setTouched({ email: true, password: true })
       setErrors(formErrors)
       setGlobalError({
-        type: 'invalid_credentials',
-        message: 'Please resolve form validation issues before submitting.',
+        type: 'custom',
+        title: 'Incomplete Credentials',
+        message: 'Please resolve the highlighted validation errors before signing in.',
       })
       return
     }
@@ -232,18 +234,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         setStatusNotice(null)
         setGlobalError({
           type: 'server_error',
+          title: 'Authentication Service Unavailable',
           message: 'Backend API service is currently unavailable. Please verify the backend server is running on port 8000.',
         })
       } else if (lower.includes('declined') || lower.includes('rejected')) {
         setStatusNotice(null)
         setGlobalError({
           type: 'custom',
+          title: 'Access Request Declined',
           message: rawErrorMsg || 'Your access request was declined by workspace administrators.',
         })
       } else if (lower.includes('welcomepass') || lower.includes('temporary password')) {
         setStatusNotice(null)
         setGlobalError({
           type: 'custom',
+          title: 'Initial Password Required',
           message: rawErrorMsg,
           actionLabel: 'Use "WelcomePass123!" & Sign In →',
           onAction: () => {
@@ -255,7 +260,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         setStatusNotice(null)
         setGlobalError({
           type: 'invalid_credentials',
-          message: rawErrorMsg || 'Invalid work credentials. Please verify your email and password.',
+          title: 'Invalid Credentials',
+          message: rawErrorMsg || 'Invalid email or password. Please verify your credentials and try again.',
           actionLabel: 'Joining a team? Join workspace →',
           onAction: () => {
             setAuthMode('join')
@@ -291,6 +297,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       setRegisterErrors(newErrors)
       setGlobalError({
         type: 'custom',
+        title: 'Missing Required Fields',
         message: 'Please complete all required fields to register your workspace.',
       })
       return
@@ -311,16 +318,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Registration failed.'
       const isNetwork = msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')
+      const isDuplicate = msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('already taken')
+
       setGlobalError({
         type: isNetwork ? 'server_error' : 'custom',
+        title: isNetwork
+          ? 'Authentication Service Unavailable'
+          : isDuplicate
+          ? 'Account Already Exists'
+          : 'Registration Notice',
         message: isNetwork
-          ? 'Backend API service is currently unavailable. Please ensure the backend server is running.'
+          ? 'Backend API service is currently unavailable. Please ensure the backend server is running on port 8000.'
+          : isDuplicate
+          ? `${msg} Please sign in using the Sign In tab.`
           : msg,
-        actionLabel: msg.includes('already exists') ? 'Sign in with this email →' : undefined,
-        onAction: msg.includes('already exists')
+        actionLabel: isDuplicate ? 'Sign in with this email →' : undefined,
+        onAction: isDuplicate
           ? () => {
               setAuthMode('signin')
-              setFormValues((prev) => ({ ...prev, email: registerValues.email }))
+              setFormValues((prev) => ({
+                ...prev,
+                email: registerValues.email,
+                password: registerValues.password,
+              }))
               setGlobalError(null)
             }
           : undefined,
@@ -352,6 +372,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       setJoinErrors(newErrors)
       setGlobalError({
         type: 'custom',
+        title: 'Missing Required Fields',
         message: 'Please complete all required fields to join your company workspace.',
       })
       return
@@ -372,16 +393,45 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to join workspace.'
       const isNetwork = msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')
+      const isDuplicate = msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('already taken')
+      const isNotFound = msg.toLowerCase().includes('does not exist') || msg.toLowerCase().includes('not found')
+
       setGlobalError({
         type: isNetwork ? 'server_error' : 'custom',
+        title: isNetwork
+          ? 'Authentication Service Unavailable'
+          : isNotFound
+          ? 'Workspace Not Found'
+          : isDuplicate
+          ? 'Account Already Exists'
+          : 'Join Workspace Notice',
         message: isNetwork
-          ? 'Backend API service is currently unavailable. Please ensure the backend server is running.'
+          ? 'Backend API service is currently unavailable. Please ensure the backend server is running on port 8000.'
           : msg,
-        actionLabel: msg.includes('already exists') ? 'Sign in with this email →' : undefined,
-        onAction: msg.includes('already exists')
+        actionLabel: isDuplicate
+          ? 'Sign in with this email →'
+          : isNotFound
+          ? 'Create this workspace →'
+          : undefined,
+        onAction: isDuplicate
           ? () => {
               setAuthMode('signin')
-              setFormValues((prev) => ({ ...prev, email: joinValues.email }))
+              setFormValues((prev) => ({
+                ...prev,
+                email: joinValues.email,
+                password: joinValues.password,
+              }))
+              setGlobalError(null)
+            }
+          : isNotFound
+          ? () => {
+              setAuthMode('register')
+              setRegisterValues((prev) => ({
+                ...prev,
+                workspaceName: joinValues.workspaceName,
+                fullName: joinValues.fullName,
+                email: joinValues.email,
+              }))
               setGlobalError(null)
             }
           : undefined,
@@ -609,6 +659,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           {globalError && (
             <div style={{ marginBottom: '1.25rem' }}>
               <GlobalErrorBanner
+                title={globalError.title}
                 type={globalError.type}
                 message={globalError.message}
                 actionLabel={globalError.actionLabel}

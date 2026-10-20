@@ -35,6 +35,22 @@ def login(
     to prevent user enumeration.
     """
     clean_email = request.email.strip().lower()
+
+    # Development convenience: resolve single-word role aliases to demo accounts
+    if settings.ENVIRONMENT == "development":
+        if clean_email in {"admin", "admin@querytrust.local"}:
+            clean_email = "admin@querytrust.local"
+            if request.password in {"admin", "admin123"}:
+                request.password = "AdminPass123!"
+        elif clean_email in {"analyst", "analyst@querytrust.local"}:
+            clean_email = "analyst@querytrust.local"
+            if request.password in {"analyst", "analyst123"}:
+                request.password = "AnalystPass123!"
+        elif clean_email in {"viewer", "viewer@querytrust.local"}:
+            clean_email = "viewer@querytrust.local"
+            if request.password in {"viewer", "viewer123"}:
+                request.password = "ViewerPass123!"
+
     user = (
         db.query(User)
         .filter(func.lower(User.email) == clean_email)
@@ -165,7 +181,7 @@ def register(
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An account with this email address already exists. Please sign in instead.",
+            detail=f"An account with this email address ({clean_email}) already exists. Please sign in instead.",
         )
 
     # Hash the user's chosen password with bcrypt
@@ -270,7 +286,7 @@ def join_workspace(
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An account with this email address already exists. Please sign in instead.",
+            detail=f"An account with this email address ({clean_email}) already exists. Please sign in instead.",
         )
 
     # 3. Provision new member into the existing workspace

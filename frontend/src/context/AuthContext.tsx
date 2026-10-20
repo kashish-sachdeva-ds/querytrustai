@@ -56,34 +56,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     setError(null)
+    const cleanEmail = email.trim().toLowerCase()
+
+    // Development convenience: resolve single-word role aliases to demo accounts
+    const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
+    let submitEmail = cleanEmail
+    let submitPassword = password
+
+    if (isDemoMode) {
+      if (cleanEmail === 'admin' || cleanEmail === 'admin@querytrust.local') {
+        submitEmail = 'admin@querytrust.local'
+        if (!submitPassword || submitPassword === 'admin' || submitPassword === 'admin123') {
+          submitPassword = 'AdminPass123!'
+        }
+      } else if (cleanEmail === 'analyst' || cleanEmail === 'analyst@querytrust.local') {
+        submitEmail = 'analyst@querytrust.local'
+        if (!submitPassword || submitPassword === 'analyst' || submitPassword === 'analyst123') {
+          submitPassword = 'AnalystPass123!'
+        }
+      } else if (cleanEmail === 'viewer' || cleanEmail === 'viewer@querytrust.local') {
+        submitEmail = 'viewer@querytrust.local'
+        if (!submitPassword || submitPassword === 'viewer' || submitPassword === 'viewer123') {
+          submitPassword = 'ViewerPass123!'
+        }
+      }
+    }
+
     try {
-      await apiLogin(email, password)
+      await apiLogin(submitEmail, submitPassword)
       const me = await apiGetMe()
       setUser(me)
     } catch (err) {
-      const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
-      const cleanEmail = email.trim().toLowerCase()
-      if (
-        isDemoMode &&
-        (cleanEmail.includes('analyst') || cleanEmail.includes('admin') || cleanEmail.includes('viewer'))
-      ) {
-        const role: 'admin' | 'analyst' | 'viewer' = cleanEmail.includes('admin')
-          ? 'admin'
-          : cleanEmail.includes('viewer')
-          ? 'viewer'
-          : 'analyst'
-        const fallbackUser: UserMeResponse = {
-          id: `demo-${role}-001`,
-          email: cleanEmail,
-          display_name: role === 'admin' ? 'Demo Administrator' : role === 'analyst' ? 'Demo Analyst' : 'Demo Read-Only Viewer',
-          role,
-          is_active: true,
-          environment: 'demo-sandbox',
-          llm_provider: 'demo',
-        }
-        setUser(fallbackUser)
-        return
-      }
       const msg = err instanceof Error ? err.message : 'Login failed'
       setError(msg)
       throw err

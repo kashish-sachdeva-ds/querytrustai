@@ -15,8 +15,10 @@
 10. ✅ **Dynamic Starter Prompts (`AskDataView.tsx`):** Adaptive starter prompt chips inspect active connected database tables (`orders`, `shipments`, etc.) or present onboarding guidance for fresh workspaces instead of static hardware queries.
 11. ✅ **Razor-Sharp Value Proposition (`LandingPage.tsx`, `Header.tsx`):** Aligned brand headline with market leaders (ThoughtSpot, Metabase): "The governed natural-language analytics platform for enterprise PostgreSQL databases."
 12. ✅ **Network & Host Resilience (`vite.config.ts`):** Bound dev server to `0.0.0.0` ensuring seamless access via both `localhost` and `127.0.0.1`.
+13. ✅ **Context-Aware Authentication Banners (`GlobalErrorBanner.tsx`, `LoginPage.tsx`):** Added dynamic `title` prop to `GlobalErrorBanner`. When registering an existing email or joining a non-existent workspace, errors now clearly state "Account Already Exists" (with one-click switch to Sign In) or "Workspace Not Found", permanently eliminating misleading "Invalid Credentials" titles during registration.
+14. ✅ **Eliminated Tokenless Fallback Zombie State (`AuthContext.tsx`, `OverviewView.tsx`):** Removed unauthenticated mock user fallback that triggered 401 UNAUTHORIZED on the dashboard. Development/demo aliases (`admin`, `analyst`, `viewer`) now resolve to actual seeded credentials with real JWT access tokens and session cookies.
 
-**Automated Test Pass:** 129/129 pytest backend tests pass in 12.27s. Frontend production build compiles with 0 TypeScript/Vite errors in 4.89s.
+**Automated Test Pass:** 129/129 pytest backend tests pass in 11.70s. Frontend production build compiles with 0 TypeScript/Vite errors in 3.78s.
 
 ---
 

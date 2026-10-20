@@ -210,9 +210,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     } catch (err) {
       const is401 = err instanceof Error && (err.message.includes('401') || err.message.includes('UNAUTHORIZED'))
       const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
-      if (is401 && isDemoMode && (!user || user.email.endsWith('@querytrust.local'))) {
+      const isDemoUser = !user || user.email?.endsWith('@querytrust.local') || user.email === 'admin' || user.id?.startsWith('demo-')
+      if (is401 && isDemoMode && isDemoUser) {
         try {
-          await apiLogin('analyst@querytrust.local', 'AnalystPass123!')
+          const targetRole = user?.role || 'admin'
+          const roleEmail = targetRole === 'admin' ? 'admin@querytrust.local' : targetRole === 'viewer' ? 'viewer@querytrust.local' : 'analyst@querytrust.local'
+          const rolePass = targetRole === 'admin' ? 'AdminPass123!' : targetRole === 'viewer' ? 'ViewerPass123!' : 'AnalystPass123!'
+          await apiLogin(roleEmail, rolePass)
           const [summary, healthResult, findingsResult] = await Promise.all([
             fetchDashboardSummary(),
             fetchDataQualitySummary().catch(() => null),
@@ -231,9 +235,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           // If silent re-auth also fails, show error
         }
       }
-      setError(
-        err instanceof Error ? err.message : 'Failed to retrieve live analytics data from server.'
-      )
+      if (is401) {
+        setError('Your session has expired. Please sign in again.')
+      } else {
+        setError(
+          err instanceof Error ? err.message : 'Failed to retrieve live analytics data from server.'
+        )
+      }
     } finally {
       setLoading(false)
       setRefreshing(false)

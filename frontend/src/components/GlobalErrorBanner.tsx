@@ -9,6 +9,7 @@ export type ErrorBannerType =
   | 'custom'
 
 export interface GlobalErrorBannerProps {
+  title?: string
   type?: ErrorBannerType
   message?: string
   onDismiss?: () => void
@@ -48,6 +49,7 @@ const ERROR_CONFIGS: Record<
 }
 
 export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
+  title,
   type = 'custom',
   message,
   onDismiss,
@@ -56,7 +58,7 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
   onAction,
 }) => {
   const config = type !== 'custom' ? ERROR_CONFIGS[type] : null
-  const displayTitle = config ? config.title : 'Authentication Notice'
+  const displayTitle = title || (config ? config.title : 'Authentication Notice')
   const displayMessage = message || (config ? config.defaultMessage : 'An unexpected error occurred.')
   const severityClass = config ? `banner-severity-${config.severity}` : 'banner-severity-error'
 

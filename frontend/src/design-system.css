@@ -206,11 +206,50 @@ button:active:not(:disabled) { transform: scale(.98); }
 .environment-dot { background: var(--qt-accent); box-shadow: none; }
 .user-profile-button { background: var(--qt-surface); border-color: var(--qt-border); border-radius: 6px; color: var(--qt-ink); }
 .user-profile-button:hover { background: var(--qt-surface-muted); border-color: var(--qt-border-strong); }
-.user-name { color: var(--qt-ink); }
 .user-dropdown-menu { animation: qt-dropdown-enter 180ms cubic-bezier(.16, 1, .3, 1); background: var(--qt-surface); border-color: var(--qt-border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .14); transform-origin: top right; white-space: normal; }
-.dropdown-name { color: var(--qt-ink); }
-.dropdown-divider { background: var(--qt-border); }
-.dropdown-logout-btn { color: var(--qt-muted); }
+.user-dropdown-menu p,
+.user-dropdown-menu .enterprise-governance-note,
+.dropdown-enterprise-governance {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  box-sizing: border-box;
+}
+.dropdown-enterprise-governance {
+  padding: 0.6rem 0.75rem;
+  background: var(--qt-canvas, #FAF8F5);
+  border: 1px solid var(--qt-border);
+  border-radius: 6px;
+  margin: 0.25rem 0;
+  width: 100%;
+  overflow: hidden;
+}
+[data-theme="dark"] .dropdown-enterprise-governance {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.enterprise-governance-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--qt-ink);
+  white-space: normal;
+}
+.enterprise-governance-note {
+  font-family: var(--font-sans);
+  font-size: 0.71rem;
+  color: var(--qt-muted, #71706B);
+  margin: 0.3rem 0 0 0;
+  line-height: 1.45;
+}
+.enterprise-governance-note strong {
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  color: var(--qt-ink);
+}
 
 @keyframes qt-dropdown-enter {
   from { opacity: 0; transform: translateY(-5px) scale(.985); }

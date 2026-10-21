@@ -1,0 +1,862 @@
+/* ==========================================================================
+   QueryTrust AI — World-Class Linear / Raycast / Supabase App Shell
+   Harmonized Dark Zinc/Slate Palette:
+   - Sidebar & Navbar background: #090D16 (recessed dark surface)
+   - Main Canvas background: #0D111C (elevated dark surface)
+   - Borders: 1px solid rgba(255, 255, 255, 0.07)
+   - Brand Orange (#F97316 / #EA580C) reserved strictly for CTA & active bar
+   ========================================================================== */
+
+/* ─── Layout Shell Overrides ─── */
+.app-container {
+  display: flex;
+  background-color: #090D16;
+  min-height: 100vh;
+}
+
+.content-area {
+  background-color: #0D111C !important;
+  color: #f1f5f9;
+}
+
+[data-theme="light"] .content-area {
+  background-color: #f8fafc !important;
+  color: #0f172a;
+}
+
+/* ─── 1. Sidebar (240px fixed width, ultra-clean hierarchy) ─── */
+.sidebar {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+  background-color: #090D16 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  z-index: 40 !important;
+  transition: width 180ms cubic-bezier(0.16, 1, 0.3, 1), min-width 180ms ease !important;
+}
+
+.sidebar.sidebar--collapsed {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+}
+
+/* Sidebar Header: h-14 (56px) flush with top navbar */
+.sidebar .brand-section {
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 14px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.sidebar .brand-info {
+  display: flex;
+  flex-direction: column;
+  margin-left: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar .brand-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebar .brand-title {
+  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.sidebar .brand-ai-chip {
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  padding: 1px 4.5px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.sidebar .brand-badge {
+  font-size: 0.62rem;
+  color: #64748b;
+  font-weight: 500;
+  display: block;
+  margin-top: 1px;
+}
+
+.sidebar-collapse-toggle {
+  background: transparent !important;
+  border: none !important;
+  color: #64748b !important;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 140ms ease !important;
+  box-shadow: none !important;
+}
+
+.sidebar-collapse-toggle:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f1f5f9 !important;
+  transform: none !important;
+}
+
+/* Primary Action CTA ("Ask a question") */
+.sidebar .sidebar-cta-wrap {
+  padding: 12px 10px 6px 10px;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.sidebar-ask-cta-linear {
+  width: 100%;
+  height: 36px;
+  background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.sidebar-ask-cta-linear:hover {
+  background: linear-gradient(180deg, #fb923c 0%, #f97316 100%);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-0.5px);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.sidebar-ask-cta-linear:active {
+  transform: scale(0.98);
+}
+
+.sidebar-ask-cta-linear.active {
+  box-shadow: 0 0 0 2px #090D16, 0 0 0 3.5px #f97316;
+}
+
+.sidebar-ask-kbd-badge {
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  padding: 2px 5.5px;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  line-height: 1;
+}
+
+.sidebar--collapsed .sidebar-ask-cta-linear {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+/* Sidebar Scrollable Body */
+.sidebar .sidebar-scrollable-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Recent Questions: Frameless Collapsible Group */
+.sidebar-recent-group {
+  margin: 6px 0 10px 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.sidebar-recent-group-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  padding: 4px 8px;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-recent-all-link {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 3px;
+  transition: color 120ms ease;
+}
+
+.sidebar-recent-all-link:hover {
+  color: #cbd5e1;
+}
+
+.sidebar-recent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 120ms ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-recent-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}
+
+.sidebar-recent-row span.truncate-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.status-dot-6px {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot-6px.dot-answered { background-color: #10b981; }
+.status-dot-6px.dot-blocked { background-color: #ef4444; }
+.status-dot-6px.dot-clarification { background-color: #f59e0b; }
+.status-dot-6px.dot-out-of-scope { background-color: #64748b; }
+
+/* Navigation Links */
+.sidebar-nav-section-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  padding: 8px 10px 4px 10px;
+}
+
+.sidebar-nav-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+  position: relative;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.sidebar-nav-link-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.sidebar-nav-link-left svg {
+  color: #64748b;
+  flex-shrink: 0;
+  transition: color 140ms ease;
+}
+
+.sidebar-nav-link:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-nav-link:hover .sidebar-nav-link-left svg {
+  color: #cbd5e1;
+}
+
+/* Active Nav Link: Refined 2px Left Accent Bar, NO heavy orange boxed border */
+.sidebar-nav-link.active {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+  font-weight: 500;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.sidebar-nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 2px;
+  background: #f97316;
+  border-radius: 0 2px 2px 0;
+}
+
+.sidebar-nav-link.active .sidebar-nav-link-left svg {
+  color: #f97316 !important;
+}
+
+/* Minimal Notification Badges */
+.sidebar-badge-minimal {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.sidebar-badge-minimal.badge-amber {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* Sidebar Footer: Unified System Telemetry */
+.sidebar-footer-bar {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 10px 12px;
+  margin-top: auto;
+  background-color: #090D16;
+  position: relative;
+}
+
+.sidebar-footer-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 140ms ease;
+}
+
+.sidebar-footer-trigger:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}
+
+.pulse-dot-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pulse-green-beacon {
+  position: relative;
+  display: flex;
+  width: 7px;
+  height: 7px;
+}
+
+.pulse-green-beacon .ping {
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  position: absolute;
+  display: inline-flex;
+  height: 100%;
+  width: 100%;
+  border-radius: 9999px;
+  background-color: #34d399;
+  opacity: 0.6;
+}
+
+.pulse-green-beacon .core {
+  position: relative;
+  display: inline-flex;
+  border-radius: 9999px;
+  width: 7px;
+  height: 7px;
+  background-color: #10b981;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Sentinel Telemetry Popover */
+.sidebar-telemetry-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 10px;
+  right: 10px;
+  background: #111622;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  padding: 12px;
+  z-index: 100;
+  animation: popoverFadeIn 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.telemetry-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.telemetry-popover-header span.title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.telemetry-popover-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3.5px 0;
+  font-size: 11.5px;
+}
+
+.telemetry-popover-row .label {
+  color: #94a3b8;
+}
+
+.telemetry-popover-row .value {
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  color: #cbd5e1;
+}
+
+.telemetry-popover-row .value.green {
+  color: #10b981;
+}
+
+/* ─── 2. Top Navbar (h-14, 56px, backdrop blur, uncluttered) ─── */
+.app-top-navbar {
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  background: rgba(9, 13, 22, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  z-index: 30 !important;
+}
+
+/* Left: Contextual Breadcrumb (Replaces redundant Search Ctrl+K) */
+.navbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.breadcrumb-root {
+  color: #94a3b8;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 120ms ease;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.breadcrumb-root:hover {
+  color: #e2e8f0;
+}
+
+.breadcrumb-sep {
+  color: #475569;
+  font-size: 12px;
+}
+
+.breadcrumb-current {
+  color: #f8fafc;
+  font-weight: 500;
+}
+
+/* Right: Strictly 3 items */
+.navbar-right-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 1. Unified Telemetry Status Pill */
+.navbar-telemetry-pill {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9999px;
+  padding: 3.5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11.5px;
+  font-family: var(--font-mono, monospace);
+  color: #94a3b8;
+}
+
+.navbar-telemetry-pill .ast-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  flex-shrink: 0;
+}
+
+.navbar-telemetry-pill .ast-label {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.navbar-telemetry-pill .divider {
+  color: rgba(255, 255, 255, 0.16);
+}
+
+.navbar-telemetry-pill .latency-val {
+  color: #94a3b8;
+}
+
+/* 2. Demo Mode & Active Role Indicator (Strictly Synced) */
+.navbar-demo-role-badge {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9999px;
+  padding: 3.5px 11px;
+  display: flex;
+  align-items: center;
+  gap: 6.5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.navbar-demo-role-badge:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.role-amber-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  flex-shrink: 0;
+}
+
+/* 3. Guide & Profile Trigger */
+.navbar-guide-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 140ms ease;
+}
+
+.navbar-guide-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.navbar-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px 3px 5px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  transition: all 140ms ease;
+  color: #f1f5f9;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.navbar-profile-trigger:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.avatar-initials-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  flex-shrink: 0;
+}
+
+/* ─── 3. Profile & Sandbox Popover Polish ─── */
+.profile-popover-card {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 320px;
+  background: #111622;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.7);
+  border-radius: 14px;
+  padding: 16px;
+  z-index: 100;
+  animation: popoverFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.profile-user-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.profile-user-hero .avatar-lg {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  flex-shrink: 0;
+}
+
+.profile-hero-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-hero-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-role-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.profile-hero-email {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin: 1px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-hero-ws {
+  font-size: 11px;
+  color: #64748b;
+  margin: 3px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Recessed Segmented Controls */
+.linear-segmented-track {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 3px;
+  display: flex;
+  gap: 2px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.linear-segmented-track.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.linear-segmented-btn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.linear-segmented-btn:hover:not(:disabled) {
+  color: #f1f5f9;
+}
+
+.linear-segmented-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.profile-section-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 10px 0;
+}
+
+.profile-control-group {
+  margin-bottom: 8px;
+}
+
+.profile-control-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.profile-control-hint {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.profile-logout-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+  margin-top: 4px;
+}
+
+.profile-logout-row:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}

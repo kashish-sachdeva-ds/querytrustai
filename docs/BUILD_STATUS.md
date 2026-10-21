@@ -1,16 +1,16 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-21  
-**Current milestone:** 29 — Admin IAM & Governance UI Overhaul (Actionable Request Queues, Search Filters, Bounded Pagination)  
-**Overall status:** Complete enterprise governance architecture and production IAM controls:
-1. ✅ **Actionable Access Request Lifecycle (`AdminView.tsx`):** Partitioned access request triage into actionable queues: `Pending` (default actionable queue), `Resolved` (audit trail of approved/declined requests), and `All`. Approving immediately provisions the user into `Team Members` and removes them from the pending queue with clean empty state when caught up.
-2. ✅ **Bounded Pagination & Filter Strip for Teammates (`AdminView.tsx`, `AdminView.css`):** Search input across user names and emails, role filtering (`Admin`, `Analyst`, `Viewer`), and status filtering (`Active`, `Deactivated`) with 6-item pagination to prevent tall page scrolling.
-3. ✅ **Activity History & Audit Log Scalability (`AdminView.tsx`, `AdminView.css`):** Search queries across natural-language questions and query IDs with segmented status filtering (`All`, `Executed`, `Blocked for safety`) and 8-item bounded pagination.
-4. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 14.41s; 0 Oxlint errors/warnings across 45 files; TypeScript and Vite production bundle built cleanly in 8.57s.
+**Current milestone:** 30 — Linear/Vercel B2B Shell Architecture & Humanized Quickstart Cheatsheet  
+**Overall status:** Complete dark-mode shell unification and cognitive-load reduction across navigation, login, and quickstart:
+1. ✅ **Linear/Vercel Shell Aesthetic (`LinearShell.css`, `Sidebar.tsx`, `Header.tsx`):** Unified app surface under `#090D16` / `#0D111C` with `1px solid rgba(255, 255, 255, 0.07)` micro-borders, segmented navigation groups, active indicators, workspace switcher pill, consolidated telemetry status pill, and profile popover.
+2. ✅ **Humanized Quickstart Cheatsheet (`OnboardingModal.tsx`, `OnboardingModal.css`):** Replaced overwhelming 519-line simulated attack/database ping wall-of-text and intrusive sign-in auto-popup with a single-screen Linear-style cheatsheet (3 core principles + keyboard shortcuts table), accessible on-demand via the profile menu or global `?` keybinding. Removed AI-prototype `✨ Guide` navbar button.
+3. ✅ **Streamlined Enterprise Login Canvas (`LoginPage.tsx`, `LoginPage.css`):** Replaced confusing "offline zero-wait session" link with transparent demo preset pills (Admin, Analyst, Viewer) and enterprise SSO toggle with honest offline/live labeling.
+4. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 18.38s; 0 Oxlint errors across 49 files; TypeScript and Vite production bundle built cleanly in 2.38s.
 
 **Automated Test Pass:**
-- **Backend:** 151/151 pytest tests pass in 22.76s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, and webhooks).
-- **Frontend Build:** `npx tsc --noEmit` exits with 0 errors; `npm run lint` exits with 0 warnings and 0 errors; `npm run build` exits with code 0 and chunked bundle output.
+- **Backend:** 151/151 pytest tests pass in 18.38s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, and webhooks).
+- **Frontend Build:** `npx tsc -b && vite build` exits with code 0 (2037 modules transformed in 2.38s); `npm run lint` exits with 0 errors.
 - **E2E & Accessibility:** Playwright test exits with code 0:
   - Scenario A (Healthy backend): Pass.
   - Scenario B (10s delayed Render cold start): Aborts in < 3,000ms (<= 4,000ms target), rendering fallback interactive workbench without hanging.

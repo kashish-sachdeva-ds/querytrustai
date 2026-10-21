@@ -82,17 +82,6 @@ const AppShell: React.FC = () => {
   })
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      try {
-        if (localStorage.getItem('qt_onboarded') !== 'true') {
-          setIsOnboardingOpen(true)
-        }
-      } catch {
-        /* noop */
-      }
-    }
-  }, [isAuthenticated])
 
   const selectTab = (tab: ActiveTab, params?: Record<string, string | number>) => {
     if (params) {
@@ -127,6 +116,9 @@ const AppShell: React.FC = () => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         setIsCommandPaletteOpen((open) => !open)
+      } else if (event.key === '?' && !['INPUT', 'TEXTAREA'].includes((event.target as HTMLElement)?.tagName)) {
+        event.preventDefault()
+        setIsOnboardingOpen((open) => !open)
       }
     }
 
@@ -262,8 +254,10 @@ const AppShell: React.FC = () => {
       <div className="app-container" style={{ flex: 1, minHeight: 0 }}>
         <Sidebar activeTab={activeTab} onSelectTab={selectTab} onAskQuestion={openAskQuestion} />
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto', backgroundColor: '#0D111C' }}>
           <Header
+            activeTab={activeTab}
+            onNavigate={selectTab}
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
             onOpenOnboarding={() => setIsOnboardingOpen(true)}
           />

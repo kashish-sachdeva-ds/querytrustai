@@ -64,33 +64,33 @@
 }
 
 [data-theme="dark"] {
-  --qt-canvas: #0B0F17;
+  --qt-canvas: #0D111C;
   --qt-surface: #111723;
   --qt-surface-muted: #182030;
   --qt-ink: #F4F2EE;
   --qt-text: #B8B3AA;
   --qt-muted: #7E8594;
-  --qt-border: #222B3B;
-  --qt-border-strong: #334056;
-  --qt-accent: #FF5E1A;
-  --qt-accent-hover: #FF7033;
-  --qt-accent-soft: #2B1810;
-  --qt-success: #34D399;
-  --qt-success-soft: #0D281E;
-  --qt-warning: #FBBF24;
-  --qt-warning-soft: #2B2109;
-  --qt-danger: #F87171;
-  --qt-danger-soft: #2E1212;
-  --bg-primary: var(--qt-canvas);
-  --bg-secondary: #0B0F17;
-  --bg-surface: var(--qt-surface);
-  --bg-surface-hover: var(--qt-surface-muted);
-  --bg-card: var(--qt-surface);
-  --border-subtle: var(--qt-border);
-  --border-focus: var(--qt-accent);
-  --text-primary: var(--qt-ink);
-  --text-secondary: var(--qt-text);
-  --text-muted: var(--qt-muted);
+  --qt-border: rgba(255, 255, 255, 0.07);
+  --qt-border-strong: rgba(255, 255, 255, 0.12);
+  --qt-accent: #F97316;
+  --qt-accent-hover: #EA580C;
+  --qt-accent-soft: rgba(249, 115, 22, 0.12);
+  --qt-success: #10B981;
+  --qt-success-soft: rgba(16, 185, 129, 0.12);
+  --qt-warning: #F59E0B;
+  --qt-warning-soft: rgba(245, 158, 11, 0.12);
+  --qt-danger: #EF4444;
+  --qt-danger-soft: rgba(239, 68, 68, 0.12);
+  --bg-primary: #0D111C;
+  --bg-secondary: #090D16;
+  --bg-surface: #111723;
+  --bg-surface-hover: #182030;
+  --bg-card: #111723;
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-focus: #F97316;
+  --text-primary: #F4F2EE;
+  --text-secondary: #B8B3AA;
+  --text-muted: #7E8594;
 }
 
 html { background: var(--qt-canvas); }
@@ -179,21 +179,20 @@ button:active:not(:disabled) { transform: scale(.98); }
 ::-webkit-scrollbar-thumb:hover { background: #b6aea5; }
 
 .sidebar {
-  background: #25221f;
-  border-color: #39342f;
-  padding: 1.25rem .85rem;
+  background: var(--bg-secondary, #090D16);
+  border-color: rgba(255, 255, 255, 0.07);
 }
-.brand-section { border-color: #39342f; }
+.brand-section { border-color: rgba(255, 255, 255, 0.07); }
 .brand-logo { background: var(--qt-accent); border-radius: 8px; box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
 .brand-title { background: none; -webkit-text-fill-color: #fffaf5; color: #fffaf5; font-family: var(--font-display); letter-spacing: -.035em; }
-.brand-badge { background: transparent; border-color: #5b534b; color: #c6bdb3; border-radius: 4px; }
-.nav-section-title { color: #9c9288; letter-spacing: .1em; }
-.nav-item { background: transparent; color: #d3cbc2; border-radius: 6px; font-weight: 500; position: relative; transition: color 160ms cubic-bezier(.16, 1, .3, 1), background-color 160ms cubic-bezier(.16, 1, .3, 1); }
-.nav-item:hover { background: rgba(255, 255, 255, 0.06); color: #fffaf5; }
-.nav-item.active { background: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.12) !important; color: #ffffff !important; box-shadow: inset 3.5px 0 0 var(--qt-accent, #FF5A14) !important; }
-.nav-item:focus-visible { outline: 2px solid var(--qt-accent, #FF5A14); outline-offset: 2px; }
-.nav-badge, .nav-badge-pill { background: #39342f !important; border-color: #514940 !important; color: #e1d8ce !important; border-radius: 4px !important; }
-.sidebar-footer { border-color: #39342f; color: #9c9288; }
+.brand-badge { background: transparent; border-color: rgba(255, 255, 255, 0.1); color: #94a3b8; border-radius: 4px; }
+.nav-section-title { color: #64748b; letter-spacing: .08em; }
+.nav-item { background: transparent; color: #94a3b8; border-radius: 6px; font-weight: 500; position: relative; transition: color 140ms ease, background-color 140ms ease; }
+.nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #f1f5f9; }
+.nav-item.active { background: rgba(255, 255, 255, 0.06) !important; border-color: transparent !important; color: #ffffff !important; }
+.nav-item:focus-visible { outline: 2px solid var(--qt-accent, #F97316); outline-offset: 2px; }
+.nav-badge, .nav-badge-pill { background: rgba(255, 255, 255, 0.06) !important; border-color: rgba(255, 255, 255, 0.08) !important; color: #cbd5e1 !important; border-radius: 4px !important; }
+.sidebar-footer { border-color: rgba(255, 255, 255, 0.07); color: #94a3b8; }
 
 .app-header, .top-header {
   background: rgba(250,248,245,.92);

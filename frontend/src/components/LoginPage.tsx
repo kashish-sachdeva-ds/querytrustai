@@ -14,7 +14,6 @@ import {
   User as UserIcon,
   Users,
   Clock,
-  ChevronDown,
   Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -109,7 +108,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
   // UI Interactive States
   const [showPassword, setShowPassword] = useState(false)
-  const [showDemoPersonas, setShowDemoPersonas] = useState(false)
   const [loading, setLoading] = useState(false)
 
   // Validation States
@@ -458,13 +456,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       await login(demoEmail, demoPass)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Demo sign-in failed.'
-      setGlobalError({
-        type: 'custom',
-        title: 'Backend Asleep / Cold Starting',
-        message: `${msg} You can instantly enter the full interactive sandbox using local synthetic fixtures.`,
-        actionLabel: `Launch Zero-Wait Offline Demo (${role.toUpperCase()}) →`,
-        onAction: () => enterDemoMode(role),
-      })
+      console.warn('Live backend unavailable for demo account, instantly entering offline sandbox:', msg)
+      enterDemoMode(role)
     } finally {
       setLoading(false)
     }
@@ -1169,136 +1162,94 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               </form>
 
               {/* Action Links */}
-              <div className="login-request-access-row">
-                <span>Need a new company workspace? </span>
+              <div className="login-quick-links-row">
                 <button
                   type="button"
-                  className="login-request-access-btn"
+                  className="login-text-link"
                   onClick={() => {
                     setAuthMode('register')
                     setGlobalError(null)
                   }}
                 >
-                  Create workspace →
+                  Create workspace
                 </button>
-              </div>
-
-              <div className="login-request-access-row" style={{ marginTop: '0.25rem', fontSize: '0.75rem', opacity: 0.85 }}>
-                Joining a coworker's workspace?{' '}
+                <span className="login-link-separator">•</span>
                 <button
                   type="button"
-                  className="login-request-access-btn"
+                  className="login-text-link"
                   onClick={() => {
                     setAuthMode('join')
                     setGlobalError(null)
                   }}
                 >
-                  Join workspace →
+                  Join workspace
                 </button>
               </div>
 
-              {/* ─── Collapsible Demo Sandbox Quick-Fills (Enterprise Disclosure) ─── */}
+              {/* ─── Fast Demo Sandbox Personas ─── */}
               {isDemoMode && (
                 <section className="demo-credentials-section" aria-label="Demo Sandbox Quick Access">
-                  <button
-                    type="button"
-                    className="demo-sandbox-toggle"
-                    onClick={() => setShowDemoPersonas((prev) => !prev)}
-                    aria-expanded={showDemoPersonas}
-                    id="demo-sandbox-toggle-btn"
-                  >
-                    <div className="demo-toggle-left">
-                      <Sparkles size={13} className="text-accent" />
-                      <span>Explore Demo Sandbox Personas</span>
-                      <span className="demo-toggle-badge">3 pre-seeded roles</span>
-                    </div>
-                    <ChevronDown
-                      size={14}
-                      className={`demo-toggle-arrow ${showDemoPersonas ? 'open' : ''}`}
-                    />
-                  </button>
-
-                  {showDemoPersonas && (
-                    <div className="demo-chips-container">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                        <p className="demo-disclosure-hint" style={{ margin: 0 }}>
-                          Instant zero-password sandbox evaluation with synthetic equipment data:
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => enterDemoMode('analyst')}
-                          style={{
-                            background: 'var(--qt-accent, #ff5a14)',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '4px 10px',
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                          }}
-                        >
-                          <Sparkles size={12} />
-                          <span>Zero-Wait Offline Sandbox</span>
-                        </button>
+                  <div className="demo-section-divider">
+                    <span>
+                      <Sparkles size={11} style={{ marginRight: 6, verticalAlign: -1, color: 'var(--qt-accent, #ff5a14)' }} />
+                      Explore Demo Sandbox
+                    </span>
+                  </div>
+                  <p className="demo-disclosure-hint">
+                    Instant 1-click evaluation with synthetic equipment data:
+                  </p>
+                  <div className="demo-chips-grid">
+                    {/* 1. Analyst first */}
+                    <button
+                      type="button"
+                      className="demo-chip chip-analyst"
+                      disabled={loading}
+                      onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
+                      title="Sign in as Analyst"
+                      aria-label="Instant login as Analyst"
+                    >
+                      <div className="demo-chip-action-row">
+                        <span className="role-tag role-analyst">Analyst</span>
+                        <span className="demo-chip-btn-label">Try as Analyst &rarr;</span>
                       </div>
-                      <div className="demo-chips-grid">
-                        {/* 1. Analyst first */}
-                        <button
-                          type="button"
-                          className="demo-chip chip-analyst"
-                          disabled={loading}
-                          onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
-                          title="Sign in as Analyst"
-                          aria-label="Instant login as Analyst"
-                        >
-                          <div className="demo-chip-action-row">
-                            <span className="role-tag role-analyst">Analyst</span>
-                            <span className="demo-chip-btn-label">Try as Analyst &rarr;</span>
-                          </div>
-                          <span className="demo-chip-email">analyst@querytrust.local</span>
-                          <span className="demo-chip-desc">Natural-language questions, health checks, & telemetry anomalies</span>
-                        </button>
+                      <span className="demo-chip-email">analyst@querytrust.local</span>
+                      <span className="demo-chip-desc">Natural-language questions, health checks, & telemetry anomalies</span>
+                    </button>
 
-                        {/* 2. Viewer second */}
-                        <button
-                          type="button"
-                          className="demo-chip chip-viewer"
-                          disabled={loading}
-                          onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
-                          title="Sign in as Viewer"
-                          aria-label="Instant login as Viewer"
-                        >
-                          <div className="demo-chip-action-row">
-                            <span className="role-tag role-viewer">Viewer</span>
-                            <span className="demo-chip-btn-label">Try as Viewer &rarr;</span>
-                          </div>
-                          <span className="demo-chip-email">viewer@querytrust.local</span>
-                          <span className="demo-chip-desc">Read-only: equipment catalog, data health and telemetry alerts</span>
-                        </button>
-
-                        {/* 3. Admin third */}
-                        <button
-                          type="button"
-                          className="demo-chip chip-admin"
-                          disabled={loading}
-                          onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
-                          title="Sign in as Admin"
-                          aria-label="Instant login as Admin"
-                        >
-                          <div className="demo-chip-action-row">
-                            <span className="role-tag role-admin">Admin</span>
-                            <span className="demo-chip-btn-label">Try as Admin &rarr;</span>
-                          </div>
-                          <span className="demo-chip-email">admin@querytrust.local</span>
-                          <span className="demo-chip-desc">Full governance, security audit logs, BYOD sources, & team invites</span>
-                        </button>
+                    {/* 2. Viewer second */}
+                    <button
+                      type="button"
+                      className="demo-chip chip-viewer"
+                      disabled={loading}
+                      onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
+                      title="Sign in as Viewer"
+                      aria-label="Instant login as Viewer"
+                    >
+                      <div className="demo-chip-action-row">
+                        <span className="role-tag role-viewer">Viewer</span>
+                        <span className="demo-chip-btn-label">Try as Viewer &rarr;</span>
                       </div>
-                    </div>
-                  )}
+                      <span className="demo-chip-email">viewer@querytrust.local</span>
+                      <span className="demo-chip-desc">Read-only: equipment catalog, data health and telemetry alerts</span>
+                    </button>
+
+                    {/* 3. Admin third */}
+                    <button
+                      type="button"
+                      className="demo-chip chip-admin"
+                      disabled={loading}
+                      onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
+                      title="Sign in as Admin"
+                      aria-label="Instant login as Admin"
+                    >
+                      <div className="demo-chip-action-row">
+                        <span className="role-tag role-admin">Admin</span>
+                        <span className="demo-chip-btn-label">Try as Admin &rarr;</span>
+                      </div>
+                      <span className="demo-chip-email">admin@querytrust.local</span>
+                      <span className="demo-chip-desc">Full governance, security audit logs, BYOD sources, & team invites</span>
+                    </button>
+                  </div>
                 </section>
               )}
             </>

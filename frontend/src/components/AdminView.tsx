@@ -13,6 +13,9 @@ import {
   X,
   Clock,
   Copy,
+  Search,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import {
   type UserPublic,
@@ -30,6 +33,7 @@ import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
 import { WebhookSettingsCard } from './WebhookSettingsCard'
+import './AdminView.css'
 
 export const AdminView: React.FC = () => {
   const { user: currentUser } = useAuth()
@@ -49,6 +53,25 @@ export const AdminView: React.FC = () => {
   })
   const [inviteLoading, setInviteLoading] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+
+  // Team Members Filter & Pagination
+  const [userSearch, setUserSearch] = useState('')
+  const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'admin' | 'analyst' | 'viewer'>('all')
+  const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'active' | 'deactivated'>('all')
+  const [userPage, setUserPage] = useState(1)
+  const USER_PAGE_SIZE = 6
+
+  // Access Requests Filter & Pagination
+  const [requestTab, setRequestTab] = useState<'pending' | 'resolved' | 'all'>('pending')
+  const [requestSearch, setRequestSearch] = useState('')
+  const [requestPage, setRequestPage] = useState(1)
+  const REQUEST_PAGE_SIZE = 5
+
+  // Activity History Filter & Pagination
+  const [auditSearch, setAuditSearch] = useState('')
+  const [auditStatusFilter, setAuditStatusFilter] = useState<'all' | 'executed' | 'blocked'>('all')
+  const [auditPage, setAuditPage] = useState(1)
+  const AUDIT_PAGE_SIZE = 8
 
   const copyJoinLink = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
@@ -185,12 +208,12 @@ export const AdminView: React.FC = () => {
         const finalRole = roleToAssign || updated.role_requested
         setNotification({
           type: 'success',
-          message: `Approved access for ${updated.full_name} (${updated.email}). Provisioned as ${finalRole} in workspace '${currentUser?.workspace_name || 'your workspace'}' (initial password: WelcomePass123!).`,
+          message: `Approved access for ${updated.full_name} (${updated.email}). Provisioned as ${finalRole} in workspace '${currentUser?.workspace_name || 'your workspace'}' (initial password: WelcomePass123!). Moved from Pending queue to Team Members.`,
         })
       } else {
         setNotification({
           type: 'success',
-          message: `Declined access request for ${updated.email}.`,
+          message: `Declined access request for ${updated.email}. Moved from Pending queue to Resolved.`,
         })
       }
     } catch (err) {
@@ -235,6 +258,68 @@ export const AdminView: React.FC = () => {
     return <span className="badge badge-neutral">{log.status}</span>
   }
 
+  // --- Derived Calculations: Team Members ---
+  const filteredUsers = users.filter((u) => {
+    if (userRoleFilter !== 'all' && u.role !== userRoleFilter) return false
+    if (userStatusFilter === 'active' && !u.is_active) return false
+    if (userStatusFilter === 'deactivated' && u.is_active) return false
+    if (userSearch.trim()) {
+      const q = userSearch.toLowerCase()
+      const matchName = (u.display_name || '').toLowerCase().includes(q)
+      const matchEmail = (u.email || '').toLowerCase().includes(q)
+      if (!matchName && !matchEmail) return false
+    }
+    return true
+  })
+  const totalUserPages = Math.max(1, Math.ceil(filteredUsers.length / USER_PAGE_SIZE))
+  const paginatedUsers = filteredUsers.slice((userPage - 1) * USER_PAGE_SIZE, userPage * USER_PAGE_SIZE)
+
+  // --- Derived Calculations: Access Requests ---
+  const pendingRequestsCount = accessRequests.filter((r) => r.status === 'pending').length
+  const resolvedRequestsCount = accessRequests.filter((r) => r.status !== 'pending').length
+
+  const filteredRequests = accessRequests.filter((r) => {
+    if (requestTab === 'pending' && r.status !== 'pending') return false
+    if (requestTab === 'resolved' && r.status === 'pending') return false
+    if (requestSearch.trim()) {
+      const q = requestSearch.toLowerCase()
+      const matchName = (r.full_name || '').toLowerCase().includes(q)
+      const matchEmail = (r.email || '').toLowerCase().includes(q)
+      const matchCompany = (r.company || '').toLowerCase().includes(q)
+      const matchUseCase = (r.use_case || '').toLowerCase().includes(q)
+      if (!matchName && !matchEmail && !matchCompany && !matchUseCase) return false
+    }
+    return true
+  })
+  const totalRequestPages = Math.max(1, Math.ceil(filteredRequests.length / REQUEST_PAGE_SIZE))
+  const paginatedRequests = filteredRequests.slice((requestPage - 1) * REQUEST_PAGE_SIZE, requestPage * REQUEST_PAGE_SIZE)
+
+  // --- Derived Calculations: Audit Logs ---
+  const executedAuditCount = auditLogs.filter(
+    (l) => l.status.toLowerCase().includes('exec') || l.status.toLowerCase().includes('success')
+  ).length
+  const blockedAuditCount = auditLogs.filter((l) => l.status.toLowerCase().includes('block')).length
+
+  const filteredAuditLogs = auditLogs.filter((l) => {
+    if (auditStatusFilter === 'executed') {
+      const s = l.status.toLowerCase()
+      if (!s.includes('exec') && !s.includes('success')) return false
+    }
+    if (auditStatusFilter === 'blocked') {
+      const s = l.status.toLowerCase()
+      if (!s.includes('block')) return false
+    }
+    if (auditSearch.trim()) {
+      const q = auditSearch.toLowerCase()
+      const matchQ = (l.question || '').toLowerCase().includes(q)
+      const matchId = (l.id || '').toLowerCase().includes(q)
+      if (!matchQ && !matchId) return false
+    }
+    return true
+  })
+  const totalAuditPages = Math.max(1, Math.ceil(filteredAuditLogs.length / AUDIT_PAGE_SIZE))
+  const paginatedAuditLogs = filteredAuditLogs.slice((auditPage - 1) * AUDIT_PAGE_SIZE, auditPage * AUDIT_PAGE_SIZE)
+
   if (currentUser?.role !== 'admin') {
     return (
       <div className="error-card" role="alert" style={{ maxWidth: 640, margin: '2rem auto' }}>
@@ -256,7 +341,7 @@ export const AdminView: React.FC = () => {
       <PageHeader
         title="People & access"
         description="Who can do what in QueryTrust AI. Permissions are enforced on every backend request."
-        helpText="Viewer accounts see a simplified view without SQL. Analysts inspect diagnostics. Admins manage accounts and activity history."
+        helpText="Viewer accounts see a simplified view without SQL. Analysts inspect diagnostics. Admins manage accounts, webhooks, and activity history."
         actions={
           <button
             type="button"
@@ -288,7 +373,7 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* Users Management Card */}
+      {/* 1. Users Management Card */}
       <div className="content-card full-width-card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--qt-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -323,6 +408,67 @@ export const AdminView: React.FC = () => {
           </div>
         </div>
 
+        {/* Toolbar: Search & Role Filter */}
+        <div className="admin-toolbar-row">
+          <div className="admin-toolbar-left">
+            <div className="admin-search-wrapper">
+              <Search size={13} />
+              <input
+                type="text"
+                className="admin-search-input"
+                placeholder="Search teammates by name or email…"
+                value={userSearch}
+                onChange={(e) => {
+                  setUserSearch(e.target.value)
+                  setUserPage(1)
+                }}
+              />
+              {userSearch && (
+                <button
+                  type="button"
+                  className="admin-clear-btn"
+                  onClick={() => {
+                    setUserSearch('')
+                    setUserPage(1)
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="admin-toolbar-right">
+            <select
+              className="admin-filter-select"
+              value={userRoleFilter}
+              onChange={(e) => {
+                setUserRoleFilter(e.target.value as any)
+                setUserPage(1)
+              }}
+              aria-label="Filter teammates by role"
+            >
+              <option value="all">All Roles</option>
+              <option value="admin">Admins only</option>
+              <option value="analyst">Analysts only</option>
+              <option value="viewer">Viewers only</option>
+            </select>
+            <select
+              className="admin-filter-select"
+              value={userStatusFilter}
+              onChange={(e) => {
+                setUserStatusFilter(e.target.value as any)
+                setUserPage(1)
+              }}
+              aria-label="Filter teammates by status"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active only</option>
+              <option value="deactivated">Deactivated only</option>
+            </select>
+          </div>
+        </div>
+
         <div className="table-responsive">
           <table className="data-table">
             <thead>
@@ -344,14 +490,32 @@ export const AdminView: React.FC = () => {
                     </p>
                   </td>
                 </tr>
-              ) : users.length === 0 ? (
+              ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem' }}>
-                    <p className="text-muted">No user records returned.</p>
+                    <p className="text-muted" style={{ margin: 0 }}>
+                      {userSearch || userRoleFilter !== 'all' || userStatusFilter !== 'all'
+                        ? 'No team members match your filter criteria.'
+                        : 'No user records returned.'}
+                    </p>
+                    {(userSearch || userRoleFilter !== 'all' || userStatusFilter !== 'all') && (
+                      <button
+                        type="button"
+                        className="admin-empty-state-action"
+                        onClick={() => {
+                          setUserSearch('')
+                          setUserRoleFilter('all')
+                          setUserStatusFilter('all')
+                          setUserPage(1)
+                        }}
+                      >
+                        Reset filters
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (
-                users.map((u) => {
+                paginatedUsers.map((u) => {
                   const isCurrent = u.id === currentUser?.id
                   return (
                     <tr key={u.id}>
@@ -425,9 +589,44 @@ export const AdminView: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Users Pagination */}
+        {filteredUsers.length > USER_PAGE_SIZE && (
+          <div className="pagination-bar">
+            <span>
+              Showing {Math.min((userPage - 1) * USER_PAGE_SIZE + 1, filteredUsers.length)}–
+              {Math.min(userPage * USER_PAGE_SIZE, filteredUsers.length)} of {filteredUsers.length} teammates
+            </span>
+            <div className="pagination-controls">
+              <span className="page-current">
+                Page {userPage} of {totalUserPages}
+              </span>
+              <div className="page-buttons">
+                <button
+                  type="button"
+                  className="page-nav-btn"
+                  disabled={userPage <= 1}
+                  onClick={() => setUserPage((p) => Math.max(1, p - 1))}
+                  aria-label="Previous page of teammates"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="page-nav-btn"
+                  disabled={userPage >= totalUserPages}
+                  onClick={() => setUserPage((p) => Math.min(totalUserPages, p + 1))}
+                  aria-label="Next page of teammates"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Prospective Access Requests Card */}
+      {/* 2. Prospective Access Requests Card */}
       <div className="content-card full-width-card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--qt-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -436,14 +635,9 @@ export const AdminView: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
                   {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
-                    ? `${currentUser.workspace_name} — Access Requests (${accessRequests.length})`
-                    : `Access requests (${accessRequests.length})`}
+                    ? `${currentUser.workspace_name} — Access Requests`
+                    : 'Access Requests'}
                 </h3>
-                {accessRequests.filter((r) => r.status === 'pending').length > 0 && (
-                  <span className="badge badge-warning" style={{ fontSize: '0.7rem', padding: '2px 7px' }}>
-                    {accessRequests.filter((r) => r.status === 'pending').length} pending review
-                  </span>
-                )}
               </div>
               <p style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', margin: 0 }}>
                 {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
@@ -452,13 +646,92 @@ export const AdminView: React.FC = () => {
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Segmented Queue Filter Tabs */}
+            <div className="admin-segmented-tabs" role="tablist" aria-label="Access request queues">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={requestTab === 'pending'}
+                className={`admin-tab-btn ${requestTab === 'pending' ? 'active' : ''}`}
+                onClick={() => {
+                  setRequestTab('pending')
+                  setRequestPage(1)
+                }}
+              >
+                <span>Pending</span>
+                <span className="admin-tab-badge">{pendingRequestsCount}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={requestTab === 'resolved'}
+                className={`admin-tab-btn ${requestTab === 'resolved' ? 'active' : ''}`}
+                onClick={() => {
+                  setRequestTab('resolved')
+                  setRequestPage(1)
+                }}
+              >
+                <span>Resolved</span>
+                <span className="admin-tab-badge">{resolvedRequestsCount}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={requestTab === 'all'}
+                className={`admin-tab-btn ${requestTab === 'all' ? 'active' : ''}`}
+                onClick={() => {
+                  setRequestTab('all')
+                  setRequestPage(1)
+                }}
+              >
+                <span>All</span>
+                <span className="admin-tab-badge">{accessRequests.length}</span>
+              </button>
+            </div>
+
             <ExplainButton
               title="Access Request Provisioning"
-              explanation="Approving an access request automatically creates the user account in PostgreSQL with their requested role and a salted bcrypt hashed password."
+              explanation="Approving an access request automatically creates the user account in PostgreSQL with their requested role and a salted bcrypt hashed password. Once approved, they move out of Pending into Team Members."
             />
           </div>
         </div>
+
+        {/* Search bar if multiple requests exist */}
+        {accessRequests.length > 3 && (
+          <div className="admin-toolbar-row">
+            <div className="admin-toolbar-left">
+              <div className="admin-search-wrapper">
+                <Search size={13} />
+                <input
+                  type="text"
+                  className="admin-search-input"
+                  placeholder="Filter requests by name, email, or company…"
+                  value={requestSearch}
+                  onChange={(e) => {
+                    setRequestSearch(e.target.value)
+                    setRequestPage(1)
+                  }}
+                />
+                {requestSearch && (
+                  <button
+                    type="button"
+                    className="admin-clear-btn"
+                    onClick={() => {
+                      setRequestSearch('')
+                      setRequestPage(1)
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="admin-toolbar-right" style={{ fontSize: '0.74rem', color: 'var(--qt-muted)' }}>
+              Showing {filteredRequests.length} of {accessRequests.length} requests
+            </div>
+          </div>
+        )}
 
         <div className="table-responsive">
           <table className="data-table">
@@ -482,18 +755,68 @@ export const AdminView: React.FC = () => {
                     </p>
                   </td>
                 </tr>
-              ) : accessRequests.length === 0 ? (
+              ) : filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '2.5rem' }}>
-                    <p className="text-muted" style={{ margin: 0 }}>
-                      {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
-                        ? `No pending access requests for ${currentUser.workspace_name} yet.`
-                        : 'No prospective access requests received yet.'}
-                    </p>
+                  <td colSpan={6} style={{ padding: 0 }}>
+                    {requestTab === 'pending' ? (
+                      <div className="admin-empty-state-box">
+                        <div className="admin-empty-state-icon">
+                          <CheckCircle2 size={22} />
+                        </div>
+                        <h4 className="admin-empty-state-title">
+                          All caught up! No pending access requests.
+                        </h4>
+                        <p className="admin-empty-state-desc">
+                          {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
+                            ? `Prospective requests submitted for ${currentUser.workspace_name} will appear here for review and provisioning.`
+                            : 'Prospective sign-ups submitted from the public portal will appear here.'}
+                        </p>
+                        {resolvedRequestsCount > 0 && (
+                          <button
+                            type="button"
+                            className="admin-empty-state-action"
+                            onClick={() => {
+                              setRequestTab('resolved')
+                              setRequestPage(1)
+                            }}
+                          >
+                            View {resolvedRequestsCount} resolved request{resolvedRequestsCount > 1 ? 's' : ''} history →
+                          </button>
+                        )}
+                      </div>
+                    ) : requestTab === 'resolved' ? (
+                      <div className="admin-empty-state-box">
+                        <div className="admin-empty-state-icon" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--qt-muted)' }}>
+                          <Clock size={22} />
+                        </div>
+                        <h4 className="admin-empty-state-title">No resolved requests yet</h4>
+                        <p className="admin-empty-state-desc">
+                          Requests you approve or decline will appear in this audit log.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="admin-empty-state-box">
+                        <p className="text-muted" style={{ margin: 0 }}>
+                          {requestSearch ? `No requests matching "${requestSearch}".` : 'No access requests received yet.'}
+                        </p>
+                        {requestSearch && (
+                          <button
+                            type="button"
+                            className="admin-empty-state-action"
+                            onClick={() => {
+                              setRequestSearch('')
+                              setRequestPage(1)
+                            }}
+                          >
+                            Clear search
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ) : (
-                accessRequests.map((req) => {
+                paginatedRequests.map((req) => {
                   const isPending = req.status === 'pending'
                   const isUpdating = updatingId === req.id
                   return (
@@ -614,20 +937,57 @@ export const AdminView: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Requests Pagination */}
+        {filteredRequests.length > REQUEST_PAGE_SIZE && (
+          <div className="pagination-bar">
+            <span>
+              Showing {Math.min((requestPage - 1) * REQUEST_PAGE_SIZE + 1, filteredRequests.length)}–
+              {Math.min(requestPage * REQUEST_PAGE_SIZE, filteredRequests.length)} of {filteredRequests.length} requests
+            </span>
+            <div className="pagination-controls">
+              <span className="page-current">
+                Page {requestPage} of {totalRequestPages}
+              </span>
+              <div className="page-buttons">
+                <button
+                  type="button"
+                  className="page-nav-btn"
+                  disabled={requestPage <= 1}
+                  onClick={() => setRequestPage((p) => Math.max(1, p - 1))}
+                  aria-label="Previous page of access requests"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="page-nav-btn"
+                  disabled={requestPage >= totalRequestPages}
+                  onClick={() => setRequestPage((p) => Math.min(totalRequestPages, p + 1))}
+                  aria-label="Next page of access requests"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Alert Webhooks & Dispatcher Card */}
+      {/* 3. Alert Webhooks & Dispatcher Card */}
       <WebhookSettingsCard onNotify={setNotification} />
 
-      {/* Activity History & Audit Logs Card */}
+      {/* 4. Activity History & Audit Logs Card */}
       <div className="content-card full-width-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--qt-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <History size={18} style={{ color: 'var(--qt-accent)' }} />
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Activity history</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+                Activity history ({auditLogs.length})
+              </h3>
               <p style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', margin: 0 }}>
-                All natural-language requests and safety blocks.
+                All natural-language requests and safety blocks across the workspace.
               </p>
             </div>
           </div>
@@ -639,11 +999,86 @@ export const AdminView: React.FC = () => {
           </div>
         </div>
 
+        {/* Toolbar: Search & Segmented Filter */}
+        <div className="admin-toolbar-row">
+          <div className="admin-toolbar-left">
+            <div className="admin-search-wrapper">
+              <Search size={13} />
+              <input
+                type="text"
+                className="admin-search-input"
+                placeholder="Search queries, questions, or query IDs…"
+                value={auditSearch}
+                onChange={(e) => {
+                  setAuditSearch(e.target.value)
+                  setAuditPage(1)
+                }}
+              />
+              {auditSearch && (
+                <button
+                  type="button"
+                  className="admin-clear-btn"
+                  onClick={() => {
+                    setAuditSearch('')
+                    setAuditPage(1)
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="admin-toolbar-right">
+            <div className="admin-segmented-tabs" role="tablist" aria-label="Filter activity status">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={auditStatusFilter === 'all'}
+                className={`admin-tab-btn ${auditStatusFilter === 'all' ? 'active' : ''}`}
+                onClick={() => {
+                  setAuditStatusFilter('all')
+                  setAuditPage(1)
+                }}
+              >
+                <span>All</span>
+                <span className="admin-tab-badge">{auditLogs.length}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={auditStatusFilter === 'executed'}
+                className={`admin-tab-btn ${auditStatusFilter === 'executed' ? 'active' : ''}`}
+                onClick={() => {
+                  setAuditStatusFilter('executed')
+                  setAuditPage(1)
+                }}
+              >
+                <span>Executed</span>
+                <span className="admin-tab-badge">{executedAuditCount}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={auditStatusFilter === 'blocked'}
+                className={`admin-tab-btn ${auditStatusFilter === 'blocked' ? 'active' : ''}`}
+                onClick={() => {
+                  setAuditStatusFilter('blocked')
+                  setAuditPage(1)
+                }}
+              >
+                <span>Blocked</span>
+                <span className="admin-tab-badge">{blockedAuditCount}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="table-responsive">
           <table className="data-table">
             <thead>
               <tr>
-                <th style={{ width: '80px' }}>ID</th>
+                <th style={{ width: '100px' }}>ID</th>
                 <th>Question asked</th>
                 <th style={{ width: '220px' }}>Result</th>
                 <th style={{ width: '140px' }}>When</th>
@@ -653,11 +1088,30 @@ export const AdminView: React.FC = () => {
               {auditLogs.length === 0 ? (
                 <tr>
                   <td colSpan={4} style={{ textAlign: 'center', padding: '2.5rem' }}>
-                    <p className="text-muted">No natural-language questions executed yet.</p>
+                    <p className="text-muted" style={{ margin: 0 }}>No natural-language questions executed yet.</p>
+                  </td>
+                </tr>
+              ) : filteredAuditLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={4} style={{ textAlign: 'center', padding: '2.5rem' }}>
+                    <p className="text-muted" style={{ margin: 0 }}>
+                      No queries match the selected filter or search term.
+                    </p>
+                    <button
+                      type="button"
+                      className="admin-empty-state-action"
+                      onClick={() => {
+                        setAuditSearch('')
+                        setAuditStatusFilter('all')
+                        setAuditPage(1)
+                      }}
+                    >
+                      Reset filters
+                    </button>
                   </td>
                 </tr>
               ) : (
-                auditLogs.map((log) => (
+                paginatedAuditLogs.map((log) => (
                   <tr key={log.id}>
                     <td className="font-mono text-muted" style={{ fontSize: '0.72rem' }}>
                       {log.id.slice(0, 8)}…
@@ -677,6 +1131,41 @@ export const AdminView: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Audit Logs Pagination */}
+        {filteredAuditLogs.length > AUDIT_PAGE_SIZE && (
+          <div className="pagination-bar">
+            <span>
+              Showing {Math.min((auditPage - 1) * AUDIT_PAGE_SIZE + 1, filteredAuditLogs.length)}–
+              {Math.min(auditPage * AUDIT_PAGE_SIZE, filteredAuditLogs.length)} of {filteredAuditLogs.length} queries
+            </span>
+            <div className="pagination-controls">
+              <span className="page-current">
+                Page {auditPage} of {totalAuditPages}
+              </span>
+              <div className="page-buttons">
+                <button
+                  type="button"
+                  className="page-nav-btn"
+                  disabled={auditPage <= 1}
+                  onClick={() => setAuditPage((p) => Math.max(1, p - 1))}
+                  aria-label="Previous page of audit queries"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="page-nav-btn"
+                  disabled={auditPage >= totalAuditPages}
+                  onClick={() => setAuditPage((p) => Math.min(totalAuditPages, p + 1))}
+                  aria-label="Next page of audit queries"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Invite Team Member Modal */}

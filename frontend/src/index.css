@@ -430,6 +430,7 @@
   animation: dropdown-fade 160ms cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
   white-space: normal;
+  overflow: hidden;
 }
 
 @keyframes dropdown-fade {
@@ -678,12 +679,17 @@
 }
 
 .dropdown-enterprise-governance {
-  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem 0.75rem;
   background: var(--qt-canvas, #FAF8F5);
   border: 1px solid var(--qt-border);
   border-radius: 6px;
   margin: 0.25rem 0;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -701,24 +707,55 @@
   font-size: 0.74rem;
   font-weight: 600;
   color: var(--qt-ink);
-  white-space: normal;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.enterprise-governance-icon {
+  color: var(--qt-accent, #ff5a14);
+  flex-shrink: 0;
+}
+
+.enterprise-governance-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enterprise-governance-body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .enterprise-governance-note {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
   font-family: var(--font-sans);
   font-size: 0.71rem;
   color: var(--qt-muted, #71706B);
-  margin: 0.3rem 0 0 0;
-  line-height: 1.4;
+  margin: 0 !important;
+  line-height: 1.45;
   white-space: normal !important;
-  word-break: break-word !important;
-  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
 }
 
-.enterprise-governance-note strong {
-  word-break: break-word !important;
-  overflow-wrap: anywhere !important;
-  color: var(--qt-ink);
+.enterprise-governance-note strong,
+.enterprise-governance-ws {
+  display: inline !important;
+  color: var(--qt-ink) !important;
+  font-weight: 600 !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  white-space: normal !important;
 }
 
 

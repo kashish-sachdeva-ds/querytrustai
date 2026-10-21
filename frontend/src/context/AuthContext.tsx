@@ -93,17 +93,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isTimeoutOrNetwork) {
         setConnectionState((prev) => (prev === 'offline_demo' ? 'offline_demo' : 'waking_backend'))
       } else {
-        // Explicit 401 or auth failure
-        if (!isInitial) {
-          setUser(null)
-          try {
-            localStorage.removeItem(CACHED_USER_KEY)
-          } catch {}
-        }
+        // Explicit 401 or auth failure from backend
+        // When server rejects the session token (expired or invalid), clear the stale cached user
+        setUser(null)
+        try {
+          localStorage.removeItem(CACHED_USER_KEY)
+        } catch {}
       }
     } finally {
       setIsLoading(false)
     }
+  }, [])
+
+  // Listen for unauthorized 401 events dispatched by API client
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null)
+      try {
+        localStorage.removeItem(CACHED_USER_KEY)
+      } catch {}
+    }
+    window.addEventListener('querytrust:auth-unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('querytrust:auth-unauthorized', handleUnauthorized)
   }, [])
 
   // Auto retry countdown when in waking_backend state

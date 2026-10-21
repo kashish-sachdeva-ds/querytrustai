@@ -377,6 +377,12 @@ async function authFetch(
   if (response.status === 401) {
     // Token may have expired
     clearStoredToken()
+    try {
+      localStorage.removeItem('qt_cached_user')
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('querytrust:auth-unauthorized'))
+      }
+    } catch {}
   }
 
   return response

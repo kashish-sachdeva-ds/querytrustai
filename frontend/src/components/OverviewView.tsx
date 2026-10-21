@@ -156,7 +156,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   onOpenDevice,
 }) => {
   const { mode } = useTheme()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [data, setData] = useState<DashboardSummaryResponse | null>(null)
   const [activeSource, setActiveSource] = useState<ActiveDataSourceResponse | null>(null)
   const [dataHealth, setDataHealth] = useState<DataQualityRunSummary | null>(null)
@@ -834,9 +834,23 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         <div className="security-alert-box alert-error" role="alert">
           <div className="alert-title">Unable to load dashboard data</div>
           <div className="alert-desc">{error}</div>
-          <button type="button" className="hero-refresh-btn" onClick={() => loadData()}>
-            Retry connection
-          </button>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
+            {error.includes('expired') || error.includes('sign in') ? (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={async () => {
+                  await logout()
+                }}
+                style={{ fontSize: '0.8rem', padding: '6px 14px' }}
+              >
+                Sign in again →
+              </button>
+            ) : null}
+            <button type="button" className="hero-refresh-btn" onClick={() => loadData()}>
+              Retry connection
+            </button>
+          </div>
         </div>
       )}
 

@@ -553,50 +553,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
               ) : (
                 <>
                   <div className="dropdown-divider" />
-                  <div
-                    className="dropdown-enterprise-governance"
-                    style={{
-                      width: '100%',
-                      maxWidth: '100%',
-                      boxSizing: 'border-box',
-                      whiteSpace: 'normal',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      className="enterprise-governance-header"
-                      style={{
-                        whiteSpace: 'normal',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.45rem',
-                      }}
-                    >
-                      <Building size={13} style={{ color: 'var(--qt-accent, #ff5a14)', flexShrink: 0 }} />
-                      <span>Enterprise Organization Member</span>
+                  <div className="dropdown-enterprise-governance">
+                    <div className="enterprise-governance-header">
+                      <Building size={13} className="enterprise-governance-icon" aria-hidden="true" />
+                      <span className="enterprise-governance-title">Enterprise Organization Member</span>
                     </div>
-                    <p
-                      className="enterprise-governance-note"
-                      style={{
-                        whiteSpace: 'normal',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word',
-                        margin: '0.35rem 0 0',
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      Role privileges ({roleDisplay}) are cryptographically governed by{' '}
-                      <strong
-                        style={{
-                          color: 'var(--qt-ink)',
-                          wordBreak: 'break-word',
-                          overflowWrap: 'break-word',
-                        }}
-                      >
-                        {user?.workspace_name || 'Organization'}
-                      </strong>{' '}
-                      policies.
-                    </p>
+                    <div className="enterprise-governance-body">
+                      <p className="enterprise-governance-note">
+                        Role privileges ({roleDisplay}) are cryptographically governed by{' '}
+                        <strong className="enterprise-governance-ws">
+                          {user?.workspace_name || 'Organization'}
+                        </strong>{' '}
+                        policies.
+                      </p>
+                    </div>
                   </div>
                 </>
               )}

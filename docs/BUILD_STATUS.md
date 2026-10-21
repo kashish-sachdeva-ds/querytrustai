@@ -1,14 +1,12 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-21  
-**Current milestone:** 28 — Automated Alert Webhook Dispatcher (Discord, Slack, Generic Webhooks) & Incident Notification Pipeline  
-**Overall status:** Complete production alert notification architecture and full-stack workbench integration:
-1. ✅ **Automated Webhook Dispatch Engine (`webhook_dispatcher.py`):** Asynchronous alert dispatching via `httpx.AsyncClient` with automatic retries, SSRF protections (blocking cloud metadata IPs `169.254.169.254` and `metadata.google.internal`), and HMAC-SHA256 signature verification headers (`X-QueryTrust-Signature`).
-2. ✅ **Platform-Specific Rich Payload Formatters (`webhook_dispatcher.py`):** Discord rich embeds with severity color-coding (red for critical outliers, orange for warnings, green for normal) and Slack Block Kit structured blocks with diagnostic fields and timestamps.
-3. ✅ **Workspace-Isolated Webhook Configuration API (`webhooks.py`, `webhook.py`):** PostgreSQL `webhook_configs` model with workspace isolation and REST endpoints (`GET`, `POST`, `DELETE /api/v1/webhooks`, `POST /api/v1/webhooks/test`).
-4. ✅ **Real-Time Automated Alert Dispatch Triggers (`anomalies.py`, `data_quality.py`):** Non-blocking FastAPI `BackgroundTasks` automatically dispatch alerts when IsolationForest flags severe sensor anomalies or when data quality diagnostics detect critical rule violations.
-5. ✅ **Interactive Admin Webhook UI (`WebhookSettingsCard.tsx`, `AdminView.tsx`):** Modern settings card with platform cards (Discord, Slack, Custom), secret token toggle, triggers matrix, live test alert button with millisecond latency badge, and delivery audit footer.
-6. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 22.76s; zero Oxlint warnings; zero TypeScript errors; Vite production bundle built cleanly in 2.43s.
+**Current milestone:** 29 — Admin IAM & Governance UI Overhaul (Actionable Request Queues, Search Filters, Bounded Pagination)  
+**Overall status:** Complete enterprise governance architecture and production IAM controls:
+1. ✅ **Actionable Access Request Lifecycle (`AdminView.tsx`):** Partitioned access request triage into actionable queues: `Pending` (default actionable queue), `Resolved` (audit trail of approved/declined requests), and `All`. Approving immediately provisions the user into `Team Members` and removes them from the pending queue with clean empty state when caught up.
+2. ✅ **Bounded Pagination & Filter Strip for Teammates (`AdminView.tsx`, `AdminView.css`):** Search input across user names and emails, role filtering (`Admin`, `Analyst`, `Viewer`), and status filtering (`Active`, `Deactivated`) with 6-item pagination to prevent tall page scrolling.
+3. ✅ **Activity History & Audit Log Scalability (`AdminView.tsx`, `AdminView.css`):** Search queries across natural-language questions and query IDs with segmented status filtering (`All`, `Executed`, `Blocked for safety`) and 8-item bounded pagination.
+4. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 14.41s; 0 Oxlint errors/warnings across 45 files; TypeScript and Vite production bundle built cleanly in 8.57s.
 
 **Automated Test Pass:**
 - **Backend:** 151/151 pytest tests pass in 22.76s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, and webhooks).

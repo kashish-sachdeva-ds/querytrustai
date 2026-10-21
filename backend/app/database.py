@@ -1,8 +1,16 @@
-from typing import Generator, AsyncGenerator
+from typing import Generator, AsyncGenerator, Any
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.config import get_settings
+
+try:
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    HAS_ASYNCIO = True
+except (ImportError, Exception):
+    create_async_engine = None  # type: ignore
+    async_sessionmaker = None  # type: ignore
+    AsyncSession = Any  # type: ignore
+    HAS_ASYNCIO = False
 
 settings = get_settings()
 
@@ -51,44 +59,51 @@ def get_readonly_db() -> Generator[Session, None, None]:
 import logging
 logger = logging.getLogger("querytrust.database")
 
-# Asynchronous SQLAlchemy 2.0 engines & sessionmakers (graceful fallback if async driver is not installed)
-try:
-    async_engine = create_async_engine(
-        settings.async_sqlalchemy_database_url,
-        pool_pre_ping=True,
-        pool_recycle=1800,
-        pool_size=10,
-        max_overflow=20,
-    )
-    AsyncSessionLocal = async_sessionmaker(
-        bind=async_engine,
-        class_=AsyncSession,
-        autocommit=False,
-        autoflush=False,
-        expire_on_commit=False,
-    )
-except Exception as exc:
-    logger.warning(f"Async primary database engine deferred or driver not installed: {exc}")
+# Asynchronous SQLAlchemy 2.0 engines & sessionmakers (graceful fallback if greenlet or async driver is not installed)
+if HAS_ASYNCIO and create_async_engine is not None:
+    try:
+        async_engine = create_async_engine(
+            settings.async_sqlalchemy_database_url,
+            pool_pre_ping=True,
+            pool_recycle=1800,
+            pool_size=10,
+            max_overflow=20,
+        )
+        AsyncSessionLocal = async_sessionmaker(
+            bind=async_engine,
+            class_=AsyncSession,
+            autocommit=False,
+            autoflush=False,
+            expire_on_commit=False,
+        )
+    except Exception as exc:
+        logger.warning(f"Async primary database engine deferred or driver not installed: {exc}")
+        async_engine = None
+        AsyncSessionLocal = None
+
+    try:
+        async_readonly_engine = create_async_engine(
+            settings.async_sqlalchemy_readonly_database_url,
+            pool_pre_ping=True,
+            pool_recycle=1800,
+            pool_size=10,
+            max_overflow=20,
+        )
+        AsyncReadonlySessionLocal = async_sessionmaker(
+            bind=async_readonly_engine,
+            class_=AsyncSession,
+            autocommit=False,
+            autoflush=False,
+            expire_on_commit=False,
+        )
+    except Exception as exc:
+        logger.warning(f"Async read-only database engine deferred or driver not installed: {exc}")
+        async_readonly_engine = None
+        AsyncReadonlySessionLocal = None
+else:
+    logger.warning("SQLAlchemy asyncio/greenlet is not installed; async database engine is deferred.")
     async_engine = None
     AsyncSessionLocal = None
-
-try:
-    async_readonly_engine = create_async_engine(
-        settings.async_sqlalchemy_readonly_database_url,
-        pool_pre_ping=True,
-        pool_recycle=1800,
-        pool_size=10,
-        max_overflow=20,
-    )
-    AsyncReadonlySessionLocal = async_sessionmaker(
-        bind=async_readonly_engine,
-        class_=AsyncSession,
-        autocommit=False,
-        autoflush=False,
-        expire_on_commit=False,
-    )
-except Exception as exc:
-    logger.warning(f"Async read-only database engine deferred or driver not installed: {exc}")
     async_readonly_engine = None
     AsyncReadonlySessionLocal = None
 

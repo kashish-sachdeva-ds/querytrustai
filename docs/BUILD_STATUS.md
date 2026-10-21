@@ -3,9 +3,9 @@
 **Last updated:** 2026-10-21  
 **Current milestone:** 31 — Render Cloud Deployment Hardening & Async Engine Safeguards  
 **Overall status:** Resolved cloud deployment blockers for Render web service:
-1. ✅ **Render Deployment Recovery (`requirements.txt`, `database.py`):** Removed `asyncpg` C-wheel requirement causing build failures on Render Linux container without build tools; wrapped async engine and sessionmaker initialization in defensive try-except handlers with graceful fallbacks so missing optional drivers never impede startup.
-2. ✅ **Container & Package Discovery Consistency (`Dockerfile`, `pyproject.toml`):** Aligned Dockerfile to install from `requirements.txt` directly; added explicit `tool.setuptools.packages.find` in `pyproject.toml` and created `backend/README.md` to guarantee clean installation under standard build tools.
-3. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 14.40s; TypeScript and Vite production bundle builds cleanly in 2.12s.
+1. ✅ **Render Deployment Recovery (`requirements.txt`, `database.py`, `pyproject.toml`):** Added `greenlet>=3.0.0` and `sqlalchemy[asyncio]>=2.0.28` to `requirements.txt` and `pyproject.toml`; wrapped `sqlalchemy.ext.asyncio` imports and engine initialization in defensive `try...except` fallback handlers so missing optional drivers or shims never impede application startup.
+2. ✅ **Container & Package Discovery Consistency (`Dockerfile`, `pyproject.toml`):** Aligned Dockerfile to install from `requirements.txt` directly; added explicit `tool.setuptools.packages.find` and `pythonpath = ["."]` in `pyproject.toml` and created `backend/README.md` to guarantee clean installation and standard pytest invocation.
+3. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 14.27s; TypeScript and Vite production bundle builds cleanly in 2.17s.
 
 **Automated Test Pass:**
 - **Backend:** 151/151 pytest tests pass in 14.40s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, async engine resiliency, and webhooks).

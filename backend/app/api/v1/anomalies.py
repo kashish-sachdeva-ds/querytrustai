@@ -10,15 +10,18 @@ INVARIANT: Anomaly score is strictly an unsupervised statistical outlier indicat
 NEVER described or exposed as a failure probability.
 """
 
+import asyncio
 import logging
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.database import get_db
 from app.models.user import User
 from app.models.data_source import DataSource
+from app.models.webhook import WebhookConfig
+from app.services.webhook_dispatcher import dispatch_webhook
 from app.core.auth import get_current_user, require_role, is_demo_workspace
 from app.core.anomaly_detector import anomaly_detector
 from app.schemas.anomalies import (
@@ -163,6 +166,7 @@ def get_current_unusual_activity(
 @router.post("/scan", response_model=AnomalyScanResponse)
 async def run_telemetry_anomaly_scan(
     payload: AnomalyScanRequest,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(scan_controls_required),
     db: Session = Depends(get_db),
 ):
@@ -197,6 +201,46 @@ async def run_telemetry_anomaly_scan(
             limit=payload.limit,
             threshold=payload.threshold or 0.65,
         )
+
+        # Automated alert webhook dispatch if anomalies detected
+        if scan_results.get("anomalies_detected", 0) > 0:
+            workspace = current_user.workspace_name or "Default Workspace"
+            webhook = (
+                db.query(WebhookConfig)
+                .filter(
+                    WebhookConfig.workspace_name == workspace,
+                    WebhookConfig.is_active == True,
+                    WebhookConfig.notify_on_anomaly == True,
+                )
+                .first()
+            )
+            if webhook:
+                top_item = scan_results["top_anomalies"][0] if scan_results.get("top_anomalies") else None
+                fields = [
+                    {"name": "Anomalies Flagged", "value": str(scan_results["anomalies_detected"])},
+                    {"name": "Readings Scanned", "value": str(scan_results["total_telemetry_scanned"])},
+                ]
+                if top_item:
+                    fields.append({"name": "Top Asset Tag", "value": str(top_item.get("asset_tag", "Unknown"))})
+                    fields.append({"name": "Outlier Score", "value": f"{top_item.get('anomaly_score', 0):.4f}"})
+                    fields.append({"name": "Site", "value": str(top_item.get("site_name", "Unknown"))})
+
+                async def _dispatch_anomaly_alert():
+                    try:
+                        await dispatch_webhook(
+                            url=webhook.url,
+                            platform=webhook.platform,
+                            alert_type="anomaly_detected",
+                            title=f"Telemetry Outliers Flagged ({scan_results['anomalies_detected']} readings)",
+                            description=f"Automated IsolationForest scan detected {scan_results['anomalies_detected']} telemetry readings with statistical anomalies.",
+                            fields=fields,
+                            severity="critical" if (top_item and top_item.get("anomaly_score", 0) >= 0.8) else "warning",
+                            secret_token=webhook.secret_token,
+                        )
+                    except Exception as dispatch_err:
+                        logger.warning(f"Background anomaly webhook dispatch failed: {dispatch_err}")
+
+                background_tasks.add_task(_dispatch_anomaly_alert)
 
         return _to_scan_response(scan_results)
     except Exception as e:

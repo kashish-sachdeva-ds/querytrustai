@@ -11,7 +11,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError
@@ -20,6 +20,8 @@ from app.database import get_db
 from app.models.user import User
 from app.models.data_source import DataSource
 from app.models.data_quality import DataQualityRun, DataQualityFinding
+from app.models.webhook import WebhookConfig
+from app.services.webhook_dispatcher import dispatch_webhook
 from app.core.auth import get_current_user, is_demo_workspace
 from app.core.data_quality import DataQualityProfiler
 from app.schemas.data_quality import (
@@ -136,6 +138,7 @@ def get_data_quality_summary(
 
 @router.post("/run", response_model=DataQualityRunResponse)
 def trigger_data_quality_run(
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -180,6 +183,48 @@ def trigger_data_quality_run(
         )
         .all()
     )
+
+    # Automated alert webhook dispatch on data quality degradation
+    summary_data = run.summary_json or {}
+    critical_count = summary_data.get("critical_count", 0)
+    workspace = current_user.workspace_name or "Default Workspace"
+    webhook = (
+        db.query(WebhookConfig)
+        .filter(
+            WebhookConfig.workspace_name == workspace,
+            WebhookConfig.is_active == True,
+            WebhookConfig.notify_on_data_quality == True,
+        )
+        .first()
+    )
+    if webhook and (critical_count > 0 or run.total_findings > 0):
+        fields = [
+            {"name": "Overall Health Score", "value": f"{summary_data.get('overall_health_score', 100):.1f}%"},
+            {"name": "Critical Rule Violations", "value": str(critical_count)},
+            {"name": "Total Findings", "value": str(run.total_findings)},
+            {"name": "Records Profiled", "value": str(summary_data.get("total_records_analyzed", 0))},
+        ]
+        top_critical = [f for f in findings if f.severity == "critical"]
+        if top_critical:
+            fields.append({"name": "Top Failed Rule", "value": top_critical[0].rule_name})
+            fields.append({"name": "Affected Entities", "value": str(top_critical[0].affected_count)})
+
+        async def _dispatch_dq_alert():
+            try:
+                await dispatch_webhook(
+                    url=webhook.url,
+                    platform=webhook.platform,
+                    alert_type="data_quality_degraded",
+                    title=f"Data Quality Degradation Alert ({critical_count} critical violations)",
+                    description=f"Automated diagnostic profiling detected {critical_count} critical data quality rule violations.",
+                    fields=fields,
+                    severity="critical" if critical_count > 0 else "warning",
+                    secret_token=webhook.secret_token,
+                )
+            except Exception as dq_err:
+                logger.warning(f"Background DQ webhook dispatch failed: {dq_err}")
+
+        background_tasks.add_task(_dispatch_dq_alert)
 
     return DataQualityRunResponse(
         summary=_to_run_summary(run),

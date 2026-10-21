@@ -1354,4 +1354,87 @@ export async function resetWorkspaceSandbox(): Promise<ActiveDataSourceResponse>
   return res.json()
 }
 
+export interface WebhookConfig {
+  id: string
+  workspace_name: string
+  name: string
+  url: string
+  platform: 'discord' | 'slack' | 'generic'
+  has_secret_token: boolean
+  is_active: boolean
+  notify_on_anomaly: boolean
+  notify_on_data_quality: boolean
+  last_dispatched_at?: string | null
+  last_status_code?: string | null
+  last_error?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface WebhookConfigPayload {
+  name: string
+  url: string
+  platform: 'discord' | 'slack' | 'generic'
+  secret_token?: string | null
+  is_active: boolean
+  notify_on_anomaly: boolean
+  notify_on_data_quality: boolean
+}
+
+export interface WebhookTestRequest {
+  url?: string
+  platform?: 'discord' | 'slack' | 'generic'
+}
+
+export interface WebhookTestResponse {
+  success: boolean
+  status_code?: number | null
+  latency_ms?: number | null
+  message: string
+}
+
+export async function fetchWebhookConfig(): Promise<WebhookConfig | null> {
+  const res = await authFetch(`${API_BASE}/webhooks`, { method: 'GET' })
+  if (!res.ok) {
+    if (res.status === 404) return null
+    throw new Error(`Failed to fetch webhook config: ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function saveWebhookConfig(payload: WebhookConfigPayload): Promise<WebhookConfig> {
+  const res = await authFetch(`${API_BASE}/webhooks`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiRequestError(err.detail || `Failed to save webhook configuration: ${res.status}`, res.status)
+  }
+  return res.json()
+}
+
+export async function deleteWebhookConfig(): Promise<void> {
+  const res = await authFetch(`${API_BASE}/webhooks`, {
+    method: 'DELETE',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiRequestError(err.detail || `Failed to delete webhook configuration: ${res.status}`, res.status)
+  }
+}
+
+export async function testWebhookAlert(payload?: WebhookTestRequest): Promise<WebhookTestResponse> {
+  const res = await authFetch(`${API_BASE}/webhooks/test`, {
+    method: 'POST',
+    body: JSON.stringify(payload || {}),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiRequestError(err.detail || `Failed to dispatch test alert: ${res.status}`, res.status)
+  }
+  return res.json()
+}
+
+
 

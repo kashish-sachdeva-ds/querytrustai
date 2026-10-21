@@ -1,18 +1,17 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-21  
-**Current milestone:** 27 — Full-Stack UI/UX Overhaul, Async Engine, & Cold-Start Resilience  
-**Overall status:** Complete full-stack modernization, UI/UX overhaul, and production cold-start hardening:
-1. ✅ **Cold-Start Resilience & Session Probes (`client.ts`, `AuthContext.tsx`, `ColdStartBanner.tsx`):** Eliminated blocking session spinners. Added `AbortController` timeout (4,000ms for auth/health probes, 15,000ms for analytics) with instant localStorage hydration, live retry countdown, and one-click "Enter Interactive Demo Workbench" fallback backed by deterministic seed fixtures.
-2. ✅ **Modern Frontend Architecture (`package.json`, `queries.ts`, `workbenchStore.ts`):** Integrated TanStack Query v5 for declarative server-state caching with offline fallback, Zustand for client workbench state, and Tailwind CSS v4 mapped to `--qt-*` tokens.
-3. ✅ **Code Splitting & Suspense Skeletons (`App.tsx`, `ViewShimmerSkeleton.tsx`):** Code-split all 8 workbench views using `React.lazy()` + accessible shimmering skeletons, bringing entry bundle down to 382 kB (107 kB gzip).
-4. ✅ **UI/UX Craft & Ergonomics (`AskDataView.tsx`, `DeviceDetailDrawer.tsx`, `MetricsRibbon.tsx`, `AstSafetyStepper.tsx`):** Integrated interactive 6-step AST Safety Pipeline Stepper, multi-metric telemetry charts with sparklines across all 5 dimensions (`cpu_utilization_pct`, `memory_utilization_pct`, `temperature_celsius`, `packet_loss_pct`, `latency_ms`), virtualized data grids with one-click JSON/CSV export, and sticky telemetry ribbon.
-5. ✅ **Backend Async Engine & Thread Offloading (`database.py`, `main.py`, `cache.py`):** Configured async SQLAlchemy 2.0 with `asyncpg` connection pooling and `statement_timeout = '5000ms'`. CPU-bound SQLGlot validation and IsolationForest inference offloaded to `asyncio.to_thread()`.
-6. ✅ **Response Caching, Compression & SSE Streaming (`cache.py`, `main.py`, `chat.py`):** Injected `GZipMiddleware(minimum_size=500)`, `ProcessTimeMiddleware` (`X-Process-Time-Ms`), in-memory TTL caching with `?refresh=true`, and Server-Sent Events endpoint `POST /api/v1/chat/stream` for real-time pipeline telemetry.
-7. ✅ **Strict Accessibility & Theme Invariants (`design-system.css`, `test_cold_start_and_a11y.mjs`):** Verified WCAG 2.1 AA across Warm Editorial Light (`#FAF8F5`) and Carbon Obsidian Dark (`#0B0F17`) with 0 critical or serious violations via automated Axe audits across all 8 views.
+**Current milestone:** 28 — Automated Alert Webhook Dispatcher (Discord, Slack, Generic Webhooks) & Incident Notification Pipeline  
+**Overall status:** Complete production alert notification architecture and full-stack workbench integration:
+1. ✅ **Automated Webhook Dispatch Engine (`webhook_dispatcher.py`):** Asynchronous alert dispatching via `httpx.AsyncClient` with automatic retries, SSRF protections (blocking cloud metadata IPs `169.254.169.254` and `metadata.google.internal`), and HMAC-SHA256 signature verification headers (`X-QueryTrust-Signature`).
+2. ✅ **Platform-Specific Rich Payload Formatters (`webhook_dispatcher.py`):** Discord rich embeds with severity color-coding (red for critical outliers, orange for warnings, green for normal) and Slack Block Kit structured blocks with diagnostic fields and timestamps.
+3. ✅ **Workspace-Isolated Webhook Configuration API (`webhooks.py`, `webhook.py`):** PostgreSQL `webhook_configs` model with workspace isolation and REST endpoints (`GET`, `POST`, `DELETE /api/v1/webhooks`, `POST /api/v1/webhooks/test`).
+4. ✅ **Real-Time Automated Alert Dispatch Triggers (`anomalies.py`, `data_quality.py`):** Non-blocking FastAPI `BackgroundTasks` automatically dispatch alerts when IsolationForest flags severe sensor anomalies or when data quality diagnostics detect critical rule violations.
+5. ✅ **Interactive Admin Webhook UI (`WebhookSettingsCard.tsx`, `AdminView.tsx`):** Modern settings card with platform cards (Discord, Slack, Custom), secret token toggle, triggers matrix, live test alert button with millisecond latency badge, and delivery audit footer.
+6. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 22.76s; zero Oxlint warnings; zero TypeScript errors; Vite production bundle built cleanly in 2.43s.
 
 **Automated Test Pass:**
-- **Backend:** 144/144 pytest tests pass in 25.64s (including async engine, SSE streaming, SQLGlot AST guard, and 37-case benchmark).
+- **Backend:** 151/151 pytest tests pass in 22.76s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, and webhooks).
 - **Frontend Build:** `npx tsc --noEmit` exits with 0 errors; `npm run lint` exits with 0 warnings and 0 errors; `npm run build` exits with code 0 and chunked bundle output.
 - **E2E & Accessibility:** Playwright test exits with code 0:
   - Scenario A (Healthy backend): Pass.

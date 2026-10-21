@@ -15,6 +15,7 @@ from app.api.v1.data_quality import router as data_quality_router
 from app.api.v1.anomalies import router as anomalies_router
 from app.api.v1.evaluations import router as evaluations_router
 from app.api.v1.data_sources import router as data_sources_router
+from app.api.v1.webhooks import router as webhooks_router
 
 from app.database import Base, engine
 import app.models  # noqa: F401 - Register all models
@@ -135,6 +136,7 @@ app.include_router(data_quality_router, prefix=settings.API_V1_PREFIX, tags=["Da
 app.include_router(anomalies_router, prefix=settings.API_V1_PREFIX, tags=["Anomalies"])
 app.include_router(evaluations_router, prefix=settings.API_V1_PREFIX, tags=["Evaluations"])
 app.include_router(data_sources_router, prefix=settings.API_V1_PREFIX, tags=["Data Sources"])
+app.include_router(webhooks_router, prefix=settings.API_V1_PREFIX, tags=["Alert Webhooks"])
 
 
 @app.get("/", tags=["Root"])

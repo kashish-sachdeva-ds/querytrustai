@@ -10,6 +10,7 @@ from app.models.evaluation import EvaluationRun
 from app.models.ml_model import MLModelVersion
 from app.models.access_request import AccessRequest
 from app.models.data_source import DataSource
+from app.models.webhook import WebhookConfig
 
 __all__ = [
     "User",
@@ -27,4 +28,5 @@ __all__ = [
     "MLModelVersion",
     "AccessRequest",
     "DataSource",
+    "WebhookConfig",
 ]

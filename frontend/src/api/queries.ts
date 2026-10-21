@@ -7,10 +7,18 @@ import {
   fetchEvaluationRuns,
   previewQuery,
   executeSavedQuery,
+  fetchWebhookConfig,
+  saveWebhookConfig,
+  deleteWebhookConfig,
+  testWebhookAlert,
   type DashboardSummaryResponse,
   type DeviceListResponse,
   type PreviewResponse,
   type ExecuteResponse,
+  type WebhookConfig,
+  type WebhookConfigPayload,
+  type WebhookTestRequest,
+  type WebhookTestResponse,
 } from './client'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -349,3 +357,52 @@ export function useAskDataMutation() {
     executeMutation,
   }
 }
+
+export function useWebhookQuery() {
+  const { isOfflineDemo } = useAuth()
+
+  return useQuery<WebhookConfig | null>({
+    queryKey: ['webhookConfig'],
+    queryFn: async () => {
+      if (isOfflineDemo) {
+        return null
+      }
+      try {
+        return await fetchWebhookConfig()
+      } catch (err) {
+        console.warn('Failed to load webhook configuration', err)
+        return null
+      }
+    },
+    staleTime: 30_000,
+  })
+}
+
+export function useSaveWebhookMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<WebhookConfig, Error, WebhookConfigPayload>({
+    mutationFn: (payload) => saveWebhookConfig(payload),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(['webhookConfig'], saved)
+      queryClient.invalidateQueries({ queryKey: ['webhookConfig'] })
+    },
+  })
+}
+
+export function useDeleteWebhookMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<void, Error, void>({
+    mutationFn: () => deleteWebhookConfig(),
+    onSuccess: () => {
+      queryClient.setQueryData(['webhookConfig'], null)
+      queryClient.invalidateQueries({ queryKey: ['webhookConfig'] })
+    },
+  })
+}
+
+export function useTestWebhookMutation() {
+  return useMutation<WebhookTestResponse, Error, WebhookTestRequest | undefined>({
+    mutationFn: (payload) => testWebhookAlert(payload),
+  })
+}
+

@@ -29,6 +29,7 @@ import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
+import { WebhookSettingsCard } from './WebhookSettingsCard'
 
 export const AdminView: React.FC = () => {
   const { user: currentUser } = useAuth()
@@ -614,6 +615,9 @@ export const AdminView: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Alert Webhooks & Dispatcher Card */}
+      <WebhookSettingsCard onNotify={setNotification} />
 
       {/* Activity History & Audit Logs Card */}
       <div className="content-card full-width-card" style={{ padding: 0, overflow: 'hidden' }}>

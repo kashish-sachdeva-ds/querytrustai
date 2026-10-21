@@ -1,16 +1,15 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-21  
-**Current milestone:** 30 — Linear/Vercel B2B Shell Architecture & Humanized Quickstart Cheatsheet  
-**Overall status:** Complete dark-mode shell unification and cognitive-load reduction across navigation, login, and quickstart:
-1. ✅ **Linear/Vercel Shell Aesthetic (`LinearShell.css`, `Sidebar.tsx`, `Header.tsx`):** Unified app surface under `#090D16` / `#0D111C` with `1px solid rgba(255, 255, 255, 0.07)` micro-borders, segmented navigation groups, active indicators, workspace switcher pill, consolidated telemetry status pill, and profile popover.
-2. ✅ **Humanized Quickstart Cheatsheet (`OnboardingModal.tsx`, `OnboardingModal.css`):** Replaced overwhelming 519-line simulated attack/database ping wall-of-text and intrusive sign-in auto-popup with a single-screen Linear-style cheatsheet (3 core principles + keyboard shortcuts table), accessible on-demand via the profile menu or global `?` keybinding. Removed AI-prototype `✨ Guide` navbar button.
-3. ✅ **Streamlined Enterprise Login Canvas (`LoginPage.tsx`, `LoginPage.css`):** Replaced confusing "offline zero-wait session" link with transparent demo preset pills (Admin, Analyst, Viewer) and enterprise SSO toggle with honest offline/live labeling.
-4. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 18.38s; 0 Oxlint errors across 49 files; TypeScript and Vite production bundle built cleanly in 2.38s.
+**Current milestone:** 31 — Render Cloud Deployment Hardening & Async Engine Safeguards  
+**Overall status:** Resolved cloud deployment blockers for Render web service:
+1. ✅ **Render Deployment Recovery (`requirements.txt`, `database.py`):** Removed `asyncpg` C-wheel requirement causing build failures on Render Linux container without build tools; wrapped async engine and sessionmaker initialization in defensive try-except handlers with graceful fallbacks so missing optional drivers never impede startup.
+2. ✅ **Container & Package Discovery Consistency (`Dockerfile`, `pyproject.toml`):** Aligned Dockerfile to install from `requirements.txt` directly; added explicit `tool.setuptools.packages.find` in `pyproject.toml` and created `backend/README.md` to guarantee clean installation under standard build tools.
+3. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 14.40s; TypeScript and Vite production bundle builds cleanly in 2.12s.
 
 **Automated Test Pass:**
-- **Backend:** 151/151 pytest tests pass in 18.38s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, and webhooks).
-- **Frontend Build:** `npx tsc -b && vite build` exits with code 0 (2037 modules transformed in 2.38s); `npm run lint` exits with 0 errors.
+- **Backend:** 151/151 pytest tests pass in 14.40s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, async engine resiliency, and webhooks).
+- **Frontend Build:** `npx tsc -b && vite build` exits with code 0 (2037 modules transformed in 2.12s); `npm run lint` exits with 0 errors.
 - **E2E & Accessibility:** Playwright test exits with code 0:
   - Scenario A (Healthy backend): Pass.
   - Scenario B (10s delayed Render cold start): Aborts in < 3,000ms (<= 4,000ms target), rendering fallback interactive workbench without hanging.

@@ -48,48 +48,63 @@ def get_readonly_db() -> Generator[Session, None, None]:
         db.close()
 
 
-# Asynchronous SQLAlchemy 2.0 engines & sessionmakers
-async_engine = create_async_engine(
-    settings.async_sqlalchemy_database_url,
-    pool_pre_ping=True,
-    pool_recycle=1800,
-    pool_size=10,
-    max_overflow=20,
-)
+import logging
+logger = logging.getLogger("querytrust.database")
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=async_engine,
-    class_=AsyncSession,
-    autocommit=False,
-    autoflush=False,
-    expire_on_commit=False,
-)
+# Asynchronous SQLAlchemy 2.0 engines & sessionmakers (graceful fallback if async driver is not installed)
+try:
+    async_engine = create_async_engine(
+        settings.async_sqlalchemy_database_url,
+        pool_pre_ping=True,
+        pool_recycle=1800,
+        pool_size=10,
+        max_overflow=20,
+    )
+    AsyncSessionLocal = async_sessionmaker(
+        bind=async_engine,
+        class_=AsyncSession,
+        autocommit=False,
+        autoflush=False,
+        expire_on_commit=False,
+    )
+except Exception as exc:
+    logger.warning(f"Async primary database engine deferred or driver not installed: {exc}")
+    async_engine = None
+    AsyncSessionLocal = None
 
-async_readonly_engine = create_async_engine(
-    settings.async_sqlalchemy_readonly_database_url,
-    pool_pre_ping=True,
-    pool_recycle=1800,
-    pool_size=10,
-    max_overflow=20,
-)
-
-AsyncReadonlySessionLocal = async_sessionmaker(
-    bind=async_readonly_engine,
-    class_=AsyncSession,
-    autocommit=False,
-    autoflush=False,
-    expire_on_commit=False,
-)
+try:
+    async_readonly_engine = create_async_engine(
+        settings.async_sqlalchemy_readonly_database_url,
+        pool_pre_ping=True,
+        pool_recycle=1800,
+        pool_size=10,
+        max_overflow=20,
+    )
+    AsyncReadonlySessionLocal = async_sessionmaker(
+        bind=async_readonly_engine,
+        class_=AsyncSession,
+        autocommit=False,
+        autoflush=False,
+        expire_on_commit=False,
+    )
+except Exception as exc:
+    logger.warning(f"Async read-only database engine deferred or driver not installed: {exc}")
+    async_readonly_engine = None
+    AsyncReadonlySessionLocal = None
 
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """Asynchronous dependency for app_user privileges."""
+    if AsyncSessionLocal is None:
+        raise RuntimeError("Async database session is unavailable: async driver is not installed or configured.")
     async with AsyncSessionLocal() as session:
         yield session
 
 
 async def get_async_readonly_db() -> AsyncGenerator[AsyncSession, None]:
     """Asynchronous dependency for analytics_reader SELECT-only privileges with statement timeout."""
+    if AsyncReadonlySessionLocal is None:
+        raise RuntimeError("Async read-only database session is unavailable: async driver is not installed or configured.")
     async with AsyncReadonlySessionLocal() as session:
         # Enforce 5,000ms statement timeout
         try:
@@ -97,3 +112,4 @@ async def get_async_readonly_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             pass
         yield session
+

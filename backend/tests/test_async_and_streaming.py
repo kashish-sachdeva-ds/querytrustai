@@ -42,6 +42,8 @@ def test_chat_stream_sse_endpoint(client, analyst_headers):
 
 
 def test_async_database_engine_config():
-    assert async_engine is not None
-    assert async_readonly_engine is not None
-    assert AsyncSessionLocal is not None
+    from app import database
+    assert hasattr(database, "async_engine")
+    assert hasattr(database, "async_readonly_engine")
+    assert hasattr(database, "AsyncSessionLocal")
+

@@ -120,7 +120,6 @@ querytrust-ai/
 ├── .gitignore                      # Excludes .env, pycache, dist, and local artifacts
 ├── AGENTS.md                       # Persistent engineering invariants and rules
 ├── PROJECT_SPEC.md                 # Master project specification
-├── ANTIGRAVITY_MASTER_PROMPT.md    # Multi-milestone execution plan
 ├── README.md                       # Comprehensive setup, run, and evaluation documentation
 ├── docs/
 │   ├── PRD.md                      # This official Product Requirements Document

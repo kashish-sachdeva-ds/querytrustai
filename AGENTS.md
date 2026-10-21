@@ -2,7 +2,7 @@
 
 ## Sources of truth
 - Read `PROJECT_SPEC.md` before implementing or changing architecture.
-- Follow `ANTIGRAVITY_MASTER_PROMPT.md` milestone gates.
+- Follow architectural milestone gates and requirements.
 - Keep `docs/BUILD_STATUS.md` truthful and current.
 
 ## Core invariants
@@ -20,7 +20,7 @@
 ## Runtime configuration and privacy
 - Never hard-code secrets or commit `.env`.
 - Keep `.env.example` current and use environment variables for credentials.
-- Do not assume Antigravity's coding-agent credentials are available to the running app.
+- Do not assume development assistant or host credentials are available to the running app.
 - If no external LLM key is configured, use a visibly labelled demo mode; do not claim a live inference call occurred.
 - Never log API keys, passwords, tokens, connection strings, or raw result datasets.
 

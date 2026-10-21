@@ -214,7 +214,7 @@ tests/test_sql_validator.py::test_empty_query_blocked PASSED             [100%]
 
 ### Visual Browser Verification
 
-- **Tool:** Antigravity Browser Subagent
+- **Tool:** Automated Browser Verification (Playwright)
 - **Actions executed & verified:**
   1. Signed into the workbench as `admin@querytrust.local`.
   2. Selected the **Ask Data** tab from the left sidebar.
@@ -318,7 +318,7 @@ tests/test_sql_validator.py (16 tests) PASSED
 
 ### Visual Browser Verification
 
-- **Tool:** Antigravity Browser Subagent
+- **Tool:** Automated Browser Verification (Playwright)
 - **Recording Artifact:** `data_quality_and_anomalies_demo_1792065610399.webp`
 - **Actions executed & verified:**
   1. Signed into the workbench as `admin@querytrust.local`.
@@ -411,7 +411,7 @@ tests/test_sql_validator.py (16 tests) PASSED
 
 ### Visual Browser Verification
 
-- **Tool:** Antigravity Browser Subagent
+- **Tool:** Automated Browser Verification (Playwright)
 - **Recording Artifact:** `evaluation_lab_demo_1792067431017.webp`
 - **Screenshot Artifact:** `evaluation_lab_cases_1792067482629.png`
 - **Actions executed & verified:**

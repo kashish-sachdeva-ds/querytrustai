@@ -1,27 +1,26 @@
 # QueryTrust AI
-## Product, Engineering, and Antigravity Build Specification
+## Product, Architecture, and Engineering Specification
 
-**Project type:** Full Stack AI Engineering capstone / college evaluation prototype  
+**Project type:** Full Stack Enterprise AI Analytics Workbench  
 **Version:** 1.0  
-**Prepared:** 14 October 2026  
-**Implementation window:** 7 days for the first demonstrable MVP  
+**Prepared:** October 2026  
 **Primary domain:** Synthetic networking-device inventory, warranties, service events, and telemetry  
-**Primary stack:** React + TypeScript + Vite, FastAPI + Python, PostgreSQL, an optional external LLM API, Docker Compose  
-**Build target:** A working, testable, explainable application - not a mock-up and not a claim to replace Snowflake or ThoughtSpot.
+**Primary stack:** React + TypeScript + Vite, FastAPI + Python, PostgreSQL, pluggable LLM provider, Docker Compose  
+**Build target:** A working, testable, explainable application - with zero-trust database isolation and verifiable security.
 
 ---
 
 ## Read this first
 
-This file is the product and engineering source of truth for the project. The developer agent must follow it unless the student explicitly approves a change. The companion `ANTIGRAVITY_MASTER_PROMPT.md` explains how to give this specification to Google Antigravity. The root-level `AGENTS.md` contains persistent implementation rules.
+This document serves as the formal product and engineering specification for the QueryTrust AI project. The root-level `AGENTS.md` contains persistent engineering invariants and security boundaries.
 
-### How to use this package
+### Engineering Method and Quality Bar
 
-1. Create or open a new, empty workspace in Antigravity.
-2. Copy `PROJECT_SPEC.md`, `ANTIGRAVITY_MASTER_PROMPT.md`, and `AGENTS.md` into the workspace root.
-3. Paste the master prompt into Antigravity and ask it to begin with Milestone 0 only.
-4. Review the proposed plan, then let it implement one milestone at a time.
-5. Do not accept a claim that a milestone is complete until its tests and visual checks have actually run.
+1. Follow a modular, test-driven implementation approach across all milestones.
+2. Maintain strict separation of concerns: React frontend, FastAPI routes, domain services, AST guard, database models, and automated tests.
+3. Keep `docs/BUILD_STATUS.md` updated with verified facts, passing test suites, and audit logs.
+4. Verify every feature with automated tests and browser inspections before declaring it complete.
+5. Never trade correctness or data security for an inflated feature count.
 
 ### Evidence and assumptions
 
@@ -341,7 +340,7 @@ Support these modes:
 - `LLM_PROVIDER=gemini`: use a real Google Gemini API only when a separate valid runtime API key is configured.
 - `LLM_PROVIDER=openai_compatible`: use the OpenAI SDK and configured compatible endpoint/key/model.
 
-Use a provider interface so other APIs could be added later. Do not assume the credentials used by the Antigravity coding assistant automatically exist in the running application. If no key is present, the app must still start in demo mode and explain its limitations.
+Use a provider interface so other APIs could be added later. Do not assume development-time environment credentials automatically exist in the running application. If no key is present, the app must still start in demo mode and explain its limitations.
 
 Never hard-code an API key. Provide `.env.example`, load secrets from environment variables, ignore `.env` in git, redact secrets in logs, and fail with a helpful message for invalid provider configuration.
 
@@ -713,7 +712,7 @@ Minimum controls:
 
 # 17. Suggested repository structure
 
-Antigravity may make small changes if it documents them, but preserve clear separation of frontend, backend, infrastructure and docs.
+Maintain a clear separation of frontend, backend, infrastructure, and documentation:
 
 ```text
 querytrust-ai/
@@ -724,7 +723,6 @@ querytrust-ai/
 ├── docker-compose.yml
 ├── Makefile
 ├── PROJECT_SPEC.md
-├── ANTIGRAVITY_MASTER_PROMPT.md
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── API_CONTRACT.md
@@ -1033,9 +1031,9 @@ The final report must distinguish planned behavior, implemented behavior, tested
 
 ---
 
-# 26. Antigravity implementation protocol
+# 26. Iterative implementation protocol
 
-The agent must use an iterative engineering workflow:
+Development follows a strict, disciplined engineering workflow:
 
 1. Read this entire spec and `AGENTS.md` before coding.
 2. Inspect the actual workspace, available runtime versions, existing files and credentials/configuration status. Never delete existing work without asking.
@@ -1089,8 +1087,6 @@ The course handout lists Docker/Kubernetes and ML monitoring/versioning in its s
 
 Use primary documentation first and verify current APIs/version behavior during implementation.
 
-- Google Antigravity rules and persistent workspace instructions: https://www.antigravity.google/docs/rules/
-- Google Antigravity IDE overview: https://www.antigravity.google/docs/ide/overview/
 - Snowflake Cortex Analyst evaluation documentation: https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-analyst-evaluations
 - ThoughtSpot Spotter product overview: https://www.thoughtspot.com/product/agents/spotter
 - FastAPI: https://fastapi.tiangolo.com/

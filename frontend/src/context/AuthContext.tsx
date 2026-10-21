@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [retryCountdown, setRetryCountdown] = useState<number>(10)
   const retryTimerRef = useRef<number | null>(null)
 
-  const verifySession = useCallback(async (isInitial = false): Promise<void> => {
+  const verifySession = useCallback(async (_isInitial = false): Promise<void> => {
     try {
       const me = await apiGetMe(PROBE_TIMEOUT_MS)
       setUser(me)

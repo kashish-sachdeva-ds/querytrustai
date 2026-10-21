@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import {
   Activity,
   FlaskConical,
@@ -13,29 +13,43 @@ import {
   Sparkles,
   Database,
 } from 'lucide-react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { useTheme } from './context/ThemeContext'
 import { LoginPage } from './components/LoginPage'
 import { LandingPage } from './components/LandingPage'
-import { QueryTrustLogo } from './components/QueryTrustLogo'
 import { OnboardingModal } from './components/OnboardingModal'
 import { Sidebar, type ActiveTab } from './components/Sidebar'
 import { Header } from './components/Header'
-import { OverviewView } from './components/OverviewView'
-import { DevicesView } from './components/DevicesView'
-import { AdminView } from './components/AdminView'
-import { AskDataView } from './components/AskDataView'
-import { DataSourcesView } from './components/DataSourcesView'
-import { QueryHistoryView } from './components/QueryHistoryView'
-import { DataQualityView } from './components/DataQualityView'
-import { AnomalyMonitorView } from './components/AnomalyMonitorView'
-import EvaluationLabView from './components/EvaluationLabView'
+import { ColdStartBanner } from './components/ColdStartBanner'
+import { ViewShimmerSkeleton } from './components/ViewShimmerSkeleton'
 import { CommandPalette, type CommandPaletteAction } from './components/CommandPalette'
 import { withLayoutTransition } from './motion'
 import { pushUrlParams, readUrlParam } from './urlState'
 import { NotFoundPage } from './components/NotFoundPage'
 import { ApiFailureToast } from './components/ApiFailureToast'
 import './ProductExperience.css'
+
+// Code-split all 8 primary workbench views
+const OverviewView = React.lazy(() => import('./components/OverviewView').then((m) => ({ default: m.OverviewView })))
+const DevicesView = React.lazy(() => import('./components/DevicesView').then((m) => ({ default: m.DevicesView })))
+const AskDataView = React.lazy(() => import('./components/AskDataView').then((m) => ({ default: m.AskDataView })))
+const DataSourcesView = React.lazy(() => import('./components/DataSourcesView').then((m) => ({ default: m.DataSourcesView })))
+const AdminView = React.lazy(() => import('./components/AdminView').then((m) => ({ default: m.AdminView })))
+const DataQualityView = React.lazy(() => import('./components/DataQualityView').then((m) => ({ default: m.DataQualityView })))
+const AnomalyMonitorView = React.lazy(() => import('./components/AnomalyMonitorView').then((m) => ({ default: m.AnomalyMonitorView })))
+const QueryHistoryView = React.lazy(() => import('./components/QueryHistoryView').then((m) => ({ default: m.QueryHistoryView })))
+const EvaluationLabView = React.lazy(() => import('./components/EvaluationLabView'))
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 const tabs: ActiveTab[] = [
   'overview',
@@ -84,7 +98,6 @@ const AppShell: React.FC = () => {
     if (params) {
       pushUrlParams({ tab, ...params })
     } else if (tab === 'overview') {
-      // Home is a clean destination, never a carrier for inventory filters.
       window.history.pushState({}, '', `${window.location.pathname}${window.location.hash}`)
     } else {
       pushUrlParams({ tab })
@@ -149,31 +162,40 @@ const AppShell: React.FC = () => {
     return pageActions
   }, [user?.role, mode, theme, toggleMode, toggleTheme])
 
-  if (isLoading) {
+  // Non-blocking authentication: If not authenticated and not loading, show login/landing
+  if (!isAuthenticated && !isLoading) {
+    if (unauthView === 'login') {
+      return (
+        <>
+          <ColdStartBanner />
+          <LoginPage onBackToLanding={() => setUnauthView('landing')} />
+        </>
+      )
+    }
     return (
-      <div className="login-wrapper">
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-            <QueryTrustLogo size={52} />
-          </div>
-          <div className="table-loading-spinner" />
-          <p className="text-muted" style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
-            Verifying cryptographic session...
-          </p>
+      <>
+        <ColdStartBanner />
+        <LandingPage onGoToLogin={() => setUnauthView('login')} />
+      </>
+    )
+  }
+
+  // If loading without cached credentials, show shell skeleton with top cold-start banner
+  if (isLoading && !user) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+        <ColdStartBanner />
+        <div style={{ flex: 1, padding: '24px' }}>
+          <ViewShimmerSkeleton title="Initializing Workspace" />
         </div>
       </div>
     )
   }
 
-  if (!isAuthenticated) {
-    if (unauthView === 'login') {
-      return <LoginPage onBackToLanding={() => setUnauthView('landing')} />
-    }
-    return <LandingPage onGoToLogin={() => setUnauthView('login')} />
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      <ColdStartBanner />
+
       {/* Invite Workspace Awareness Banner if logged into another account */}
       {joinParam && user && user.workspace_name?.toLowerCase() !== joinParam.toLowerCase() && (
         <div style={{
@@ -248,27 +270,29 @@ const AppShell: React.FC = () => {
 
           <main className="content-area">
             <div className="page-transition" key={activeTab}>
-              {activeTab === 'overview' && (
-                <OverviewView
-                  onNavigate={selectTab}
-                  onAskQuestion={openAskQuestion}
-                  onOpenDevice={openDevice}
-                />
-              )}
-              {activeTab === 'devices' && <DevicesView onAskQuestion={openAskQuestion} />}
-              {activeTab === 'ask-data' && <AskDataView initialQuestion={pendingAskQuestion} />}
-              {activeTab === 'data-sources' && <DataSourcesView />}
-              {activeTab === 'admin' && <AdminView />}
+              <Suspense fallback={<ViewShimmerSkeleton title={`Loading ${activeTab.replace('-', ' ')}...`} />}>
+                {activeTab === 'overview' && (
+                  <OverviewView
+                    onNavigate={selectTab}
+                    onAskQuestion={openAskQuestion}
+                    onOpenDevice={openDevice}
+                  />
+                )}
+                {activeTab === 'devices' && <DevicesView onAskQuestion={openAskQuestion} />}
+                {activeTab === 'ask-data' && <AskDataView initialQuestion={pendingAskQuestion} />}
+                {activeTab === 'data-sources' && <DataSourcesView />}
+                {activeTab === 'admin' && <AdminView />}
 
-              {activeTab === 'data-quality' && <DataQualityView />}
-              {activeTab === 'anomalies' && (
-                <AnomalyMonitorView
-                  onOpenDevice={openDevice}
-                />
-              )}
+                {activeTab === 'data-quality' && <DataQualityView />}
+                {activeTab === 'anomalies' && (
+                  <AnomalyMonitorView
+                    onOpenDevice={openDevice}
+                  />
+                )}
 
-              {activeTab === 'history' && <QueryHistoryView onAskQuestion={openAskQuestion} />}
-              {activeTab === 'evaluations' && <EvaluationLabView />}
+                {activeTab === 'history' && <QueryHistoryView onAskQuestion={openAskQuestion} />}
+                {activeTab === 'evaluations' && <EvaluationLabView />}
+              </Suspense>
             </div>
           </main>
         </div>
@@ -295,8 +319,10 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <AppShell />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
+    </QueryClientProvider>
   )
 }

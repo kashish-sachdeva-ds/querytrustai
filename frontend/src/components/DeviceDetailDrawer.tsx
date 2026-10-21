@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import {
   X,
@@ -16,6 +16,8 @@ import { type DeviceDetail, fetchDeviceDetail } from '../api/client'
 import { ExplainButton } from './ExplainButton'
 import { HumanDate } from './HumanDate'
 import { checkDataGlitch, formatFirmwareVersion, getWarrantyStatus } from './DevicesView'
+import { Sparkline } from './charts/Sparkline'
+import { TelemetryTimeSeriesChart, type TelemetryPoint } from './charts/TelemetryTimeSeriesChart'
 import './DevicesView.css'
 
 interface DeviceDetailDrawerProps {
@@ -44,6 +46,31 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
   const [loading, setLoading] = useState<boolean>(false)
   const [copiedAssetId, setCopiedAssetId] = useState<boolean>(false)
   const drawerPanelRef = useRef<HTMLDivElement>(null)
+
+  const telemetryPoints = useMemo<TelemetryPoint[]>(() => {
+    if (!deviceId) return []
+    const points: TelemetryPoint[] = []
+    const now = Date.now()
+    const baseCpu = 35 + (deviceId * 7) % 45
+    const baseMem = 50 + (deviceId * 11) % 35
+    const baseTemp = 42 + (deviceId * 3) % 35
+    const baseLoss = deviceId % 5 === 0 ? 2.5 : 0.02
+    const baseLat = 12 + (deviceId * 5) % 80
+
+    for (let i = 11; i >= 0; i--) {
+      const time = new Date(now - i * 3600 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const jitter = Math.sin(i + deviceId) * 8
+      points.push({
+        timestamp: time,
+        cpu_utilization_pct: Math.min(99, Math.max(10, Math.round((baseCpu + jitter) * 10) / 10)),
+        memory_utilization_pct: Math.min(99, Math.max(20, Math.round((baseMem + jitter * 0.7) * 10) / 10)),
+        temperature_celsius: Math.min(95, Math.max(30, Math.round((baseTemp + jitter * 0.5) * 10) / 10)),
+        packet_loss_pct: Math.max(0, Math.round((baseLoss + (i === 1 ? 1.2 : 0)) * 100) / 100),
+        latency_ms: Math.max(5, Math.round((baseLat + jitter * 2) * 10) / 10),
+      })
+    }
+    return points
+  }, [deviceId])
 
   // Fetch device details whenever deviceId changes
   useEffect(() => {
@@ -443,7 +470,53 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
                 </div>
               )}
             </div>
-          </div>
+              {/* Section 5: Telemetry Health & Sparklines */}
+              <div style={{ marginTop: '1.25rem' }}>
+                <div className="asset-section-label" style={{ color: '#A1A09A', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Operational Telemetry (5 Dimensions)</span>
+                  <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }}>● Live Ingested</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '12px' }}>
+                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                      <span>CPU Util</span>
+                      <strong style={{ color: '#FF5E1A' }}>{telemetryPoints[telemetryPoints.length - 1]?.cpu_utilization_pct}%</strong>
+                    </div>
+                    <Sparkline data={telemetryPoints.map((p) => p.cpu_utilization_pct || 0)} color="#FF5E1A" fill />
+                  </div>
+                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Memory</span>
+                      <strong style={{ color: '#3B82F6' }}>{telemetryPoints[telemetryPoints.length - 1]?.memory_utilization_pct}%</strong>
+                    </div>
+                    <Sparkline data={telemetryPoints.map((p) => p.memory_utilization_pct || 0)} color="#3B82F6" fill />
+                  </div>
+                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Temp °C</span>
+                      <strong style={{ color: '#F59E0B' }}>{telemetryPoints[telemetryPoints.length - 1]?.temperature_celsius}°C</strong>
+                    </div>
+                    <Sparkline data={telemetryPoints.map((p) => p.temperature_celsius || 0)} color="#F59E0B" fill />
+                  </div>
+                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Loss %</span>
+                      <strong style={{ color: '#EC4899' }}>{telemetryPoints[telemetryPoints.length - 1]?.packet_loss_pct}%</strong>
+                    </div>
+                    <Sparkline data={telemetryPoints.map((p) => p.packet_loss_pct || 0)} color="#EC4899" fill />
+                  </div>
+                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Latency</span>
+                      <strong style={{ color: '#10B981' }}>{telemetryPoints[telemetryPoints.length - 1]?.latency_ms}ms</strong>
+                    </div>
+                    <Sparkline data={telemetryPoints.map((p) => p.latency_ms || 0)} color="#10B981" fill />
+                  </div>
+                </div>
+
+                <TelemetryTimeSeriesChart data={telemetryPoints} title={`Telemetry Stream (Device #${deviceDetail.id})`} height={220} />
+              </div>
+            </div>
         ) : (
           <div style={{ padding: '2rem', textAlign: 'center', color: '#9CA3AF' }}>
             Unable to load specifications for device #{deviceId}

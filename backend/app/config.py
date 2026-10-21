@@ -88,6 +88,24 @@ class Settings(BaseSettings):
             url = url.replace("postgres://", "postgresql://", 1)
         return url
 
+    @property
+    def async_sqlalchemy_database_url(self) -> str:
+        url = self.sqlalchemy_database_url
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return url
+
+    @property
+    def async_sqlalchemy_readonly_database_url(self) -> str:
+        url = self.sqlalchemy_readonly_database_url
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return url
+
 
 @lru_cache()
 def get_settings() -> Settings:

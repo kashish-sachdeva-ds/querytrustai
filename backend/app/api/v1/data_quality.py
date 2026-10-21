@@ -74,8 +74,11 @@ def _to_finding_item(f: DataQualityFinding, total_devices: int = 5000) -> DataQu
     )
 
 
+from app.core.cache import ttl_cache
+
 @router.get("/summary", response_model=DataQualityRunSummary)
 def get_data_quality_summary(
+    refresh: bool = Query(False, description="Bypass cache and force recalculation"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -83,6 +86,12 @@ def get_data_quality_summary(
 
     If no run exists yet, initiates an initial baseline profiling run automatically.
     """
+    cache_key = f"dq_summary:{current_user.workspace_name}"
+    if not refresh:
+        cached_val = ttl_cache.get(cache_key)
+        if cached_val is not None:
+            return cached_val
+
     if not is_demo_workspace(current_user):
         active_ds = (
             db.query(DataSource)
@@ -120,7 +129,9 @@ def get_data_quality_summary(
         profiler = DataQualityProfiler(db)
         latest_run = profiler.run_all_checks(triggered_by_user_id=current_user.id)
 
-    return _to_run_summary(latest_run)
+    res = _to_run_summary(latest_run)
+    ttl_cache.set(cache_key, res, ttl=60)
+    return res
 
 
 @router.post("/run", response_model=DataQualityRunResponse)

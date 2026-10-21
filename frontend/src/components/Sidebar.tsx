@@ -102,7 +102,7 @@ function getQuestionStatus(item: QueryHistoryItem) {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQuestion }) => {
-  const { user } = useAuth()
+  const { user, connectionState } = useAuth()
   const isAdmin = user?.role === 'admin'
   const isViewer = user?.role === 'viewer'
   const canAsk = true // PROJECT_SPEC: Viewers, Analysts, and Admins can ask governed read-only questions
@@ -609,6 +609,56 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
             )
           )}
         </button>
+
+        {/* Live backend connection heartbeat badge */}
+        <div
+          style={{
+            padding: isCollapsed ? '6px 0' : '6px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
+            gap: '8px',
+            fontSize: '0.72rem',
+            borderTop: '1px solid var(--qt-border, #E6E4E0)',
+            marginTop: '8px',
+            color: 'var(--qt-muted, #766F68)',
+          }}
+          title={
+            connectionState === 'connected'
+              ? 'Backend API & PostgreSQL database connected'
+              : connectionState === 'waking_backend'
+              ? 'Render backend server is waking up (cold start)'
+              : 'Operating in offline demo mode with local fixtures'
+          }
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor:
+                connectionState === 'connected'
+                  ? '#1F7A4C'
+                  : connectionState === 'waking_backend'
+                  ? '#FF5E1A'
+                  : '#B45309',
+              boxShadow:
+                connectionState === 'connected'
+                  ? '0 0 6px rgba(31, 122, 76, 0.6)'
+                  : '0 0 6px rgba(255, 94, 26, 0.6)',
+              flexShrink: 0,
+            }}
+          />
+          {!isCollapsed && (
+            <span style={{ fontWeight: 600, color: 'var(--qt-ink, #191817)' }}>
+              {connectionState === 'connected'
+                ? 'Backend: Connected'
+                : connectionState === 'waking_backend'
+                ? 'Backend: Waking Up...'
+                : 'Offline Demo Mode'}
+            </span>
+          )}
+        </div>
       </div>
     </aside>
   )

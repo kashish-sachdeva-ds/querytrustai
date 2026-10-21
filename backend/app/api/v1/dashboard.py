@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 import re
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -8,6 +8,7 @@ from app.database import get_db
 from app.models import Device, Site, ServiceEvent, User
 from app.models.data_source import DataSource
 from app.core.auth import get_current_user, is_demo_workspace
+from app.core.cache import ttl_cache
 from app.schemas.dashboard import (
     DashboardSummaryResponse,
     MetricItem,
@@ -21,6 +22,7 @@ REFERENCE_DATE = date(2026, 10, 14)
 
 @router.get("/summary", response_model=DashboardSummaryResponse)
 def get_dashboard_summary(
+    refresh: bool = Query(False, description="Bypass cache and force recalculation"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -28,6 +30,12 @@ def get_dashboard_summary(
 
     Requires authenticated user (any role: Viewer, Analyst, Admin).
     """
+    cache_key = f"dashboard_summary:{current_user.workspace_name}"
+    if not refresh:
+        cached_val = ttl_cache.get(cache_key)
+        if cached_val is not None:
+            return cached_val
+
     # Enforce workspace data isolation: new company workspaces start empty until a database is connected or sample data is loaded
     if not is_demo_workspace(current_user):
         active_ds = (
@@ -213,7 +221,7 @@ def get_dashboard_summary(
         for row in top_sites_raw
     ]
 
-    return DashboardSummaryResponse(
+    res = DashboardSummaryResponse(
         total_devices=total_devices,
         active_devices=active_devices,
         expiring_warranties_30d=expiring_warranties_30d,
@@ -227,3 +235,5 @@ def get_dashboard_summary(
         top_sites_by_expiring_warranties=top_sites_by_expiring_warranties,
         reference_date="2026-10-14",
     )
+    ttl_cache.set(cache_key, res, ttl=60)
+    return res

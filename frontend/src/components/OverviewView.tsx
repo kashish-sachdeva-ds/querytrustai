@@ -5,6 +5,7 @@ import {
   Clock,
   Database,
   RefreshCw,
+  RotateCcw,
   Search,
   Send,
   Server,
@@ -21,6 +22,7 @@ import {
   fetchDataQualitySummary,
   fetchActiveDataSource,
   seedWorkspaceSandbox,
+  resetWorkspaceSandbox,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -178,6 +180,19 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       await loadData(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to seed sample data.')
+    } finally {
+      setSeeding(false)
+    }
+  }
+
+  const handleResetSandbox = async () => {
+    setSeeding(true)
+    setError(null)
+    try {
+      await resetWorkspaceSandbox()
+      await loadData(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reset workspace.')
     } finally {
       setSeeding(false)
     }
@@ -427,12 +442,24 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               onClick={() => loadData(true)}
               disabled={loading || refreshing}
               title="Refresh this overview (Press R)"
-              aria-label="Refresh overview data"
             >
               <RefreshCw size={13} className={refreshing ? 'spin-icon' : ''} />
               <span>{refreshing ? 'Updating…' : 'Refresh'}</span>
               <kbd className="hero-kbd-badge">R</kbd>
             </button>
+            {!isDemo && !isUnconfigured && activeSource?.mode === 'sandbox' && user?.role === 'admin' && (
+              <button
+                type="button"
+                className="hero-refresh-btn"
+                onClick={handleResetSandbox}
+                disabled={loading || refreshing || seeding}
+                title="Reset workspace back to clean unconfigured state"
+                style={{ borderColor: 'var(--qt-border)' }}
+              >
+                <RotateCcw size={13} className={seeding ? 'spin-icon' : ''} />
+                <span>{seeding ? 'Resetting…' : 'Reset to Clean Workspace'}</span>
+              </button>
+            )}
           </div>
         }
       />
@@ -540,6 +567,49 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <Database size={14} />
               <span>Explore Data Catalog</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 3. ENTERPRISE WORKSPACE SAMPLE SANDBOX BANNER (When Sample Data Active) ─── */}
+      {!isDemo && !isUnconfigured && activeSource?.mode === 'sandbox' && (
+        <div className="workspace-hero-banner" style={{ borderLeft: '3px solid var(--qt-accent, #ff5a14)' }}>
+          <div className="workspace-hero-left">
+            <div className="workspace-hero-status">
+              <span className="workspace-pulse-dot" style={{ background: 'var(--qt-accent, #ff5a14)' }} />
+              <span className="workspace-badge-text">Sample Sandbox Telemetry Active</span>
+              <span className="workspace-name-badge">{activeSource.name}</span>
+            </div>
+            <h2 className="workspace-hero-title">
+              {user?.workspace_name || 'Enterprise Workspace'} &bull; Exploring Sample Data
+            </h2>
+            <p className="workspace-hero-desc">
+              Your workspace is running an isolated sample dataset with 5,000 synthetic devices and telemetry signals. Ready to connect your actual database or reset to clean onboarding?
+            </p>
+          </div>
+          <div className="workspace-hero-actions">
+            {user?.role === 'admin' && (
+              <button
+                type="button"
+                className="workspace-hero-btn primary"
+                onClick={() => onNavigate('data-sources')}
+              >
+                <Database size={14} />
+                <span>Connect Real DB</span>
+              </button>
+            )}
+            {user?.role === 'admin' && (
+              <button
+                type="button"
+                className="workspace-hero-btn secondary"
+                onClick={handleResetSandbox}
+                disabled={seeding}
+                title="Remove sample data and return to clean workspace"
+              >
+                <RotateCcw size={14} className={seeding ? 'spin-icon' : ''} />
+                <span>{seeding ? 'Resetting…' : 'Reset to Clean Workspace'}</span>
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -250,7 +250,9 @@ export interface QueryHistoryResponse {
 }
 
 const TOKEN_KEY = 'querytrust_jwt_token'
-const API_TIMEOUT_MS = 25_000
+export const PROBE_TIMEOUT_MS = 4_000
+export const ANALYTICS_TIMEOUT_MS = 15_000
+export const DEFAULT_API_TIMEOUT_MS = 8_000
 const inFlightRequests = new Map<string, Promise<unknown>>()
 
 export class ApiRequestError extends Error {
@@ -264,9 +266,13 @@ function notifyRetryableApiFailure(message: string): void {
   window.dispatchEvent(new CustomEvent('querytrust:api-failure', { detail: { message } }))
 }
 
-async function requestWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+export async function requestWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = DEFAULT_API_TIMEOUT_MS
+): Promise<Response> {
   const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS)
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const response = await fetch(url, { ...options, signal: controller.signal })
@@ -276,7 +282,7 @@ async function requestWithTimeout(url: string, options: RequestInit = {}): Promi
     return response
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      const message = 'The request took longer than 8 seconds. Check the service and try again.'
+      const message = `The request timed out after ${(timeoutMs / 1000).toFixed(0)} seconds. Check the service and try again.`
       notifyRetryableApiFailure(message)
       throw new ApiRequestError(message, undefined, true)
     }
@@ -343,7 +349,11 @@ export function clearStoredToken(): void {
   } catch {}
 }
 
-async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+async function authFetch(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = DEFAULT_API_TIMEOUT_MS
+): Promise<Response> {
   const headers = new Headers(options.headers || {})
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json')
@@ -354,11 +364,15 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const response = await requestWithTimeout(url, {
-    ...options,
-    headers,
-    credentials: 'same-origin',
-  })
+  const response = await requestWithTimeout(
+    url,
+    {
+      ...options,
+      headers,
+      credentials: 'same-origin',
+    },
+    timeoutMs
+  )
 
   if (response.status === 401) {
     // Token may have expired
@@ -372,7 +386,7 @@ const API_BASE_ORIGIN = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/,
 const API_BASE = `${API_BASE_ORIGIN}/api/v1`
 
 export async function fetchHealth(): Promise<HealthResponse> {
-  const res = await requestWithTimeout(`${API_BASE_ORIGIN}/health`)
+  const res = await requestWithTimeout(`${API_BASE_ORIGIN}/health`, {}, PROBE_TIMEOUT_MS)
   if (!res.ok) {
     throw new Error(`Health probe failed: ${res.statusText}`)
   }
@@ -380,7 +394,7 @@ export async function fetchHealth(): Promise<HealthResponse> {
 }
 
 export async function fetchReady(): Promise<HealthResponse> {
-  const res = await requestWithTimeout(`${API_BASE_ORIGIN}/ready`)
+  const res = await requestWithTimeout(`${API_BASE_ORIGIN}/ready`, {}, PROBE_TIMEOUT_MS)
   if (!res.ok) {
     throw new Error(`Readiness probe failed: ${res.statusText}`)
   }
@@ -501,8 +515,8 @@ export async function apiJoinWorkspace(payload: JoinWorkspacePayload): Promise<L
   return data
 }
 
-export async function apiGetMe(): Promise<UserMeResponse> {
-  const res = await authFetch(`${API_BASE}/auth/me`)
+export async function apiGetMe(timeoutMs: number = PROBE_TIMEOUT_MS): Promise<UserMeResponse> {
+  const res = await authFetch(`${API_BASE}/auth/me`, {}, timeoutMs)
   if (!res.ok) {
     throw new Error(`Failed to authenticate user: ${res.status}`)
   }
@@ -723,10 +737,14 @@ export async function previewQuery(question: string, sessionId?: string | null):
   const cleanQuestion = requireText(question, 'Question', 2, 1000)
   if (sessionId) requireUuid(sessionId, 'Chat session ID')
   return singleFlight(`preview:${sessionId || 'new'}:${cleanQuestion}`, async () => {
-    const res = await authFetch(`${API_BASE}/analytics/preview`, {
-      method: 'POST',
-      body: JSON.stringify({ question: cleanQuestion, session_id: sessionId || null }),
-    })
+    const res = await authFetch(
+      `${API_BASE}/analytics/preview`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ question: cleanQuestion, session_id: sessionId || null }),
+      },
+      ANALYTICS_TIMEOUT_MS
+    )
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new ApiRequestError(err.detail || `Query preview failed: ${res.status}`, res.status, res.status >= 500)
@@ -777,10 +795,14 @@ export async function deleteChatSession(sessionId: string): Promise<void> {
 export async function executeSavedQuery(queryRunId: string): Promise<ExecuteResponse> {
   requireUuid(queryRunId, 'Query preview ID')
   return singleFlight(`query-execute:${queryRunId}`, async () => {
-    const res = await authFetch(`${API_BASE}/analytics/execute`, {
-      method: 'POST',
-      body: JSON.stringify({ query_run_id: queryRunId }),
-    })
+    const res = await authFetch(
+      `${API_BASE}/analytics/execute`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ query_run_id: queryRunId }),
+      },
+      ANALYTICS_TIMEOUT_MS
+    )
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
       throw new ApiRequestError(err.detail || `Query execution failed: ${res.status}`, res.status, res.status >= 500)
@@ -1320,4 +1342,16 @@ export async function seedWorkspaceSandbox(): Promise<ActiveDataSourceResponse> 
   }
   return res.json()
 }
+
+export async function resetWorkspaceSandbox(): Promise<ActiveDataSourceResponse> {
+  const res = await authFetch(`${API_BASE}/data-sources/reset-sandbox`, {
+    method: 'POST',
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new ApiRequestError(err.detail || `Failed to reset workspace sandbox: ${res.status}`, res.status)
+  }
+  return res.json()
+}
+
 

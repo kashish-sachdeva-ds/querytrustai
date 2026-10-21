@@ -43,3 +43,8 @@ class ChatMessageCreate(StrictRequestModel):
     content: str = Field(..., min_length=1)
     role: str = Field("user", pattern="^(user|assistant|system)$")
     metadata_json: Optional[Dict[str, Any]] = None
+
+
+class ChatStreamRequest(StrictRequestModel):
+    question: str = Field(..., min_length=2, max_length=1000)
+    session_id: Optional[uuid.UUID] = None

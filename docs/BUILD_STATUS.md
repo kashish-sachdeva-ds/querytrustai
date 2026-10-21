@@ -1,18 +1,24 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-10-20  
-**Current milestone:** 26 — Adversarial Security Hardening & Enterprise Governance  
-**Overall status:** Complete implementation of all critical and high-severity security findings from the adversarial enterprise audit:
-1. ✅ **Personal Credentials Purged (`main.py`):** Removed hardcoded personal credentials from server startup.
-2. ✅ **Demo Mode Security Boundary (`config.py`, `main.py`, `auth.py`):** Demo seeding and demo login shortcuts gated strictly behind explicit `DEMO_MODE=true` setting; demo passwords configurable via environment variables (`DEMO_ADMIN_PASSWORD`, etc.).
-3. ✅ **Cookie Scope Hardening (`auth.py`):** Auth session cookie path expanded from restrictive `/api/v1` to root `/` with `SameSite=Strict` and `HttpOnly=True`.
-4. ✅ **SQLGlot AST Schema-Qualified Function Security (`sql_validator.py`):** Added inspection for schema-prefixed functions and `exp.Dot` expressions. Calls like `pg_catalog.pg_sleep()`, `pg_catalog.version()`, `current_setting()`, and `pg_backend_pid()` are proactively blocked. Added dedicated unit tests.
-5. ✅ **SSRF Protection on Data Sources (`data_source_service.py`, `data_sources.py`):** Prohibited connections to cloud metadata endpoints (`169.254.169.254`, `metadata.google.internal`, etc.) and internal restricted hosts across test and creation workflows. Added regression tests.
-6. ✅ **Independent Encryption Key (`config.py`, `data_source_service.py`):** Added separate `ENCRYPTION_KEY` environment variable for Fernet credential encryption, decoupling stored database credentials from the JWT `SECRET_KEY`.
-7. ✅ **Database Connection Pool Resilience (`database.py`):** Added `pool_recycle=1800` to primary and read-only engines to prevent stale/dropped TCP connections.
-8. ✅ **Environment Configuration Documentation (`.env.example`):** Added all new security, SSRF, and demo configuration keys with safe enterprise defaults.
+**Last updated:** 2026-10-21  
+**Current milestone:** 27 — Full-Stack UI/UX Overhaul, Async Engine, & Cold-Start Resilience  
+**Overall status:** Complete full-stack modernization, UI/UX overhaul, and production cold-start hardening:
+1. ✅ **Cold-Start Resilience & Session Probes (`client.ts`, `AuthContext.tsx`, `ColdStartBanner.tsx`):** Eliminated blocking session spinners. Added `AbortController` timeout (4,000ms for auth/health probes, 15,000ms for analytics) with instant localStorage hydration, live retry countdown, and one-click "Enter Interactive Demo Workbench" fallback backed by deterministic seed fixtures.
+2. ✅ **Modern Frontend Architecture (`package.json`, `queries.ts`, `workbenchStore.ts`):** Integrated TanStack Query v5 for declarative server-state caching with offline fallback, Zustand for client workbench state, and Tailwind CSS v4 mapped to `--qt-*` tokens.
+3. ✅ **Code Splitting & Suspense Skeletons (`App.tsx`, `ViewShimmerSkeleton.tsx`):** Code-split all 8 workbench views using `React.lazy()` + accessible shimmering skeletons, bringing entry bundle down to 382 kB (107 kB gzip).
+4. ✅ **UI/UX Craft & Ergonomics (`AskDataView.tsx`, `DeviceDetailDrawer.tsx`, `MetricsRibbon.tsx`, `AstSafetyStepper.tsx`):** Integrated interactive 6-step AST Safety Pipeline Stepper, multi-metric telemetry charts with sparklines across all 5 dimensions (`cpu_utilization_pct`, `memory_utilization_pct`, `temperature_celsius`, `packet_loss_pct`, `latency_ms`), virtualized data grids with one-click JSON/CSV export, and sticky telemetry ribbon.
+5. ✅ **Backend Async Engine & Thread Offloading (`database.py`, `main.py`, `cache.py`):** Configured async SQLAlchemy 2.0 with `asyncpg` connection pooling and `statement_timeout = '5000ms'`. CPU-bound SQLGlot validation and IsolationForest inference offloaded to `asyncio.to_thread()`.
+6. ✅ **Response Caching, Compression & SSE Streaming (`cache.py`, `main.py`, `chat.py`):** Injected `GZipMiddleware(minimum_size=500)`, `ProcessTimeMiddleware` (`X-Process-Time-Ms`), in-memory TTL caching with `?refresh=true`, and Server-Sent Events endpoint `POST /api/v1/chat/stream` for real-time pipeline telemetry.
+7. ✅ **Strict Accessibility & Theme Invariants (`design-system.css`, `test_cold_start_and_a11y.mjs`):** Verified WCAG 2.1 AA across Warm Editorial Light (`#FAF8F5`) and Carbon Obsidian Dark (`#0B0F17`) with 0 critical or serious violations via automated Axe audits across all 8 views.
 
-**Automated Test Pass:** 133/133 pytest backend tests pass in 27.49s (including 4 new security tests). Frontend production build compiles with 0 TypeScript/Vite errors in 5.38s.
+**Automated Test Pass:**
+- **Backend:** 144/144 pytest tests pass in 25.64s (including async engine, SSE streaming, SQLGlot AST guard, and 37-case benchmark).
+- **Frontend Build:** `npx tsc --noEmit` exits with 0 errors; `npm run lint` exits with 0 warnings and 0 errors; `npm run build` exits with code 0 and chunked bundle output.
+- **E2E & Accessibility:** Playwright test exits with code 0:
+  - Scenario A (Healthy backend): Pass.
+  - Scenario B (10s delayed Render cold start): Aborts in < 3,000ms (<= 4,000ms target), rendering fallback interactive workbench without hanging.
+  - Scenario C (503 unreachable backend): Pass.
+  - Scenario D (Axe audit): 0 critical/serious WCAG 2.1 AA violations across all views in both Light and Dark modes.
 
 ---
 

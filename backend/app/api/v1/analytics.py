@@ -9,6 +9,7 @@ Implements:
 """
 
 import time
+import asyncio
 import logging
 import decimal
 import datetime as dt
@@ -274,7 +275,7 @@ async def preview_natural_language_query(
     sanitized_sql = None
 
     if llm_resp.intent_status == "ready" and llm_resp.sql:
-        val_res: SQLValidationResult = validate_and_sanitize_sql(llm_resp.sql, allowed_tables=custom_tables)
+        val_res: SQLValidationResult = await asyncio.to_thread(validate_and_sanitize_sql, llm_resp.sql, allowed_tables=custom_tables)
         validation_detail = ValidationDetail(
             passed=val_res.is_valid,
             checks=val_res.checks,
@@ -387,7 +388,7 @@ async def preview_natural_language_query(
 
 
 @router.post("/execute", response_model=ExecuteResponse)
-def execute_previewed_query(
+async def execute_previewed_query(
     payload: ExecuteRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -461,7 +462,7 @@ def execute_previewed_query(
     custom_tables = set(active_ds.schema_cache.get("table_names", [])) if (active_ds and active_ds.schema_cache) else None
 
     # Re-validate stored SQL at execution time against active target
-    val_res = validate_and_sanitize_sql(query_run.generated_sql, allowed_tables=custom_tables)
+    val_res = await asyncio.to_thread(validate_and_sanitize_sql, query_run.generated_sql, allowed_tables=custom_tables)
     if not val_res.is_valid:
         query_run.status = "blocked"
         query_run.error_category = "REVALIDATION_FAILURE"

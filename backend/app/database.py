@@ -1,6 +1,7 @@
-from typing import Generator
-from sqlalchemy import create_engine
+from typing import Generator, AsyncGenerator
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.config import get_settings
 
 settings = get_settings()
@@ -45,3 +46,54 @@ def get_readonly_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+# Asynchronous SQLAlchemy 2.0 engines & sessionmakers
+async_engine = create_async_engine(
+    settings.async_sqlalchemy_database_url,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    pool_size=10,
+    max_overflow=20,
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    bind=async_engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+)
+
+async_readonly_engine = create_async_engine(
+    settings.async_sqlalchemy_readonly_database_url,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    pool_size=10,
+    max_overflow=20,
+)
+
+AsyncReadonlySessionLocal = async_sessionmaker(
+    bind=async_readonly_engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+)
+
+
+async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+    """Asynchronous dependency for app_user privileges."""
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+async def get_async_readonly_db() -> AsyncGenerator[AsyncSession, None]:
+    """Asynchronous dependency for analytics_reader SELECT-only privileges with statement timeout."""
+    async with AsyncReadonlySessionLocal() as session:
+        # Enforce 5,000ms statement timeout
+        try:
+            await session.execute(text("SET statement_timeout = '5000ms'"))
+        except Exception:
+            pass
+        yield session

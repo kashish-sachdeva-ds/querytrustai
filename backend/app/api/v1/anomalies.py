@@ -67,12 +67,22 @@ def _to_scan_response(scan_results: dict) -> AnomalyScanResponse:
     )
 
 
+import asyncio
+from app.core.cache import ttl_cache
+
 @router.get("/summary", response_model=ModelMetadataResponse)
 def get_anomaly_model_summary(
+    refresh: bool = Query(False, description="Bypass cache and force recalculation"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Retrieves active ML model version, algorithm, feature vector, and synthetic evaluation metrics."""
+    cache_key = f"anomaly_summary:{current_user.workspace_name}"
+    if not refresh:
+        cached_val = ttl_cache.get(cache_key)
+        if cached_val is not None:
+            return cached_val
+
     # Ensure model exists
     if not anomaly_detector.is_model_trained():
         logger.info("Model artifact missing. Auto-training baseline model...")
@@ -85,7 +95,7 @@ def get_anomaly_model_summary(
             detail="Failed to retrieve anomaly model metadata.",
         )
 
-    return ModelMetadataResponse(
+    res = ModelMetadataResponse(
         id=meta["id"],
         model_name=meta["model_name"],
         version=meta["version"],
@@ -98,10 +108,13 @@ def get_anomaly_model_summary(
         is_active=meta["is_active"],
         status=meta.get("status", "active"),
     )
+    ttl_cache.set(cache_key, res, ttl=60)
+    return res
 
 
 @router.get("/current", response_model=AnomalyScanResponse)
 def get_current_unusual_activity(
+    refresh: bool = Query(False, description="Bypass cache and force recalculation"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -110,6 +123,12 @@ def get_current_unusual_activity(
     Viewers can inspect a fixed, read-only result set but cannot change scan
     sensitivity or row limits, nor trigger an operator-controlled scan.
     """
+    cache_key = f"anomaly_current:{current_user.workspace_name}"
+    if not refresh:
+        cached_val = ttl_cache.get(cache_key)
+        if cached_val is not None:
+            return cached_val
+
     if not is_demo_workspace(current_user):
         active_ds = (
             db.query(DataSource)
@@ -130,7 +149,9 @@ def get_current_unusual_activity(
             )
 
     try:
-        return _to_scan_response(anomaly_detector.scan_telemetry(db=db, limit=50, threshold=0.65))
+        res = _to_scan_response(anomaly_detector.scan_telemetry(db=db, limit=50, threshold=0.65))
+        ttl_cache.set(cache_key, res, ttl=60)
+        return res
     except Exception as e:
         logger.error("Error loading current unusual activity: %s", e, exc_info=True)
         raise HTTPException(
@@ -140,7 +161,7 @@ def get_current_unusual_activity(
 
 
 @router.post("/scan", response_model=AnomalyScanResponse)
-def run_telemetry_anomaly_scan(
+async def run_telemetry_anomaly_scan(
     payload: AnomalyScanRequest,
     current_user: User = Depends(scan_controls_required),
     db: Session = Depends(get_db),
@@ -148,6 +169,7 @@ def run_telemetry_anomaly_scan(
     """Executes an unsupervised IsolationForest anomaly detection scan across telemetry readings.
 
     Returns the top-ranked statistical outliers sorted by anomaly score.
+    Runs CPU-bound inference in thread-pool via asyncio.to_thread.
     """
     if not is_demo_workspace(current_user):
         active_ds = (
@@ -169,7 +191,8 @@ def run_telemetry_anomaly_scan(
             )
 
     try:
-        scan_results = anomaly_detector.scan_telemetry(
+        scan_results = await asyncio.to_thread(
+            anomaly_detector.scan_telemetry,
             db=db,
             limit=payload.limit,
             threshold=payload.threshold or 0.65,
@@ -182,6 +205,7 @@ def run_telemetry_anomaly_scan(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Telemetry anomaly scan failed: {str(e)}",
         )
+
 
 
 @router.post("/train", response_model=ModelTrainResponse)

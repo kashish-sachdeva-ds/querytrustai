@@ -4,8 +4,6 @@ import {
   ShieldAlert,
   AlertTriangle,
   Ban,
-  CheckCircle2,
-  XCircle,
   Zap,
   FileText,
   ThumbsUp,
@@ -45,6 +43,8 @@ import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
+import { AstSafetyStepper } from './AstSafetyStepper'
+import { useWorkbenchStore } from '../store/workbenchStore'
 import './AskDataView.css'
 
 interface MessageItem {
@@ -159,29 +159,25 @@ const HighlightedSql: React.FC<{ sql: string }> = ({ sql }) => {
 }
 
 // Visual Chart Component (Strict Invariant: Neutral Data Bars, No Orange Monochrome)
-const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
+const MetricChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
   const { chart_recommendation: rec, rows, columns } = result
+  const rawVal = rows[0][columns[0]]
+  const displayVal =
+    typeof rawVal === 'number'
+      ? rawVal.toLocaleString()
+      : String(rawVal ?? '0')
 
-  if (!rows || rows.length === 0) {
-    return <div className="chart-empty">No records available to visualize.</div>
-  }
+  return (
+    <div className="metric-chart-container">
+      <div className="metric-chart-label">{rec.title || columns[0].replace(/_/g, ' ')}</div>
+      <div className="metric-chart-value">{displayVal}</div>
+      <div className="metric-chart-sub">Read-only verified aggregate metric</div>
+    </div>
+  )
+}
 
-  // 1. Metric Single Value: if exactly 1 row & 1 column, or rec.chart_type === 'metric'
-  if (rec.chart_type === 'metric' || (rows.length === 1 && columns.length === 1)) {
-    const rawVal = rows[0][columns[0]]
-    const displayVal =
-      typeof rawVal === 'number'
-        ? rawVal.toLocaleString()
-        : String(rawVal ?? '0')
-
-    return (
-      <div className="metric-chart-container">
-        <div className="metric-chart-label">{rec.title || columns[0].replace(/_/g, ' ')}</div>
-        <div className="metric-chart-value">{displayVal}</div>
-        <div className="metric-chart-sub">Read-only verified aggregate metric</div>
-      </div>
-    )
-  }
+const CategoricalChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
+  const { chart_recommendation: rec, rows, columns } = result
 
   // Check if dataset is a 2-column pre-aggregated distribution (e.g. region + count)
   const isTwoColAggregate = useMemo(() => {
@@ -479,6 +475,20 @@ const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
   )
 }
 
+const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
+  const { chart_recommendation: rec, rows, columns } = result
+
+  if (!rows || rows.length === 0) {
+    return <div className="chart-empty">No records available to visualize.</div>
+  }
+
+  if (rec.chart_type === 'metric' || (rows.length === 1 && columns.length === 1)) {
+    return <MetricChart result={result} />
+  }
+
+  return <CategoricalChart result={result} />
+}
+
 // 6-Point Safety Shield Sequence Component (ThoughtSpot / Monte Carlo Benchmark)
 interface SafetyShieldProps {
   preview: PreviewResponse
@@ -486,94 +496,21 @@ interface SafetyShieldProps {
 
 const SafetyShieldDisplay: React.FC<SafetyShieldProps> = ({ preview }) => {
   const isBlocked = preview.status === 'blocked' || !preview.validation.passed
-  const tables =
-    preview.validation.tables_referenced?.length > 0
-      ? preview.validation.tables_referenced.join(', ')
-      : 'devices'
-
-  // The 6 strict safety invariants required by specification
-  const checks = [
-    {
-      id: 'single_statement',
-      label: 'Single statement parsed',
-      sublabel: 'Rejects multi-command chaining and injection',
-      pass: !isBlocked,
-    },
-    {
-      id: 'select_only',
-      label: 'SELECT-only execution',
-      sublabel: 'Zero mutations: INSERT, UPDATE, DELETE, and DROP forbidden',
-      pass: !isBlocked,
-    },
-    {
-      id: 'table_allowlist',
-      label: 'Permitted schema tables',
-      sublabel: tables ? `Confined to: ${tables}` : 'Equipment inventory tables only',
-      pass: !isBlocked,
-    },
-    {
-      id: 'schema_allowlist',
-      label: 'Public schema isolation',
-      sublabel: 'Blocks access to pg_catalog and system namespaces',
-      pass: !isBlocked,
-    },
-    {
-      id: 'function_allowlist',
-      label: 'Safe functions only',
-      sublabel: 'Permits math & aggregates; rejects system execution routines',
-      pass: !isBlocked,
-    },
-    {
-      id: 'row_limit',
-      label: 'Row clamp enforced',
-      sublabel: 'Strict limit capped to 200 rows max in read-only transaction',
-      pass: true,
-    },
-  ]
-
-  const passedCount = isBlocked ? checks.filter((c) => c.pass).length : 6
 
   return (
-    <div className={`safety-shield ${isBlocked ? 'blocked' : 'passed'}`} role="status" aria-live="polite">
-      <div className="safety-shield-header">
-        <div className="shield-title-group">
-          <div className="shield-icon-badge">
-            {isBlocked ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}
-          </div>
-          <div className="shield-title-text">
-            <h4>{isBlocked ? 'Query blocked by AST safety rules' : `Safety Shield: ${passedCount} of 6 AST checks verified`}</h4>
-            <p>
-              {isBlocked
-                ? 'Intercepted before reaching your database. Zero modifications possible.'
-                : 'Guaranteed read-only. Abstract syntax tree verified. Safe to run.'}
-            </p>
-          </div>
-        </div>
-        <ExplainButton
-          title="6-Point Safety Shield Verification"
-          explanation="Every question must pass 6 automated checks before execution. Antigravity AST guards reject writes, drops, unauthorized tables, and unbound limits."
-        />
-      </div>
-
-      <div className="shield-checks-grid">
-        {checks.map((chk, idx) => (
-          <div
-            key={chk.id}
-            className={`shield-check-card ${chk.pass ? 'check-pass' : 'check-fail'}`}
-            style={{ animationDelay: `${idx * 40}ms` }}
-          >
-            {chk.pass ? (
-              <CheckCircle2 size={15} className="check-icon-pass" />
-            ) : (
-              <XCircle size={15} className="check-icon-fail" />
-            )}
-            <div className="check-card-body">
-              <span className="check-card-title">{chk.label}</span>
-              <span className="check-card-sub">{chk.sublabel}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div style={{ margin: '14px 0' }}>
+      <AstSafetyStepper
+        isValid={!isBlocked}
+        violations={preview.validation.violations || []}
+        checksPerformed={{
+          single_statement: !isBlocked,
+          select_only: !isBlocked,
+          table_allowlist: !isBlocked,
+          system_catalog_blocked: !isBlocked,
+          row_limit_enforced: true,
+        }}
+        executed={preview.can_execute}
+      />
     </div>
   )
 }
@@ -620,7 +557,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   const [expandedShieldMap, setExpandedShieldMap] = useState<Record<string, boolean>>({})
   const [sessionSearchTerm, setSessionSearchTerm] = useState('')
 
-  // Execution & Feedback States
+  const { activeSqlInspectorTab, setActiveSqlInspectorTab } = useWorkbenchStore()
   const [executingId, setExecutingId] = useState<string | null>(null)
   const [resultsMap, setResultsMap] = useState<Record<string, ExecuteResponse>>({})
   const [viewModeMap, setViewModeMap] = useState<Record<string, 'table' | 'chart'>>({})
@@ -923,6 +860,19 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     URL.revokeObjectURL(url)
   }
 
+  const handleExportJSON = (result: ExecuteResponse) => {
+    if (!result || !result.rows || result.rows.length === 0) return
+    const blob = new Blob([JSON.stringify(result.rows, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `querytrust-data-${result.query_run_id.slice(0, 8)}.json`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   const handleFeedbackSubmit = async (queryRunId: string, isHelpful: boolean) => {
     const currentExplanation = feedbackMap[queryRunId]?.explanation || ''
     const previousFeedback = feedbackMap[queryRunId]
@@ -1156,7 +1106,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                 const runId = msg.previewData?.query_run_id || msg.id
                 const execResult = resultsMap[runId]
                 const isExecuting = executingId === runId
-                const activeMode = viewModeMap[runId] || 'table'
+                const activeMode = viewModeMap[runId] || (activeSqlInspectorTab === 'chart' ? 'chart' : 'table')
                 const feedbackState = feedbackMap[runId]
                 const isSqlExpanded = !!expandedSqlMap[runId] || mode === 'expert'
                 const providerLabel = msg.previewData?.provider === 'gemini' ? 'Gemini 1.5' : 'Rule-based AST Engine'
@@ -1533,18 +1483,42 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                   <Download size={12} />
                                   <span>Export CSV</span>
                                 </button>
+                                <button
+                                  type="button"
+                                  className="toggle-btn"
+                                  onClick={() => handleExportJSON(execResult)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    background: 'var(--qt-surface)',
+                                    border: '1px solid var(--qt-border)',
+                                    padding: '3px 8px',
+                                    borderRadius: 'var(--qt-radius-control)',
+                                  }}
+                                  title="Export result records as JSON"
+                                >
+                                  <Download size={12} />
+                                  <span>Export JSON</span>
+                                </button>
                                 <div className="view-mode-toggle">
                                   <button
                                     type="button"
                                     className={`toggle-btn ${activeMode === 'table' ? 'active' : ''}`}
-                                    onClick={() => setViewModeMap((p) => ({ ...p, [runId]: 'table' }))}
+                                    onClick={() => {
+                                      setViewModeMap((p) => ({ ...p, [runId]: 'table' }))
+                                      setActiveSqlInspectorTab('table')
+                                    }}
                                   >
                                     Table
                                   </button>
                                   <button
                                     type="button"
                                     className={`toggle-btn ${activeMode === 'chart' ? 'active' : ''}`}
-                                    onClick={() => setViewModeMap((p) => ({ ...p, [runId]: 'chart' }))}
+                                    onClick={() => {
+                                      setViewModeMap((p) => ({ ...p, [runId]: 'chart' }))
+                                      setActiveSqlInspectorTab('chart')
+                                    }}
                                   >
                                     Chart
                                   </button>

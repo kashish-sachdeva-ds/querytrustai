@@ -28,6 +28,7 @@ import {
   CheckCheck,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
 import './LandingPage.css'
 
@@ -294,6 +295,7 @@ if isinstance(node, (exp.Insert, exp.Update, exp.Delete)):
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
   const { theme, toggleTheme } = useTheme()
+  const { enterDemoMode } = useAuth()
 
   // Interactive Sandbox state
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('warranties')
@@ -504,6 +506,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
               <Zap size={16} />
               <span>Launch Live Workspace</span>
               <ArrowRight size={16} />
+            </button>
+
+            <button
+              type="button"
+              className="btn-hero-secondary"
+              onClick={() => enterDemoMode('analyst')}
+              style={{
+                borderColor: 'var(--qt-accent, #ff5a14)',
+                color: 'var(--qt-ink, #ffffff)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <Sparkles size={16} style={{ color: 'var(--qt-accent, #ff5a14)' }} />
+              <span>Explore Demo Sandbox</span>
             </button>
 
             <a href="#attack-playground" className="btn-hero-secondary">

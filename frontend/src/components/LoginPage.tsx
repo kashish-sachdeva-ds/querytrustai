@@ -39,7 +39,7 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
-  const { login, register, joinWorkspace } = useAuth()
+  const { login, register, joinWorkspace, enterDemoMode } = useAuth()
   const isDemoMode = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE !== 'false'
 
   // Auth Mode: 'signin' | 'register' | 'join' (default to 'join' if invite parameter present)
@@ -441,19 +441,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
     }
   }
 
-  // 1-Click Demo Login
+  // 1-Click Demo Login with zero-wait offline demo fallback
   const loginAsDemo = async (demoEmail: string, demoPass: string) => {
     setFormValues((prev) => ({ ...prev, email: demoEmail, password: demoPass }))
     setLoading(true)
     setGlobalError(null)
     setErrors({})
 
+    const role = demoEmail.includes('admin')
+      ? 'admin'
+      : demoEmail.includes('viewer')
+      ? 'viewer'
+      : 'analyst'
+
     try {
       await login(demoEmail, demoPass)
     } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Demo sign-in failed.'
       setGlobalError({
-        type: 'invalid_credentials',
-        message: err instanceof Error ? err.message : 'Demo sign-in failed. Please retry.',
+        type: 'custom',
+        title: 'Backend Asleep / Cold Starting',
+        message: `${msg} You can instantly enter the full interactive sandbox using local synthetic fixtures.`,
+        actionLabel: `Launch Zero-Wait Offline Demo (${role.toUpperCase()}) →`,
+        onAction: () => enterDemoMode(role),
       })
     } finally {
       setLoading(false)
@@ -1210,9 +1220,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
                   {showDemoPersonas && (
                     <div className="demo-chips-container">
-                      <p className="demo-disclosure-hint">
-                        Instant zero-password sandbox evaluation with synthetic equipment data:
-                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                        <p className="demo-disclosure-hint" style={{ margin: 0 }}>
+                          Instant zero-password sandbox evaluation with synthetic equipment data:
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => enterDemoMode('analyst')}
+                          style={{
+                            background: 'var(--qt-accent, #ff5a14)',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 10px',
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}
+                        >
+                          <Sparkles size={12} />
+                          <span>Zero-Wait Offline Sandbox</span>
+                        </button>
+                      </div>
                       <div className="demo-chips-grid">
                         {/* 1. Analyst first */}
                         <button

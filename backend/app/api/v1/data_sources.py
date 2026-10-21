@@ -242,6 +242,21 @@ def seed_workspace_sandbox(
     return build_active_response(workspace, existing)
 
 
+@router.post("/reset-sandbox", response_model=ActiveDataSourceResponse)
+def reset_workspace_sandbox(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(["admin", "analyst"])),
+):
+    """Remove sandbox sample data for the workspace, returning it to clean unconfigured state."""
+    workspace = current_user.workspace_name or "Default Workspace"
+    db.query(DataSource).filter(
+        DataSource.workspace_name == workspace,
+        DataSource.name == "Synthetic Networking Sandbox",
+    ).delete()
+    db.commit()
+    return build_active_response(workspace, None)
+
+
 @router.get("", response_model=List[DataSourcePublic])
 def list_data_sources(
     db: Session = Depends(get_db),

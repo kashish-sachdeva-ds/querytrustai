@@ -429,6 +429,7 @@
   z-index: 100;
   animation: dropdown-fade 160ms cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  white-space: normal;
 }
 
 @keyframes dropdown-fade {
@@ -682,6 +683,9 @@
   border: 1px solid var(--qt-border);
   border-radius: 6px;
   margin: 0.25rem 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 [data-theme="dark"] .dropdown-enterprise-governance {
@@ -697,6 +701,7 @@
   font-size: 0.74rem;
   font-weight: 600;
   color: var(--qt-ink);
+  white-space: normal;
 }
 
 .enterprise-governance-note {
@@ -704,7 +709,16 @@
   font-size: 0.71rem;
   color: var(--qt-muted, #71706B);
   margin: 0.3rem 0 0 0;
-  line-height: 1.35;
+  line-height: 1.4;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+.enterprise-governance-note strong {
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  color: var(--qt-ink);
 }
 
 

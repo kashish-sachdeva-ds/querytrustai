@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { MetricsRibbon } from './MetricsRibbon'
 
 interface HeaderProps {
   onOpenCommandPalette: () => void
@@ -255,12 +256,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
           className="command-trigger"
           onClick={onOpenCommandPalette}
           title={`Quick actions & search (${commandShortcut})`}
-          aria-label="Search and quick actions"
         >
           <Search size={14} aria-hidden="true" />
           <span>Search &amp; actions</span>
           <kbd aria-hidden="true">{commandShortcut}</kbd>
         </button>
+      </div>
+
+      {/* Center: Global Telemetry & Context Ribbon */}
+      <div className="header-center" style={{ display: 'flex', alignItems: 'center' }}>
+        <MetricsRibbon />
       </div>
 
       {/* Right: Demo data pill + Single Guide Button + User Menu */}
@@ -304,7 +309,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
             onClick={onOpenOnboarding}
             title="Product guide, role tour, and database preview"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-            aria-label="Open product guide and tour"
+            aria-label="Guide - product tour and help"
           >
             <Sparkles size={12} style={{ color: 'var(--qt-accent)' }} aria-hidden="true" />
             <span>Guide</span>
@@ -553,8 +558,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenCommandPalette, onOpenOnbo
                       <Building size={13} style={{ color: 'var(--qt-accent, #ff5a14)' }} />
                       <span>Enterprise Organization Member</span>
                     </div>
-                    <p className="enterprise-governance-note">
-                      Role privileges ({roleDisplay}) are cryptographically governed by <strong>{user?.workspace_name || 'Organization'}</strong> policies.
+                    <p className="enterprise-governance-note" style={{ whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                      Role privileges ({roleDisplay}) are cryptographically governed by{' '}
+                      <strong style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                        {user?.workspace_name || 'Organization'}
+                      </strong>{' '}
+                      policies.
                     </p>
                   </div>
                 </>

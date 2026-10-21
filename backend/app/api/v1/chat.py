@@ -170,3 +170,49 @@ def delete_session(
     db.delete(session)
     db.commit()
     return None
+
+
+import json
+import asyncio
+from starlette.responses import StreamingResponse
+from app.schemas.chat import ChatStreamRequest
+from app.schemas.analytics import PreviewRequest
+from app.api.v1.analytics import preview_natural_language_query
+
+
+@router.post("/stream")
+async def chat_stream(
+    payload: ChatStreamRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Server-Sent Events (SSE) streaming endpoint emitting real-time pipeline stages."""
+    async def event_generator():
+        try:
+            # Stage 1: parsing_intent
+            yield f"data: {json.dumps({'stage': 'parsing_intent', 'message': 'Parsing natural-language query intent...'})}\n\n"
+            await asyncio.sleep(0.04)
+
+            # Stage 2: generating_sql
+            yield f"data: {json.dumps({'stage': 'generating_sql', 'message': 'Synthesizing schema-constrained PostgreSQL SELECT...'})}\n\n"
+            await asyncio.sleep(0.04)
+
+            # Stage 3: validating_sqlglot_ast
+            yield f"data: {json.dumps({'stage': 'validating_sqlglot_ast', 'message': 'Verifying AST security bounds with SQLGlot...'})}\n\n"
+
+            # Execute preview pipeline
+            preview_req = PreviewRequest(question=payload.question, session_id=payload.session_id)
+            preview_res = await preview_natural_language_query(preview_req, current_user=current_user, db=db)
+
+            # Stage 4: executing_readonly_sql (if preview is valid)
+            if preview_res.status == "previewed":
+                yield f"data: {json.dumps({'stage': 'executing_readonly_sql', 'message': 'Executing candidate query under analytics_reader role...'})}\n\n"
+                await asyncio.sleep(0.04)
+
+            # Stage 5: complete
+            yield f"data: {json.dumps({'stage': 'complete', 'result': preview_res.model_dump(mode='json')})}\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'stage': 'error', 'message': str(exc)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+

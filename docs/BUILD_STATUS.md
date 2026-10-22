@@ -1,15 +1,16 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-21  
-**Current milestone:** 31 — Render Cloud Deployment Hardening & Async Engine Safeguards  
-**Overall status:** Resolved cloud deployment blockers for Render web service:
-1. ✅ **Render Deployment Recovery (`requirements.txt`, `database.py`, `pyproject.toml`):** Added `greenlet>=3.0.0` and `sqlalchemy[asyncio]>=2.0.28` to `requirements.txt` and `pyproject.toml`; wrapped `sqlalchemy.ext.asyncio` imports and engine initialization in defensive `try...except` fallback handlers so missing optional drivers or shims never impede application startup.
-2. ✅ **Container & Package Discovery Consistency (`Dockerfile`, `pyproject.toml`):** Aligned Dockerfile to install from `requirements.txt` directly; added explicit `tool.setuptools.packages.find` and `pythonpath = ["."]` in `pyproject.toml` and created `backend/README.md` to guarantee clean installation and standard pytest invocation.
-3. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 14.27s; TypeScript and Vite production bundle builds cleanly in 2.17s.
+**Current milestone:** 32 — Split-Pane Canvas Workbench for Governed Data Queries  
+**Overall status:** Resolved excessive vertical scrolling in "Ask governed data" view via dual-pane enterprise workbench:
+1. ✅ **Dual-Pane Split Architecture (`AskDataView.tsx`, `AskDataView.css`):** Transformed single-column stacked view into a dual-pane workbench. Left pane contains compact question cards (~110px) with inline statuses and sticky bottom query composer. Right pane is a dedicated full-height Data Canvas for deep inspection.
+2. ✅ **Dedicated Data Canvas with Tab Switching:** Right canvas features full-height scrollable results tables with sticky headers, charts with export controls, SQL preview with copy/explain controls, and a dedicated 5-card AST Safety Stepper tab (AST parsing, CTE safety, dialect verification, row clamping, socket privileges).
+3. ✅ **Collapsible Sessions Sidebar & Responsive Behavior:** Added sidebar toggle button in the governance banner to expand workspace width. On mobile viewports (< 1024px), added a seamless pane switcher segment (`[ Query Thread | Data Canvas ]`).
+4. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 26.33s; TypeScript and Vite production bundle builds cleanly in 2.20s; `oxlint` reports 0 warnings and 0 errors.
 
 **Automated Test Pass:**
-- **Backend:** 151/151 pytest tests pass in 14.40s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, async engine resiliency, and webhooks).
-- **Frontend Build:** `npx tsc -b && vite build` exits with code 0 (2037 modules transformed in 2.12s); `npm run lint` exits with 0 errors.
+- **Backend:** 151/151 pytest tests pass in 26.33s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, async engine resiliency, and webhooks).
+- **Frontend Build:** `npx tsc -b && vite build` exits with code 0 (2037 modules transformed in 2.20s); `npm run lint` exits with 0 errors.
 - **E2E & Accessibility:** Playwright test exits with code 0:
   - Scenario A (Healthy backend): Pass.
   - Scenario B (10s delayed Render cold start): Aborts in < 3,000ms (<= 4,000ms target), rendering fallback interactive workbench without hanging.

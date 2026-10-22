@@ -3,7 +3,6 @@ import {
   ShieldCheck,
   ShieldAlert,
   AlertTriangle,
-  Ban,
   Zap,
   FileText,
   ThumbsUp,
@@ -11,8 +10,6 @@ import {
   Check,
   Copy,
   Download,
-  ChevronDown,
-  ChevronUp,
   Play,
   Flame,
   Plus,
@@ -22,6 +19,10 @@ import {
   Search,
   BarChart3,
   PieChart,
+  Table as TableIcon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Database,
 } from 'lucide-react'
 import {
   previewQuery,
@@ -38,10 +39,8 @@ import {
   type ChatMessage,
   type ActiveDataSourceResponse,
 } from '../api/client'
-import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
-import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
 import { AstSafetyStepper } from './AstSafetyStepper'
 import { useWorkbenchStore } from '../store/workbenchStore'
@@ -542,9 +541,7 @@ interface AskDataViewProps {
 }
 
 export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => {
-  const { mode } = useTheme()
   const { user } = useAuth()
-  const isViewer = user?.role === 'viewer'
   const isDemo = !user?.workspace_name || user.workspace_name === 'Default Workspace' || (user.email ? user.email.endsWith('@querytrust.local') : false)
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
@@ -553,8 +550,6 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [copiedQueryId, setCopiedQueryId] = useState<string | null>(null)
-  const [expandedSqlMap, setExpandedSqlMap] = useState<Record<string, boolean>>({})
-  const [expandedShieldMap, setExpandedShieldMap] = useState<Record<string, boolean>>({})
   const [sessionSearchTerm, setSessionSearchTerm] = useState('')
 
   const { activeSqlInspectorTab, setActiveSqlInspectorTab } = useWorkbenchStore()
@@ -565,7 +560,39 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     Record<string, { isHelpful: boolean; explanation: string; saved: boolean }>
   >({})
 
+  // Split-Pane Workbench States
+  const [isSessionsCollapsed, setIsSessionsCollapsed] = useState(false)
+  const [focusedRunId, setFocusedRunId] = useState<string | null>(null)
+  const [activeCanvasTab, setActiveCanvasTab] = useState<'results' | 'sql' | 'safety'>('results')
+  const [mobilePane, setMobilePane] = useState<'thread' | 'canvas'>('thread')
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Resolve currently focused / latest assistant message and preview
+  const latestAssistantMessage = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant' && messages[i].previewData) {
+        return messages[i]
+      }
+    }
+    return null
+  }, [messages])
+
+  const activeMessage = useMemo(() => {
+    if (focusedRunId) {
+      const found = messages.find(
+        (m) => m.previewData?.query_run_id === focusedRunId || m.id === focusedRunId
+      )
+      if (found) return found
+    }
+    return latestAssistantMessage
+  }, [focusedRunId, messages, latestAssistantMessage])
+
+  const activePreview = activeMessage?.previewData || null
+  const activeRunId = activePreview?.query_run_id || activeMessage?.id || null
+  const activeResult = activeRunId ? resultsMap[activeRunId] : null
+  const activeMode = (activeRunId && viewModeMap[activeRunId]) || (activeSqlInspectorTab === 'chart' ? 'chart' : 'table')
+  const activeFeedback = activeRunId ? feedbackMap[activeRunId] : null
 
   useEffect(() => {
     if (initialQuestion?.trim()) setInputQuestion(initialQuestion)
@@ -786,6 +813,9 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
         createdAt: previewRes.created_at,
       }
       setMessages((prev) => [...prev, assistantMsg])
+      setFocusedRunId(previewRes.query_run_id)
+      setActiveCanvasTab('results')
+      setMobilePane('canvas')
       loadSessions()
     } catch (err: any) {
       setErrorMessage(err.message || 'An unexpected error occurred during preview generation.')
@@ -810,10 +840,6 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     setTimeout(() => setCopiedQueryId(null), 2000)
   }
 
-  const toggleSqlExpansion = (queryId: string) => {
-    setExpandedSqlMap((prev) => ({ ...prev, [queryId]: !prev[queryId] }))
-  }
-
   const handleExecuteQuery = async (previewData: PreviewResponse) => {
     setExecutingId(previewData.query_run_id)
     setErrorMessage(null)
@@ -826,12 +852,29 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
       const initialMode =
         execResult.chart_recommendation.chart_type !== 'table' || askedForChart ? 'chart' : 'table'
       setViewModeMap((prev) => ({ ...prev, [previewData.query_run_id]: initialMode }))
+      setFocusedRunId(previewData.query_run_id)
+      setActiveCanvasTab('results')
+      setMobilePane('canvas')
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to execute query in read-only transaction.')
     } finally {
       setExecutingId(null)
     }
   }
+
+  // Global Ctrl+Enter shortcut to execute currently validated query
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (activePreview?.can_execute && !executingId && !resultsMap[activePreview.query_run_id]) {
+          e.preventDefault()
+          handleExecuteQuery(activePreview)
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activePreview, executingId, resultsMap])
 
   const handleExportCSV = (result: ExecuteResponse) => {
     if (!result || !result.rows || result.rows.length === 0) return
@@ -896,7 +939,10 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   return (
     <div className="ask-data-container">
       {/* Linear-Style Sessions Drawer */}
-      <aside className="ask-data-sessions-sidebar" aria-label="Conversation Sessions">
+      <aside
+        className={`ask-data-sessions-sidebar ${isSessionsCollapsed ? 'collapsed' : ''}`}
+        aria-label="Conversation Sessions"
+      >
         <div className="sessions-header">
           <div className="sessions-header-left">
             <span className="sessions-title">Conversations</span>
@@ -975,17 +1021,20 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
         </ul>
       </aside>
 
-      {/* Main Conversation & ThoughtSpot Preview Area */}
+      {/* Main Split-Pane Workspace */}
       <section className="ask-data-workspace">
-        <PageHeader
-          title="Ask governed data"
-          description="Translate natural-language questions into safe, validated SQL queries."
-          helpText="Every generated query is checked across 6 safety checks and run via a SELECT-only PostgreSQL reader."
-        />
-
         {/* Governance & Safety Status Bar */}
         <div className="ask-data-governance-banner">
           <div className="governance-badge-group">
+            <button
+              type="button"
+              className="collapse-sessions-btn"
+              onClick={() => setIsSessionsCollapsed((p) => !p)}
+              title={isSessionsCollapsed ? 'Expand conversations drawer' : 'Collapse conversations drawer'}
+            >
+              {isSessionsCollapsed ? <PanelLeftOpen size={13} /> : <PanelLeftClose size={13} />}
+              <span>{isSessionsCollapsed ? 'Conversations' : 'Collapse'}</span>
+            </button>
             <span className="badge badge-warning">
               <span className="live-dot" style={{ backgroundColor: 'var(--qt-accent, #FF4F00)' }} />
               Guided demo mode
@@ -994,722 +1043,754 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
             <span className="badge badge-success">6-layer AST guardrails</span>
             <span className="badge badge-primary">Read-only connection</span>
           </div>
-          <div className="governance-notice-text">
-            <span>Guaranteed read-only. No raw client SQL execution.</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div className="split-mobile-toggle">
+              <button
+                type="button"
+                className={`split-mobile-btn ${mobilePane === 'thread' ? 'active' : ''}`}
+                onClick={() => setMobilePane('thread')}
+              >
+                Questions
+              </button>
+              <button
+                type="button"
+                className={`split-mobile-btn ${mobilePane === 'canvas' ? 'active' : ''}`}
+                onClick={() => setMobilePane('canvas')}
+              >
+                Data Canvas
+              </button>
+            </div>
+            <div className="governance-notice-text">
+              <span>Split-Pane Analytics Canvas &bull; Guaranteed read-only</span>
+            </div>
           </div>
         </div>
 
         {/* Global Error Banner */}
         {errorMessage && (
-          <div className="security-alert-box alert-error" style={{ margin: '0.75rem 1.25rem 0 1.25rem' }}>
+          <div className="security-alert-box alert-error" style={{ margin: '0.5rem 1rem 0' }}>
             <div className="alert-title">Notice</div>
             <div className="alert-desc">{errorMessage}</div>
           </div>
         )}
 
-        {/* Messages & Feed */}
-        <div className="ask-data-feed">
-          {messages.length === 0 ? (
-            <div className="ask-data-hero">
-              <div className="ask-hero-badge">
-                <Sparkles size={13} />
-                <span>AI SQL Translation with 6-Layer AST Guardrails</span>
-              </div>
-              <h2 className="hero-title">Ask your equipment anything, in plain English.</h2>
-              <p className="hero-subtitle">
-                The enterprise analytics path you can't make dangerous. We interpret your intent, verify compliance across 6 independent AST checks, and execute strictly through a read-only PostgreSQL role.
-              </p>
-
-              <div className="ast-visual-hero-banner">
-                <img
-                  src="/images/ast_architecture.jpg"
-                  alt="QueryTrust AI 6-Point AST Safety Shield and Execution Pipeline Architecture"
-                  className="ast-visual-hero-img"
-                  loading="lazy"
-                />
-                <div className="ast-visual-hero-overlay">
-                  <div className="ast-visual-hero-meta">
-                    <span className="ast-visual-tag">AST Security Architecture</span>
-                    <span className="ast-visual-sub">Client Query &rarr; LLM &rarr; SQLGlot AST Parse &rarr; Read-Only Replica</span>
+        {/* Split-Pane Wrapper */}
+        <div className="ask-split-pane-wrapper">
+          {/* LEFT: Conversation Thread & Input */}
+          <div
+            className="ask-thread-pane"
+            style={{ display: mobilePane === 'canvas' ? undefined : undefined }}
+          >
+            <div className="thread-feed">
+              {messages.length === 0 ? (
+                <div className="thread-empty-state">
+                  <div className="ask-hero-badge">
+                    <Sparkles size={13} />
+                    <span>AI SQL Translation with 6-Layer AST Guardrails</span>
                   </div>
-                </div>
-              </div>
-
-              <ol className="ask-data-steps" aria-label="How asking works">
-                <li>
-                  <span className="ask-step-num">1</span>
-                  <strong>Ask freely</strong>
-                  <small>Natural English phrasing without technical SQL syntax.</small>
-                </li>
-                <li>
-                  <span className="ask-step-num">2</span>
-                  <strong>Safety check</strong>
-                  <small>6-point AST shield blocks destructive commands & injections.</small>
-                </li>
-                <li>
-                  <span className="ask-step-num">3</span>
-                  <strong>Trust completely</strong>
-                  <small>Verified read-only database reader clamped to 200 rows.</small>
-                </li>
-              </ol>
-
-              {/* Starter Prompt Chips */}
-              <div className="starter-prompts-matrix">
-                <div className="starter-prompts-label">
-                  {activeSource?.mode === 'connected'
-                    ? `Try a question on ${activeSource.name}:`
-                    : 'Try one of these real questions:'}
-                </div>
-                <div className="starter-chips-grid">
-                  {starterPrompts.map((item, idx) => (
-                    <button
-                      key={idx}
-                      className="starter-chip-card"
-                      onClick={() => handleSendQuestion(item.prompt)}
-                      disabled={isLoading}
-                    >
-                      <div className="chip-card-top">
+                  <h3 className="thread-empty-title">Ask your equipment anything</h3>
+                  <p className="thread-empty-sub">
+                    Enter any natural English question. The safety shield validates the SQL before executing strictly via a read-only PostgreSQL role.
+                  </p>
+                  <div className="starter-chips-compact-grid">
+                    {starterPrompts.map((item, idx) => (
+                      <button
+                        key={idx}
+                        className="starter-chip-compact"
+                        onClick={() => handleSendQuestion(item.prompt)}
+                        disabled={isLoading}
+                      >
                         <span className={`chip-badge ${item.badgeClass}`}>{item.badge}</span>
-                      </div>
-                      <div className="chip-card-title">{item.label}</div>
-                      <div className="chip-card-prompt">"{item.prompt}"</div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* "Try to break it" Demo Banner */}
-                <div className="try-break-card">
-                  <div className="try-break-text">
-                    <h5>
-                      <Flame size={14} style={{ color: '#dc2626' }} />
-                      Want proof? Try to break it.
-                    </h5>
-                    <p>
-                      Click below to send <code>{breakQuery}</code> directly to the backend. Watch the Safety Shield intercept it live without touching a single record.
-                    </p>
+                        <span className="chip-prompt-text">{item.label}</span>
+                      </button>
+                    ))}
                   </div>
-                  <button
-                    type="button"
-                    className="try-break-btn"
-                    onClick={handleTryToBreakIt}
-                    disabled={isLoading}
-                  >
-                    <Flame size={13} />
-                    <span>Try to break it</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="chat-messages-container">
-              {messages.map((msg) => {
-                const runId = msg.previewData?.query_run_id || msg.id
-                const execResult = resultsMap[runId]
-                const isExecuting = executingId === runId
-                const activeMode = viewModeMap[runId] || (activeSqlInspectorTab === 'chart' ? 'chart' : 'table')
-                const feedbackState = feedbackMap[runId]
-                const isSqlExpanded = !!expandedSqlMap[runId] || mode === 'expert'
-                const providerLabel = msg.previewData?.provider === 'gemini' ? 'Gemini 1.5' : 'Rule-based AST Engine'
 
-                return (
-                  <div key={msg.id} className={`chat-message-row ${msg.role}`}>
-                    {msg.role === 'user' ? (
-                      <div className="user-message-bubble">
+                  {/* Try to break it Banner */}
+                  <div className="try-break-card" style={{ marginTop: '0.75rem' }}>
+                    <div className="try-break-text">
+                      <h5 style={{ margin: 0, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Flame size={13} style={{ color: '#dc2626' }} />
+                        Test security live
+                      </h5>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--qt-muted)' }}>
+                        Send <code>{breakQuery}</code> to test AST interception.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="try-break-btn"
+                      onClick={handleTryToBreakIt}
+                      disabled={isLoading}
+                      style={{ fontSize: '0.72rem', padding: '3px 8px' }}
+                    >
+                      <Flame size={11} />
+                      <span>Try it</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                messages.map((msg) => {
+                  const runId = msg.previewData?.query_run_id || msg.id
+                  const isSelected = activeRunId === runId
+                  const msgExecResult = resultsMap[runId]
+                  const isExecuting = executingId === runId
+                  const providerLabel = msg.previewData?.provider === 'gemini' ? 'Gemini 1.5' : 'Rule-based AST Engine'
+
+                  if (msg.role === 'user') {
+                    return (
+                      <div key={msg.id} className="user-message-bubble">
                         <div className="message-sender">You</div>
                         <div className="message-text">{msg.content}</div>
                         <div className="message-time">
                           <HumanDate iso={msg.createdAt} />
                         </div>
                       </div>
-                    ) : (
-                      <div className="assistant-preview-card">
-                        {/* Card Header with Status Badge */}
-                        <div className="preview-card-header">
-                          <div className="header-left">
-                            <span className="brand-pill">QueryTrust Guard</span>
-                            <span className="badge badge-neutral" style={{ fontSize: '0.6875rem' }}>
-                              {providerLabel}
-                            </span>
-                            <span className="preview-time" style={{ marginLeft: 6 }}>
-                              <HumanDate iso={msg.createdAt} />
-                            </span>
-                          </div>
-                          <div className="header-right">
-                            {msg.previewData?.status === 'previewed' && (
-                              <span className="status-tag status-success">
-                                <span className="live-dot" /> Safe to run
-                              </span>
-                            )}
-                            {msg.previewData?.status === 'clarification_needed' && (
-                              <span className="status-tag status-warning">
-                                <AlertTriangle size={12} style={{ marginRight: 4 }} /> Quick question back
-                              </span>
-                            )}
-                            {msg.previewData?.status === 'unsupported' && (
-                              <span className="status-tag status-neutral">
-                                <Ban size={12} style={{ marginRight: 4 }} /> Outside equipment domain
-                              </span>
-                            )}
-                            {msg.previewData?.status === 'blocked' && (
-                              <span className="status-tag status-danger">
-                                <ShieldAlert size={12} style={{ marginRight: 4 }} /> Blocked for safety
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                    )
+                  }
 
-                        {/* Animated 6-Point Safety Shield Inspector */}
-                        {msg.previewData && (
-                          isViewer ? (
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '10px 14px',
-                                margin: '10px 0 14px',
-                                borderRadius: 8,
-                                background: msg.previewData.status === 'blocked'
-                                  ? 'rgba(239, 68, 68, 0.08)'
-                                  : 'rgba(16, 185, 129, 0.08)',
-                                border: `1px solid ${msg.previewData.status === 'blocked' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
-                                fontSize: '0.8rem',
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                {msg.previewData.status === 'blocked' ? (
-                                  <ShieldAlert size={16} style={{ color: '#ef4444', flexShrink: 0 }} />
-                                ) : (
-                                  <ShieldCheck size={16} style={{ color: '#10b981', flexShrink: 0 }} />
-                                )}
-                                <span>
-                                  <strong>{msg.previewData.status === 'blocked' ? 'AST Safety Guard Blocked:' : '6-Point AST Safety Verified:'}</strong>{' '}
-                                  {msg.previewData.status === 'blocked'
-                                    ? 'Potentially destructive query intercepted.'
-                                    : 'Guaranteed read-only SELECT execution.'}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setExpandedShieldMap((prev) => ({
-                                    ...prev,
-                                    [msg.previewData!.query_run_id]: !prev[msg.previewData!.query_run_id],
-                                  }))
-                                }
-                                style={{
-                                  background: 'transparent',
-                                  border: 'none',
-                                  color: 'var(--qt-accent, #ff5a14)',
-                                  cursor: 'pointer',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 600,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 4,
-                                }}
-                              >
-                                <span>{expandedShieldMap[msg.previewData.query_run_id] ? 'Hide technical proof' : 'Inspect technical checks'}</span>
-                                {expandedShieldMap[msg.previewData.query_run_id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                              </button>
-                            </div>
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`thread-assistant-card ${isSelected ? 'active-card' : ''}`}
+                      onClick={() => {
+                        setFocusedRunId(runId)
+                        setMobilePane('canvas')
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Select query result to view on canvas"
+                    >
+                      {/* Card Header */}
+                      <div className="thread-assistant-header">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span className="brand-pill" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
+                            QueryTrust Guard
+                          </span>
+                          <span className="badge badge-neutral" style={{ fontSize: '0.65rem' }}>
+                            {providerLabel}
+                          </span>
+                        </div>
+                        <div>
+                          {msgExecResult ? (
+                            <span className="status-tag status-success" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
+                              <span className="live-dot" /> Executed ({msgExecResult.row_count} rows)
+                            </span>
+                          ) : msg.previewData?.status === 'previewed' ? (
+                            <span className="status-tag status-success" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
+                              <span className="live-dot" /> Ready to run
+                            </span>
+                          ) : msg.previewData?.status === 'blocked' ? (
+                            <span className="status-tag status-danger" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
+                              <ShieldAlert size={11} style={{ marginRight: 3 }} /> Blocked
+                            </span>
                           ) : (
-                            <SafetyShieldDisplay preview={msg.previewData} />
-                          )
-                        )}
-                        {msg.previewData && isViewer && expandedShieldMap[msg.previewData.query_run_id] && (
-                          <SafetyShieldDisplay preview={msg.previewData} />
-                        )}
-
-                        {/* ThoughtSpot-Style Intent Breakdown */}
-                        <div className="thoughtspot-intent-card">
-                          <div className="intent-card-header">
-                            <div className="intent-title-group">
-                              <Sparkles size={13} className="intent-sparkle-icon" />
-                              <span className="intent-card-label">Semantic interpretation</span>
-                            </div>
-                            <span className="intent-card-sub">What the engine mapped from plain English</span>
-                          </div>
-                          <div className="intent-meaning-text">{msg.content}</div>
-
-                          <div className="intent-entities-row">
-                            {msg.previewData?.validation.tables_referenced?.map((tbl) => (
-                              <span key={tbl} className="entity-chip entity-table">
-                                <span className="entity-chip-label">Table:</span> {tbl}
-                              </span>
-                            ))}
-                            {msg.previewData?.business_terms_used?.map((term) => (
-                              <span key={term} className="entity-chip entity-term">
-                                <span className="entity-chip-label">Term:</span> {term}
-                              </span>
-                            ))}
-                            {msg.previewData?.assumptions?.map((asm, idx) => (
-                              <span key={idx} className="entity-chip entity-assumption">
-                                <span className="entity-chip-label">Rule:</span> {asm}
-                              </span>
-                            ))}
-                          </div>
+                            <span className="status-tag status-warning" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
+                              <AlertTriangle size={11} style={{ marginRight: 3 }} /> Question
+                            </span>
+                          )}
                         </div>
-
-                        {/* Clarification Alert (if ambiguous) */}
-                        {msg.previewData?.clarification_question && (
-                          <div className="clarification-box">
-                            <div className="clarification-title">Quick question before we run this:</div>
-                            <div className="clarification-prompt">{msg.previewData.clarification_question}</div>
-                            <div className="clarification-actions">
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => handleSendQuestion('Show devices with warranty expiring in 30 days')}
-                              >
-                                Option 1: Imminent Warranty Expiry (&lt;30d)
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => handleSendQuestion('List open Critical service events')}
-                              >
-                                Option 2: Open Critical Incidents
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => handleSendQuestion('Show offline or maintenance devices')}
-                              >
-                                Option 3: Offline / Non-Active Status
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Unsupported Concept Alert */}
-                        {msg.previewData?.intent_status === 'unsupported' && (
-                          <div className="unsupported-box">
-                            <div className="unsupported-title">Out-of-domain question</div>
-                            <p className="unsupported-desc" style={{ marginBottom: '0.75rem' }}>
-                              The requested question is outside the networking device inventory and operational telemetry schema. QueryTrust AI never hallucinates data outside known equipment domains.
-                            </p>
-                            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--qt-ink)', marginBottom: '0.4rem' }}>
-                              Try asking about equipment instead:
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => handleSendQuestion('How many active devices are in each region?')}
-                              >
-                                Devices by region
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => handleSendQuestion('Show all routers with warranty expiring in the next 60 days.')}
-                              >
-                                Warranty expiring soon
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => handleSendQuestion('List critical open service events grouped by site.')}
-                              >
-                                Open critical incidents
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* AST Violations Alert (if blocked) */}
-                        {msg.previewData?.validation.violations && msg.previewData.validation.violations.length > 0 && (
-                          <div className="security-alert-box alert-error">
-                            <div className="alert-title">This was blocked for safety:</div>
-                            <ul className="violations-list">
-                              {msg.previewData.validation.violations.map((v, i) => (
-                                <li key={i}>{v}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* SQL Syntax Highlighted Inspector Block (Simple vs Expert Mode) */}
-                        {msg.previewData?.sql_preview && (
-                          <div className="sql-preview-container">
-                            <button
-                              type="button"
-                              className="toggle-btn"
-                              onClick={() => toggleSqlExpansion(runId)}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 6,
-                                background: 'var(--qt-surface-muted)',
-                                border: '1px solid var(--qt-border)',
-                                padding: '4px 8px',
-                                borderRadius: 'var(--qt-radius-control)',
-                                marginBottom: isSqlExpanded ? 8 : 0,
-                                fontSize: '0.75rem',
-                              }}
-                            >
-                              <Code2 size={13} />
-                              <span>{isSqlExpanded ? 'Hide SQL preview' : 'Show SQL preview'}</span>
-                              {isSqlExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                            </button>
-
-                            {isSqlExpanded && (
-                              <div className="sql-preview-block">
-                                <div className="sql-preview-header">
-                                  <span className="sql-dialect-tag">PostgreSQL (SELECT-only)</span>
-                                  <div className="sql-header-actions">
-                                    <span className="limit-clamped-badge">LIMIT 200 clamped</span>
-                                    <button
-                                      type="button"
-                                      className="copy-btn"
-                                      onClick={() =>
-                                        handleCopySQL(msg.previewData!.query_run_id, msg.previewData!.sql_preview!)
-                                      }
-                                      title="Copy SQL statement"
-                                    >
-                                      {copiedQueryId === msg.previewData.query_run_id ? (
-                                        <span style={{ color: '#4ade80' }}>
-                                          <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copied
-                                        </span>
-                                      ) : (
-                                        <>
-                                          <Copy size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copy SQL
-                                        </>
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-                                <pre className="sql-code-box">
-                                  <HighlightedSql sql={msg.previewData.sql_preview} />
-                                </pre>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Action Footer (Prominent Solid Orange CTA or Blocked Indicator) */}
-                        {msg.previewData && !execResult && (
-                          <div className="preview-action-footer">
-                            <div className="footer-meta">
-                              <span className="run-id-label">Preview ID:</span>
-                              <code className="run-id-code">{msg.previewData.query_run_id.slice(0, 12)}…</code>
-                            </div>
-                            {msg.previewData.can_execute ? (
-                              <button
-                                type="button"
-                                className="btn btn-primary btn-md run-query-btn"
-                                onClick={() => handleExecuteQuery(msg.previewData!)}
-                                disabled={isExecuting}
-                                title="Execute query in read-only transaction"
-                              >
-                                {isExecuting ? (
-                                  <>
-                                    <div className="btn-spinner" /> Running safely in read-only mode...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Play size={13} fill="currentColor" />
-                                    <span>Run query</span>
-                                    <kbd className="kbd-shortcut">Ctrl+↵</kbd>
-                                  </>
-                                )}
-                              </button>
-                            ) : (
-                              <div
-                                className="blocked-execution-pill"
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 6,
-                                  padding: '6px 12px',
-                                  borderRadius: 'var(--qt-radius-control)',
-                                  background: 'var(--qt-danger-soft)',
-                                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                                  color: 'var(--qt-danger)',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 600,
-                                }}
-                              >
-                                <ShieldAlert size={14} />
-                                <span>Execution blocked by safety policy</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Execution Loading Skeleton */}
-                        {isExecuting && (
-                          <div className="execution-result-card">
-                            <div className="qt-skeleton" style={{ height: 28, width: '45%' }} />
-                            <div className="qt-skeleton" style={{ height: 180, width: '100%', borderRadius: 8 }} />
-                          </div>
-                        )}
-
-                        {/* LIVE QUERY EXECUTION RESULTS CONTAINER */}
-                        {execResult && (
-                          <div className="execution-result-card">
-                            <div className="result-card-header">
-                              <div className="result-header-left">
-                                <span className="status-tag status-success">
-                                  <span className="live-dot" /> Read-only executed
-                                </span>
-                                <span className="result-metric-pill">
-                                  <Zap size={12} style={{ verticalAlign: 'middle' }} /> {execResult.execution_duration_ms} ms
-                                </span>
-                                <span className="result-metric-pill">
-                                  <FileText size={12} style={{ verticalAlign: 'middle' }} /> {execResult.row_count} {execResult.row_count === 1 ? 'row' : 'rows'}
-                                </span>
-                                {execResult.truncated && (
-                                  <span className="badge badge-warning">Max 200 row limit reached</span>
-                                )}
-                              </div>
-                              <div className="result-header-right">
-                                <button
-                                  type="button"
-                                  className="toggle-btn"
-                                  onClick={() => handleExportCSV(execResult)}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 4,
-                                    background: 'var(--qt-surface)',
-                                    border: '1px solid var(--qt-border)',
-                                    padding: '3px 8px',
-                                    borderRadius: 'var(--qt-radius-control)',
-                                  }}
-                                  title="Export result table as CSV"
-                                >
-                                  <Download size={12} />
-                                  <span>Export CSV</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  className="toggle-btn"
-                                  onClick={() => handleExportJSON(execResult)}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 4,
-                                    background: 'var(--qt-surface)',
-                                    border: '1px solid var(--qt-border)',
-                                    padding: '3px 8px',
-                                    borderRadius: 'var(--qt-radius-control)',
-                                  }}
-                                  title="Export result records as JSON"
-                                >
-                                  <Download size={12} />
-                                  <span>Export JSON</span>
-                                </button>
-                                <div className="view-mode-toggle">
-                                  <button
-                                    type="button"
-                                    className={`toggle-btn ${activeMode === 'table' ? 'active' : ''}`}
-                                    onClick={() => {
-                                      setViewModeMap((p) => ({ ...p, [runId]: 'table' }))
-                                      setActiveSqlInspectorTab('table')
-                                    }}
-                                  >
-                                    Table
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`toggle-btn ${activeMode === 'chart' ? 'active' : ''}`}
-                                    onClick={() => {
-                                      setViewModeMap((p) => ({ ...p, [runId]: 'chart' }))
-                                      setActiveSqlInspectorTab('chart')
-                                    }}
-                                  >
-                                    Chart
-                                  </button>
-                                </div>
-                                <ExplainButton
-                                  title="Query Results"
-                                  explanation="These records were retrieved in a read-only database transaction. The system enforces strict SELECT-only access and clamps results to 200 rows."
-                                />
-                              </div>
-                            </div>
-
-                            {/* Result Summary Bar: One sentence takeaway */}
-                            <div className="result-summary-box">{execResult.result_summary}</div>
-
-                            {/* View Mode: Chart */}
-                            {activeMode === 'chart' && (
-                              <div className="result-visualization-area">
-                                <VisualChart result={execResult} />
-                              </div>
-                            )}
-
-                            {/* View Mode: Table (Linear Standard) */}
-                            {activeMode === 'table' && (
-                              <div className="result-table-wrapper">
-                                <table className="result-data-table">
-                                  <thead>
-                                    <tr>
-                                      {execResult.columns.map((col) => (
-                                        <th key={col}>{col.replace(/_/g, ' ')}</th>
-                                      ))}
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {execResult.rows.map((row, rIdx) => (
-                                      <tr key={rIdx}>
-                                        {execResult.columns.map((col) => {
-                                          const val = row[col]
-                                          const isNumeric = typeof val === 'number'
-                                          const isAssetTag = typeof val === 'string' && /^ASSET-\d+/i.test(val)
-
-                                          return (
-                                            <td
-                                              key={col}
-                                              className={isNumeric ? 'cell-numeric' : undefined}
-                                              title={val !== null && val !== undefined ? String(val) : undefined}
-                                            >
-                                              {val === null || val === undefined ? (
-                                                <span className="cell-null">—</span>
-                                              ) : isAssetTag ? (
-                                                <span className="asset-tag-token">{String(val)}</span>
-                                              ) : isNumeric ? (
-                                                Number(val).toLocaleString()
-                                              ) : (
-                                                String(val)
-                                              )}
-                                            </td>
-                                          )
-                                        })}
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-
-                            {/* Feedback Section */}
-                            <div className="feedback-subcard">
-                              <div className="feedback-header">
-                                <span className="feedback-label">Was this answer accurate and helpful?</span>
-                                {feedbackState?.saved && (
-                                  <span className="badge badge-success">
-                                    <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Feedback saved ({feedbackState.isHelpful ? 'Helpful' : 'Needs improvement'})
-                                  </span>
-                                )}
-                              </div>
-                              <div className="feedback-actions">
-                                <button
-                                  type="button"
-                                  className={`feedback-btn ${feedbackState?.isHelpful === true ? 'active-helpful' : ''}`}
-                                  onClick={() => handleFeedbackSubmit(runId, true)}
-                                >
-                                  <ThumbsUp size={12} style={{ marginRight: 4 }} /> Helpful
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`feedback-btn ${feedbackState?.isHelpful === false ? 'active-unhelpful' : ''}`}
-                                  onClick={() => handleFeedbackSubmit(runId, false)}
-                                >
-                                  <ThumbsDown size={12} style={{ marginRight: 4 }} /> Needs improvement
-                                </button>
-                                <input
-                                  type="text"
-                                  className="feedback-notes-input"
-                                  placeholder="Optional note for model evaluation..."
-                                  value={feedbackState?.explanation || ''}
-                                  onChange={(e) =>
-                                    setFeedbackMap((p) => ({
-                                      ...p,
-                                      [runId]: {
-                                        isHelpful: p[runId]?.isHelpful ?? true,
-                                        explanation: e.target.value,
-                                        saved: false,
-                                      },
-                                    }))
-                                  }
-                                />
-                                <button
-                                  type="button"
-                                  className="btn btn-secondary btn-sm"
-                                  onClick={() => handleFeedbackSubmit(runId, feedbackState?.isHelpful ?? true)}
-                                >
-                                  Save feedback
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
                       </div>
-                    )}
-                  </div>
-                )
-              })}
 
-              {/* Parsing Loading State */}
+                      {/* Semantic Meaning */}
+                      <div className="thread-card-meaning">
+                        {msg.content}
+                      </div>
+
+                      {/* Entities */}
+                      {msg.previewData && (
+                        <div className="thread-card-entities">
+                          {msg.previewData.validation.tables_referenced?.map((tbl) => (
+                            <span key={tbl} className="entity-chip entity-table" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>
+                              <span className="entity-chip-label">Table:</span> {tbl}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Clarification Alert */}
+                      {msg.previewData?.clarification_question && (
+                        <div className="clarification-box" style={{ padding: '8px 10px', margin: '4px 0' }}>
+                          <div className="clarification-title" style={{ fontSize: '0.72rem' }}>Clarification requested:</div>
+                          <div className="clarification-prompt" style={{ fontSize: '0.75rem' }}>{msg.previewData.clarification_question}</div>
+                        </div>
+                      )}
+
+                      {/* Blocked Violations */}
+                      {msg.previewData?.validation.violations && msg.previewData.validation.violations.length > 0 && (
+                        <div className="security-alert-box alert-error" style={{ padding: '6px 10px', margin: '4px 0', fontSize: '0.72rem' }}>
+                          <strong>Blocked:</strong> {msg.previewData.validation.violations[0]}
+                        </div>
+                      )}
+
+                      {/* Action Row */}
+                      <div className="thread-card-actions">
+                        {msg.previewData?.can_execute && !msgExecResult ? (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm run-query-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleExecuteQuery(msg.previewData!)
+                            }}
+                            disabled={isExecuting}
+                            style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                          >
+                            {isExecuting ? (
+                              <>
+                                <div className="btn-spinner" /> Running...
+                              </>
+                            ) : (
+                              <>
+                                <Play size={11} fill="currentColor" />
+                                <span>Run query</span>
+                              </>
+                            )}
+                          </button>
+                        ) : msgExecResult ? (
+                          <button
+                            type="button"
+                            className="thread-open-canvas-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setFocusedRunId(runId)
+                              setActiveCanvasTab('results')
+                              setMobilePane('canvas')
+                            }}
+                          >
+                            <TableIcon size={12} />
+                            <span>View in Canvas &rarr;</span>
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--qt-muted)' }}>Non-executable query</span>
+                        )}
+
+                        <span style={{ fontSize: '0.68rem', color: 'var(--qt-muted)' }}>
+                          <HumanDate iso={msg.createdAt} />
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+
               {isLoading && <QueryLoadingSkeleton />}
-
               <div ref={messagesEndRef} />
             </div>
-          )}
-        </div>
 
-        {/* Bottom Query Input Box */}
-        <div className="ask-data-input-dock">
-          <form
-            className="input-form-wrapper"
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleSendQuestion()
-            }}
-          >
-            <textarea
-              className="query-textarea"
-              placeholder="Ask anything about equipment, e.g., 'How many active devices are in each region?'"
-              rows={2}
-              value={inputQuestion}
-              onChange={(e) => setInputQuestion(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+            {/* Bottom Query Composer Dock */}
+            <div className="ask-data-input-dock">
+              <form
+                className="input-form-wrapper"
+                onSubmit={(e) => {
                   e.preventDefault()
                   handleSendQuestion()
-                }
-              }}
-              disabled={isLoading}
-              aria-label="Ask equipment question"
-            />
-            <div className="input-actions-bar">
-              <span className="input-hint-text">
-                Press <kbd>Enter ↵</kbd> to run safety check. <kbd>Shift+Enter</kbd> for new line. Preview is strictly read-only.
-              </span>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button
-                  type="button"
-                  className="try-break-btn"
-                  onClick={handleTryToBreakIt}
+                }}
+              >
+                <textarea
+                  className="query-textarea"
+                  placeholder="Ask anything about equipment, e.g., 'How many active devices are in each region?'"
+                  rows={2}
+                  value={inputQuestion}
+                  onChange={(e) => setInputQuestion(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSendQuestion()
+                    }
+                  }}
                   disabled={isLoading}
-                  title="Test security with DROP TABLE"
-                >
-                  <Flame size={12} />
-                  <span>Try to break it</span>
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={!inputQuestion.trim() || isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="btn-spinner" /> Checking safety...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={14} style={{ marginRight: 4 }} />
-                      <span>Check & preview</span>
-                    </>
-                  )}
-                </button>
+                  aria-label="Ask equipment question"
+                />
+                <div className="input-actions-bar">
+                  <span className="input-hint-text">
+                    <kbd>Enter ↵</kbd> preview &bull; <kbd>Ctrl+↵</kbd> run
+                  </span>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      className="try-break-btn"
+                      onClick={handleTryToBreakIt}
+                      disabled={isLoading}
+                      title="Test security with DROP TABLE"
+                      style={{ fontSize: '0.72rem', padding: '4px 8px' }}
+                    >
+                      <Flame size={12} />
+                      <span>Try to break it</span>
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-sm"
+                      disabled={!inputQuestion.trim() || isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="btn-spinner" /> Checking...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={12} style={{ marginRight: 3 }} />
+                          <span>Check &amp; preview</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* RIGHT: Dedicated Data & Safety Canvas */}
+          <div className="ask-canvas-pane">
+            {/* Canvas Header */}
+            <div className="canvas-top-bar">
+              <div className="canvas-header-left">
+                <div className="canvas-title-group">
+                  <TableIcon size={16} style={{ color: 'var(--qt-accent)' }} />
+                  <span className="canvas-title">
+                    {activePreview ? activePreview.interpreted_question : 'Equipment Intelligence Canvas'}
+                  </span>
+                </div>
+                {activeResult && (
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <span className="result-metric-pill">
+                      <Zap size={11} style={{ verticalAlign: 'middle' }} /> {activeResult.execution_duration_ms} ms
+                    </span>
+                    <span className="result-metric-pill">
+                      <FileText size={11} style={{ verticalAlign: 'middle' }} /> {activeResult.row_count} rows
+                    </span>
+                    {activeResult.truncated && (
+                      <span className="badge badge-warning" style={{ fontSize: '0.65rem' }}>
+                        LIMIT 200 clamped
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="canvas-header-right">
+                {/* Segmented Tabs */}
+                <div className="canvas-tabs-group" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeCanvasTab === 'results'}
+                    className={`canvas-tab-btn ${activeCanvasTab === 'results' ? 'active' : ''}`}
+                    onClick={() => setActiveCanvasTab('results')}
+                  >
+                    <TableIcon size={12} />
+                    <span>Data Results {activeResult ? `(${activeResult.row_count})` : ''}</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeCanvasTab === 'sql'}
+                    className={`canvas-tab-btn ${activeCanvasTab === 'sql' ? 'active' : ''}`}
+                    onClick={() => setActiveCanvasTab('sql')}
+                  >
+                    <Code2 size={12} />
+                    <span>SQL Preview</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeCanvasTab === 'safety'}
+                    className={`canvas-tab-btn ${activeCanvasTab === 'safety' ? 'active' : ''}`}
+                    onClick={() => setActiveCanvasTab('safety')}
+                  >
+                    <ShieldCheck size={12} />
+                    <span>Safety Proof</span>
+                  </button>
+                </div>
+
+                {/* Actions when executed */}
+                {activeResult && activeCanvasTab === 'results' && (
+                  <>
+                    <div className="view-mode-toggle" style={{ margin: 0 }}>
+                      <button
+                        type="button"
+                        className={`toggle-btn ${activeMode === 'table' ? 'active' : ''}`}
+                        onClick={() => {
+                          if (activeRunId) setViewModeMap((p) => ({ ...p, [activeRunId]: 'table' }))
+                          setActiveSqlInspectorTab('table')
+                        }}
+                      >
+                        Table
+                      </button>
+                      <button
+                        type="button"
+                        className={`toggle-btn ${activeMode === 'chart' ? 'active' : ''}`}
+                        onClick={() => {
+                          if (activeRunId) setViewModeMap((p) => ({ ...p, [activeRunId]: 'chart' }))
+                          setActiveSqlInspectorTab('chart')
+                        }}
+                      >
+                        Chart
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className="toggle-btn"
+                      onClick={() => handleExportCSV(activeResult)}
+                      title="Export CSV"
+                      style={{ padding: '3px 8px', fontSize: '0.72rem' }}
+                    >
+                      <Download size={11} />
+                      <span>CSV</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="toggle-btn"
+                      onClick={() => handleExportJSON(activeResult)}
+                      title="Export JSON"
+                      style={{ padding: '3px 8px', fontSize: '0.72rem' }}
+                    >
+                      <Download size={11} />
+                      <span>JSON</span>
+                    </button>
+                    <ExplainButton
+                      title="Query Results"
+                      explanation="These records were retrieved in a read-only database transaction. The system enforces strict SELECT-only access and clamps results to 200 rows."
+                    />
+                  </>
+                )}
+
+                {/* Primary CTA when previewed but not executed */}
+                {activePreview?.can_execute && !activeResult && (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm run-query-btn"
+                    onClick={() => handleExecuteQuery(activePreview)}
+                    disabled={executingId === activePreview.query_run_id}
+                    title="Execute query in read-only transaction (Ctrl+Enter)"
+                  >
+                    {executingId === activePreview.query_run_id ? (
+                      <>
+                        <div className="btn-spinner" /> Running safely...
+                      </>
+                    ) : (
+                      <>
+                        <Play size={11} fill="currentColor" />
+                        <span>Run query</span>
+                        <kbd className="kbd-shortcut">Ctrl+↵</kbd>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
-          </form>
+
+            {/* Canvas Body */}
+            <div className="canvas-content-area">
+              {/* TAB 1: RESULTS */}
+              {activeCanvasTab === 'results' && (
+                <>
+                  {activeResult ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+                      <div className="result-summary-box" style={{ marginBottom: '1rem' }}>
+                        {activeResult.result_summary}
+                      </div>
+
+                      {activeMode === 'chart' ? (
+                        <div className="canvas-chart-area">
+                          <VisualChart result={activeResult} />
+                        </div>
+                      ) : (
+                        <div className="canvas-table-wrapper">
+                          <table className="result-data-table">
+                            <thead>
+                              <tr>
+                                {activeResult.columns.map((col) => (
+                                  <th key={col}>{col.replace(/_/g, ' ')}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {activeResult.rows.map((row, rIdx) => (
+                                <tr key={rIdx}>
+                                  {activeResult.columns.map((col) => {
+                                    const val = row[col]
+                                    const isNumeric = typeof val === 'number'
+                                    const isAssetTag = typeof val === 'string' && /^ASSET-\d+/i.test(val)
+
+                                    return (
+                                      <td
+                                        key={col}
+                                        className={isNumeric ? 'cell-numeric' : undefined}
+                                        title={val !== null && val !== undefined ? String(val) : undefined}
+                                      >
+                                        {val === null || val === undefined ? (
+                                          <span className="cell-null">—</span>
+                                        ) : isAssetTag ? (
+                                          <span className="asset-tag-token">{String(val)}</span>
+                                        ) : isNumeric ? (
+                                          Number(val).toLocaleString()
+                                        ) : (
+                                          String(val)
+                                        )}
+                                      </td>
+                                    )
+                                  })}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* Feedback bar */}
+                      <div className="feedback-subcard" style={{ marginTop: '1rem' }}>
+                        <div className="feedback-header">
+                          <span className="feedback-label">Was this answer accurate and helpful?</span>
+                          {activeFeedback?.saved && (
+                            <span className="badge badge-success">
+                              <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Feedback saved
+                            </span>
+                          )}
+                        </div>
+                        <div className="feedback-actions">
+                          <button
+                            type="button"
+                            className={`feedback-btn ${activeFeedback?.isHelpful === true ? 'active-helpful' : ''}`}
+                            onClick={() => handleFeedbackSubmit(activeRunId!, true)}
+                          >
+                            <ThumbsUp size={12} style={{ marginRight: 4 }} /> Helpful
+                          </button>
+                          <button
+                            type="button"
+                            className={`feedback-btn ${activeFeedback?.isHelpful === false ? 'active-unhelpful' : ''}`}
+                            onClick={() => handleFeedbackSubmit(activeRunId!, false)}
+                          >
+                            <ThumbsDown size={12} style={{ marginRight: 4 }} /> Needs improvement
+                          </button>
+                          <input
+                            type="text"
+                            className="feedback-notes-input"
+                            placeholder="Optional note for model evaluation..."
+                            value={activeFeedback?.explanation || ''}
+                            onChange={(e) =>
+                              setFeedbackMap((p) => ({
+                                ...p,
+                                [activeRunId!]: {
+                                  isHelpful: p[activeRunId!]?.isHelpful ?? true,
+                                  explanation: e.target.value,
+                                  saved: false,
+                                },
+                              }))
+                            }
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleFeedbackSubmit(activeRunId!, activeFeedback?.isHelpful ?? true)}
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : activePreview?.can_execute ? (
+                    <div className="canvas-ready-hero">
+                      <div
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: '50%',
+                          background: 'rgba(16, 185, 129, 0.12)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                        }}
+                      >
+                        <ShieldCheck size={28} style={{ color: '#10b981' }} />
+                      </div>
+                      <div>
+                        <h3>Query Safe &amp; Validated</h3>
+                        <p style={{ maxWidth: 460 }}>
+                          Parsed by SQLGlot AST guardrails. Verified SELECT-only transaction clamped to 200 rows.
+                        </p>
+                      </div>
+
+                      <div style={{ background: 'var(--qt-canvas)', padding: '12px 16px', borderRadius: 8, border: '1px solid var(--qt-border)', width: '100%', textAlign: 'left' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', marginBottom: 4 }}>Mapped question:</div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--qt-ink)' }}>"{activePreview.interpreted_question}"</div>
+                        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                          {activePreview.validation.tables_referenced?.map((t) => (
+                            <span key={t} className="entity-chip entity-table" style={{ fontSize: '0.7rem' }}>
+                              Table: {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-md run-query-btn"
+                        onClick={() => handleExecuteQuery(activePreview)}
+                        disabled={executingId === activePreview.query_run_id}
+                        style={{ padding: '8px 20px', fontSize: '0.875rem' }}
+                      >
+                        {executingId === activePreview.query_run_id ? (
+                          <>
+                            <div className="btn-spinner" /> Executing in read-only transaction...
+                          </>
+                        ) : (
+                          <>
+                            <Play size={14} fill="currentColor" />
+                            <span>Run query in read-only mode</span>
+                            <kbd className="kbd-shortcut" style={{ marginLeft: 6 }}>Ctrl+↵</kbd>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : activePreview?.status === 'blocked' ? (
+                    <div className="canvas-blocked-hero">
+                      <div
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: '50%',
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                        }}
+                      >
+                        <ShieldAlert size={28} style={{ color: '#ef4444' }} />
+                      </div>
+                      <h3>Query Blocked for Safety</h3>
+                      <p>
+                        The SQL statement violates QueryTrust read-only governance rules. No query was executed against the database.
+                      </p>
+                      {activePreview.validation.violations && activePreview.validation.violations.length > 0 && (
+                        <div style={{ textAlign: 'left', width: '100%', background: 'var(--qt-canvas)', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ef4444', marginBottom: 4 }}>
+                            Violations detected:
+                          </div>
+                          <ul style={{ margin: 0, paddingLeft: 16, fontSize: '0.78rem', color: '#ef4444' }}>
+                            {activePreview.validation.violations.map((v, i) => (
+                              <li key={i}>{v}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="canvas-welcome-panel">
+                      <div
+                        style={{
+                          width: 60,
+                          height: 60,
+                          borderRadius: '50%',
+                          background: 'var(--qt-accent-soft)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid rgba(255, 79, 0, 0.25)',
+                        }}
+                      >
+                        <Sparkles size={30} style={{ color: 'var(--qt-accent)' }} />
+                      </div>
+                      <div>
+                        <h3>Equipment Intelligence Canvas</h3>
+                        <p>
+                          Ask a question on the left or click a starter chip to view live tabular records, charts, and AST security proofs here without page scrolling.
+                        </p>
+                      </div>
+
+                      <div style={{ marginTop: '0.5rem', width: '100%', maxWidth: 520 }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--qt-muted)', marginBottom: 8, textAlign: 'center' }}>
+                          Available Equipment Schema
+                        </div>
+                        <div className="canvas-schema-pills">
+                          <span className="canvas-schema-pill">
+                            <Database size={11} style={{ color: 'var(--qt-accent)' }} />
+                            <code>devices</code> (5,000 nodes)
+                          </span>
+                          <span className="canvas-schema-pill">
+                            <Database size={11} style={{ color: '#10b981' }} />
+                            <code>telemetry</code> (30,000+ readings)
+                          </span>
+                          <span className="canvas-schema-pill">
+                            <Database size={11} style={{ color: '#6366f1' }} />
+                            <code>sites</code> (50 regions)
+                          </span>
+                          <span className="canvas-schema-pill">
+                            <Database size={11} style={{ color: '#f59e0b' }} />
+                            <code>maintenance_events</code> (1,200 logs)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* TAB 2: SQL PREVIEW */}
+              {activeCanvasTab === 'sql' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {activePreview?.sql_preview ? (
+                    <div className="sql-preview-block" style={{ margin: 0 }}>
+                      <div className="sql-preview-header">
+                        <span className="sql-dialect-tag">PostgreSQL (SELECT-only) Dialect</span>
+                        <div className="sql-header-actions">
+                          <span className="limit-clamped-badge">LIMIT 200 clamped</span>
+                          <button
+                            type="button"
+                            className="copy-btn"
+                            onClick={() =>
+                              handleCopySQL(activePreview.query_run_id, activePreview.sql_preview!)
+                            }
+                            title="Copy SQL statement"
+                          >
+                            {copiedQueryId === activePreview.query_run_id ? (
+                              <span style={{ color: '#4ade80' }}>
+                                <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copied
+                              </span>
+                            ) : (
+                              <>
+                                <Copy size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copy SQL
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      <pre className="sql-code-box" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+                        <HighlightedSql sql={activePreview.sql_preview} />
+                      </pre>
+                    </div>
+                  ) : (
+                    <div className="sessions-empty" style={{ padding: '3rem 1rem' }}>
+                      <Code2 size={28} style={{ color: 'var(--qt-muted)' }} />
+                      <span>No SQL query generated yet.</span>
+                      <small>Select or ask a question on the left to inspect its SQL AST parse.</small>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: SAFETY PROOF */}
+              {activeCanvasTab === 'safety' && (
+                <div>
+                  {activePreview ? (
+                    <SafetyShieldDisplay preview={activePreview} />
+                  ) : (
+                    <div className="sessions-empty" style={{ padding: '3rem 1rem' }}>
+                      <ShieldCheck size={28} style={{ color: 'var(--qt-muted)' }} />
+                      <span>No query active to inspect.</span>
+                      <small>Run a query on the left to review its 6-point AST safety checks.</small>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
     </div>
   )
 }
+

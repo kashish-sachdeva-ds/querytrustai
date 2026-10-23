@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     # LLM Provider: 'demo' | 'gemini' | 'openai_compatible'
     LLM_PROVIDER: str = "demo"
     GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-3.8-flash"
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_BASE_URL: Optional[str] = None
     OPENAI_MODEL: str = "gpt-4o-mini"

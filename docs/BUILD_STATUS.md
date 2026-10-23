@@ -7,7 +7,8 @@
 2. ✅ **Structured Vertical Clarification Option Cards (`AskDataView.tsx`, `AskDataView.css`):** Replaced inline, side-by-side run-on options `(1)... (2)... (3)...` with vertical, beautifully structured interactive option cards. Each card displays an operational definition number badge, plain English title, SQL/rule hint, and an interactive 1-click execution action (`Select →`).
 3. ✅ **Dedicated Data Canvas Clarification Studio:** Added a dedicated full-height disambiguation view on the Canvas pane (`canvas-clarification-hero`) that displays when an ambiguous term is intercepted, offering high-level definition cards and instant disambiguation.
 4. ✅ **Clean Semantic Interpretation Meaning:** Isolated the plain-English mapped question from raw clarification prompts so `thread-card-meaning` remains concise and readable.
-5. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 16.25s; TypeScript and Vite production bundle builds cleanly in 2.45s with 0 errors.
+5. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 21.69s; TypeScript and Vite production bundle builds cleanly in 2.45s with 0 errors.
+6. ✅ **Gemini API Model Upgrade & Header Key Privacy (`llm_provider.py`, `config.py`, `.env.example`):** Resolved HTTP 404 Not Found error caused by Google retiring `gemini-2.0-flash`. Upgraded default model to `gemini-3.8-flash` / `gemini-flash-latest` with configurable `GEMINI_MODEL` environment variable. Replaced query parameter API key (`?key=...`) with `x-goog-api-key` header to eliminate credential leakage in server logs.
 
 **Automated Test Pass:**
 - **Backend:** 151/151 pytest tests pass in 16.25s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, async engine resiliency, and webhooks).

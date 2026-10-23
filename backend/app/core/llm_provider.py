@@ -463,12 +463,14 @@ class DemoLLMProvider(BaseLLMProvider):
 class GeminiLLMProvider(BaseLLMProvider):
     """Integration for Google Gemini models via REST with strict JSON structured outputs."""
 
-    def __init__(self, api_key: str):
-        super().__init__(name="gemini", model="gemini-2.0-flash", is_demo=False)
+    def __init__(self, api_key: str, model: Optional[str] = None):
+        selected_model = model or "gemini-3.8-flash"
+        super().__init__(name="gemini", model=selected_model, is_demo=False)
         self.api_key = api_key
-        self.endpoint = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
-        )
+
+    def _build_endpoint(self, model_name: str) -> str:
+        clean_model = model_name.replace("models/", "")
+        return f"https://generativelanguage.googleapis.com/v1beta/models/{clean_model}:generateContent"
 
     def _build_prompt(
         self,
@@ -511,22 +513,51 @@ class GeminiLLMProvider(BaseLLMProvider):
             },
         }
 
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            try:
-                resp = await client.post(self.endpoint, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
-                parsed = json.loads(raw_text)
-                return StructuredLLMResponse(**parsed)
-            except Exception as e:
-                logger.error(f"Gemini API generation failed: {e}; falling back to demo provider with honest labeling.")
-                demo = DemoLLMProvider()
-                fallback_resp = await demo.generate_sql_preview(question, history, schema_context)
-                fallback_resp.assumptions.insert(
-                    0, f"[NOTICE] Live Gemini generation failed ({type(e).__name__}). Query preview generated via local offline governance templates."
-                )
-                return fallback_resp
+        # Keep API key strictly in header to prevent leaking credentials in URL/logs (NIST SP 800-53 / Rule compliance)
+        headers = {
+            "x-goog-api-key": self.api_key,
+            "Content-Type": "application/json",
+        }
+
+        # Candidate models to try in order if a model is deprecated/returns 404
+        candidate_models = list(dict.fromkeys([self.model, "gemini-3.8-flash", "gemini-flash-latest"]))
+        last_error = None
+
+        async with httpx.AsyncClient(timeout=25.0) as client:
+            for candidate in candidate_models:
+                endpoint = self._build_endpoint(candidate)
+                try:
+                    resp = await client.post(endpoint, headers=headers, json=payload)
+                    if resp.status_code == 404:
+                        logger.warning(
+                            f"Gemini model '{candidate}' returned 404 (model retired/unavailable); trying fallback model..."
+                        )
+                        continue
+                    resp.raise_for_status()
+                    data = resp.json()
+                    raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    parsed = json.loads(raw_text)
+                    self.model = candidate
+                    return StructuredLLMResponse(**parsed)
+                except httpx.HTTPStatusError as e:
+                    last_error = e
+                    if e.response.status_code == 404:
+                        continue
+                    break
+                except Exception as e:
+                    last_error = e
+                    break
+
+            logger.error(
+                f"Gemini API generation failed ({type(last_error).__name__}: {last_error}); falling back to demo provider with honest labeling."
+            )
+            demo = DemoLLMProvider()
+            fallback_resp = await demo.generate_sql_preview(question, history, schema_context)
+            fallback_resp.assumptions.insert(
+                0,
+                f"[NOTICE] Live Gemini generation failed ({type(last_error).__name__ if last_error else '404'}). Query preview generated via local offline governance templates.",
+            )
+            return fallback_resp
 
 
 class OpenAICompatibleLLMProvider(BaseLLMProvider):
@@ -606,7 +637,8 @@ def get_llm_provider(settings: Optional[Settings] = None) -> BaseLLMProvider:
     provider_type = (cfg.LLM_PROVIDER or "demo").lower()
 
     if provider_type == "gemini" and cfg.GEMINI_API_KEY:
-        return GeminiLLMProvider(api_key=cfg.GEMINI_API_KEY)
+        gemini_model = getattr(cfg, "GEMINI_MODEL", "gemini-3.8-flash")
+        return GeminiLLMProvider(api_key=cfg.GEMINI_API_KEY, model=gemini_model)
     elif provider_type == "openai_compatible" and cfg.OPENAI_API_KEY:
         return OpenAICompatibleLLMProvider(
             api_key=cfg.OPENAI_API_KEY,

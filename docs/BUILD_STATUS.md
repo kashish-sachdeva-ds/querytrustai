@@ -1,16 +1,17 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-10-21  
-**Current milestone:** 32 — Split-Pane Canvas Workbench for Governed Data Queries  
-**Overall status:** Resolved excessive vertical scrolling in "Ask governed data" view via dual-pane enterprise workbench:
-1. ✅ **Dual-Pane Split Architecture (`AskDataView.tsx`, `AskDataView.css`):** Transformed single-column stacked view into a dual-pane workbench. Left pane contains compact question cards (~110px) with inline statuses and sticky bottom query composer. Right pane is a dedicated full-height Data Canvas for deep inspection.
-2. ✅ **Dedicated Data Canvas with Tab Switching:** Right canvas features full-height scrollable results tables with sticky headers, charts with export controls, SQL preview with copy/explain controls, and a dedicated 5-card AST Safety Stepper tab (AST parsing, CTE safety, dialect verification, row clamping, socket privileges).
-3. ✅ **Collapsible Sessions Sidebar & Responsive Behavior:** Added sidebar toggle button in the governance banner to expand workspace width. On mobile viewports (< 1024px), added a seamless pane switcher segment (`[ Query Thread | Data Canvas ]`).
-4. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 26.33s; TypeScript and Vite production bundle builds cleanly in 2.20s; `oxlint` reports 0 warnings and 0 errors.
+**Last updated:** 2026-10-23  
+**Current milestone:** 33 — Structured Vertical Clarification Options & Padded Governed Workspace Header  
+**Overall status:** Resolved visual clarity and layout constraints in "Ask governed data" workbench:
+1. ✅ **Padded Governed Workspace Header (`AskDataView.tsx`, `AskDataView.css`):** Re-introduced standard enterprise `PageHeader` inside a dedicated `.ask-data-workspace-header` container with generous `padding: 1.25rem 1.75rem 0.5rem 1.75rem`. Completely resolved the layout bug where "Ask governed data" was sticking flush against the conversation history sidebar.
+2. ✅ **Structured Vertical Clarification Option Cards (`AskDataView.tsx`, `AskDataView.css`):** Replaced inline, side-by-side run-on options `(1)... (2)... (3)...` with vertical, beautifully structured interactive option cards. Each card displays an operational definition number badge, plain English title, SQL/rule hint, and an interactive 1-click execution action (`Select →`).
+3. ✅ **Dedicated Data Canvas Clarification Studio:** Added a dedicated full-height disambiguation view on the Canvas pane (`canvas-clarification-hero`) that displays when an ambiguous term is intercepted, offering high-level definition cards and instant disambiguation.
+4. ✅ **Clean Semantic Interpretation Meaning:** Isolated the plain-English mapped question from raw clarification prompts so `thread-card-meaning` remains concise and readable.
+5. ✅ **Full Quality Gates:** 151/151 pytest backend tests pass in 16.25s; TypeScript and Vite production bundle builds cleanly in 2.45s with 0 errors.
 
 **Automated Test Pass:**
-- **Backend:** 151/151 pytest tests pass in 26.33s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, async engine resiliency, and webhooks).
-- **Frontend Build:** `npx tsc -b && vite build` exits with code 0 (2037 modules transformed in 2.20s); `npm run lint` exits with 0 errors.
+- **Backend:** 151/151 pytest tests pass in 16.25s (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, async engine resiliency, and webhooks).
+- **Frontend Build:** `npx tsc -b && vite build` exits with code 0 (2037 modules transformed in 2.45s); `npm run lint` exits with 0 errors.
 - **E2E & Accessibility:** Playwright test exits with code 0:
   - Scenario A (Healthy backend): Pass.
   - Scenario B (10s delayed Render cold start): Aborts in < 3,000ms (<= 4,000ms target), rendering fallback interactive workbench without hanging.

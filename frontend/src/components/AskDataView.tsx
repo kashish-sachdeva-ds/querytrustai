@@ -41,6 +41,7 @@ import {
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
+import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
 import { AstSafetyStepper } from './AstSafetyStepper'
 import { useWorkbenchStore } from '../store/workbenchStore'
@@ -52,6 +53,116 @@ interface MessageItem {
   content: string
   previewData?: PreviewResponse | null
   createdAt: string
+}
+
+export interface ClarificationOption {
+  id: number
+  label: string
+  prompt: string
+  hint?: string
+}
+
+export interface ParsedClarification {
+  question: string
+  subtext?: string
+  options: ClarificationOption[]
+}
+
+export function parseClarification(rawQuestion?: string | null): ParsedClarification {
+  if (!rawQuestion || !rawQuestion.trim()) {
+    return { question: '', options: [] }
+  }
+
+  const clean = rawQuestion.trim()
+  const lower = clean.toLowerCase()
+
+  // 1. High-risk devices domain disambiguation
+  if (lower.includes('high-risk') || lower.includes('high risk')) {
+    return {
+      question: "How would you like to define 'high-risk devices'?",
+      subtext: 'Choose an operational definition to generate safe, verified SQL:',
+      options: [
+        {
+          id: 1,
+          label: 'Imminent warranty expiry (within 30 days)',
+          prompt: 'Show devices with warranty expiring in 30 days',
+          hint: 'warranty_expiry <= current_date + 30d',
+        },
+        {
+          id: 2,
+          label: 'Devices with unresolved Critical or High service events',
+          prompt: 'Show devices with unresolved Critical or High service events',
+          hint: "severity IN ('Critical', 'High')",
+        },
+        {
+          id: 3,
+          label: 'Repeated flapping incidents',
+          prompt: 'Show devices with repeated flapping incidents',
+          hint: 'flapping incident count >= 2',
+        },
+      ],
+    }
+  }
+
+  // 2. Unhealthy devices domain disambiguation
+  if (lower.includes('unhealthy')) {
+    return {
+      question: 'How would you like to filter unhealthy devices?',
+      subtext: 'Select an operational health condition:',
+      options: [
+        {
+          id: 1,
+          label: 'Non-active operational status (Offline or Maintenance)',
+          prompt: 'Show devices with Offline or Maintenance status',
+          hint: "status IN ('Offline', 'Maintenance')",
+        },
+        {
+          id: 2,
+          label: 'Devices with open Critical service events',
+          prompt: 'Show devices with open Critical service events',
+          hint: "service_events.status != 'resolved' AND severity = 'Critical'",
+        },
+      ],
+    }
+  }
+
+  // 3. Dynamic parser for general numbered options: (1) ... (2) ... (3) ...
+  const matchSplit = clean.match(
+    /^(.*?)(?:please choose one of:?|choose one of:?|select one:?|choose:|select:)\s*(.*)$/i
+  )
+  if (matchSplit) {
+    const questionText = matchSplit[1].trim()
+    const optionsText = matchSplit[2].trim()
+
+    const optionMatches = [...optionsText.matchAll(/\(?(\d+)\)?\s*([^,(;]+(?:\([^)]*\))*[^,(;]*)/g)]
+    if (optionMatches.length >= 2) {
+      const options: ClarificationOption[] = optionMatches.map((m) => {
+        const id = parseInt(m[1], 10)
+        const label = m[2].replace(/^\s*or\s+/i, '').replace(/[\s,.;]+$/, '').trim()
+        return {
+          id,
+          label,
+          prompt: label,
+        }
+      })
+      return {
+        question: questionText || 'Clarification needed:',
+        subtext: 'Please select an option to continue:',
+        options,
+      }
+    }
+  }
+
+  return {
+    question: clean,
+    options: [],
+  }
+}
+
+export function getCleanSemanticMeaning(content: string): string {
+  if (!content) return ''
+  const parts = content.split(/(?:\r?\n\s*)*Clarification Needed:\s*/i)
+  return parts[0].trim()
 }
 
 const STARTER_PROMPTS = [
@@ -1023,6 +1134,15 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
 
       {/* Main Split-Pane Workspace */}
       <section className="ask-data-workspace">
+        {/* Workspace Top Header with PageHeader (Generous margin & padding from sidebar) */}
+        <div className="ask-data-workspace-header">
+          <PageHeader
+            title="Ask governed data"
+            description="Translate natural-language questions into safe, validated SQL queries."
+            helpText="Every generated query is checked across 6 safety checks and run via a SELECT-only PostgreSQL reader."
+          />
+        </div>
+
         {/* Governance & Safety Status Bar */}
         <div className="ask-data-governance-banner">
           <div className="governance-badge-group">
@@ -1195,7 +1315,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
 
                       {/* Semantic Meaning */}
                       <div className="thread-card-meaning">
-                        {msg.content}
+                        {getCleanSemanticMeaning(msg.content)}
                       </div>
 
                       {/* Entities */}
@@ -1209,13 +1329,52 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                         </div>
                       )}
 
-                      {/* Clarification Alert */}
-                      {msg.previewData?.clarification_question && (
-                        <div className="clarification-box" style={{ padding: '8px 10px', margin: '4px 0' }}>
-                          <div className="clarification-title" style={{ fontSize: '0.72rem' }}>Clarification requested:</div>
-                          <div className="clarification-prompt" style={{ fontSize: '0.75rem' }}>{msg.previewData.clarification_question}</div>
-                        </div>
-                      )}
+                      {/* Clarification Alert (Vertical Structured Options) */}
+                      {msg.previewData?.clarification_question && (() => {
+                        const parsed = parseClarification(msg.previewData.clarification_question)
+                        return (
+                          <div className="clarification-box" style={{ padding: '8px 10px', margin: '4px 0' }}>
+                            <div className="clarification-header">
+                              <div className="clarification-title-row">
+                                <AlertTriangle size={12} />
+                                <span>Clarification requested</span>
+                              </div>
+                              <div className="clarification-question-text">{parsed.question}</div>
+                              {parsed.subtext && (
+                                <div className="clarification-subtext">{parsed.subtext}</div>
+                              )}
+                            </div>
+
+                            {parsed.options.length > 0 ? (
+                              <div className="clarification-options-list">
+                                {parsed.options.map((opt) => (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    className="clarification-option-card"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleSendQuestion(opt.prompt)
+                                    }}
+                                    title={`Disambiguate as: ${opt.label}`}
+                                  >
+                                    <div className="clarification-option-badge">{opt.id}</div>
+                                    <div className="clarification-option-content">
+                                      <span className="clarification-option-label">{opt.label}</span>
+                                      {opt.hint && <span className="clarification-option-hint">{opt.hint}</span>}
+                                    </div>
+                                    <div className="clarification-option-action">
+                                      <span>Select &rarr;</span>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="clarification-prompt">{msg.previewData.clarification_question}</div>
+                            )}
+                          </div>
+                        )
+                      })()}
 
                       {/* Blocked Violations */}
                       {msg.previewData?.validation.violations && msg.previewData.validation.violations.length > 0 && (
@@ -1678,7 +1837,49 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                         </div>
                       )}
                     </div>
-                  ) : (
+                  ) : activePreview?.clarification_question ? (() => {
+                    const parsed = parseClarification(activePreview.clarification_question)
+                    return (
+                      <div className="canvas-clarification-hero">
+                        <div className="canvas-clarification-icon-box">
+                          <AlertTriangle size={28} style={{ color: '#d97706' }} />
+                        </div>
+                        <h3>Clarification Required Before Execution</h3>
+                        <p style={{ maxWidth: 520, margin: '4px auto 16px', color: 'var(--qt-muted)', fontSize: '0.85rem' }}>
+                          The natural language query contains an ambiguous operational term. Please select an approved operational rule to generate and execute verified read-only SQL:
+                        </p>
+
+                        <div className="canvas-clarification-question-banner">
+                          <span className="canvas-clarification-label">Ambiguous term intercepted</span>
+                          <span className="canvas-clarification-query">"{parsed.question}"</span>
+                        </div>
+
+                        {parsed.options.length > 0 ? (
+                          <div className="canvas-clarification-options">
+                            {parsed.options.map((opt) => (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                className="canvas-clarification-option-btn"
+                                onClick={() => handleSendQuestion(opt.prompt)}
+                              >
+                                <div className="canvas-clarification-option-top">
+                                  <span className="canvas-clarification-badge">Definition {opt.id}</span>
+                                  <span className="canvas-clarification-action">Select &amp; Run &rarr;</span>
+                                </div>
+                                <div className="canvas-clarification-title">{opt.label}</div>
+                                {opt.hint && <div className="canvas-clarification-hint">{opt.hint}</div>}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="canvas-clarification-fallback">
+                            <p>{activePreview.clarification_question}</p>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })() : (
                     <div className="canvas-welcome-panel">
                       <div
                         style={{

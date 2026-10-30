@@ -1,9 +1,15 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-31  
-**Current milestone:** 36 — 21st.dev / Linear Ultra-Clean Redesign & Radical Visual Subtraction  
-**Overall status:** Complete ground-up UI/UX subtraction redesign matching 21st.dev, Linear, and Raycast minimalist standards. Removed 70% of visual clutter, badges, and telemetry strips, replacing them with generous 50%-60% negative space, open-source 21st.dev/MagicUI components, True Zinc monochrome palette, and sleek progressive disclosure:
-1. ✅ **21st.dev Open-Source Component Architecture:**
+**Current milestone:** 37 — Linear Ultra-Clean Sidebar Redesign & Information Architecture Refinement  
+**Overall status:** Complete ground-up UI/UX subtraction redesign matching 21st.dev, Linear, and Raycast minimalist standards. Removed 70% of visual clutter, badges, and telemetry strips across Landing, Sign-In, and the Application Sidebar:
+1. ✅ **Linear Minimalist Sidebar Architecture (`Sidebar.tsx`, `LinearShell.css`):**
+   - Streamlined width from 240px to compact 220px (collapsed to 56px icon rail with `⌘B` keyboard persistence).
+   - Removed triple "Ask Data" redundancy: replaced bulky gradient button with a quiet 32px `[Sparkles] Ask data... [⌘K]` well.
+   - Removed cramped 3-row "Recent Verified" text truncation strip (conversations live cleanly in `AskDataView` session history and the `⌘K` palette).
+   - Eliminated 5 static badges (`[IDE]`, `[5,000]`, `[100%]`, `[4 Tables]`, `[7]`), retaining ONLY dynamic, action-worthy alerts: `Data Health: 6` (amber) and `Unusual Activity: 375` (rose).
+   - Flush 56px header alignment and bottom kernel status beacon (`● PostgreSQL Read-Only • Zero-Write Lock • 1.4ms`).
+2. ✅ **21st.dev Open-Source Component Architecture:**
    - `<HeroSpotlightBackground />`: 1px architectural grid mask (`bg-[size:32px_32px]`) with radial fade mask (`ellipse 60% 50% at 50% 0%`) and top ambient orange spotlight (`bg-orange-500/10 blur-[120px]`).
    - `<SpotlightCard />`: Mouse-tracking radial gradient border illumination (`radial-gradient(450px circle at x,y, rgba(249, 115, 22, 0.08))`) for bento grids and metric cards.
    - `<ASTAnimatedBeam />`: 3-node animated SVG beam pipeline diagram with flowing particle pulses from Natural Language &rarr; SQLGlot AST Shield (6 Gates) &rarr; PostgreSQL Read-Only Kernel.

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import {
   LayoutDashboard,
   Server,
-  MessageSquareText,
   ShieldCheck,
   Activity,
   FlaskConical,
@@ -11,12 +10,12 @@ import {
   ChevronRight,
   Database,
   Terminal,
+  Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import {
   fetchDataQualitySummary,
   fetchAnomalySummary,
-  fetchQueryHistory,
 } from '../api/client'
 import { QueryTrustLogo } from './QueryTrustLogo'
 import './LinearShell.css'
@@ -38,13 +37,7 @@ interface SidebarProps {
   onAskQuestion?: (question: string) => void
 }
 
-const DEFAULT_RECENT_QUESTIONS = [
-  'Show devices with warranty expiring in 30 days',
-  'Show all high-risk devices with open critical events',
-  'List open Critical service events grouped by site',
-]
-
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQuestion }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
 
@@ -56,10 +49,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
     }
   })
 
-  // Live Monospace Counters
+  // Dynamic alert counts only (no static noise badges)
   const [dataHealthCount, setDataHealthCount] = useState<number>(6)
   const [anomaliesCount, setAnomaliesCount] = useState<number>(375)
-  const [recentQuestions, setRecentQuestions] = useState<string[]>(DEFAULT_RECENT_QUESTIONS)
 
   const toggleCollapsed = () => {
     setIsCollapsed((prev) => {
@@ -73,14 +65,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
     })
   }
 
-  // Load telemetry counts and recent history
+  // Load live hygiene & anomaly defect counts
   useEffect(() => {
     let isMounted = true
 
     async function loadTelemetry() {
       try {
         const dq = await fetchDataQualitySummary()
-        if (isMounted && dq && dq.total_findings) {
+        if (isMounted && dq?.total_findings) {
           setDataHealthCount(dq.total_findings)
         }
       } catch {
@@ -97,23 +89,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
       } catch {
         // default 375 preserved
       }
-
-      try {
-        const history = await fetchQueryHistory(1, 10)
-        if (isMounted && history?.items && history.items.length > 0) {
-          const unique: string[] = []
-          for (const item of history.items) {
-            const q = item.question?.trim()
-            if (q && !unique.includes(q)) {
-              unique.push(q)
-              if (unique.length >= 3) break
-            }
-          }
-          if (unique.length > 0) setRecentQuestions(unique)
-        }
-      } catch {
-        // default questions preserved
-      }
     }
 
     loadTelemetry()
@@ -122,15 +97,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
     }
   }, [])
 
+  const navItemClass = (tab: ActiveTab) =>
+    `group relative flex items-center justify-between h-8 mx-2 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+      activeTab === tab
+        ? 'bg-[var(--bg-subtle)] text-[var(--text-main)] font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:bg-[#F97316] before:rounded-r'
+        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)]'
+    }`
+
   return (
     <aside
       className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''}`}
       aria-label="Main Navigation Sidebar"
       style={{
-        width: isCollapsed ? '60px' : '240px',
-        minWidth: isCollapsed ? '60px' : '240px',
-        maxWidth: isCollapsed ? '60px' : '240px',
-        backgroundColor: 'var(--bg-canvas)',
+        width: isCollapsed ? '56px' : '220px',
+        minWidth: isCollapsed ? '56px' : '220px',
+        maxWidth: isCollapsed ? '56px' : '220px',
+        backgroundColor: 'var(--bg-card)',
         borderRight: '1px solid var(--border-subtle)',
         display: 'flex',
         flexDirection: 'column',
@@ -140,56 +122,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
         boxSizing: 'border-box',
         flexShrink: 0,
         zIndex: 40,
-        transition: 'width 140ms ease, min-width 140ms ease',
+        transition: 'width 160ms cubic-bezier(0.16, 1, 0.3, 1), min-width 160ms ease',
       }}
     >
-      {/* ─── Top Brand Section ─── */}
-      <div>
-        <div
-          style={{
-            height: '48px',
-            borderBottom: '1px solid var(--border-subtle)',
-            padding: isCollapsed ? '0 12px' : '0 14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: isCollapsed ? 'center' : 'space-between',
-            backgroundColor: 'var(--bg-surface-1)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-            <div style={{ flexShrink: 0 }}>
+      {/* ─── Top Brand & Navigation Section ─── */}
+      <div className="flex flex-col min-h-0 flex-1">
+        {/* Header flush with top navigation bar */}
+        <div className="h-14 border-b border-[var(--border-subtle)] px-3 flex items-center justify-between bg-[var(--bg-card)] flex-shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              type="button"
+              onClick={isCollapsed ? toggleCollapsed : undefined}
+              className="flex-shrink-0 cursor-pointer focus:outline-none"
+              title={isCollapsed ? 'Expand sidebar' : 'QueryTrust AI'}
+            >
               <QueryTrustLogo size={22} />
-            </div>
+            </button>
             {!isCollapsed && (
-              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      color: 'var(--ink-primary)',
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
-                    QueryTrust
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '9px',
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 700,
-                      backgroundColor: 'var(--accent-primary-subtle)',
-                      color: 'var(--accent-primary)',
-                      border: '1px solid var(--accent-primary-border)',
-                      padding: '1px 4px',
-                      borderRadius: '3px',
-                    }}
-                  >
-                    AI
-                  </span>
-                </div>
-                <span style={{ fontSize: '10px', color: 'var(--ink-muted)' }}>Zero-Trust SQL</span>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="font-semibold text-xs tracking-tight text-[var(--text-main)] font-display truncate">
+                  Query<span className="text-[#F97316]">Trust</span>
+                </span>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-orange-500/10 text-[#F97316] border border-orange-500/20">
+                  AI
+                </span>
               </div>
             )}
           </div>
@@ -197,351 +153,111 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
           <button
             type="button"
             onClick={toggleCollapsed}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--ink-muted)',
-              cursor: 'pointer',
-              padding: '4px',
-              borderRadius: '4px',
-              display: isCollapsed ? 'none' : 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
+            title={isCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
             aria-label="Toggle sidebar collapse"
           >
-            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            {isCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
           </button>
         </div>
 
-        {/* ─── Primary CTA: Ask Governed Data ─── */}
-        <div style={{ padding: '10px 10px 8px 10px' }}>
-          <button
-            type="button"
-            onClick={() => onSelectTab('ask-data')}
-            style={{
-              width: '100%',
-              backgroundColor: 'var(--accent-primary)',
-              color: '#ffffff',
-              border: '1px solid var(--accent-primary-hover)',
-              borderRadius: '6px',
-              padding: isCollapsed ? '8px 0' : '7px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: isCollapsed ? 'center' : 'space-between',
-              fontWeight: 600,
-              fontSize: '12px',
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(249, 87, 22, 0.25)',
-              transition: 'background-color 120ms ease',
-            }}
-            title="Ask Governed Data (⌘K)"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <MessageSquareText size={14} />
-              {!isCollapsed && <span>Ask Governed Data</span>}
-            </div>
-            {!isCollapsed && (
-              <kbd
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.22)',
-                  color: '#ffffff',
-                  fontSize: '9.5px',
-                  fontFamily: 'var(--font-mono)',
-                  padding: '1.5px 5px',
-                  borderRadius: '3px',
-                }}
-              >
+        {/* ─── Quick Action Omnibar Shortcut ─── */}
+        <div className="p-2 border-b border-[var(--border-subtle)]">
+          {isCollapsed ? (
+            <button
+              type="button"
+              onClick={() => onSelectTab('ask-data')}
+              className="w-8 h-8 mx-auto rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] flex items-center justify-center text-[#F97316] transition-all cursor-pointer"
+              title="Ask Governed Data (⌘K)"
+            >
+              <Sparkles size={14} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onSelectTab('ask-data')}
+              className="w-full h-8 px-2.5 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] flex items-center justify-between transition-all cursor-pointer group"
+              title="Ask anything across 5,000 devices (⌘K)"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles size={13} className="text-[#F97316]" />
+                <span className="text-[11px] font-medium">Ask data...</span>
+              </div>
+              <kbd className="text-[10px] font-mono text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] px-1.5 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-subtle)]">
                 ⌘K
               </kbd>
-            )}
-          </button>
+            </button>
+          )}
         </div>
 
-        {/* ─── Recent Verified Queries Section ─── */}
-        {!isCollapsed && recentQuestions.length > 0 && (
-          <div style={{ padding: '0 10px 8px 10px' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '2px 4px 4px 4px',
-                fontSize: '10px',
-                fontFamily: 'var(--font-mono)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                color: 'var(--ink-muted)',
-              }}
-            >
-              <span>Recent Verified</span>
-              <button
-                type="button"
-                onClick={() => onSelectTab('history')}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--ink-muted)',
-                  cursor: 'pointer',
-                  fontSize: '10px',
-                  fontFamily: 'var(--font-mono)',
-                  padding: 0,
-                }}
-              >
-                All &rarr;
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              {recentQuestions.map((q, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => (onAskQuestion ? onAskQuestion(q) : onSelectTab('ask-data'))}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '4px 6px',
-                    borderRadius: '4px',
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                    fontSize: '11px',
-                    color: 'var(--ink-secondary)',
-                    transition: 'background-color 100ms ease',
-                  }}
-                  title={q}
-                >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '9.5px',
-                      color: 'var(--ink-muted)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    0{idx + 1}
-                  </span>
-                  <span
-                    style={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      flex: 1,
-                    }}
-                  >
-                    {q}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '8.5px',
-                      fontWeight: 700,
-                      color: 'var(--gov-safe-text)',
-                      backgroundColor: 'var(--gov-safe-bg)',
-                      padding: '1px 3px',
-                      borderRadius: '3px',
-                      flexShrink: 0,
-                    }}
-                  >
-                    AST✓
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ─── Navigation Groups ─── */}
-        <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* GROUP 1: ANALYTICS & WORKBENCH */}
+        {/* ─── Scrollable Navigation Body ─── */}
+        <div className="flex-1 overflow-y-auto py-2 space-y-4">
+          {/* GROUP 1: WORKSPACE */}
           <div>
             {!isCollapsed && (
-              <div
-                style={{
-                  fontSize: '10px',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--ink-muted)',
-                  padding: '2px 8px 4px 8px',
-                }}
-              >
-                Analytics &amp; Workbench
+              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-3 mb-1">
+                Workspace
               </div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            <div className="space-y-0.5">
               <button
                 type="button"
-                className={`sidebar-nav-link ${activeTab === 'overview' ? 'active' : ''}`}
                 onClick={() => onSelectTab('overview')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  background: activeTab === 'overview' ? 'var(--bg-surface-3)' : 'transparent',
-                  color: activeTab === 'overview' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                  cursor: 'pointer',
-                  width: '100%',
-                  fontSize: '12px',
-                  fontWeight: activeTab === 'overview' ? 600 : 500,
-                }}
+                className={navItemClass('overview')}
                 title="Fleet Overview"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <LayoutDashboard size={14} style={{ color: activeTab === 'overview' ? 'var(--accent-primary)' : 'var(--ink-muted)' }} />
-                  {!isCollapsed && <span>Fleet Overview</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <LayoutDashboard size={14} className={activeTab === 'overview' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
+                  {!isCollapsed && <span className="truncate">Fleet Overview</span>}
                 </div>
               </button>
 
               <button
                 type="button"
-                className={`sidebar-nav-link ${activeTab === 'ask-data' ? 'active' : ''}`}
                 onClick={() => onSelectTab('ask-data')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  background: activeTab === 'ask-data' ? 'var(--bg-surface-3)' : 'transparent',
-                  color: activeTab === 'ask-data' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                  cursor: 'pointer',
-                  width: '100%',
-                  fontSize: '12px',
-                  fontWeight: activeTab === 'ask-data' ? 600 : 500,
-                }}
-                title="Ask Governed Data"
+                className={navItemClass('ask-data')}
+                title="Ask Governed Data (Studio)"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Terminal size={14} style={{ color: activeTab === 'ask-data' ? 'var(--accent-primary)' : 'var(--ink-muted)' }} />
-                  {!isCollapsed && <span>Ask Governed Data</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Terminal size={14} className={activeTab === 'ask-data' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
+                  {!isCollapsed && <span className="truncate">Ask Governed Data</span>}
                 </div>
-                {!isCollapsed && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '9.5px',
-                      fontWeight: 700,
-                      backgroundColor: 'var(--accent-primary-subtle)',
-                      color: 'var(--accent-primary)',
-                      padding: '1px 5px',
-                      borderRadius: '3px',
-                      border: '1px solid var(--accent-primary-border)',
-                    }}
-                  >
-                    IDE
-                  </span>
-                )}
               </button>
 
               <button
                 type="button"
-                className={`sidebar-nav-link ${activeTab === 'devices' ? 'active' : ''}`}
                 onClick={() => onSelectTab('devices')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  background: activeTab === 'devices' ? 'var(--bg-surface-3)' : 'transparent',
-                  color: activeTab === 'devices' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                  cursor: 'pointer',
-                  width: '100%',
-                  fontSize: '12px',
-                  fontWeight: activeTab === 'devices' ? 600 : 500,
-                }}
+                className={navItemClass('devices')}
                 title="Data Catalog & Schema"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Server size={14} style={{ color: activeTab === 'devices' ? 'var(--accent-primary)' : 'var(--ink-muted)' }} />
-                  {!isCollapsed && <span>Data Catalog &amp; Schema</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Database size={14} className={activeTab === 'devices' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
+                  {!isCollapsed && <span className="truncate">Data Catalog</span>}
                 </div>
-                {!isCollapsed && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '10px',
-                      color: 'var(--ink-muted)',
-                      backgroundColor: 'var(--bg-surface-2)',
-                      padding: '1px 5px',
-                      borderRadius: '3px',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    5,000
-                  </span>
-                )}
               </button>
             </div>
           </div>
 
-          {/* GROUP 2: OBSERVABILITY & HYGIENE */}
+          {/* GROUP 2: SIGNALS & HYGIENE */}
           <div>
             {!isCollapsed && (
-              <div
-                style={{
-                  fontSize: '10px',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--ink-muted)',
-                  padding: '2px 8px 4px 8px',
-                }}
-              >
-                Observability &amp; Hygiene
+              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-3 mb-1">
+                Hygiene &amp; Signals
               </div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            <div className="space-y-0.5">
               <button
                 type="button"
-                className={`sidebar-nav-link ${activeTab === 'data-quality' ? 'active' : ''}`}
                 onClick={() => onSelectTab('data-quality')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  background: activeTab === 'data-quality' ? 'var(--bg-surface-3)' : 'transparent',
-                  color: activeTab === 'data-quality' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                  cursor: 'pointer',
-                  width: '100%',
-                  fontSize: '12px',
-                  fontWeight: activeTab === 'data-quality' ? 600 : 500,
-                }}
-                title="Data Health Scanner"
+                className={navItemClass('data-quality')}
+                title={`Data Health (${dataHealthCount} findings)`}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ShieldCheck size={14} style={{ color: activeTab === 'data-quality' ? 'var(--accent-primary)' : 'var(--ink-muted)' }} />
-                  {!isCollapsed && <span>Data Health</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <ShieldCheck size={14} className={activeTab === 'data-quality' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
+                  {!isCollapsed && <span className="truncate">Data Health</span>}
                 </div>
-                {!isCollapsed && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      color: 'var(--gov-warn-text)',
-                      backgroundColor: 'var(--gov-warn-bg)',
-                      border: '1px solid var(--gov-warn-border)',
-                      padding: '1px 5px',
-                      borderRadius: '3px',
-                    }}
-                  >
+                {!isCollapsed && dataHealthCount > 0 && (
+                  <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     {dataHealthCount}
                   </span>
                 )}
@@ -549,41 +265,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
 
               <button
                 type="button"
-                className={`sidebar-nav-link ${activeTab === 'anomalies' ? 'active' : ''}`}
                 onClick={() => onSelectTab('anomalies')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  background: activeTab === 'anomalies' ? 'var(--bg-surface-3)' : 'transparent',
-                  color: activeTab === 'anomalies' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                  cursor: 'pointer',
-                  width: '100%',
-                  fontSize: '12px',
-                  fontWeight: activeTab === 'anomalies' ? 600 : 500,
-                }}
-                title="Unusual Activity (Telemetry Anomalies)"
+                className={navItemClass('anomalies')}
+                title={`Unusual Activity (${anomaliesCount} outliers)`}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Activity size={14} style={{ color: activeTab === 'anomalies' ? 'var(--accent-primary)' : 'var(--ink-muted)' }} />
-                  {!isCollapsed && <span>Unusual Activity</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Activity size={14} className={activeTab === 'anomalies' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
+                  {!isCollapsed && <span className="truncate">Unusual Activity</span>}
                 </div>
-                {!isCollapsed && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      color: 'var(--accent-primary)',
-                      backgroundColor: 'var(--accent-primary-subtle)',
-                      border: '1px solid var(--accent-primary-border)',
-                      padding: '1px 5px',
-                      borderRadius: '3px',
-                    }}
-                  >
+                {!isCollapsed && anomaliesCount > 0 && (
+                  <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
                     {anomaliesCount}
                   </span>
                 )}
@@ -591,147 +282,49 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
             </div>
           </div>
 
-          {/* GROUP 3: ZERO-TRUST GOVERNANCE */}
+          {/* GROUP 3: COMPLIANCE & KERNEL */}
           <div>
             {!isCollapsed && (
-              <div
-                style={{
-                  fontSize: '10px',
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  color: 'var(--ink-muted)',
-                  padding: '2px 8px 4px 8px',
-                }}
-              >
-                Zero-Trust Governance
+              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-3 mb-1">
+                Governance
               </div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            <div className="space-y-0.5">
               <button
                 type="button"
-                className={`sidebar-nav-link ${activeTab === 'evaluations' ? 'active' : ''}`}
                 onClick={() => onSelectTab('evaluations')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  background: activeTab === 'evaluations' ? 'var(--bg-surface-3)' : 'transparent',
-                  color: activeTab === 'evaluations' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                  cursor: 'pointer',
-                  width: '100%',
-                  fontSize: '12px',
-                  fontWeight: activeTab === 'evaluations' ? 600 : 500,
-                }}
+                className={navItemClass('evaluations')}
                 title="Safety Proof & AST Lab"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <FlaskConical size={14} style={{ color: activeTab === 'evaluations' ? 'var(--accent-primary)' : 'var(--ink-muted)' }} />
-                  {!isCollapsed && <span>Safety Proof &amp; AST Lab</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FlaskConical size={14} className={activeTab === 'evaluations' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
+                  {!isCollapsed && <span className="truncate">Safety Proof &amp; AST</span>}
                 </div>
-                {!isCollapsed && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      color: 'var(--gov-safe-text)',
-                      backgroundColor: 'var(--gov-safe-bg)',
-                      border: '1px solid var(--gov-safe-border)',
-                      padding: '1px 5px',
-                      borderRadius: '3px',
-                    }}
-                  >
-                    100%
-                  </span>
-                )}
               </button>
 
               <button
                 type="button"
-                className={`sidebar-nav-link ${activeTab === 'data-sources' ? 'active' : ''}`}
                 onClick={() => onSelectTab('data-sources')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '6px 8px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  background: activeTab === 'data-sources' ? 'var(--bg-surface-3)' : 'transparent',
-                  color: activeTab === 'data-sources' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                  cursor: 'pointer',
-                  width: '100%',
-                  fontSize: '12px',
-                  fontWeight: activeTab === 'data-sources' ? 600 : 500,
-                }}
-                title="Data Sources & Dual-Role Kernel"
+                className={navItemClass('data-sources')}
+                title="Data Sources & Kernel Topology"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Database size={14} style={{ color: activeTab === 'data-sources' ? 'var(--accent-primary)' : 'var(--ink-muted)' }} />
-                  {!isCollapsed && <span>Data Sources &amp; Kernel</span>}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Server size={14} className={activeTab === 'data-sources' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
+                  {!isCollapsed && <span className="truncate">Data Sources &amp; Kernel</span>}
                 </div>
-                {!isCollapsed && (
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '10px',
-                      color: 'var(--ink-muted)',
-                      backgroundColor: 'var(--bg-surface-2)',
-                      padding: '1px 5px',
-                      borderRadius: '3px',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    4 Tables
-                  </span>
-                )}
               </button>
 
               {isAdmin && (
                 <button
                   type="button"
-                  className={`sidebar-nav-link ${activeTab === 'admin' ? 'active' : ''}`}
                   onClick={() => onSelectTab('admin')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '6px 8px',
-                    borderRadius: '5px',
-                    border: 'none',
-                    background: activeTab === 'admin' ? 'var(--bg-surface-3)' : 'transparent',
-                    color: activeTab === 'admin' ? 'var(--ink-primary)' : 'var(--ink-secondary)',
-                    cursor: 'pointer',
-                    width: '100%',
-                    fontSize: '12px',
-                    fontWeight: activeTab === 'admin' ? 600 : 500,
-                  }}
+                  className={navItemClass('admin')}
                   title="People & RBAC Access"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Users size={14} style={{ color: activeTab === 'admin' ? 'var(--accent-primary)' : 'var(--ink-muted)' }} />
-                    {!isCollapsed && <span>People &amp; RBAC Access</span>}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Users size={14} className={activeTab === 'admin' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
+                    {!isCollapsed && <span className="truncate">People &amp; Access</span>}
                   </div>
-                  {!isCollapsed && (
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '10px',
-                        color: 'var(--ink-muted)',
-                        backgroundColor: 'var(--bg-surface-2)',
-                        padding: '1px 5px',
-                        borderRadius: '3px',
-                        border: '1px solid var(--border-subtle)',
-                      }}
-                    >
-                      7
-                    </span>
-                  )}
                 </button>
               )}
             </div>
@@ -739,53 +332,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
         </div>
       </div>
 
-      {/* ─── Bottom Kernel Footer ─── */}
-      <div
-        style={{
-          borderTop: '1px solid var(--border-subtle)',
-          padding: isCollapsed ? '10px 4px' : '10px 12px',
-          backgroundColor: 'var(--bg-surface-1)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span
-            style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--gov-safe-dot)',
-              display: 'inline-block',
-              flexShrink: 0,
-            }}
-          />
+      {/* ─── Bottom Status Beacon (Kernel Integrity) ─── */}
+      <div className="p-3 border-t border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
           {!isCollapsed && (
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10.5px',
-                fontWeight: 600,
-                color: 'var(--ink-primary)',
-              }}
-            >
-              PostgreSQL 16.4 &bull; SSL
-            </span>
+            <div className="flex flex-col min-w-0">
+              <div className="text-[11px] font-mono font-semibold text-[var(--text-main)] truncate">
+                PostgreSQL Read-Only
+              </div>
+              <div className="text-[10px] font-mono text-[var(--text-muted)] truncate">
+                Zero-Write Lock &bull; 1.4ms
+              </div>
+            </div>
           )}
         </div>
-        {!isCollapsed && (
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '9.5px',
-              color: 'var(--gov-safe-text)',
-              paddingLeft: '12px',
-            }}
-          >
-            Kernel Read-Only Lock Active
-          </div>
-        )}
       </div>
     </aside>
   )

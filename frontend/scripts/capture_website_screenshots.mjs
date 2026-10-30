@@ -102,12 +102,27 @@ async function run() {
     }
     await page.waitForTimeout(1500)
 
-    // Capture Overview
+    // Capture Overview with New Linear Minimalist Sidebar
     await page.screenshot({
       path: path.join(screenshotDir, '5_workspace_overview.png'),
       fullPage: false,
     })
     console.log('Saved 5_workspace_overview.png')
+
+    // Test Sidebar Collapse Toggle
+    const collapseBtn = page.locator('button[aria-label="Toggle sidebar collapse"]')
+    if (await collapseBtn.count() > 0) {
+      await collapseBtn.click()
+      await page.waitForTimeout(300)
+      await page.screenshot({
+        path: path.join(screenshotDir, '7_workspace_collapsed_sidebar.png'),
+        fullPage: false,
+      })
+      console.log('Saved 7_workspace_collapsed_sidebar.png')
+      // Expand back
+      await collapseBtn.click()
+      await page.waitForTimeout(300)
+    }
 
     // 4. Navigate to Ask Data
     console.log('Navigating to Ask Data studio...')

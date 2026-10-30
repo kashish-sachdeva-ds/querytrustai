@@ -1,8 +1,31 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-31  
-**Current milestone:** 40 — Keyvo (Heyo) Design Overhaul: Interactive Scenario Sandbox, 4-Metric Trust Strip, Rich Evaluator Cards, and Suggested Query Chips  
-**Overall status:** Complete Keyvo / Framer / Linear aesthetic redesign across marketing landing, evaluator sign-in, and the interactive compiler workbench:
+**Current milestone:** 41 — shadcn / Framer-Motion UserProfileMenu Integration, Zero-Leak Layout Shell, and Linear-Grade Header & Sidebar Polish  
+**Overall status:** Complete full-stack UI/UX redesign and component integration inspired by shadcn/21st.dev `UserProfileSidebar` and modern Linear/Keyvo navigation systems:
+1. ✅ **Component Integration (`frontend/src/components/ui/menu.tsx`, `demo.tsx`):**
+   - Installed `framer-motion`, `clsx`, and `tailwind-merge`.
+   - Configured path alias `@/*` in both `frontend/vite.config.ts` and `frontend/tsconfig.app.json`.
+   - Created `@/lib/utils.ts` exporting standard shadcn `cn` utility.
+   - Integrated `UserProfileSidebar` (`menu.tsx`) and demo sandbox (`demo.tsx`) with Unsplash stock asset fallbacks.
+2. ✅ **Upper Navbar Redesign (`Header.tsx`):**
+   - Eliminated the leaking Windows browser upward arrow thumb `▲` by anchoring `Header` inside an `overflow: hidden` parent flex shell and confining vertical page scrolling strictly to `<main className="content-area">`.
+   - Styled clean breadcrumbs with active workspace pill (`[Building2] Workspace Name`) and active view title.
+   - Refined ⌘K Command Palette search bar with `whitespace-nowrap truncate` to prevent text-wrapping artifacts.
+   - Integrated `AnimatePresence` and spring-staggered `motion.div` into the Role Switcher and User Profile popovers.
+   - User Profile popover modeled after `UserProfileSidebar`: initials avatar, name, email, role badge, quick nav items with hover `ChevronRight`, "What can a [Role] do?" permissions inspector, and destructive Sign Out action.
+3. ✅ **Zero-Scrollbar, Non-Truncated Sidebar (`Sidebar.tsx`, `LinearShell.css`):**
+   - Expanded sidebar width to 248px, eliminating all ellipsis truncation (`...`) on navigation labels and table names.
+   - Eradicated the horizontal scrollbar `< === >` at the bottom via `overflow-x: hidden !important` and multi-engine scrollbar suppression.
+   - Animated navigation items using `framer-motion` staggered entrance variants.
+   - Micro-interaction: `ChevronRight` smoothly fades in on hover across all navigation items.
+   - High-contrast active tab indicator (`bg-orange-500/10 text-[#F97316] font-semibold border border-orange-500/25`).
+   - Clean Live Schemas tree (`devices 5,000`, `sites 50`, `service_events 1,500`, `telemetry_readings 25k`) with 1-click query priming.
+   - Elevated PostgreSQL Read-Only kernel integrity beacon with pulsing emerald dot.
+4. ✅ **Build & Lint Verification:**
+   - `oxlint`: 0 warnings, 0 errors across all 64 files.
+   - `tsc -b && vite build`: compiled cleanly with 0 errors in 4.8s.
+   - Verified across all Dark and Light viewports via headless Playwright captures.
 1. ✅ **Interactive Scenario Sandbox (`LandingPage.tsx`):**
    - Transformed the static preview into a live 3-scenario selector: `Hardware Warranty Expiring` (Safe SELECT), `High-Temp Sensor Anomaly` (Multi-table JOIN), and `Malicious DROP TABLE Injection` (Blocked AST-01).
    - Visitors can toggle scenarios to watch SQL generation, sub-millisecond AST verification badges (`1.42ms`), and virtualized telemetry tables update in real time.

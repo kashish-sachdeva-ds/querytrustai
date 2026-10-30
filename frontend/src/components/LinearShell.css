@@ -11,12 +11,18 @@
 .app-container {
   display: flex;
   background-color: var(--bg-canvas);
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 .content-area {
   background-color: var(--bg-canvas) !important;
   color: var(--text-primary);
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
 }
 
 [data-theme="light"] .content-area {
@@ -24,11 +30,11 @@
   color: var(--text-primary);
 }
 
-/* ─── 1. Sidebar (236px compact width, Linear minimalist hierarchy) ─── */
+/* ─── 1. Sidebar (248px comfortable width, Linear minimalist hierarchy) ─── */
 .sidebar {
-  width: 236px !important;
-  min-width: 236px !important;
-  max-width: 236px !important;
+  width: 248px !important;
+  min-width: 248px !important;
+  max-width: 248px !important;
   background-color: var(--bg-card) !important;
   border-right: 1px solid var(--border-subtle) !important;
   display: flex !important;

@@ -282,10 +282,10 @@ const AppShell: React.FC = () => {
         </div>
       )}
 
-      <div className="app-container" style={{ flex: 1, minHeight: 0 }}>
+      <div className="app-container" style={{ flex: 1, height: '100%', minHeight: 0, overflow: 'hidden' }}>
         <Sidebar activeTab={activeTab} onSelectTab={selectTab} onAskQuestion={openAskQuestion} />
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto', backgroundColor: 'var(--bg-canvas)' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%', overflow: 'hidden', backgroundColor: 'var(--bg-canvas)' }}>
           <Header
             activeTab={activeTab}
             onNavigate={selectTab}
@@ -293,7 +293,7 @@ const AppShell: React.FC = () => {
             onOpenOnboarding={() => setIsOnboardingOpen(true)}
           />
 
-          <main className="content-area">
+          <main className="content-area" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minHeight: 0 }}>
             <div className="page-transition" key={activeTab}>
               <Suspense fallback={<ViewShimmerSkeleton title={`Loading ${activeTab.replace('-', ' ')}...`} />}>
                 {activeTab === 'overview' && (

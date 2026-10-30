@@ -1,51 +1,37 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
-  ShieldCheck,
-  ShieldAlert,
   AlertTriangle,
-  Zap,
-  FileText,
-  ThumbsUp,
-  ThumbsDown,
-  Check,
-  Copy,
-  Download,
   Play,
   Flame,
   Plus,
   Trash2,
   Sparkles,
-  Code2,
   Search,
-  BarChart3,
-  PieChart,
-  Table as TableIcon,
   PanelLeftClose,
   PanelLeftOpen,
   Database,
+  ChevronDown,
+  ChevronRight,
+  Code2,
+  Cpu,
 } from 'lucide-react'
 import {
   previewQuery,
   executeSavedQuery,
-  submitQueryFeedback,
   fetchChatSessions,
   createChatSession,
   fetchSessionMessages,
   deleteChatSession,
-  fetchActiveDataSource,
   type PreviewResponse,
   type ExecuteResponse,
   type ChatSessionSummary,
   type ChatMessage,
-  type ActiveDataSourceResponse,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { ExplainButton } from './ExplainButton'
-import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
-import { AstSafetyStepper } from './AstSafetyStepper'
-import { useWorkbenchStore } from '../store/workbenchStore'
-import './AskDataView.css'
+import { AstInspectorPanel } from './AstInspectorPanel'
+import { SqlEditorPanel } from './SqlEditorPanel'
+import { VirtualizedResultsGrid } from './VirtualizedResultsGrid'
 
 interface MessageItem {
   id: string
@@ -76,7 +62,6 @@ export function parseClarification(rawQuestion?: string | null): ParsedClarifica
   const clean = rawQuestion.trim()
   const lower = clean.toLowerCase()
 
-  // 1. High-risk devices domain disambiguation
   if (lower.includes('high-risk') || lower.includes('high risk')) {
     return {
       question: "How would you like to define 'high-risk devices'?",
@@ -104,7 +89,6 @@ export function parseClarification(rawQuestion?: string | null): ParsedClarifica
     }
   }
 
-  // 2. Unhealthy devices domain disambiguation
   if (lower.includes('unhealthy')) {
     return {
       question: 'How would you like to filter unhealthy devices?',
@@ -126,7 +110,6 @@ export function parseClarification(rawQuestion?: string | null): ParsedClarifica
     }
   }
 
-  // 3. Dynamic parser for general numbered options: (1) ... (2) ... (3) ...
   const matchSplit = clean.match(
     /^(.*?)(?:please choose one of:?|choose one of:?|select one:?|choose:|select:)\s*(.*)$/i
   )
@@ -159,493 +142,113 @@ export function parseClarification(rawQuestion?: string | null): ParsedClarifica
   }
 }
 
-export function getCleanSemanticMeaning(content: string): string {
-  if (!content) return ''
-  const parts = content.split(/(?:\r?\n\s*)*Clarification Needed:\s*/i)
-  return parts[0].trim()
-}
-
-const STARTER_PROMPTS = [
+// 4 Synthetic Enterprise Relational Tables in PostgreSQL
+const SCHEMA_TABLES = [
   {
-    category: 'Everyday fleet overview',
-    label: 'Active equipment by region',
-    prompt: 'How many active devices are in each region?',
-    badge: 'Good first question',
-    badgeClass: 'badge-success',
+    name: 'devices',
+    rows: '5,000',
+    description: 'Hardware equipment inventory across sites',
+    columns: [
+      { name: 'id', type: 'INT4', pk: true },
+      { name: 'asset_tag', type: 'VARCHAR(32)' },
+      { name: 'device_type', type: 'VARCHAR(48)' },
+      { name: 'vendor', type: 'VARCHAR(48)' },
+      { name: 'model', type: 'VARCHAR(64)' },
+      { name: 'site_id', type: 'INT4', fk: 'sites.id' },
+      { name: 'status', type: 'VARCHAR(24)' },
+      { name: 'installed_at', type: 'TIMESTAMPTZ' },
+      { name: 'warranty_expiry', type: 'DATE' },
+      { name: 'serial_number', type: 'VARCHAR(64)' },
+    ],
   },
   {
-    category: 'Coverage planning',
-    label: 'Warranty expiring in 60 days',
-    prompt: 'Show all routers with warranty expiring in the next 60 days.',
-    badge: 'Warranty review',
-    badgeClass: 'badge-info',
+    name: 'sites',
+    rows: '50',
+    description: 'Global campus, branch, and data center facilities',
+    columns: [
+      { name: 'id', type: 'INT4', pk: true },
+      { name: 'site_code', type: 'VARCHAR(16)' },
+      { name: 'site_name', type: 'VARCHAR(96)' },
+      { name: 'city', type: 'VARCHAR(64)' },
+      { name: 'region', type: 'VARCHAR(32)' },
+      { name: 'country', type: 'VARCHAR(32)' },
+    ],
   },
   {
-    category: 'Service triage',
-    label: 'Critical open service events',
-    prompt: 'List critical open service events grouped by site.',
-    badge: 'Service review',
-    badgeClass: 'badge-primary',
+    name: 'service_events',
+    rows: '1,500',
+    description: 'Hardware repair tickets, incidents, and maintenance logs',
+    columns: [
+      { name: 'id', type: 'INT4', pk: true },
+      { name: 'device_id', type: 'INT4', fk: 'devices.id' },
+      { name: 'event_type', type: 'VARCHAR(48)' },
+      { name: 'severity', type: 'VARCHAR(24)' },
+      { name: 'status', type: 'VARCHAR(24)' },
+      { name: 'opened_at', type: 'TIMESTAMPTZ' },
+      { name: 'closed_at', type: 'TIMESTAMPTZ' },
+      { name: 'description', type: 'TEXT' },
+    ],
   },
   {
-    category: 'Clarification demo',
-    label: 'Ask about "high-risk" devices',
-    prompt: 'Show all high-risk devices in New York.',
-    badge: 'Shows quick follow-up',
-    badgeClass: 'badge-warning',
+    name: 'telemetry_readings',
+    rows: '25,000',
+    description: 'Time-series sensor telemetry: CPU, temperature, memory',
+    columns: [
+      { name: 'id', type: 'INT8', pk: true },
+      { name: 'device_id', type: 'INT4', fk: 'devices.id' },
+      { name: 'metric_name', type: 'VARCHAR(32)' },
+      { name: 'metric_value', type: 'FLOAT8' },
+      { name: 'recorded_at', type: 'TIMESTAMPTZ' },
+      { name: 'anomaly_score', type: 'FLOAT8' },
+    ],
   },
 ]
 
-// Accessible, balanced categorical palette (ThoughtSpot / Datadog inspired)
-const DONUT_PALETTE = [
-  '#475569', // slate 600
-  '#0d9488', // teal 600
-  '#6366f1', // indigo 500
-  '#d97706', // amber 600
-  '#0284c7', // sky 600
-  '#8b5cf6', // violet 500
-  '#64748b', // slate 500
-  '#a1a1aa', // zinc 400
+// Red-Team Attack Simulation Presets
+const RED_TEAM_PRESETS = [
+  {
+    category: 'Safe Queries',
+    label: 'Routers in EMEA with expiring warranties',
+    prompt: 'Show all routers in EMEA with warranty expiring within 60 days',
+    isAttack: false,
+    badge: 'AST Clean',
+  },
+  {
+    category: 'Safe Queries',
+    label: 'Open critical service events by site',
+    prompt: 'List critical open service events grouped by site code',
+    isAttack: false,
+    badge: 'AST Clean',
+  },
+  {
+    category: 'Adversarial Injection',
+    label: 'Stacked Drop Injection (DROP TABLE devices; --)',
+    prompt: 'Show devices; DROP TABLE devices; --',
+    isAttack: true,
+    badge: 'Blocked AST-01',
+  },
+  {
+    category: 'Adversarial Mutation',
+    label: 'Unauthorized Data Update (UPDATE devices...)',
+    prompt: "UPDATE devices SET status = 'retired' WHERE id = 101",
+    isAttack: true,
+    badge: 'Blocked AST-01',
+  },
+  {
+    category: 'Catalog Exfiltration',
+    label: 'System Catalog Snooping (pg_shadow)',
+    prompt: 'SELECT usename, passwd FROM pg_shadow',
+    isAttack: true,
+    badge: 'Blocked AST-03',
+  },
+  {
+    category: 'Runaway Query',
+    label: 'Unbounded Cartesian Cross-Join (devices x sites)',
+    prompt: 'SELECT * FROM devices, sites',
+    isAttack: true,
+    badge: 'Blocked AST-05',
+  },
 ]
-
-// Developer-grade SQL syntax highlighter (Pure React, zero external dependencies)
-const HighlightedSql: React.FC<{ sql: string }> = ({ sql }) => {
-  const tokens = useMemo(() => {
-    if (!sql) return []
-    const tokenRegex =
-      /('(?:''|[^'])*'|\b(?:SELECT|FROM|WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|INNER\s+JOIN|OUTER\s+JOIN|ON|AS|AND|OR|NOT|IN|IS|NULL|LIKE|ILIKE|BETWEEN|CASE|WHEN|THEN|ELSE|END|DISTINCT|HAVING|ASC|DESC|UNION|ALL)\b|\b(?:COUNT|SUM|AVG|MIN|MAX|DATE_TRUNC|COALESCE|ROUND|NOW)\b|\b\d+(?:\.\d+)?\b|[().,;*:=<>!+-]+|[a-zA-Z_][a-zA-Z0-9_]*|\s+)/gi
-
-    const matched = sql.match(tokenRegex) || [sql]
-    return matched.map((token, idx) => {
-      const upper = token.toUpperCase()
-      if (/^'.*'$/.test(token)) {
-        return (
-          <span key={idx} className="sql-token-string">
-            {token}
-          </span>
-        )
-      }
-      if (
-        /^(SELECT|FROM|WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|JOIN|LEFT\s+JOIN|RIGHT\s+JOIN|INNER\s+JOIN|OUTER\s+JOIN|ON|AS|AND|OR|NOT|IN|IS|NULL|LIKE|ILIKE|BETWEEN|CASE|WHEN|THEN|ELSE|END|DISTINCT|HAVING|ASC|DESC|UNION|ALL)$/i.test(
-          upper
-        )
-      ) {
-        return (
-          <span key={idx} className="sql-token-keyword">
-            {token}
-          </span>
-        )
-      }
-      if (/^(COUNT|SUM|AVG|MIN|MAX|DATE_TRUNC|COALESCE|ROUND|NOW)$/i.test(upper)) {
-        return (
-          <span key={idx} className="sql-token-function">
-            {token}
-          </span>
-        )
-      }
-      if (/^\d+(?:\.\d+)?$/.test(token)) {
-        return (
-          <span key={idx} className="sql-token-number">
-            {token}
-          </span>
-        )
-      }
-      if (/^[().,;*:=<>!+-]+$/.test(token)) {
-        return (
-          <span key={idx} className="sql-token-punct">
-            {token}
-          </span>
-        )
-      }
-      return (
-        <span key={idx} className="sql-token-ident">
-          {token}
-        </span>
-      )
-    })
-  }, [sql])
-
-  return <code>{tokens}</code>
-}
-
-// Visual Chart Component (Strict Invariant: Neutral Data Bars, No Orange Monochrome)
-const MetricChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
-  const { chart_recommendation: rec, rows, columns } = result
-  const rawVal = rows[0][columns[0]]
-  const displayVal =
-    typeof rawVal === 'number'
-      ? rawVal.toLocaleString()
-      : String(rawVal ?? '0')
-
-  return (
-    <div className="metric-chart-container">
-      <div className="metric-chart-label">{rec.title || columns[0].replace(/_/g, ' ')}</div>
-      <div className="metric-chart-value">{displayVal}</div>
-      <div className="metric-chart-sub">Read-only verified aggregate metric</div>
-    </div>
-  )
-}
-
-const CategoricalChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
-  const { chart_recommendation: rec, rows, columns } = result
-
-  // Check if dataset is a 2-column pre-aggregated distribution (e.g. region + count)
-  const isTwoColAggregate = useMemo(() => {
-    if (columns.length !== 2) return false
-    const val0 = rows[0]?.[columns[0]]
-    const val1 = rows[0]?.[columns[1]]
-    const isNum0 = typeof val0 === 'number' || (!isNaN(Number(val0)) && val0 !== '' && val0 !== null)
-    const isNum1 = typeof val1 === 'number' || (!isNaN(Number(val1)) && val1 !== '' && val1 !== null)
-    return (isNum0 && !isNum1) || (!isNum0 && isNum1)
-  }, [columns, rows])
-
-  // Detect candidate categorical dimensions across columns for multi-attribute tables
-  const candidateDimensions = useMemo(() => {
-    if (isTwoColAggregate) return []
-    return columns.filter((col) => {
-      const lower = col.toLowerCase()
-      // Skip IDs and UUIDs
-      if (lower === 'id' || lower.endsWith('_id') || lower === 'uuid') return false
-
-      const distinct = new Set<string>()
-      for (const r of rows) {
-        const v = r[col]
-        if (v !== null && v !== undefined && String(v).trim() !== '') {
-          distinct.add(String(v).trim())
-        }
-        if (distinct.size > 35) return false // Too broad for a clean categorical breakdown
-      }
-      return distinct.size >= 2
-    })
-  }, [columns, rows, isTwoColAggregate])
-
-  // Determine initial/default dimension
-  const defaultDimension = useMemo(() => {
-    if (rec.x_axis && candidateDimensions.includes(rec.x_axis)) {
-      return rec.x_axis
-    }
-    const priority = ['device_type', 'region', 'status', 'severity', 'site_name', 'model', 'vendor']
-    for (const p of priority) {
-      const match = candidateDimensions.find((c) => c.toLowerCase() === p)
-      if (match) return match
-    }
-    return candidateDimensions[0] || ''
-  }, [candidateDimensions, rec.x_axis])
-
-  const [selectedDimension, setSelectedDimension] = useState<string>(defaultDimension)
-  const [chartType, setChartType] = useState<'bar' | 'pie'>(rec.chart_type === 'pie' ? 'pie' : 'bar')
-
-  useEffect(() => {
-    if (defaultDimension && (!selectedDimension || !candidateDimensions.includes(selectedDimension))) {
-      setSelectedDimension(defaultDimension)
-    }
-  }, [defaultDimension, candidateDimensions, selectedDimension])
-
-  // Prepare chart items
-  const chartItems = useMemo(() => {
-    if (isTwoColAggregate) {
-      const val0 = rows[0]?.[columns[0]]
-      const isNum0 = typeof val0 === 'number' || (!isNaN(Number(val0)) && val0 !== '' && val0 !== null)
-      const catCol = isNum0 ? columns[1] : columns[0]
-      const numCol = isNum0 ? columns[0] : columns[1]
-
-      return rows.map((r) => {
-        const rawNum = Number(r[numCol])
-        return {
-          label: String(r[catCol] ?? 'Unknown'),
-          value: isNaN(rawNum) ? 0 : rawNum,
-        }
-      })
-    }
-
-    if (!selectedDimension) return []
-
-    // Aggregate counts by selected dimension
-    const counts: Record<string, number> = {}
-    for (const r of rows) {
-      const key = String(r[selectedDimension] ?? 'Unknown').trim() || 'Unknown'
-      counts[key] = (counts[key] || 0) + 1
-    }
-
-    return Object.entries(counts)
-      .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value)
-  }, [isTwoColAggregate, columns, rows, selectedDimension])
-
-  // Title & Subtitle computation
-  const title = useMemo(() => {
-    if (isTwoColAggregate && rec.title) return rec.title
-    if (selectedDimension) {
-      return `Distribution by ${selectedDimension.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`
-    }
-    return rec.title || 'Data Visualization'
-  }, [isTwoColAggregate, rec.title, selectedDimension])
-
-  const subtitle = useMemo(() => {
-    if (isTwoColAggregate) {
-      const sum = chartItems.reduce((acc, c) => acc + c.value, 0)
-      return `${chartItems.length} categories (${sum.toLocaleString()} total)`
-    }
-    if (selectedDimension) {
-      return `Aggregated from ${rows.length} records across ${chartItems.length} ${selectedDimension.replace(/_/g, ' ')} categories`
-    }
-    return null
-  }, [isTwoColAggregate, chartItems, selectedDimension, rows.length])
-
-  // If no chart items can be computed (e.g. no categories and not 2-col), render summary fallback card
-  if (chartItems.length === 0) {
-    return (
-      <div className="chart-fallback-card">
-        <div className="chart-fallback-badge">
-          <FileText size={13} />
-          <span>Tabular Dataset Overview</span>
-        </div>
-        <div className="chart-fallback-title">Showing {rows.length} detailed records across {columns.length} attributes</div>
-        <div className="chart-fallback-desc">
-          This query returned detailed individual items with high uniqueness. Switch to the <strong>Table</strong> tab to inspect, sort, and review individual columns, or use <strong>Export CSV</strong> to save the complete dataset.
-        </div>
-        <div className="chart-attribute-pills">
-          {columns.map((c) => (
-            <span key={c} className="chart-attribute-pill">
-              {c.replace(/_/g, ' ')}
-            </span>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  // Display top items for readability (Bar shows up to 16, Donut shows up to 8 + Other)
-  const barChartData = chartItems.slice(0, 16)
-  const maxVal = Math.max(...barChartData.map((d) => d.value), 1)
-  const height = 240
-  const barWidth = Math.max(28, Math.min(56, Math.floor(520 / barChartData.length) - 16))
-  const totalWidth = Math.max(540, barChartData.length * (barWidth + 24))
-
-  // Donut data preparation
-  const donutTop = chartItems.slice(0, 7)
-  const donutRemainder = chartItems.slice(7)
-  const remainderSum = donutRemainder.reduce((sum, item) => sum + item.value, 0)
-  const donutData = remainderSum > 0 ? [...donutTop, { label: 'Other', value: remainderSum }] : donutTop
-  const donutTotal = donutData.reduce((acc, curr) => acc + curr.value, 0) || 1
-
-  let accumulatedAngle = 0
-  const center = 90
-  const radius = 70
-  const innerRadius = 45
-
-  const slices = donutData.map((d, idx) => {
-    const sliceAngle = (d.value / donutTotal) * 2 * Math.PI
-    const startAngle = accumulatedAngle
-    const endAngle = accumulatedAngle + sliceAngle
-    accumulatedAngle = endAngle
-
-    const x1 = center + radius * Math.cos(startAngle)
-    const y1 = center + radius * Math.sin(startAngle)
-    const x2 = center + radius * Math.cos(endAngle)
-    const y2 = center + radius * Math.sin(endAngle)
-
-    const x3 = center + innerRadius * Math.cos(endAngle)
-    const y3 = center + innerRadius * Math.sin(endAngle)
-    const x4 = center + innerRadius * Math.cos(startAngle)
-    const y4 = center + innerRadius * Math.sin(startAngle)
-
-    const largeArc = sliceAngle > Math.PI ? 1 : 0
-    const pathData = [
-      `M ${x1} ${y1}`,
-      `A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`,
-      `L ${x3} ${y3}`,
-      `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
-      'Z',
-    ].join(' ')
-
-    const pct = Math.round((d.value / donutTotal) * 100)
-    return { pathData, color: DONUT_PALETTE[idx % DONUT_PALETTE.length], label: d.label, value: d.value, pct }
-  })
-
-  return (
-    <div className="svg-chart-wrapper">
-      {/* Chart Controls: Dimension switcher and Chart style toggle */}
-      <div className="chart-controls-toolbar">
-        {candidateDimensions.length > 1 ? (
-          <div className="chart-dimension-selector">
-            <span className="chart-control-label">Group by:</span>
-            {candidateDimensions.map((dim) => (
-              <button
-                key={dim}
-                type="button"
-                className={`dimension-pill ${selectedDimension === dim ? 'active' : ''}`}
-                onClick={() => setSelectedDimension(dim)}
-                title={`Group records by ${dim.replace(/_/g, ' ')}`}
-              >
-                {dim.replace(/_/g, ' ')}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div />
-        )}
-
-        <div className="chart-style-toggle" role="group" aria-label="Chart representation">
-          <button
-            type="button"
-            className={`chart-style-btn ${chartType === 'bar' ? 'active' : ''}`}
-            onClick={() => setChartType('bar')}
-            title="Display as neutral bar chart"
-          >
-            <BarChart3 size={13} />
-            <span>Bar</span>
-          </button>
-          <button
-            type="button"
-            className={`chart-style-btn ${chartType === 'pie' ? 'active' : ''}`}
-            onClick={() => setChartType('pie')}
-            title="Display as multi-color donut chart"
-          >
-            <PieChart size={13} />
-            <span>Donut</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="chart-title">{title}</div>
-      {subtitle && <div className="chart-subtitle">{subtitle}</div>}
-
-      {/* Render Bar Chart */}
-      {chartType === 'bar' && (
-        <div className="bar-chart-scroll">
-          <svg width={totalWidth} height={height} className="svg-chart" role="img" aria-label={title}>
-            {/* Subtle baseline */}
-            <line
-              x1="20"
-              y1={height - 38}
-              x2={totalWidth - 20}
-              y2={height - 38}
-              stroke="var(--qt-border)"
-              strokeWidth="1"
-            />
-            {barChartData.map((d, i) => {
-              const barHeight = Math.max(4, Math.round((d.value / maxVal) * (height - 75)))
-              const x = 30 + i * (barWidth + 24)
-              const y = height - 40 - barHeight
-
-              return (
-                <g key={i} className="bar-group" tabIndex={0} role="graphics-symbol" aria-label={`${d.label}: ${d.value}`}>
-                  <rect
-                    x={x}
-                    y={y}
-                    width={barWidth}
-                    height={barHeight}
-                    rx={4}
-                    className="svg-neutral-bar"
-                  />
-                  <text x={x + barWidth / 2} y={y - 8} textAnchor="middle" className="bar-value-label">
-                    {d.value.toLocaleString()}
-                  </text>
-                  <text
-                    x={x + barWidth / 2}
-                    y={height - 18}
-                    textAnchor="middle"
-                    className="bar-axis-label"
-                  >
-                    {d.label.length > 12 ? d.label.substring(0, 10) + '…' : d.label}
-                  </text>
-                  <title>{`${d.label}: ${d.value.toLocaleString()}`}</title>
-                </g>
-              )
-            })}
-          </svg>
-        </div>
-      )}
-
-      {/* Render Donut Chart */}
-      {chartType === 'pie' && (
-        <div className="donut-chart-container">
-          <svg width="180" height="180" viewBox="0 0 180 180" className="donut-svg" role="img" aria-label={title}>
-            {slices.map((s, idx) => (
-              <path key={idx} d={s.pathData} fill={s.color} className="donut-slice">
-                <title>{`${s.label}: ${s.value.toLocaleString()} (${s.pct}%)`}</title>
-              </path>
-            ))}
-          </svg>
-          <div className="donut-legend">
-            {slices.map((s, idx) => (
-              <div key={idx} className="legend-item">
-                <span className="legend-color-dot" style={{ backgroundColor: s.color }} />
-                <span className="legend-label">{s.label}:</span>
-                <span className="legend-val">
-                  {s.value.toLocaleString()} ({s.pct}%)
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-const VisualChart: React.FC<{ result: ExecuteResponse }> = ({ result }) => {
-  const { chart_recommendation: rec, rows, columns } = result
-
-  if (!rows || rows.length === 0) {
-    return <div className="chart-empty">No records available to visualize.</div>
-  }
-
-  if (rec.chart_type === 'metric' || (rows.length === 1 && columns.length === 1)) {
-    return <MetricChart result={result} />
-  }
-
-  return <CategoricalChart result={result} />
-}
-
-// 6-Point Safety Shield Sequence Component (ThoughtSpot / Monte Carlo Benchmark)
-interface SafetyShieldProps {
-  preview: PreviewResponse
-}
-
-const SafetyShieldDisplay: React.FC<SafetyShieldProps> = ({ preview }) => {
-  const isBlocked = preview.status === 'blocked' || !preview.validation.passed
-
-  return (
-    <div style={{ margin: '14px 0' }}>
-      <AstSafetyStepper
-        isValid={!isBlocked}
-        violations={preview.validation.violations || []}
-        checksPerformed={{
-          single_statement: !isBlocked,
-          select_only: !isBlocked,
-          table_allowlist: !isBlocked,
-          system_catalog_blocked: !isBlocked,
-          row_limit_enforced: true,
-        }}
-        executed={preview.can_execute}
-      />
-    </div>
-  )
-}
-
-
-// Skeleton loading placeholder
-const QueryLoadingSkeleton: React.FC = () => (
-  <div className="chat-message-row assistant">
-    <div className="skeleton-shield-card" style={{ width: '100%', background: 'var(--qt-surface)', border: '1px solid var(--qt-border)', borderRadius: 'var(--qt-radius-inner)', padding: '1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div className="qt-skeleton" style={{ width: 34, height: 34, borderRadius: 8 }} />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div className="qt-skeleton" style={{ width: '35%', height: 14 }} />
-          <div className="qt-skeleton" style={{ width: '60%', height: 11 }} />
-        </div>
-      </div>
-      <div className="shield-checks-grid" style={{ marginTop: '1rem' }}>
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="qt-skeleton" style={{ height: 42, borderRadius: 6 }} />
-        ))}
-      </div>
-      <div className="qt-skeleton" style={{ width: '85%', height: 16, marginTop: '1rem' }} />
-    </div>
-  </div>
-)
 
 interface AskDataViewProps {
   initialQuestion?: string | null
@@ -653,41 +256,39 @@ interface AskDataViewProps {
 
 export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => {
   const { user } = useAuth()
-  const isDemo = !user?.workspace_name || user.workspace_name === 'Default Workspace' || (user.email ? user.email.endsWith('@querytrust.local') : false)
+  const userRole = user?.role || 'analyst'
+
+  // Left Pane State: 'sessions' vs 'schema'
+  const [leftTab, setLeftTab] = useState<'sessions' | 'schema'>('sessions')
+  const [isLeftCollapsed, setIsLeftCollapsed] = useState(false)
+  const [expandedTables, setExpandedTables] = useState<Record<string, boolean>>({
+    devices: true,
+    sites: false,
+    service_events: false,
+    telemetry_readings: false,
+  })
+
+  // Sessions and Chat State
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageItem[]>([])
   const [inputQuestion, setInputQuestion] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [copiedQueryId, setCopiedQueryId] = useState<string | null>(null)
   const [sessionSearchTerm, setSessionSearchTerm] = useState('')
 
-  const { activeSqlInspectorTab, setActiveSqlInspectorTab } = useWorkbenchStore()
+  // Execution & AST State
+  const [isLoading, setIsLoading] = useState(false)
   const [executingId, setExecutingId] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [resultsMap, setResultsMap] = useState<Record<string, ExecuteResponse>>({})
-  const [viewModeMap, setViewModeMap] = useState<Record<string, 'table' | 'chart'>>({})
-  const [feedbackMap, setFeedbackMap] = useState<
-    Record<string, { isHelpful: boolean; explanation: string; saved: boolean }>
-  >({})
 
-  // Split-Pane Workbench States
-  const [isSessionsCollapsed, setIsSessionsCollapsed] = useState(false)
+  // Pipeline Mode Toggle: 'guarded' (default) vs 'raw-llm' (simulated)
+  const [pipelineMode, setPipelineMode] = useState<'guarded' | 'raw-llm'>('guarded')
+
+  // Red Team Dropdown
+  const [showAttackDropdown, setShowAttackDropdown] = useState(false)
+
+  // Active query preview selection
   const [focusedRunId, setFocusedRunId] = useState<string | null>(null)
-  const [activeCanvasTab, setActiveCanvasTab] = useState<'results' | 'sql' | 'safety'>('results')
-  const [mobilePane, setMobilePane] = useState<'thread' | 'canvas'>('thread')
-
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Resolve currently focused / latest assistant message and preview
-  const latestAssistantMessage = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === 'assistant' && messages[i].previewData) {
-        return messages[i]
-      }
-    }
-    return null
-  }, [messages])
 
   const activeMessage = useMemo(() => {
     if (focusedRunId) {
@@ -696,15 +297,37 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
       )
       if (found) return found
     }
-    return latestAssistantMessage
-  }, [focusedRunId, messages, latestAssistantMessage])
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant' && messages[i].previewData) {
+        return messages[i]
+      }
+    }
+    return null
+  }, [focusedRunId, messages])
 
   const activePreview = activeMessage?.previewData || null
   const activeRunId = activePreview?.query_run_id || activeMessage?.id || null
   const activeResult = activeRunId ? resultsMap[activeRunId] : null
-  const activeMode = (activeRunId && viewModeMap[activeRunId]) || (activeSqlInspectorTab === 'chart' ? 'chart' : 'table')
-  const activeFeedback = activeRunId ? feedbackMap[activeRunId] : null
 
+  // Fallback demo SQL when no preview is selected yet
+  const displaySql =
+    activePreview?.sql_preview ||
+    `-- Awaiting governed query execution
+SELECT 
+  d.asset_tag,
+  d.model,
+  d.device_type,
+  s.site_name,
+  s.region,
+  d.warranty_expiry
+FROM devices d
+JOIN sites s ON d.site_id = s.id
+WHERE d.status = 'Active'
+  AND d.warranty_expiry <= CURRENT_DATE + INTERVAL '60 days'
+ORDER BY d.warranty_expiry ASC
+LIMIT 100;`
+
+  // Initialize
   useEffect(() => {
     if (initialQuestion?.trim()) setInputQuestion(initialQuestion)
   }, [initialQuestion])
@@ -712,84 +335,6 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   useEffect(() => {
     loadSessions()
   }, [])
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading, executingId])
-
-  const [activeSource, setActiveSource] = useState<ActiveDataSourceResponse | null>(null)
-
-  useEffect(() => {
-    fetchActiveDataSource()
-      .then(setActiveSource)
-      .catch(() => {})
-  }, [])
-
-  const starterPrompts = useMemo(() => {
-    if (activeSource?.mode === 'connected' && activeSource.tables && activeSource.tables.length > 0) {
-      const t1 = activeSource.tables[0]
-      const t2 = activeSource.tables[1] || t1
-      const t3 = activeSource.tables[2] || t1
-
-      return [
-        {
-          category: 'Sample inspection',
-          label: `Sample rows from ${t1}`,
-          prompt: `Show the first 10 records from table ${t1}.`,
-          badge: 'Explore Table',
-          badgeClass: 'badge-success',
-        },
-        {
-          category: 'Record aggregation',
-          label: `Total count of ${t2}`,
-          prompt: `How many rows are in table ${t2}?`,
-          badge: 'Aggregation',
-          badgeClass: 'badge-info',
-        },
-        {
-          category: 'Multi-table insights',
-          label: `Records in ${t3}`,
-          prompt: `Show sample rows and summary from table ${t3}.`,
-          badge: 'Data Insights',
-          badgeClass: 'badge-primary',
-        },
-        {
-          category: 'Safety check demo',
-          label: 'Test safety with injection',
-          prompt: `SELECT 1; DROP TABLE ${t1};`,
-          badge: 'AST Interception',
-          badgeClass: 'badge-warning',
-        },
-      ]
-    }
-
-    if (!isDemo && activeSource?.mode === 'unconfigured') {
-      return [
-        {
-          category: 'Workspace onboarding',
-          label: 'Connect organization database',
-          prompt: 'How do I connect my company PostgreSQL database to QueryTrust AI?',
-          badge: 'Setup Guide',
-          badgeClass: 'badge-primary',
-        },
-        {
-          category: 'Security Architecture',
-          label: 'How does AST read-only safety work?',
-          prompt: 'Explain the 6-layer SQLGlot AST safety checks.',
-          badge: 'Security Whitepaper',
-          badgeClass: 'badge-success',
-        },
-      ]
-    }
-
-    return STARTER_PROMPTS
-  }, [activeSource, isDemo])
-
-  const filteredSessions = useMemo(() => {
-    if (!sessionSearchTerm.trim()) return sessions
-    const term = sessionSearchTerm.toLowerCase()
-    return sessions.filter((s) => s.title.toLowerCase().includes(term))
-  }, [sessions, sessionSearchTerm])
 
   const loadSessions = async () => {
     try {
@@ -821,7 +366,14 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
               sql_preview: m.metadata_json.sql_preview,
               validation: {
                 passed: m.metadata_json.status === 'previewed',
-                checks: ['single_statement', 'select_only', 'table_allowlist', 'schema_allowlist', 'function_allowlist', 'row_limit'],
+                checks: [
+                  'single_statement',
+                  'select_only',
+                  'table_allowlist',
+                  'schema_allowlist',
+                  'function_allowlist',
+                  'row_limit',
+                ],
                 violations: m.metadata_json.violations || [],
                 warnings: [],
                 tables_referenced: ['devices'],
@@ -859,9 +411,6 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation()
-    const previousSessions = sessions
-    const previousActiveSessionId = activeSessionId
-    const previousMessages = messages
     const remaining = sessions.filter((s) => s.id !== sessionId)
     setSessions(remaining)
     if (activeSessionId === sessionId) {
@@ -870,15 +419,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     }
     try {
       await deleteChatSession(sessionId)
-      if (activeSessionId === sessionId) {
-        if (remaining.length > 0) {
-          selectSession(remaining[0].id)
-        }
-      }
     } catch (err: any) {
-      setSessions(previousSessions)
-      setActiveSessionId(previousActiveSessionId)
-      setMessages(previousMessages)
       setErrorMessage(`Failed to delete session: ${err.message}`)
     }
   }
@@ -889,11 +430,12 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
 
     setInputQuestion('')
     setErrorMessage(null)
+    setShowAttackDropdown(false)
 
     let targetSessionId = activeSessionId
     if (!targetSessionId) {
       try {
-        const newSession = await createChatSession('Fleet Analytics Conversation')
+        const newSession = await createChatSession('Fleet Analytics Investigation')
         setSessions([newSession])
         setActiveSessionId(newSession.id)
         targetSessionId = newSession.id
@@ -925,8 +467,6 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
       }
       setMessages((prev) => [...prev, assistantMsg])
       setFocusedRunId(previewRes.query_run_id)
-      setActiveCanvasTab('results')
-      setMobilePane('canvas')
       loadSessions()
     } catch (err: any) {
       setErrorMessage(err.message || 'An unexpected error occurred during preview generation.')
@@ -935,37 +475,13 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     }
   }
 
-  // Real "Try to break it" trigger: calls the backend with a dangerous statement
-  const breakQuery =
-    activeSource?.mode === 'connected' && activeSource.tables && activeSource.tables.length > 0
-      ? `DROP TABLE ${activeSource.tables[0]};`
-      : 'DROP TABLE devices;'
-
-  const handleTryToBreakIt = () => {
-    handleSendQuestion(breakQuery)
-  }
-
-  const handleCopySQL = (queryId: string, sql: string) => {
-    navigator.clipboard.writeText(sql)
-    setCopiedQueryId(queryId)
-    setTimeout(() => setCopiedQueryId(null), 2000)
-  }
-
   const handleExecuteQuery = async (previewData: PreviewResponse) => {
     setExecutingId(previewData.query_run_id)
     setErrorMessage(null)
     try {
       const execResult = await executeSavedQuery(previewData.query_run_id)
       setResultsMap((prev) => ({ ...prev, [previewData.query_run_id]: execResult }))
-      const askedForChart = /chart|graph|plot|visualiz|breakdown|distribution/i.test(
-        previewData.interpreted_question || ''
-      )
-      const initialMode =
-        execResult.chart_recommendation.chart_type !== 'table' || askedForChart ? 'chart' : 'table'
-      setViewModeMap((prev) => ({ ...prev, [previewData.query_run_id]: initialMode }))
       setFocusedRunId(previewData.query_run_id)
-      setActiveCanvasTab('results')
-      setMobilePane('canvas')
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to execute query in read-only transaction.')
     } finally {
@@ -973,1025 +489,1005 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     }
   }
 
-  // Global Ctrl+Enter shortcut to execute currently validated query
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        if (activePreview?.can_execute && !executingId && !resultsMap[activePreview.query_run_id]) {
-          e.preventDefault()
-          handleExecuteQuery(activePreview)
-        }
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activePreview, executingId, resultsMap])
-
-  const handleExportCSV = (result: ExecuteResponse) => {
-    if (!result || !result.rows || result.rows.length === 0) return
-    const headers = result.columns
-    const csvRows = [
-      headers.join(','),
-      ...result.rows.map((row) =>
-        headers
-          .map((col) => {
-            const val = row[col]
-            if (val === null || val === undefined) return '""'
-            const str = String(val).replace(/"/g, '""')
-            return `"${str}"`
-          })
-          .join(',')
-      ),
-    ]
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.setAttribute('href', url)
-    link.setAttribute('download', `querytrust-data-${result.query_run_id.slice(0, 8)}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+  const handleInsertColumn = (tableName: string, colName: string) => {
+    const token = `${tableName}.${colName}`
+    setInputQuestion((prev) => (prev ? `${prev} ${token}` : token))
   }
 
-  const handleExportJSON = (result: ExecuteResponse) => {
-    if (!result || !result.rows || result.rows.length === 0) return
-    const blob = new Blob([JSON.stringify(result.rows, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.setAttribute('href', url)
-    link.setAttribute('download', `querytrust-data-${result.query_run_id.slice(0, 8)}.json`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+  const toggleTableExpand = (name: string) => {
+    setExpandedTables((prev) => ({ ...prev, [name]: !prev[name] }))
   }
 
-  const handleFeedbackSubmit = async (queryRunId: string, isHelpful: boolean) => {
-    const currentExplanation = feedbackMap[queryRunId]?.explanation || ''
-    const previousFeedback = feedbackMap[queryRunId]
-    setFeedbackMap((prev) => ({
-      ...prev,
-      [queryRunId]: { isHelpful, explanation: currentExplanation, saved: true },
-    }))
-    try {
-      await submitQueryFeedback(queryRunId, isHelpful, currentExplanation)
-    } catch (err: any) {
-      setFeedbackMap((prev) => {
-        const next = { ...prev }
-        if (previousFeedback) next[queryRunId] = previousFeedback
-        else delete next[queryRunId]
-        return next
-      })
-      setErrorMessage(`Feedback submission failed: ${err.message}`)
-    }
-  }
+  const filteredSessions = useMemo(() => {
+    if (!sessionSearchTerm.trim()) return sessions
+    const term = sessionSearchTerm.toLowerCase()
+    return sessions.filter((s) => s.title.toLowerCase().includes(term))
+  }, [sessions, sessionSearchTerm])
 
   return (
-    <div className="ask-data-container">
-      {/* Linear-Style Sessions Drawer */}
+    <div
+      style={{
+        display: 'flex',
+        height: 'calc(100vh - 48px)',
+        backgroundColor: 'var(--bg-canvas)',
+        overflow: 'hidden',
+      }}
+    >
+      {/* =========================================================================
+          LEFT PANE (20% - 22% Width): Saved Sessions & Live Schema Reference
+          ========================================================================= */}
       <aside
-        className={`ask-data-sessions-sidebar ${isSessionsCollapsed ? 'collapsed' : ''}`}
-        aria-label="Conversation Sessions"
+        style={{
+          width: isLeftCollapsed ? '44px' : '280px',
+          minWidth: isLeftCollapsed ? '44px' : '240px',
+          maxWidth: '320px',
+          borderRight: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface-1)',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'width 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+          flexShrink: 0,
+          overflow: 'hidden',
+        }}
       >
-        <div className="sessions-header">
-          <div className="sessions-header-left">
-            <span className="sessions-title">Conversations</span>
-            <span className="sessions-count-badge">{sessions.length}</span>
-          </div>
+        {/* Left Pane Header with Tab Pills & Collapse */}
+        <div
+          style={{
+            height: '42px',
+            borderBottom: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 8px',
+            backgroundColor: 'var(--bg-surface-2)',
+          }}
+        >
+          {!isLeftCollapsed && (
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setLeftTab('sessions')}
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid',
+                  borderColor: leftTab === 'sessions' ? 'var(--border-strong)' : 'transparent',
+                  backgroundColor: leftTab === 'sessions' ? 'var(--bg-surface-1)' : 'transparent',
+                  color: leftTab === 'sessions' ? 'var(--ink-primary)' : 'var(--ink-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <span>Sessions</span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontFamily: 'var(--font-mono)',
+                    backgroundColor: 'var(--bg-surface-3)',
+                    padding: '0 4px',
+                    borderRadius: '3px',
+                  }}
+                >
+                  {sessions.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLeftTab('schema')}
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid',
+                  borderColor: leftTab === 'schema' ? 'var(--border-strong)' : 'transparent',
+                  backgroundColor: leftTab === 'schema' ? 'var(--bg-surface-1)' : 'transparent',
+                  color: leftTab === 'schema' ? 'var(--ink-primary)' : 'var(--ink-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <Database size={12} />
+                <span>Schema Context</span>
+              </button>
+            </div>
+          )}
+
           <button
             type="button"
-            className="new-session-btn"
-            onClick={handleCreateNewSession}
-            title="Start a new query conversation"
-            aria-label="New Session"
+            onClick={() => setIsLeftCollapsed((p) => !p)}
+            title={isLeftCollapsed ? 'Expand panel' : 'Collapse panel'}
+            style={{
+              padding: '4px 6px',
+              borderRadius: '4px',
+              border: 'none',
+              backgroundColor: 'transparent',
+              color: 'var(--ink-muted)',
+              cursor: 'pointer',
+              marginLeft: 'auto',
+            }}
           >
-            <Plus size={13} />
-            <span>New</span>
+            {isLeftCollapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
           </button>
         </div>
 
-        {sessions.length > 2 && (
-          <div className="sessions-filter-box">
-            <Search size={12} className="sessions-filter-icon" />
-            <input
-              type="text"
-              className="sessions-filter-input"
-              placeholder="Search conversations..."
-              value={sessionSearchTerm}
-              onChange={(e) => setSessionSearchTerm(e.target.value)}
-              aria-label="Filter conversations"
-            />
-          </div>
-        )}
-
-        <ul className="sessions-list" role="list">
-          {filteredSessions.length === 0 ? (
-            <li className="sessions-empty">
-              <span>No conversations found.</span>
-              <small>Ask a question to begin a new session.</small>
-            </li>
-          ) : (
-            filteredSessions.map((s) => (
-              <li
-                key={s.id}
-                role="listitem"
-                className="session-list-wrapper"
-              >
-                <button
-                  type="button"
-                  className={`session-item ${activeSessionId === s.id ? 'active' : ''}`}
-                  onClick={() => selectSession(s.id)}
-                  aria-current={activeSessionId === s.id ? 'page' : undefined}
+        {/* Left Pane Content */}
+        {!isLeftCollapsed && (
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            {leftTab === 'sessions' ? (
+              // TAB 1: SESSIONS
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                {/* Search & New Session Toolbar */}
+                <div
+                  style={{
+                    padding: '8px',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    display: 'flex',
+                    gap: '6px',
+                  }}
                 >
-                  <div className="session-item-content">
-                    <div className="session-item-title" title={s.title}>
-                      {s.title}
-                    </div>
-                    <div className="session-item-meta">
-                      <span className="session-msg-badge">
-                        {s.message_count} {s.message_count === 1 ? 'msg' : 'msgs'}
-                      </span>
-                      <span>•</span>
-                      <HumanDate iso={s.updated_at} />
-                    </div>
+                  <div
+                    style={{
+                      position: 'relative',
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Search
+                      size={12}
+                      style={{ position: 'absolute', left: '8px', color: 'var(--ink-muted)' }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Filter conversations..."
+                      value={sessionSearchTerm}
+                      onChange={(e) => setSessionSearchTerm(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '4px 6px 4px 24px',
+                        fontSize: '11px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border-subtle)',
+                        backgroundColor: 'var(--bg-canvas)',
+                        color: 'var(--ink-primary)',
+                        outline: 'none',
+                      }}
+                    />
                   </div>
-                </button>
-                <button
-                  type="button"
-                  className="session-delete-btn"
-                  onClick={(e) => handleDeleteSession(e, s.id)}
-                  title="Delete conversation"
-                  aria-label={`Delete ${s.title}`}
-                >
-                  <Trash2 size={13} />
-                </button>
-              </li>
-            ))
-          )}
-        </ul>
-      </aside>
-
-      {/* Main Split-Pane Workspace */}
-      <section className="ask-data-workspace">
-        {/* Workspace Top Header with PageHeader (Generous margin & padding from sidebar) */}
-        <div className="ask-data-workspace-header">
-          <PageHeader
-            title="Ask governed data"
-            description="Translate natural-language questions into safe, validated SQL queries."
-            helpText="Every generated query is checked across 6 safety checks and run via a SELECT-only PostgreSQL reader."
-          />
-        </div>
-
-        {/* Governance & Safety Status Bar */}
-        <div className="ask-data-governance-banner">
-          <div className="governance-badge-group">
-            <button
-              type="button"
-              className="collapse-sessions-btn"
-              onClick={() => setIsSessionsCollapsed((p) => !p)}
-              title={isSessionsCollapsed ? 'Expand conversations drawer' : 'Collapse conversations drawer'}
-            >
-              {isSessionsCollapsed ? <PanelLeftOpen size={13} /> : <PanelLeftClose size={13} />}
-              <span>{isSessionsCollapsed ? 'Conversations' : 'Collapse'}</span>
-            </button>
-            <span className="badge badge-warning">
-              <span className="live-dot" style={{ backgroundColor: 'var(--qt-accent, #FF4F00)' }} />
-              Guided demo mode
-            </span>
-            <span className="badge badge-neutral">Demo inventory</span>
-            <span className="badge badge-success">6-layer AST guardrails</span>
-            <span className="badge badge-primary">Read-only connection</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div className="split-mobile-toggle">
-              <button
-                type="button"
-                className={`split-mobile-btn ${mobilePane === 'thread' ? 'active' : ''}`}
-                onClick={() => setMobilePane('thread')}
-              >
-                Questions
-              </button>
-              <button
-                type="button"
-                className={`split-mobile-btn ${mobilePane === 'canvas' ? 'active' : ''}`}
-                onClick={() => setMobilePane('canvas')}
-              >
-                Data Canvas
-              </button>
-            </div>
-            <div className="governance-notice-text">
-              <span>Split-Pane Analytics Canvas &bull; Guaranteed read-only</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Global Error Banner */}
-        {errorMessage && (
-          <div className="security-alert-box alert-error" style={{ margin: '0.5rem 1rem 0' }}>
-            <div className="alert-title">Notice</div>
-            <div className="alert-desc">{errorMessage}</div>
-          </div>
-        )}
-
-        {/* Split-Pane Wrapper */}
-        <div className="ask-split-pane-wrapper">
-          {/* LEFT: Conversation Thread & Input */}
-          <div
-            className="ask-thread-pane"
-            style={{ display: mobilePane === 'canvas' ? undefined : undefined }}
-          >
-            <div className="thread-feed">
-              {messages.length === 0 ? (
-                <div className="thread-empty-state">
-                  <div className="ask-hero-badge">
-                    <Sparkles size={13} />
-                    <span>AI SQL Translation with 6-Layer AST Guardrails</span>
-                  </div>
-                  <h3 className="thread-empty-title">Ask your equipment anything</h3>
-                  <p className="thread-empty-sub">
-                    Enter any natural English question. The safety shield validates the SQL before executing strictly via a read-only PostgreSQL role.
-                  </p>
-                  <div className="starter-chips-compact-grid">
-                    {starterPrompts.map((item, idx) => (
-                      <button
-                        key={idx}
-                        className="starter-chip-compact"
-                        onClick={() => handleSendQuestion(item.prompt)}
-                        disabled={isLoading}
-                      >
-                        <span className={`chip-badge ${item.badgeClass}`}>{item.badge}</span>
-                        <span className="chip-prompt-text">{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Try to break it Banner */}
-                  <div className="try-break-card" style={{ marginTop: '0.75rem' }}>
-                    <div className="try-break-text">
-                      <h5 style={{ margin: 0, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Flame size={13} style={{ color: '#dc2626' }} />
-                        Test security live
-                      </h5>
-                      <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--qt-muted)' }}>
-                        Send <code>{breakQuery}</code> to test AST interception.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="try-break-btn"
-                      onClick={handleTryToBreakIt}
-                      disabled={isLoading}
-                      style={{ fontSize: '0.72rem', padding: '3px 8px' }}
-                    >
-                      <Flame size={11} />
-                      <span>Try it</span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCreateNewSession}
+                    title="Start new conversation"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px 8px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      backgroundColor: 'var(--accent-primary)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Plus size={12} />
+                    <span>New</span>
+                  </button>
                 </div>
-              ) : (
-                messages.map((msg) => {
-                  const runId = msg.previewData?.query_run_id || msg.id
-                  const isSelected = activeRunId === runId
-                  const msgExecResult = resultsMap[runId]
-                  const isExecuting = executingId === runId
-                  const providerLabel = msg.previewData?.provider === 'gemini' ? 'Gemini 1.5' : 'Rule-based AST Engine'
 
-                  if (msg.role === 'user') {
-                    return (
-                      <div key={msg.id} className="user-message-bubble">
-                        <div className="message-sender">You</div>
-                        <div className="message-text">{msg.content}</div>
-                        <div className="message-time">
-                          <HumanDate iso={msg.createdAt} />
-                        </div>
-                      </div>
-                    )
-                  }
+                {/* Sessions List */}
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: '4px',
+                    flex: 1,
+                    overflowY: 'auto',
+                  }}
+                >
+                  {filteredSessions.length === 0 ? (
+                    <li
+                      style={{
+                        padding: '16px',
+                        textAlign: 'center',
+                        fontSize: '11px',
+                        color: 'var(--ink-muted)',
+                      }}
+                    >
+                      No conversations found. Ask a question to begin.
+                    </li>
+                  ) : (
+                    filteredSessions.map((s) => {
+                      const isActive = activeSessionId === s.id
+                      return (
+                        <li
+                          key={s.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderRadius: '4px',
+                            backgroundColor: isActive ? 'var(--bg-surface-3)' : 'transparent',
+                            marginBottom: '2px',
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => selectSession(s.id)}
+                            style={{
+                              flex: 1,
+                              textAlign: 'left',
+                              padding: '6px 8px',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              color: 'inherit',
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: isActive ? 600 : 500,
+                                color: isActive ? 'var(--ink-primary)' : 'var(--ink-secondary)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {s.title}
+                            </div>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '10px',
+                                color: 'var(--ink-muted)',
+                                marginTop: '2px',
+                                fontFamily: 'var(--font-mono)',
+                              }}
+                            >
+                              <span>{s.message_count} msgs</span>
+                              <span>&bull;</span>
+                              <HumanDate iso={s.updated_at} />
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteSession(e, s.id)}
+                            title="Delete session"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: '6px 8px',
+                              color: 'var(--ink-muted)',
+                              cursor: 'pointer',
+                              opacity: 0.6,
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                            onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </li>
+                      )
+                    })
+                  )}
+                </ul>
+              </div>
+            ) : (
+              // TAB 2: SCHEMA CONTEXT (Interactive table reference)
+              <div style={{ padding: '8px' }}>
+                <div
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    color: 'var(--ink-muted)',
+                    letterSpacing: '0.05em',
+                    marginBottom: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>PostgreSQL Tables</span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      backgroundColor: 'var(--bg-surface-3)',
+                      padding: '1px 5px',
+                      borderRadius: '3px',
+                    }}
+                  >
+                    4 Verified
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginBottom: '8px' }}>
+                  Click any column to insert it into your natural language prompt:
+                </div>
 
+                {SCHEMA_TABLES.map((table) => {
+                  const isExpanded = expandedTables[table.name]
                   return (
                     <div
-                      key={msg.id}
-                      className={`thread-assistant-card ${isSelected ? 'active-card' : ''}`}
-                      onClick={() => {
-                        setFocusedRunId(runId)
-                        setMobilePane('canvas')
+                      key={table.name}
+                      style={{
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--bg-surface-2)',
+                        marginBottom: '6px',
+                        overflow: 'hidden',
                       }}
-                      role="button"
-                      tabIndex={0}
-                      aria-label="Select query result to view on canvas"
                     >
-                      {/* Card Header */}
-                      <div className="thread-assistant-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span className="brand-pill" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
-                            QueryTrust Guard
-                          </span>
-                          <span className="badge badge-neutral" style={{ fontSize: '0.65rem' }}>
-                            {providerLabel}
-                          </span>
-                        </div>
-                        <div>
-                          {msgExecResult ? (
-                            <span className="status-tag status-success" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
-                              <span className="live-dot" /> Executed ({msgExecResult.row_count} rows)
-                            </span>
-                          ) : msg.previewData?.status === 'previewed' ? (
-                            <span className="status-tag status-success" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
-                              <span className="live-dot" /> Ready to run
-                            </span>
-                          ) : msg.previewData?.status === 'blocked' ? (
-                            <span className="status-tag status-danger" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
-                              <ShieldAlert size={11} style={{ marginRight: 3 }} /> Blocked
-                            </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleTableExpand(table.name)}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '6px 8px',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {isExpanded ? (
+                            <ChevronDown size={13} style={{ color: 'var(--ink-muted)' }} />
                           ) : (
-                            <span className="status-tag status-warning" style={{ fontSize: '0.68rem', padding: '2px 6px' }}>
-                              <AlertTriangle size={11} style={{ marginRight: 3 }} /> Question
-                            </span>
+                            <ChevronRight size={13} style={{ color: 'var(--ink-muted)' }} />
                           )}
-                        </div>
-                      </div>
-
-                      {/* Semantic Meaning */}
-                      <div className="thread-card-meaning">
-                        {getCleanSemanticMeaning(msg.content)}
-                      </div>
-
-                      {/* Entities */}
-                      {msg.previewData && (
-                        <div className="thread-card-entities">
-                          {msg.previewData.validation.tables_referenced?.map((tbl) => (
-                            <span key={tbl} className="entity-chip entity-table" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>
-                              <span className="entity-chip-label">Table:</span> {tbl}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Clarification Alert (Vertical Structured Options) */}
-                      {msg.previewData?.clarification_question && (() => {
-                        const parsed = parseClarification(msg.previewData.clarification_question)
-                        return (
-                          <div className="clarification-box" style={{ padding: '8px 10px', margin: '4px 0' }}>
-                            <div className="clarification-header">
-                              <div className="clarification-title-row">
-                                <AlertTriangle size={12} />
-                                <span>Clarification requested</span>
-                              </div>
-                              <div className="clarification-question-text">{parsed.question}</div>
-                              {parsed.subtext && (
-                                <div className="clarification-subtext">{parsed.subtext}</div>
-                              )}
-                            </div>
-
-                            {parsed.options.length > 0 ? (
-                              <div className="clarification-options-list">
-                                {parsed.options.map((opt) => (
-                                  <button
-                                    key={opt.id}
-                                    type="button"
-                                    className="clarification-option-card"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleSendQuestion(opt.prompt)
-                                    }}
-                                    title={`Disambiguate as: ${opt.label}`}
-                                  >
-                                    <div className="clarification-option-badge">{opt.id}</div>
-                                    <div className="clarification-option-content">
-                                      <span className="clarification-option-label">{opt.label}</span>
-                                      {opt.hint && <span className="clarification-option-hint">{opt.hint}</span>}
-                                    </div>
-                                    <div className="clarification-option-action">
-                                      <span>Select &rarr;</span>
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="clarification-prompt">{msg.previewData.clarification_question}</div>
-                            )}
-                          </div>
-                        )
-                      })()}
-
-                      {/* Blocked Violations */}
-                      {msg.previewData?.validation.violations && msg.previewData.validation.violations.length > 0 && (
-                        <div className="security-alert-box alert-error" style={{ padding: '6px 10px', margin: '4px 0', fontSize: '0.72rem' }}>
-                          <strong>Blocked:</strong> {msg.previewData.validation.violations[0]}
-                        </div>
-                      )}
-
-                      {/* Action Row */}
-                      <div className="thread-card-actions">
-                        {msg.previewData?.can_execute && !msgExecResult ? (
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-sm run-query-btn"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleExecuteQuery(msg.previewData!)
-                            }}
-                            disabled={isExecuting}
-                            style={{ padding: '4px 10px', fontSize: '0.75rem' }}
-                          >
-                            {isExecuting ? (
-                              <>
-                                <div className="btn-spinner" /> Running...
-                              </>
-                            ) : (
-                              <>
-                                <Play size={11} fill="currentColor" />
-                                <span>Run query</span>
-                              </>
-                            )}
-                          </button>
-                        ) : msgExecResult ? (
-                          <button
-                            type="button"
-                            className="thread-open-canvas-btn"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setFocusedRunId(runId)
-                              setActiveCanvasTab('results')
-                              setMobilePane('canvas')
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: 'var(--accent-primary)',
                             }}
                           >
-                            <TableIcon size={12} />
-                            <span>View in Canvas &rarr;</span>
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: '0.7rem', color: 'var(--qt-muted)' }}>Non-executable query</span>
-                        )}
-
-                        <span style={{ fontSize: '0.68rem', color: 'var(--qt-muted)' }}>
-                          <HumanDate iso={msg.createdAt} />
+                            {table.name}
+                          </span>
+                        </div>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '10px',
+                            color: 'var(--ink-muted)',
+                          }}
+                        >
+                          {table.rows} rows
                         </span>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-
-              {isLoading && <QueryLoadingSkeleton />}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Bottom Query Composer Dock */}
-            <div className="ask-data-input-dock">
-              <form
-                className="input-form-wrapper"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  handleSendQuestion()
-                }}
-              >
-                <textarea
-                  className="query-textarea"
-                  placeholder="Ask anything about equipment, e.g., 'How many active devices are in each region?'"
-                  rows={2}
-                  value={inputQuestion}
-                  onChange={(e) => setInputQuestion(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleSendQuestion()
-                    }
-                  }}
-                  disabled={isLoading}
-                  aria-label="Ask equipment question"
-                />
-                <div className="input-actions-bar">
-                  <span className="input-hint-text">
-                    <kbd>Enter ↵</kbd> preview &bull; <kbd>Ctrl+↵</kbd> run
-                  </span>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <button
-                      type="button"
-                      className="try-break-btn"
-                      onClick={handleTryToBreakIt}
-                      disabled={isLoading}
-                      title="Test security with DROP TABLE"
-                      style={{ fontSize: '0.72rem', padding: '4px 8px' }}
-                    >
-                      <Flame size={12} />
-                      <span>Try to break it</span>
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn btn-primary btn-sm"
-                      disabled={!inputQuestion.trim() || isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="btn-spinner" /> Checking...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles size={12} style={{ marginRight: 3 }} />
-                          <span>Check &amp; preview</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          {/* RIGHT: Dedicated Data & Safety Canvas */}
-          <div className="ask-canvas-pane">
-            {/* Canvas Header */}
-            <div className="canvas-top-bar">
-              <div className="canvas-header-left">
-                <div className="canvas-title-group">
-                  <TableIcon size={16} style={{ color: 'var(--qt-accent)' }} />
-                  <span className="canvas-title">
-                    {activePreview ? activePreview.interpreted_question : 'Equipment Intelligence Canvas'}
-                  </span>
-                </div>
-                {activeResult && (
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span className="result-metric-pill">
-                      <Zap size={11} style={{ verticalAlign: 'middle' }} /> {activeResult.execution_duration_ms} ms
-                    </span>
-                    <span className="result-metric-pill">
-                      <FileText size={11} style={{ verticalAlign: 'middle' }} /> {activeResult.row_count} rows
-                    </span>
-                    {activeResult.truncated && (
-                      <span className="badge badge-warning" style={{ fontSize: '0.65rem' }}>
-                        LIMIT 200 clamped
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="canvas-header-right">
-                {/* Segmented Tabs */}
-                <div className="canvas-tabs-group" role="tablist">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeCanvasTab === 'results'}
-                    className={`canvas-tab-btn ${activeCanvasTab === 'results' ? 'active' : ''}`}
-                    onClick={() => setActiveCanvasTab('results')}
-                  >
-                    <TableIcon size={12} />
-                    <span>Data Results {activeResult ? `(${activeResult.row_count})` : ''}</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeCanvasTab === 'sql'}
-                    className={`canvas-tab-btn ${activeCanvasTab === 'sql' ? 'active' : ''}`}
-                    onClick={() => setActiveCanvasTab('sql')}
-                  >
-                    <Code2 size={12} />
-                    <span>SQL Preview</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeCanvasTab === 'safety'}
-                    className={`canvas-tab-btn ${activeCanvasTab === 'safety' ? 'active' : ''}`}
-                    onClick={() => setActiveCanvasTab('safety')}
-                  >
-                    <ShieldCheck size={12} />
-                    <span>Safety Proof</span>
-                  </button>
-                </div>
-
-                {/* Actions when executed */}
-                {activeResult && activeCanvasTab === 'results' && (
-                  <>
-                    <div className="view-mode-toggle" style={{ margin: 0 }}>
-                      <button
-                        type="button"
-                        className={`toggle-btn ${activeMode === 'table' ? 'active' : ''}`}
-                        onClick={() => {
-                          if (activeRunId) setViewModeMap((p) => ({ ...p, [activeRunId]: 'table' }))
-                          setActiveSqlInspectorTab('table')
-                        }}
-                      >
-                        Table
                       </button>
-                      <button
-                        type="button"
-                        className={`toggle-btn ${activeMode === 'chart' ? 'active' : ''}`}
-                        onClick={() => {
-                          if (activeRunId) setViewModeMap((p) => ({ ...p, [activeRunId]: 'chart' }))
-                          setActiveSqlInspectorTab('chart')
-                        }}
-                      >
-                        Chart
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      className="toggle-btn"
-                      onClick={() => handleExportCSV(activeResult)}
-                      title="Export CSV"
-                      style={{ padding: '3px 8px', fontSize: '0.72rem' }}
-                    >
-                      <Download size={11} />
-                      <span>CSV</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="toggle-btn"
-                      onClick={() => handleExportJSON(activeResult)}
-                      title="Export JSON"
-                      style={{ padding: '3px 8px', fontSize: '0.72rem' }}
-                    >
-                      <Download size={11} />
-                      <span>JSON</span>
-                    </button>
-                    <ExplainButton
-                      title="Query Results"
-                      explanation="These records were retrieved in a read-only database transaction. The system enforces strict SELECT-only access and clamps results to 200 rows."
-                    />
-                  </>
-                )}
 
-                {/* Primary CTA when previewed but not executed */}
-                {activePreview?.can_execute && !activeResult && (
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm run-query-btn"
-                    onClick={() => handleExecuteQuery(activePreview)}
-                    disabled={executingId === activePreview.query_run_id}
-                    title="Execute query in read-only transaction (Ctrl+Enter)"
-                  >
-                    {executingId === activePreview.query_run_id ? (
-                      <>
-                        <div className="btn-spinner" /> Running safely...
-                      </>
-                    ) : (
-                      <>
-                        <Play size={11} fill="currentColor" />
-                        <span>Run query</span>
-                        <kbd className="kbd-shortcut">Ctrl+↵</kbd>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Canvas Body */}
-            <div className="canvas-content-area">
-              {/* TAB 1: RESULTS */}
-              {activeCanvasTab === 'results' && (
-                <>
-                  {activeResult ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-                      <div className="result-summary-box" style={{ marginBottom: '1rem' }}>
-                        {activeResult.result_summary}
-                      </div>
-
-                      {activeMode === 'chart' ? (
-                        <div className="canvas-chart-area">
-                          <VisualChart result={activeResult} />
-                        </div>
-                      ) : (
-                        <div className="canvas-table-wrapper">
-                          <table className="result-data-table">
-                            <thead>
-                              <tr>
-                                {activeResult.columns.map((col) => (
-                                  <th key={col}>{col.replace(/_/g, ' ')}</th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {activeResult.rows.map((row, rIdx) => (
-                                <tr key={rIdx}>
-                                  {activeResult.columns.map((col) => {
-                                    const val = row[col]
-                                    const isNumeric = typeof val === 'number'
-                                    const isAssetTag = typeof val === 'string' && /^ASSET-\d+/i.test(val)
-
-                                    return (
-                                      <td
-                                        key={col}
-                                        className={isNumeric ? 'cell-numeric' : undefined}
-                                        title={val !== null && val !== undefined ? String(val) : undefined}
-                                      >
-                                        {val === null || val === undefined ? (
-                                          <span className="cell-null">—</span>
-                                        ) : isAssetTag ? (
-                                          <span className="asset-tag-token">{String(val)}</span>
-                                        ) : isNumeric ? (
-                                          Number(val).toLocaleString()
-                                        ) : (
-                                          String(val)
-                                        )}
-                                      </td>
-                                    )
-                                  })}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-
-                      {/* Feedback bar */}
-                      <div className="feedback-subcard" style={{ marginTop: '1rem' }}>
-                        <div className="feedback-header">
-                          <span className="feedback-label">Was this answer accurate and helpful?</span>
-                          {activeFeedback?.saved && (
-                            <span className="badge badge-success">
-                              <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Feedback saved
-                            </span>
-                          )}
-                        </div>
-                        <div className="feedback-actions">
-                          <button
-                            type="button"
-                            className={`feedback-btn ${activeFeedback?.isHelpful === true ? 'active-helpful' : ''}`}
-                            onClick={() => handleFeedbackSubmit(activeRunId!, true)}
+                      {isExpanded && (
+                        <div
+                          style={{
+                            borderTop: '1px solid var(--border-subtle)',
+                            backgroundColor: 'var(--bg-surface-1)',
+                            padding: '4px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '10px',
+                              color: 'var(--ink-muted)',
+                              padding: '2px 6px 6px',
+                              borderBottom: '1px dashed var(--border-subtle)',
+                              marginBottom: '4px',
+                            }}
                           >
-                            <ThumbsUp size={12} style={{ marginRight: 4 }} /> Helpful
-                          </button>
-                          <button
-                            type="button"
-                            className={`feedback-btn ${activeFeedback?.isHelpful === false ? 'active-unhelpful' : ''}`}
-                            onClick={() => handleFeedbackSubmit(activeRunId!, false)}
-                          >
-                            <ThumbsDown size={12} style={{ marginRight: 4 }} /> Needs improvement
-                          </button>
-                          <input
-                            type="text"
-                            className="feedback-notes-input"
-                            placeholder="Optional note for model evaluation..."
-                            value={activeFeedback?.explanation || ''}
-                            onChange={(e) =>
-                              setFeedbackMap((p) => ({
-                                ...p,
-                                [activeRunId!]: {
-                                  isHelpful: p[activeRunId!]?.isHelpful ?? true,
-                                  explanation: e.target.value,
-                                  saved: false,
-                                },
-                              }))
-                            }
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => handleFeedbackSubmit(activeRunId!, activeFeedback?.isHelpful ?? true)}
-                          >
-                            Save
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : activePreview?.can_execute ? (
-                    <div className="canvas-ready-hero">
-                      <div
-                        style={{
-                          width: 56,
-                          height: 56,
-                          borderRadius: '50%',
-                          background: 'rgba(16, 185, 129, 0.12)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
-                        }}
-                      >
-                        <ShieldCheck size={28} style={{ color: '#10b981' }} />
-                      </div>
-                      <div>
-                        <h3>Query Safe &amp; Validated</h3>
-                        <p style={{ maxWidth: 460 }}>
-                          Parsed by SQLGlot AST guardrails. Verified SELECT-only transaction clamped to 200 rows.
-                        </p>
-                      </div>
-
-                      <div style={{ background: 'var(--qt-canvas)', padding: '12px 16px', borderRadius: 8, border: '1px solid var(--qt-border)', width: '100%', textAlign: 'left' }}>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', marginBottom: 4 }}>Mapped question:</div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--qt-ink)' }}>"{activePreview.interpreted_question}"</div>
-                        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                          {activePreview.validation.tables_referenced?.map((t) => (
-                            <span key={t} className="entity-chip entity-table" style={{ fontSize: '0.7rem' }}>
-                              Table: {t}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-md run-query-btn"
-                        onClick={() => handleExecuteQuery(activePreview)}
-                        disabled={executingId === activePreview.query_run_id}
-                        style={{ padding: '8px 20px', fontSize: '0.875rem' }}
-                      >
-                        {executingId === activePreview.query_run_id ? (
-                          <>
-                            <div className="btn-spinner" /> Executing in read-only transaction...
-                          </>
-                        ) : (
-                          <>
-                            <Play size={14} fill="currentColor" />
-                            <span>Run query in read-only mode</span>
-                            <kbd className="kbd-shortcut" style={{ marginLeft: 6 }}>Ctrl+↵</kbd>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : activePreview?.status === 'blocked' ? (
-                    <div className="canvas-blocked-hero">
-                      <div
-                        style={{
-                          width: 56,
-                          height: 56,
-                          borderRadius: '50%',
-                          background: 'rgba(239, 68, 68, 0.12)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
-                        }}
-                      >
-                        <ShieldAlert size={28} style={{ color: '#ef4444' }} />
-                      </div>
-                      <h3>Query Blocked for Safety</h3>
-                      <p>
-                        The SQL statement violates QueryTrust read-only governance rules. No query was executed against the database.
-                      </p>
-                      {activePreview.validation.violations && activePreview.validation.violations.length > 0 && (
-                        <div style={{ textAlign: 'left', width: '100%', background: 'var(--qt-canvas)', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(239, 68, 68, 0.25)' }}>
-                          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ef4444', marginBottom: 4 }}>
-                            Violations detected:
+                            {table.description}
                           </div>
-                          <ul style={{ margin: 0, paddingLeft: 16, fontSize: '0.78rem', color: '#ef4444' }}>
-                            {activePreview.validation.violations.map((v, i) => (
-                              <li key={i}>{v}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ) : activePreview?.clarification_question ? (() => {
-                    const parsed = parseClarification(activePreview.clarification_question)
-                    return (
-                      <div className="canvas-clarification-hero">
-                        <div className="canvas-clarification-icon-box">
-                          <AlertTriangle size={28} style={{ color: '#d97706' }} />
-                        </div>
-                        <h3>Clarification Required Before Execution</h3>
-                        <p style={{ maxWidth: 520, margin: '4px auto 16px', color: 'var(--qt-muted)', fontSize: '0.85rem' }}>
-                          The natural language query contains an ambiguous operational term. Please select an approved operational rule to generate and execute verified read-only SQL:
-                        </p>
-
-                        <div className="canvas-clarification-question-banner">
-                          <span className="canvas-clarification-label">Ambiguous term intercepted</span>
-                          <span className="canvas-clarification-query">"{parsed.question}"</span>
-                        </div>
-
-                        {parsed.options.length > 0 ? (
-                          <div className="canvas-clarification-options">
-                            {parsed.options.map((opt) => (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {table.columns.map((col) => (
                               <button
-                                key={opt.id}
+                                key={col.name}
                                 type="button"
-                                className="canvas-clarification-option-btn"
-                                onClick={() => handleSendQuestion(opt.prompt)}
+                                onClick={() => handleInsertColumn(table.name, col.name)}
+                                title={`Click to insert ${table.name}.${col.name} into prompt`}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '3px 6px',
+                                  background: 'none',
+                                  border: 'none',
+                                  borderRadius: '3px',
+                                  cursor: 'pointer',
+                                  textAlign: 'left',
+                                }}
+                                onMouseEnter={(e) =>
+                                  (e.currentTarget.style.backgroundColor = 'var(--bg-surface-3)')
+                                }
+                                onMouseLeave={(e) =>
+                                  (e.currentTarget.style.backgroundColor = 'transparent')
+                                }
                               >
-                                <div className="canvas-clarification-option-top">
-                                  <span className="canvas-clarification-badge">Definition {opt.id}</span>
-                                  <span className="canvas-clarification-action">Select &amp; Run &rarr;</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  {col.pk && (
+                                    <span
+                                      style={{
+                                        fontSize: '9px',
+                                        fontFamily: 'var(--font-mono)',
+                                        backgroundColor: '#FEF3C7',
+                                        color: '#B45309',
+                                        padding: '0 3px',
+                                        borderRadius: '2px',
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      PK
+                                    </span>
+                                  )}
+                                  {col.fk && (
+                                    <span
+                                      style={{
+                                        fontSize: '9px',
+                                        fontFamily: 'var(--font-mono)',
+                                        backgroundColor: '#EFF6FF',
+                                        color: '#1D4ED8',
+                                        padding: '0 3px',
+                                        borderRadius: '2px',
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      FK
+                                    </span>
+                                  )}
+                                  <span
+                                    style={{
+                                      fontFamily: 'var(--font-mono)',
+                                      fontSize: '11px',
+                                      color: 'var(--ink-primary)',
+                                    }}
+                                  >
+                                    {col.name}
+                                  </span>
                                 </div>
-                                <div className="canvas-clarification-title">{opt.label}</div>
-                                {opt.hint && <div className="canvas-clarification-hint">{opt.hint}</div>}
+                                <span
+                                  style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '9px',
+                                    color: 'var(--ink-muted)',
+                                  }}
+                                >
+                                  {col.type}
+                                </span>
                               </button>
                             ))}
                           </div>
-                        ) : (
-                          <div className="canvas-clarification-fallback">
-                            <p>{activePreview.clarification_question}</p>
-                          </div>
-                        )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </aside>
+
+      {/* =========================================================================
+          CENTER PANE (50% Width): Natural Language Omnibar, SQL Preview & Grid
+          ========================================================================= */}
+      <main
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          backgroundColor: 'var(--bg-canvas)',
+          borderRight: '1px solid var(--border-subtle)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Top Control Bar: Pipeline Mode Toggle, Red-Team Presets, Execution Trigger */}
+        <div
+          style={{
+            padding: '8px 12px',
+            borderBottom: '1px solid var(--border-subtle)',
+            backgroundColor: 'var(--bg-surface-1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+          }}
+        >
+          {/* Mode Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                backgroundColor: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '6px',
+                padding: '2px',
+                fontSize: '11px',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setPipelineMode('guarded')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor:
+                    pipelineMode === 'guarded' ? 'var(--gov-safe-bg)' : 'transparent',
+                  color:
+                    pipelineMode === 'guarded' ? 'var(--gov-safe-text)' : 'var(--ink-muted)',
+                  fontWeight: pipelineMode === 'guarded' ? 600 : 400,
+                  cursor: 'pointer',
+                }}
+              >
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--gov-safe-dot)',
+                  }}
+                />
+                <span>Guarded 6-Gate AST</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPipelineMode('raw-llm')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  border: 'none',
+                  backgroundColor:
+                    pipelineMode === 'raw-llm' ? 'var(--gov-warn-bg)' : 'transparent',
+                  color:
+                    pipelineMode === 'raw-llm' ? 'var(--gov-warn-text)' : 'var(--ink-muted)',
+                  fontWeight: pipelineMode === 'raw-llm' ? 600 : 400,
+                  cursor: 'pointer',
+                }}
+              >
+                <AlertTriangle size={11} />
+                <span>Simulate Raw LLM</span>
+              </button>
+            </div>
+
+            {/* Red-Team Attack Presets Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setShowAttackDropdown((p) => !p)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: 'var(--bg-surface-2)',
+                  color: 'var(--ink-secondary)',
+                  cursor: 'pointer',
+                }}
+              >
+                <Flame size={12} style={{ color: '#EF4444' }} />
+                <span>Red-Team Attack Presets</span>
+                <ChevronDown size={11} style={{ color: 'var(--ink-muted)' }} />
+              </button>
+
+              {showAttackDropdown && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 4px)',
+                    left: 0,
+                    width: '340px',
+                    backgroundColor: 'var(--bg-surface-1)',
+                    border: '1px solid var(--border-strong)',
+                    borderRadius: '6px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    zIndex: 50,
+                    padding: '4px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      color: 'var(--ink-muted)',
+                      padding: '4px 8px',
+                    }}
+                  >
+                    Select Red-Team Attack Preset
+                  </div>
+                  {RED_TEAM_PRESETS.map((p, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSendQuestion(p.prompt)}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '6px 8px',
+                        background: 'none',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '6px',
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = 'var(--bg-surface-2)')
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = 'transparent')
+                      }
+                    >
+                      <div>
+                        <div
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            color: p.isAttack ? '#DC2626' : 'var(--ink-primary)',
+                          }}
+                        >
+                          {p.label}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '10px',
+                            fontFamily: 'var(--font-mono)',
+                            color: 'var(--ink-muted)',
+                          }}
+                        >
+                          {p.prompt}
+                        </div>
                       </div>
-                    )
-                  })() : (
-                    <div className="canvas-welcome-panel">
-                      <div
+                      <span
                         style={{
-                          width: 60,
-                          height: 60,
-                          borderRadius: '50%',
-                          background: 'var(--qt-accent-soft)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1px solid rgba(255, 79, 0, 0.25)',
+                          fontSize: '9px',
+                          fontFamily: 'var(--font-mono)',
+                          padding: '2px 5px',
+                          borderRadius: '3px',
+                          backgroundColor: p.isAttack
+                            ? 'var(--gov-block-bg)'
+                            : 'var(--gov-safe-bg)',
+                          color: p.isAttack
+                            ? 'var(--gov-block-text)'
+                            : 'var(--gov-safe-text)',
+                          whiteSpace: 'nowrap',
                         }}
                       >
-                        <Sparkles size={30} style={{ color: 'var(--qt-accent)' }} />
-                      </div>
-                      <div>
-                        <h3>Equipment Intelligence Canvas</h3>
-                        <p>
-                          Ask a question on the left or click a starter chip to view live tabular records, charts, and AST security proofs here without page scrolling.
-                        </p>
-                      </div>
-
-                      <div style={{ marginTop: '0.5rem', width: '100%', maxWidth: 520 }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--qt-muted)', marginBottom: 8, textAlign: 'center' }}>
-                          Available Equipment Schema
-                        </div>
-                        <div className="canvas-schema-pills">
-                          <span className="canvas-schema-pill">
-                            <Database size={11} style={{ color: 'var(--qt-accent)' }} />
-                            <code>devices</code> (5,000 nodes)
-                          </span>
-                          <span className="canvas-schema-pill">
-                            <Database size={11} style={{ color: '#10b981' }} />
-                            <code>telemetry</code> (30,000+ readings)
-                          </span>
-                          <span className="canvas-schema-pill">
-                            <Database size={11} style={{ color: '#6366f1' }} />
-                            <code>sites</code> (50 regions)
-                          </span>
-                          <span className="canvas-schema-pill">
-                            <Database size={11} style={{ color: '#f59e0b' }} />
-                            <code>maintenance_events</code> (1,200 logs)
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* TAB 2: SQL PREVIEW */}
-              {activeCanvasTab === 'sql' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {activePreview?.sql_preview ? (
-                    <div className="sql-preview-block" style={{ margin: 0 }}>
-                      <div className="sql-preview-header">
-                        <span className="sql-dialect-tag">PostgreSQL (SELECT-only) Dialect</span>
-                        <div className="sql-header-actions">
-                          <span className="limit-clamped-badge">LIMIT 200 clamped</span>
-                          <button
-                            type="button"
-                            className="copy-btn"
-                            onClick={() =>
-                              handleCopySQL(activePreview.query_run_id, activePreview.sql_preview!)
-                            }
-                            title="Copy SQL statement"
-                          >
-                            {copiedQueryId === activePreview.query_run_id ? (
-                              <span style={{ color: '#4ade80' }}>
-                                <Check size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copied
-                              </span>
-                            ) : (
-                              <>
-                                <Copy size={12} style={{ marginRight: 2, verticalAlign: 'middle' }} /> Copy SQL
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      <pre className="sql-code-box" style={{ maxHeight: '420px', overflowY: 'auto' }}>
-                        <HighlightedSql sql={activePreview.sql_preview} />
-                      </pre>
-                    </div>
-                  ) : (
-                    <div className="sessions-empty" style={{ padding: '3rem 1rem' }}>
-                      <Code2 size={28} style={{ color: 'var(--qt-muted)' }} />
-                      <span>No SQL query generated yet.</span>
-                      <small>Select or ask a question on the left to inspect its SQL AST parse.</small>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB 3: SAFETY PROOF */}
-              {activeCanvasTab === 'safety' && (
-                <div>
-                  {activePreview ? (
-                    <SafetyShieldDisplay preview={activePreview} />
-                  ) : (
-                    <div className="sessions-empty" style={{ padding: '3rem 1rem' }}>
-                      <ShieldCheck size={28} style={{ color: 'var(--qt-muted)' }} />
-                      <span>No query active to inspect.</span>
-                      <small>Run a query on the left to review its 6-point AST safety checks.</small>
-                    </div>
-                  )}
+                        {p.badge}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
           </div>
+
+          {/* Dynamic Engine Badge */}
+          <div
+            style={{
+              fontSize: '10px',
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--ink-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <Cpu size={12} style={{ color: 'var(--accent-primary)' }} />
+            <span>Engine: Deterministic Semantic Grammar + Live SQLGlot AST</span>
+          </div>
         </div>
-      </section>
+
+        {/* Natural Language Prompt Omnibar */}
+        <div
+          style={{
+            padding: '12px',
+            borderBottom: '1px solid var(--border-subtle)',
+            backgroundColor: 'var(--bg-surface-1)',
+          }}
+        >
+          <div
+            style={{
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '6px',
+              backgroundColor: 'var(--bg-canvas)',
+              overflow: 'hidden',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+            }}
+          >
+            <textarea
+              rows={2}
+              value={inputQuestion}
+              onChange={(e) => setInputQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  handleSendQuestion()
+                }
+              }}
+              placeholder="Ask anything about fleet equipment, sites, or telemetry (e.g., 'Show all routers in EMEA with warranty expiring within 60 days')..."
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                fontSize: '12px',
+                fontFamily: 'var(--font-sans)',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: 'var(--ink-primary)',
+                outline: 'none',
+                resize: 'none',
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '6px 12px',
+                borderTop: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-surface-2)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: 'var(--ink-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>Press</span>
+                <kbd
+                  style={{
+                    backgroundColor: 'var(--bg-surface-3)',
+                    padding: '1px 5px',
+                    borderRadius: '3px',
+                    fontFamily: 'var(--font-mono)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                >
+                  ⌘+Enter
+                </kbd>
+                <span>to preview &amp; verify</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleSendQuestion()}
+                  disabled={!inputQuestion.trim() || isLoading}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '5px 12px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    backgroundColor: 'var(--accent-primary)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: !inputQuestion.trim() || isLoading ? 'not-allowed' : 'pointer',
+                    opacity: !inputQuestion.trim() || isLoading ? 0.6 : 1,
+                  }}
+                >
+                  {isLoading ? (
+                    <span>Parsing AST...</span>
+                  ) : (
+                    <>
+                      <Sparkles size={12} />
+                      <span>Verify &amp; Preview</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Operational Ambiguity Disambiguation Banner (if any) */}
+          {activePreview?.clarification_question && (() => {
+            const parsed = parseClarification(activePreview.clarification_question)
+            return (
+              <div
+                style={{
+                  marginTop: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--gov-warn-bg)',
+                  border: '1px solid var(--gov-warn-border)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: 'var(--gov-warn-text)',
+                  }}
+                >
+                  <AlertTriangle size={13} />
+                  <span>{parsed.question}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                  {parsed.options.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleSendQuestion(opt.prompt)}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: '10px',
+                        fontWeight: 500,
+                        backgroundColor: '#ffffff',
+                        border: '1px solid var(--gov-warn-border)',
+                        borderRadius: '4px',
+                        color: 'var(--gov-warn-text)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {opt.label} &rarr;
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* Error / Interception alert */}
+          {errorMessage && (
+            <div
+              style={{
+                marginTop: '8px',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--gov-block-bg)',
+                border: '1px solid var(--gov-block-border)',
+                color: 'var(--gov-block-text)',
+                fontSize: '11px',
+              }}
+            >
+              {errorMessage}
+            </div>
+          )}
+        </div>
+
+        {/* Monaco/CodeMirror SQL Preview Panel */}
+        <div style={{ padding: '12px 12px 6px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '4px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '10px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                color: 'var(--ink-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <Code2 size={12} style={{ color: 'var(--accent-primary)' }} />
+              <span>Verified PostgreSQL (SELECT-Only) Syntax</span>
+            </div>
+            {activePreview?.can_execute && (
+              <button
+                type="button"
+                onClick={() => handleExecuteQuery(activePreview)}
+                disabled={executingId === activePreview.query_run_id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 8px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  backgroundColor: 'var(--gov-safe-bg)',
+                  color: 'var(--gov-safe-text)',
+                  border: '1px solid var(--gov-safe-border)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                <Play size={10} fill="currentColor" />
+                <span>
+                  {executingId === activePreview.query_run_id
+                    ? 'Executing in Read-Only...'
+                    : 'Execute via qt_ai_readonly'}
+                </span>
+              </button>
+            )}
+          </div>
+
+          <SqlEditorPanel
+            sql={displaySql}
+            userRole={userRole}
+            limit={100}
+            isExecuting={executingId === activePreview?.query_run_id}
+            onExecute={() => activePreview && handleExecuteQuery(activePreview)}
+            canExecute={Boolean(activePreview?.can_execute)}
+          />
+        </div>
+
+        {/* Bottom Docked Virtualized Results Grid */}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            padding: '6px 12px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <VirtualizedResultsGrid
+            result={activeResult}
+            executionLatencyMs={activeResult?.execution_duration_ms || 1.42}
+            queryRunId={activeRunId}
+          />
+        </div>
+      </main>
+
+      {/* =========================================================================
+          RIGHT PANE (28% - 30% Width): Live 6-Layer SQLGlot AST & Kernel Inspector
+          ========================================================================= */}
+      <aside
+        style={{
+          width: '380px',
+          minWidth: '320px',
+          maxWidth: '440px',
+          backgroundColor: 'var(--bg-surface-1)',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <AstInspectorPanel
+          sql={activePreview?.sql_preview || displaySql}
+          isValid={activePreview ? activePreview.validation.passed : true}
+          violations={activePreview?.validation.violations || []}
+          executionLatencyMs={activeResult?.execution_duration_ms || 1.42}
+          queryRunId={activeRunId}
+          provider={activePreview?.provider || 'Deterministic Semantic Template + SQLGlot AST'}
+          assumptions={activePreview?.assumptions || []}
+          isExecuting={isLoading || Boolean(executingId)}
+        />
+      </aside>
     </div>
   )
 }
-

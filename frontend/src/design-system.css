@@ -20,42 +20,92 @@
 
 /* QueryTrust Dual-Mode System: Warm Editorial Light & Carbon Obsidian Dark */
 :root {
-  --qt-canvas: #FAF8F5;
-  --qt-surface: #FFFFFF;
-  --qt-surface-muted: #F5F2ED;
-  --qt-ink: #191817;
-  --qt-text: #4F4A45;
-  --qt-muted: #766F68;
-  --qt-border: #E6E4E0;
-  --qt-border-strong: #D7D2CA;
-  --qt-accent: #FF4F00;
-  --qt-accent-hover: #E04500;
-  --qt-accent-soft: #FFF0E8;
-  --qt-success: #1F7A4C;
-  --qt-success-soft: #E8F5EE;
-  --qt-warning: #B45309;
-  --qt-warning-soft: #FEF3C7;
-  --qt-danger: #A7382C;
-  --qt-danger-soft: #FDF2F2;
-  --qt-radius-outer: 10px;
-  --qt-radius-inner: 8px;
+  /* === PRIMARY LIGHT THEME: "WARM STONE & INDUSTRIAL SIGNAL ORANGE" === */
+  --bg-canvas: #FAF8F5;              /* Signature QueryTrust warm alabaster canvas */
+  --bg-surface-1: #FFFFFF;           /* Crisp elevated workspace panes & data grids */
+  --bg-surface-2: #F4F1EA;           /* Secondary inset panels, toolbar headers, code gutters */
+  --bg-surface-3: #EBE6DC;           /* Active row selection, hover wells, kbd badges */
+  --bg-glass: rgba(250, 248, 245, 0.85); /* Backdrop blur sticky headers */
+
+  /* Subtle Ambient Aura (Restrained to 6% opacity so it never looks like a cheap glow) */
+  --aura-orange: radial-gradient(600px circle at 12% 8%, rgba(249, 87, 22, 0.06), transparent 70%);
+
+  /* Signature Brand Accents */
+  --accent-primary: #F95716;         /* QueryTrust Signal Orange (Primary CTA, Active AST Node, Focus Ring) */
+  --accent-primary-hover: #E0480B;   /* Deepened International Orange for hover states */
+  --accent-primary-subtle: #FFF0EB;  /* 8% tint for active sidebar indicator & selected AST token */
+  --accent-primary-border: #FDBA9C;  /* Crisp technical border for active orange elements */
+
+  /* Ink & Typography Hierarchy (High-contrast Slate/Stone) */
+  --ink-primary: #0F172A;            /* Deep Slate 900 for primary headers, SQL code, and numerals */
+  --ink-secondary: #334155;          /* Slate 700 for body copy, table cells, and schema columns */
+  --ink-muted: #64748B;              /* Slate 500 for metadata, timestamps, and SQL line numbers */
+  --ink-faint: #94A3B8;              /* Slate 400 for disabled controls and empty state hints */
+
+  /* Exposed Hairline Borders (The secret to anti-AI precision) */
+  --border-subtle: #E6E2D8;          /* 1px warm stone structural grid divider */
+  --border-strong: #D1CBC0;          /* Emphasized panel splitters and table headers */
+  --border-focus: #F95716;           /* 1.5px deterministic focus ring */
+
+  /* Semantic Governance & Kernel Status Tokens */
+  --gov-safe-bg: #ECFDF5;
+  --gov-safe-text: #047857;          /* Emerald 700: AST Verified / Kernel Read-Only Enforced */
+  --gov-safe-border: #A7F3D0;
+  --gov-safe-dot: #10B981;
+
+  --gov-warn-bg: #FFFBEB;
+  --gov-warn-text: #B45309;          /* Amber 700: Schema Hygiene Advisory / Cost Warning */
+  --gov-warn-border: #FDE68A;
+
+  --gov-block-bg: #FEF2F2;
+  --gov-block-text: #B91C1C;         /* Crimson 700: SQLGlot AST Mutation Intercepted / Blocked */
+  --gov-block-border: #FECACA;
+
+  /* Role Identity Tokens (Matching Existing Workspace Roles with Refined Contrast) */
+  --role-admin-bg: #F3E8FF;
+  --role-admin-text: #6B21A8;
+  --role-admin-border: #D8B4FE;
+
+  --role-analyst-bg: #EFF6FF;
+  --role-analyst-text: #1D4ED8;
+  --role-analyst-border: #BFDBFE;
+
+  --role-viewer-bg: #F0FDFA;
+  --role-viewer-text: #0F766E;
+  --role-viewer-border: #99F6E4;
+
+  /* Compatibility bindings for legacy --qt-* mappings */
+  --qt-canvas: var(--bg-canvas);
+  --qt-surface: var(--bg-surface-1);
+  --qt-surface-muted: var(--bg-surface-2);
+  --qt-ink: var(--ink-primary);
+  --qt-text: var(--ink-secondary);
+  --qt-muted: var(--ink-muted);
+  --qt-border: var(--border-subtle);
+  --qt-border-strong: var(--border-strong);
+  --qt-accent: var(--accent-primary);
+  --qt-accent-hover: var(--accent-primary-hover);
+  --qt-accent-soft: var(--accent-primary-subtle);
+  --qt-success: var(--gov-safe-text);
+  --qt-success-soft: var(--gov-safe-bg);
+  --qt-warning: var(--gov-warn-text);
+  --qt-warning-soft: var(--gov-warn-bg);
+  --qt-danger: var(--gov-block-text);
+  --qt-danger-soft: var(--gov-block-bg);
+  --qt-radius-outer: 8px;
+  --qt-radius-inner: 6px;
   --qt-radius-control: 6px;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Plus Jakarta Sans', var(--font-sans);
   --font-body: var(--font-sans);
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --bg-primary: var(--qt-canvas);
-  --bg-secondary: #0B0F17;
-  --bg-surface: var(--qt-surface);
-  --bg-surface-hover: var(--qt-surface-muted);
-  --bg-card: var(--qt-surface);
-  --border-subtle: var(--qt-border);
-  --border-focus: var(--qt-accent);
-  --text-primary: var(--qt-ink);
-  --text-secondary: var(--qt-text);
-  --text-muted: var(--qt-muted);
-  --accent-primary: var(--qt-accent);
-  --accent-primary-hover: var(--qt-accent-hover);
+  --bg-primary: var(--bg-canvas);
+  --bg-secondary: var(--bg-surface-2);
+  --bg-surface: var(--bg-surface-1);
+  --bg-surface-hover: var(--bg-surface-3);
+  --bg-card: var(--bg-surface-1);
+  --text-primary: var(--ink-primary);
+  --text-secondary: var(--ink-secondary);
   --radius-sm: var(--qt-radius-control);
   --radius-md: var(--qt-radius-inner);
   --radius-lg: var(--qt-radius-outer);
@@ -63,34 +113,75 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-[data-theme="dark"] {
-  --qt-canvas: #0D111C;
-  --qt-surface: #111723;
-  --qt-surface-muted: #182030;
-  --qt-ink: #F4F2EE;
-  --qt-text: #B8B3AA;
-  --qt-muted: #7E8594;
-  --qt-border: rgba(255, 255, 255, 0.07);
-  --qt-border-strong: rgba(255, 255, 255, 0.12);
-  --qt-accent: #F97316;
-  --qt-accent-hover: #EA580C;
-  --qt-accent-soft: rgba(249, 115, 22, 0.12);
-  --qt-success: #10B981;
-  --qt-success-soft: rgba(16, 185, 129, 0.12);
-  --qt-warning: #F59E0B;
-  --qt-warning-soft: rgba(245, 158, 11, 0.12);
-  --qt-danger: #EF4444;
-  --qt-danger-soft: rgba(239, 68, 68, 0.12);
-  --bg-primary: #0D111C;
-  --bg-secondary: #090D16;
-  --bg-surface: #111723;
-  --bg-surface-hover: #182030;
-  --bg-card: #111723;
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-focus: #F97316;
-  --text-primary: #F4F2EE;
-  --text-secondary: #B8B3AA;
-  --text-muted: #7E8594;
+.dark, [data-theme="dark"] {
+  /* === OPTIONAL ENGINEER DARK THEME: "OBSIDIAN KERNEL" === */
+  --bg-canvas: #0B0D10;
+  --bg-surface-1: #11141A;
+  --bg-surface-2: #171B22;
+  --bg-surface-3: #1F242D;
+  --bg-glass: rgba(17, 20, 26, 0.85);
+  --aura-orange: radial-gradient(600px circle at 12% 8%, rgba(249, 87, 22, 0.08), transparent 70%);
+  --accent-primary: #FF5E1E;
+  --accent-primary-hover: #FF743D;
+  --accent-primary-subtle: rgba(249, 87, 22, 0.14);
+  --accent-primary-border: rgba(249, 87, 22, 0.4);
+  --ink-primary: #F8FAFC;
+  --ink-secondary: #CBD5E1;
+  --ink-muted: #64748B;
+  --ink-faint: #475569;
+  --border-subtle: #1E242E;
+  --border-strong: #2E3644;
+  --border-focus: #FF5E1E;
+
+  --gov-safe-bg: rgba(16, 185, 129, 0.12);
+  --gov-safe-text: #34D399;
+  --gov-safe-border: rgba(16, 185, 129, 0.25);
+  --gov-safe-dot: #10B981;
+
+  --gov-warn-bg: rgba(245, 158, 11, 0.12);
+  --gov-warn-text: #FBBF24;
+  --gov-warn-border: rgba(245, 158, 11, 0.25);
+
+  --gov-block-bg: rgba(239, 68, 68, 0.12);
+  --gov-block-text: #F87171;
+  --gov-block-border: rgba(239, 68, 68, 0.25);
+
+  --role-admin-bg: rgba(168, 85, 247, 0.15);
+  --role-admin-text: #C084FC;
+  --role-admin-border: rgba(168, 85, 247, 0.3);
+
+  --role-analyst-bg: rgba(59, 130, 246, 0.15);
+  --role-analyst-text: #60A5FA;
+  --role-analyst-border: rgba(59, 130, 246, 0.3);
+
+  --role-viewer-bg: rgba(20, 184, 166, 0.15);
+  --role-viewer-text: #2DD4BF;
+  --role-viewer-border: rgba(20, 184, 166, 0.3);
+
+  --qt-canvas: var(--bg-canvas);
+  --qt-surface: var(--bg-surface-1);
+  --qt-surface-muted: var(--bg-surface-2);
+  --qt-ink: var(--ink-primary);
+  --qt-text: var(--ink-secondary);
+  --qt-muted: var(--ink-muted);
+  --qt-border: var(--border-subtle);
+  --qt-border-strong: var(--border-strong);
+  --qt-accent: var(--accent-primary);
+  --qt-accent-hover: var(--accent-primary-hover);
+  --qt-accent-soft: var(--accent-primary-subtle);
+  --qt-success: var(--gov-safe-text);
+  --qt-success-soft: var(--gov-safe-bg);
+  --qt-warning: var(--gov-warn-text);
+  --qt-warning-soft: var(--gov-warn-bg);
+  --qt-danger: var(--gov-block-text);
+  --qt-danger-soft: var(--gov-block-bg);
+  --bg-primary: var(--bg-canvas);
+  --bg-secondary: var(--bg-surface-2);
+  --bg-surface: var(--bg-surface-1);
+  --bg-surface-hover: var(--bg-surface-3);
+  --bg-card: var(--bg-surface-1);
+  --text-primary: var(--ink-primary);
+  --text-secondary: var(--ink-secondary);
 }
 
 html { background: var(--qt-canvas); }
@@ -329,7 +420,7 @@ button:active:not(:disabled) { transform: scale(.98); }
 .command-palette-list { max-height: min(48vh, 24rem); overflow-y: auto; padding: .45rem; }
 .command-palette-item { align-items: center; background: transparent; border: 1px solid transparent; border-radius: var(--qt-radius-inner); color: var(--qt-ink); display: flex; gap: .75rem; min-height: 3.55rem; padding: .55rem .65rem; text-align: left; width: 100%; }
 .command-palette-item--active, .command-palette-item:hover { background: var(--qt-surface-muted); border-color: var(--qt-border); }
-.command-palette-icon { align-items: center; background: var(--qt-accent-soft); border: 1px solid #ffd7c3; border-radius: 6px; color: var(--qt-accent); display: flex; flex: none; height: 2rem; justify-content: center; width: 2rem; }
+.command-palette-icon { align-items: center; background: transparent; border: none; color: var(--accent-primary, #F95716); display: flex; flex: none; height: 1.5rem; justify-content: center; width: 1.5rem; }
 .command-palette-copy { display: grid; flex: 1; gap: .1rem; min-width: 0; }
 .command-palette-copy > span { font-size: .82rem; font-weight: 700; }
 .command-palette-copy small { color: var(--qt-muted); font-size: .72rem; line-height: 1.35; }

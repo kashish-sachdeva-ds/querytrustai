@@ -9,6 +9,9 @@ import {
   Server,
   ShieldCheck,
   Users,
+  User,
+  Eye,
+  Table,
   Moon,
   Sparkles,
   Database,
@@ -69,7 +72,7 @@ const getTabFromUrl = (): ActiveTab => {
 }
 
 const AppShell: React.FC = () => {
-  const { isAuthenticated, isLoading, user, logout } = useAuth()
+  const { isAuthenticated, isLoading, user, logout, enterDemoMode } = useAuth()
   const { theme, mode, toggleTheme, toggleMode } = useTheme()
   const [activeTab, setActiveTab] = useState<ActiveTab>(getTabFromUrl)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
@@ -77,8 +80,7 @@ const AppShell: React.FC = () => {
   const joinParam = readUrlParam('join') || readUrlParam('workspace')
   const [unauthView, setUnauthView] = useState<'landing' | 'login'>(() => {
     const tab = readUrlParam('tab')
-    const join = readUrlParam('join') || readUrlParam('workspace')
-    return tab === 'login' || Boolean(join) ? 'login' : 'landing'
+    return tab === 'landing' ? 'landing' : 'login'
   })
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
 
@@ -128,18 +130,47 @@ const AppShell: React.FC = () => {
 
   const commandActions = useMemo<CommandPaletteAction[]>(() => {
     const pageActions: CommandPaletteAction[] = [
-      { id: 'overview', label: 'Open fleet overview', description: 'Live inventory and service summary', icon: LayoutDashboard, keywords: ['dashboard', 'home'], run: () => selectTab('overview') },
-      { id: 'devices', label: 'Open device explorer', description: 'Search and inspect network assets', icon: Server, keywords: ['inventory', 'assets'], run: () => selectTab('devices') },
-      { id: 'ask-data', label: 'Ask governed data', description: 'Create a read-only analytics preview', icon: MessageSquareText, keywords: ['query', 'analytics', 'sql'], run: () => selectTab('ask-data') },
-      { id: 'data-sources', label: 'Open data sources & connections', description: 'Connect live databases or switch to demo sandbox', icon: Database, keywords: ['database', 'postgres', 'connection', 'byod', 'schema'], run: () => selectTab('data-sources') },
-      { id: 'data-quality', label: 'Open data quality', description: 'Review read-only diagnostic findings', icon: ShieldCheck, keywords: ['diagnostics', 'findings'], run: () => selectTab('data-quality') },
-      { id: 'anomalies', label: 'Open anomaly monitor', description: 'Review synthetic telemetry outliers', icon: Activity, keywords: ['telemetry', 'isolation forest'], run: () => selectTab('anomalies') },
-      { id: 'history', label: 'Open query history', description: 'Review your governed query activity', icon: History, keywords: ['audit', 'queries'], run: () => selectTab('history') },
-      { id: 'evaluations', label: 'Open safety proof', description: 'Review benchmark safety metrics and regression proof', icon: FlaskConical, keywords: ['benchmark', 'regression', 'safety', 'proof'], run: () => selectTab('evaluations') },
+      // Primary Navigation
+      { id: 'overview', label: 'Fleet Overview', description: 'Live inventory, site telemetry, and service summary', icon: LayoutDashboard, keywords: ['dashboard', 'home', 'fleet'], run: () => selectTab('overview') },
+      { id: 'ask-data', label: 'Ask Governed Data (IDE)', description: '3-pane SQL workbench with live 6-gate AST verification', icon: MessageSquareText, keywords: ['query', 'analytics', 'sql', 'ast', 'workbench', 'prompt'], run: () => selectTab('ask-data') },
+      { id: 'devices', label: 'Data Catalog & Schema ERD', description: '5,000 assets inventory, schema graph, and table inspector', icon: Server, keywords: ['inventory', 'assets', 'devices', 'schema', 'erd'], run: () => selectTab('devices') },
+      { id: 'data-quality', label: 'Data Health & Diagnostic Scanner', description: 'Review 6 deterministic integrity rules across 30,000 records', icon: ShieldCheck, keywords: ['diagnostics', 'findings', 'health', 'scan'], run: () => selectTab('data-quality') },
+      { id: 'anomalies', label: 'Unusual Activity & Telemetry Outliers', description: 'Z-score and IQR distribution across 25,000 readings', icon: Activity, keywords: ['telemetry', 'isolation forest', 'outliers', 'anomalies'], run: () => selectTab('anomalies') },
+      { id: 'evaluations', label: 'Safety Proof & AST Benchmark Lab', description: '37/37 red-team attack tests, ROI metrics, compliance audit', icon: FlaskConical, keywords: ['benchmark', 'regression', 'safety', 'proof', 'roi', 'red-team'], run: () => selectTab('evaluations') },
+      { id: 'data-sources', label: 'Data Sources & Dual-Role Kernel', description: 'PostgreSQL connection pools, role privileges, and topology', icon: Database, keywords: ['database', 'postgres', 'connection', 'kernel', 'role', 'readonly'], run: () => selectTab('data-sources') },
+      { id: 'history', label: 'Query History & Verification Audit', description: 'Inspect previously validated SQL executions and logs', icon: History, keywords: ['audit', 'queries', 'history'], run: () => selectTab('history') },
+
+      // Instant Role Switching
+      { id: 'role-admin', label: 'Switch Role: System Administrator', description: 'Full SQL + AST Inspector + Benchmark Runner + RBAC', icon: Users, keywords: ['admin', 'role', 'permissions', 'auth'], run: () => enterDemoMode('admin') },
+      { id: 'role-analyst', label: 'Switch Role: Lead Data Analyst', description: 'NL-to-SQL workbench + Schema Introspection + Read-Only Execution', icon: User, keywords: ['analyst', 'role', 'permissions'], run: () => enterDemoMode('analyst') },
+      { id: 'role-viewer', label: 'Switch Role: Operations Viewer', description: 'Governed plain English answers only (raw SQL masked)', icon: Eye, keywords: ['viewer', 'role', 'safe', 'mask'], run: () => enterDemoMode('viewer') },
+
+      // Preset Governed Queries
+      { id: 'query-warranties', label: 'Query: Hardware with warranties expiring < 30 days', description: 'Filter devices by warranty_expiration <= CURRENT_DATE + 30 days', icon: Sparkles, keywords: ['query', 'preset', 'warranty', 'devices'], run: () => {
+        setPendingAskQuestion('Show all active devices with warranty expiring within 30 days')
+        selectTab('ask-data')
+      } },
+      { id: 'query-high-temp', label: 'Query: High temperature routers with packet drops', description: 'Join devices with telemetry_readings filter temperature > 65°C', icon: Sparkles, keywords: ['query', 'preset', 'temperature', 'telemetry', 'router'], run: () => {
+        setPendingAskQuestion('Find core routers with temperature > 65°C and packet drop rate > 0.05%')
+        selectTab('ask-data')
+      } },
+      { id: 'query-critical-repairs', label: 'Query: Open critical service repair events', description: 'Filter service_events by severity = Critical and open status', icon: Sparkles, keywords: ['query', 'preset', 'critical', 'service', 'incidents'], run: () => {
+        setPendingAskQuestion('List open Critical service events with device model and site location')
+        selectTab('ask-data')
+      } },
+
+      // Schema Inspection
+      { id: 'inspect-devices', label: 'Inspect Table: public.devices', description: '5,000 hardware inventory records with 11 relational columns', icon: Table, keywords: ['table', 'schema', 'devices'], run: () => selectTab('devices') },
+      { id: 'inspect-sites', label: 'Inspect Table: public.sites', description: '50 global operational sites across Americas, EMEA, and APAC', icon: Table, keywords: ['table', 'schema', 'sites'], run: () => selectTab('devices') },
+      { id: 'inspect-service-events', label: 'Inspect Table: public.service_events', description: '1,500 maintenance and repair logs with severity classifications', icon: Table, keywords: ['table', 'schema', 'service_events'], run: () => selectTab('devices') },
+      { id: 'inspect-telemetry', label: 'Inspect Table: public.telemetry_readings', description: '25,000 sensor observations (temperature, CPU, memory, packet drops)', icon: Table, keywords: ['table', 'schema', 'telemetry'], run: () => selectTab('devices') },
+
+      // Diagnostics & Preferences
+      { id: 'trigger-health-scan', label: 'Trigger Fleet Data Health Scan', description: 'Execute all 6 deterministic integrity rules across 30,000 rows', icon: RefreshCw, keywords: ['scan', 'health', 'quality'], run: () => selectTab('data-quality') },
       { id: 'toggle-mode', label: `Switch to ${mode === 'simple' ? 'Expert' : 'Simple'} view`, description: mode === 'simple' ? 'Show SQL, AST inspector, and execution times' : 'Friendly plain English, hide raw SQL', icon: Sparkles, keywords: ['expert', 'simple', 'developer', 'viewer', 'mode'], run: toggleMode },
-      { id: 'toggle-theme', label: `Switch to ${theme === 'light' ? 'Dark' : 'Light'} theme`, description: 'Toggle between clean light and deep obsidian dark themes', icon: Moon, keywords: ['theme', 'dark', 'light', 'mode'], run: toggleTheme },
-      { id: 'onboarding-tour', label: 'Welcome & role tour', description: 'Explore roles, sample questions, and database preview', icon: Sparkles, keywords: ['onboarding', 'tour', 'guide', 'help', 'welcome'], run: () => setIsOnboardingOpen(true) },
-      { id: 'refresh-overview', label: 'Refresh fleet overview', description: 'Fetch the latest live inventory snapshot', icon: RefreshCw, keywords: ['reload', 'live'], run: () => {
+      { id: 'toggle-theme', label: `Switch to ${theme === 'light' ? 'Obsidian Dark' : 'Warm Stone Light'} theme`, description: 'Toggle between warm stone (#FAF8F5) and obsidian (#0B0D10)', icon: Moon, keywords: ['theme', 'dark', 'light', 'mode'], run: toggleTheme },
+      { id: 'onboarding-tour', label: 'Welcome & Role Tour', description: 'Explore roles, sample questions, and zero-trust safeguards', icon: Sparkles, keywords: ['onboarding', 'tour', 'guide', 'help', 'welcome'], run: () => setIsOnboardingOpen(true) },
+      { id: 'refresh-overview', label: 'Refresh Fleet Overview', description: 'Fetch the latest live inventory snapshot', icon: RefreshCw, keywords: ['reload', 'live'], run: () => {
         selectTab('overview')
         window.requestAnimationFrame(() => window.dispatchEvent(new Event('querytrust:refresh-overview')))
       } },
@@ -147,12 +178,12 @@ const AppShell: React.FC = () => {
 
     if (user?.role === 'admin') {
       pageActions.push(
-        { id: 'admin', label: 'Open people & access', description: 'Manage roles and authorization states', icon: Users, keywords: ['users', 'governance', 'roles', 'people'], run: () => selectTab('admin') },
+        { id: 'admin', label: 'People & RBAC Access Management', description: 'Manage 7 team members, role assignments, and audit trails', icon: Users, keywords: ['users', 'governance', 'roles', 'people', 'rbac'], run: () => selectTab('admin') },
       )
     }
 
     return pageActions
-  }, [user?.role, mode, theme, toggleMode, toggleTheme])
+  }, [user?.role, mode, theme, toggleMode, toggleTheme, enterDemoMode])
 
   // Non-blocking authentication: If not authenticated and not loading, show login/landing
   if (!isAuthenticated && !isLoading) {
@@ -254,7 +285,7 @@ const AppShell: React.FC = () => {
       <div className="app-container" style={{ flex: 1, minHeight: 0 }}>
         <Sidebar activeTab={activeTab} onSelectTab={selectTab} onAskQuestion={openAskQuestion} />
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto', backgroundColor: '#0D111C' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto', backgroundColor: 'var(--bg-canvas)' }}>
           <Header
             activeTab={activeTab}
             onNavigate={selectTab}
@@ -277,7 +308,7 @@ const AppShell: React.FC = () => {
                 {activeTab === 'data-sources' && <DataSourcesView />}
                 {activeTab === 'admin' && <AdminView />}
 
-                {activeTab === 'data-quality' && <DataQualityView />}
+                {activeTab === 'data-quality' && <DataQualityView onAskQuestion={openAskQuestion} />}
                 {activeTab === 'anomalies' && (
                   <AnomalyMonitorView
                     onOpenDevice={openDevice}

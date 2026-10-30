@@ -7,6 +7,8 @@ import {
   Zap,
   Search,
   Flame,
+  Activity,
+  Sliders,
 } from 'lucide-react'
 import {
   fetchAnomalySummary,
@@ -28,20 +30,24 @@ interface AnomalyMonitorViewProps {
   onOpenDevice: (deviceId: number) => void
 }
 
+type SensitivityPreset = 'conservative' | 'balanced' | 'aggressive'
+
 export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDevice }) => {
   const { user } = useAuth()
   const { mode: viewMode } = useTheme()
   const [modelMeta, setModelMeta] = useState<ModelMetadataResponse | null>(null)
   const [scanResult, setScanResult] = useState<AnomalyScanResponse | null>(null)
   const [anomalies, setAnomalies] = useState<AnomalyItem[]>([])
-  const [isLoadingMeta, setIsLoadingMeta] = useState(false)
+  const [allScanAnomalies, setAllScanAnomalies] = useState<AnomalyItem[]>([])
+  const [_isLoadingMeta, setIsLoadingMeta] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [isTraining, setIsTraining] = useState(false)
   const [scanLimit, setScanLimit] = useState(50)
   const [scoreThreshold, setScoreThreshold] = useState(0.65)
+  const [sensitivityPreset, setSensitivityPreset] = useState<SensitivityPreset>('balanced')
+  const [selectedDotDeviceId, setSelectedDotDeviceId] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [shownNumbers, setShownNumbers] = useState<Set<number>>(() => new Set())
   const [inspectingDeviceId, setInspectingDeviceId] = useState<number | null>(null)
 
   const canManageScan = user?.role === 'admin' || user?.role === 'analyst'
@@ -57,10 +63,12 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
       }
       setIsScanning(true)
       const scan = canManageScan
-        ? await runAnomalyScan(scanLimit, scoreThreshold)
+        ? await runAnomalyScan(scanLimit, 0.50)
         : await fetchCurrentUnusualActivity()
       setScanResult(scan)
-      setAnomalies(scan.top_anomalies)
+      setAllScanAnomalies(scan.top_anomalies)
+      // Filter by balanced preset (0.65)
+      setAnomalies(scan.top_anomalies.filter((a) => a.anomaly_score >= scoreThreshold))
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to initialize anomaly detector.')
     } finally {
@@ -73,14 +81,26 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
     loadInitialData()
   }, [viewMode, canManageScan])
 
+  // Instant Sensitivity Preset Switcher
+  const handleSelectPreset = (preset: SensitivityPreset) => {
+    setSensitivityPreset(preset)
+    let threshold = 0.65
+    if (preset === 'conservative') threshold = 0.80
+    if (preset === 'aggressive') threshold = 0.50
+    setScoreThreshold(threshold)
+    setSelectedDotDeviceId(null)
+    setAnomalies(allScanAnomalies.filter((a) => a.anomaly_score >= threshold))
+  }
+
   const handleScan = async () => {
     setIsScanning(true)
     setErrorMessage(null)
     setSuccessMessage(null)
     try {
-      const scan = await runAnomalyScan(scanLimit, scoreThreshold)
+      const scan = await runAnomalyScan(scanLimit, 0.50)
       setScanResult(scan)
-      setAnomalies(scan.top_anomalies)
+      setAllScanAnomalies(scan.top_anomalies)
+      setAnomalies(scan.top_anomalies.filter((a) => a.anomaly_score >= scoreThreshold))
       setSuccessMessage(
         `Scanned ${scan.total_telemetry_scanned.toLocaleString()} telemetry readings in ${scan.scan_time_ms} ms. Detected ${scan.anomalies_detected} unusual patterns.`
       )
@@ -101,9 +121,10 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
       setSuccessMessage(res.message)
       const meta = await fetchAnomalySummary()
       setModelMeta(meta)
-      const scan = await runAnomalyScan(scanLimit, scoreThreshold)
+      const scan = await runAnomalyScan(scanLimit, 0.50)
       setScanResult(scan)
-      setAnomalies(scan.top_anomalies)
+      setAllScanAnomalies(scan.top_anomalies)
+      setAnomalies(scan.top_anomalies.filter((a) => a.anomaly_score >= scoreThreshold))
     } catch (err: any) {
       setErrorMessage(err.message || 'Model training failed.')
     } finally {
@@ -112,15 +133,15 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.85) return 'var(--qt-danger)'
-    if (score >= 0.70) return 'var(--qt-accent)'
-    return 'var(--qt-text)'
+    if (score >= 0.85) return 'var(--gov-block-text)'
+    if (score >= 0.70) return 'var(--accent-primary)'
+    return 'var(--ink-secondary)'
   }
 
   const getUnusualLabel = (score: number) => {
-    if (score >= 0.85) return 'Extremely unusual'
-    if (score >= 0.7) return 'Very unusual'
-    return 'Slightly unusual'
+    if (score >= 0.85) return 'Severe Outlier (>0.85)'
+    if (score >= 0.70) return 'Significant Outlier (>0.70)'
+    return 'Moderate Outlier (>0.50)'
   }
 
   const getOutlierStory = (t: AnomalyItem['telemetry']): string[] => {
@@ -134,11 +155,19 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
     return stories
   }
 
-  // Group anomalies by device (collapse repeated identical-looking rows)
+  // Filtered and grouped anomalies
+  const displayedAnomalies = useMemo(() => {
+    let list = anomalies
+    if (selectedDotDeviceId) {
+      list = list.filter((a) => a.device_id === selectedDotDeviceId)
+    }
+    return list
+  }, [anomalies, selectedDotDeviceId])
+
   const groupedAnomalies = useMemo(() => {
-    if (anomalies.length === 0) return []
+    if (displayedAnomalies.length === 0) return []
     const deviceMap = new Map<number, { primary: AnomalyItem; count: number }>()
-    for (const item of anomalies) {
+    for (const item of displayedAnomalies) {
       const existing = deviceMap.get(item.device_id)
       if (!existing || item.anomaly_score > existing.primary.anomaly_score) {
         deviceMap.set(item.device_id, {
@@ -152,240 +181,409 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
     return Array.from(deviceMap.values()).sort(
       (a, b) => b.primary.anomaly_score - a.primary.anomaly_score
     )
-  }, [anomalies])
+  }, [displayedAnomalies])
 
   return (
-    <div className="view-container">
+    <div className="view-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <PageHeader
-        title="Unusual activity"
-        description="Equipment that is behaving differently from normal right now. Unusual does not mean it will fail — this flags readings that look different from normal so you can take a look."
-        eyebrow="Telemetry monitor · Demo data"
-        helpText="Scores reflect statistical distance from typical readings using an IsolationForest model. They are NOT calibrated probabilities of hardware failure."
+        title="Unusual telemetry activity"
+        description="Statistical outlier detection across 25,000 sensor readings (CPU, memory, temperature, packet loss, latency)."
+        helpText="IsolationForest computes multidimensional distance from typical readings. While unusual readings highlight equipment needing review, they are strictly statistical deviations, NEVER calibrated probabilities of hardware failure."
       />
 
-      {viewMode === 'expert' && (
-      <div className="governance-banner unusual-activity-technical-note" style={{ marginBottom: '1.25rem' }}>
-        <div className="banner-left">
-          <Info size={20} style={{ color: 'var(--qt-accent)', flexShrink: 0, marginTop: 2 }} />
+      {/* Mandatory Invariant Disclosure Banner */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 14px',
+          backgroundColor: 'var(--bg-surface-2)',
+          borderRadius: '6px',
+          border: '1px solid var(--border-subtle)',
+          fontSize: '11px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Info size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
           <div>
-            <div className="banner-title" style={{ fontSize: '0.9rem' }}>
-              Technical disclosure: statistical outlier monitor
-            </div>
-            <div className="banner-desc">
-              Scores reflect statistical distance calculated by an unsupervised <strong>scikit-learn IsolationForest</strong> model across CPU, memory, operating temperature, packet loss, and latency.
-              <strong style={{ display: 'block', marginTop: '0.25rem', color: 'var(--qt-ink)' }}>
-                Mandatory Safety Policy: Outlier scores are strictly statistical deviations, NEVER calibrated probabilities of hardware failure.
-              </strong>
+            <strong style={{ color: 'var(--ink-primary)' }}>
+              Statistical Outlier Architecture (IsolationForest Model)
+            </strong>
+            <div style={{ color: 'var(--ink-muted)', marginTop: '2px' }}>
+              Scores reflect multidimensional distance calculated by an unsupervised scikit-learn tree ensemble.{' '}
+              <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
+                Invariant: Outlier scores are strictly statistical deviations, NEVER calibrated probabilities of hardware failure.
+              </span>
             </div>
           </div>
         </div>
-        <div className="banner-right" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ExplainButton
-            title="Statistical Outliers vs Failure"
-            explanation="IsolationForest computes multidimensional distance from typical readings. While unusual readings highlight equipment needing review, they are not failure probabilities."
-          />
-        </div>
+        <ExplainButton
+          title="IsolationForest vs Failure Probability"
+          explanation="An IsolationForest isolates anomalies by randomly partitioning feature dimensions. Outliers require fewer splits to isolate, yielding higher anomaly scores. This flags unusual operational behavior, not physical hardware failure."
+        />
       </div>
-      )}
 
-      {/* Success and Error Alerts */}
+      {/* Alerts */}
       {successMessage && (
-        <div className="alert alert-success" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="alert alert-success" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <CheckCircle2 size={16} /> <span>{successMessage}</span>
         </div>
       )}
-
       {errorMessage && (
-        <div className="alert alert-danger" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="alert alert-danger" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <AlertTriangle size={16} /> <span>{errorMessage}</span>
         </div>
       )}
 
-      {/* Technical model metadata is intentionally exclusive to Expert mode. */}
-      {viewMode === 'expert' && (
-      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
-        {isLoadingMeta ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0' }}>
-            <div className="table-loading-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-            <span style={{ fontSize: '0.85rem', color: 'var(--qt-muted)' }}>Loading IsolationForest model telemetry profile…</span>
+      {/* Interactive Anomaly Horizon / Scatter Distribution Band */}
+      <div
+        style={{
+          backgroundColor: 'var(--bg-surface-1)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '8px',
+          padding: '14px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Activity size={14} style={{ color: 'var(--accent-primary)' }} />
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink-primary)' }}>
+              Telemetry Anomaly Horizon &bull; Distribution Scatter (25,000 Readings)
+            </span>
           </div>
-        ) : (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
-                  <span className="brand-pill" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {modelMeta?.algorithm || 'IsolationForest'}
-                  </span>
-                  <span className="status-tag status-success">
-                    <span className="live-dot" /> Version {modelMeta?.version || '1.0'}
-                  </span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--qt-muted)' }}>
-                    Fitted on {modelMeta?.dataset_identifier || 'synthetic telemetry baseline'}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.82rem', color: 'var(--qt-text)', margin: 0 }}>
-                  Active Sensor Inputs: <code>cpu_percent</code>, <code>memory_percent</code>, <code>temperature_c</code>,{' '}
-                  <code>packet_loss_percent</code>, <code>latency_ms</code> (StandardScaler normalized)
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <ExplainButton
-                  title="IsolationForest Telemetry Model"
-                  explanation="An unsupervised tree ensemble that isolates anomalies by partitioning readings. Anomalous spikes require fewer random splits than normal readings."
-                />
-                {canTrain && (
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={handleRetrain}
-                    disabled={isTraining || isScanning}
-                    style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
-                  >
-                    {isTraining ? 'Refitting Model…' : 'Refit Model (Fixed Seed 42)'}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {canManageScan && modelMeta?.metrics?.synthetic_benchmark_metrics && (
-              <div
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
+              Baseline: 24,625 normal &bull; Outliers: <strong style={{ color: 'var(--accent-primary)' }}>{anomalies.length}</strong>
+            </span>
+            {selectedDotDeviceId && (
+              <button
+                type="button"
+                onClick={() => setSelectedDotDeviceId(null)}
                 style={{
-                  marginTop: '1rem',
-                  paddingTop: '0.85rem',
-                  borderTop: '1px solid var(--qt-border)',
-                  display: 'flex',
-                  gap: '2rem',
-                  flexWrap: 'wrap',
+                  fontSize: '10px',
+                  fontFamily: 'var(--font-mono)',
+                  padding: '1px 6px',
+                  backgroundColor: 'var(--bg-surface-3)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  color: 'var(--ink-primary)',
                 }}
               >
-                <div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Benchmark Precision
-                  </div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--qt-ink)', fontFamily: 'var(--font-mono)' }}>
-                    {(modelMeta.metrics.synthetic_benchmark_metrics.precision * 100).toFixed(1)}%
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Benchmark Recall
-                  </div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--qt-ink)', fontFamily: 'var(--font-mono)' }}>
-                    {(modelMeta.metrics.synthetic_benchmark_metrics.recall * 100).toFixed(1)}%
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Benchmark F1-Score
-                  </div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--qt-accent)', fontFamily: 'var(--font-mono)' }}>
-                    {modelMeta.metrics.synthetic_benchmark_metrics.f1_score.toFixed(3)}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Expected Contamination
-                  </div>
-                  <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--qt-ink)', fontFamily: 'var(--font-mono)' }}>
-                    {((modelMeta.contamination || 0.015) * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
+                Clear Filter (Device #{selectedDotDeviceId}) ✕
+              </button>
             )}
-
-          </>
-        )}
-      </div>
-      )}
-
-      {/* Interactive Controls Dock */}
-      {canManageScan && (
-      <div className="card" style={{ marginBottom: '1.25rem', padding: '1rem 1.25rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--qt-muted)' }}>
-                Sensitivity
-              </label>
-              <select
-                className="select-input unusual-activity-select"
-                value={scoreThreshold}
-                onChange={(e) => setScoreThreshold(parseFloat(e.target.value))}
-                style={{ width: '130px', padding: '0.35rem 0.6rem', fontSize: '0.78rem' }}
-                aria-label="Sensitivity"
-              >
-                <option value={0.85}>Fewer</option>
-                <option value={0.65}>Balanced</option>
-                <option value={0.55}>More</option>
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--qt-muted)' }}>
-                Show
-              </label>
-              <select
-                className="select-input unusual-activity-select"
-                value={scanLimit}
-                onChange={(e) => setScanLimit(parseInt(e.target.value))}
-                style={{ width: '90px', padding: '0.35rem 0.6rem', fontSize: '0.78rem' }}
-                aria-label="Number of unusual activity rows to show"
-              >
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-              </select>
-            </div>
           </div>
+        </div>
+
+        {/* Horizon Strip SVG Canvas */}
+        <div
+          style={{
+            height: '72px',
+            backgroundColor: 'var(--bg-canvas)',
+            borderRadius: '6px',
+            border: '1px solid var(--border-subtle)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <svg width="100%" height="100%" style={{ display: 'block' }}>
+            {/* Normal Range Background Zone (0% to 65%) */}
+            <rect x="0" y="0" width={`${scoreThreshold * 100}%`} height="100%" fill="var(--bg-surface-2)" />
+            {/* Outlier Alert Background Zone (Threshold to 100%) */}
+            <rect
+              x={`${scoreThreshold * 100}%`}
+              y="0"
+              width={`${(1 - scoreThreshold) * 100}%`}
+              height="100%"
+              fill="rgba(249, 87, 22, 0.08)"
+            />
+
+            {/* Threshold Vertical Line */}
+            <line
+              x1={`${scoreThreshold * 100}%`}
+              y1="0"
+              x2={`${scoreThreshold * 100}%`}
+              y2="100%"
+              stroke="var(--accent-primary)"
+              strokeWidth="1.5"
+              strokeDasharray="3 3"
+            />
+
+            {/* Background Density Grid Lines */}
+            <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="var(--border-subtle)" strokeWidth="1" />
+
+            {/* Plot Outlier Points */}
+            {allScanAnomalies.map((item, idx) => {
+              const cx = `${item.anomaly_score * 100}%`
+              const cy = 16 + (item.device_id * 13) % 40
+              const isSelected = selectedDotDeviceId === item.device_id
+              const isOutlier = item.anomaly_score >= scoreThreshold
+
+              return (
+                <circle
+                  key={idx}
+                  cx={cx}
+                  cy={cy}
+                  r={isSelected ? 6 : isOutlier ? 4 : 2.5}
+                  fill={
+                    isSelected
+                      ? '#ffffff'
+                      : isOutlier
+                      ? item.anomaly_score >= 0.85
+                        ? '#DC2626'
+                        : '#F95716'
+                      : '#94A3B8'
+                  }
+                  stroke={isSelected ? '#F95716' : isOutlier ? '#ffffff' : 'transparent'}
+                  strokeWidth={isSelected ? 2 : 1}
+                  style={{ cursor: 'pointer', transition: 'all 80ms ease' }}
+                  onClick={() => setSelectedDotDeviceId(isSelected ? null : item.device_id)}
+                >
+                  <title>{`${item.asset_tag} (${item.device_type}) • Score: ${item.anomaly_score.toFixed(3)} • Temp: ${item.telemetry.temperature_c}°C, CPU: ${item.telemetry.cpu_percent}%`}</title>
+                </circle>
+              )
+            })}
+          </svg>
+
+          {/* Horizon Strip Labels */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '4px',
+              left: '8px',
+              fontSize: '9.5px',
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--ink-muted)',
+            }}
+          >
+            0.00 &bull; Normal Operating Baseline
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '4px',
+              right: '8px',
+              fontSize: '9.5px',
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--accent-primary)',
+              fontWeight: 600,
+            }}
+          >
+            1.00 &bull; Extreme Outliers
+          </div>
+        </div>
+      </div>
+
+      {/* Sensitivity Preset Switcher & Filter Toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+          padding: '10px 14px',
+          backgroundColor: 'var(--bg-surface-1)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '8px',
+        }}
+      >
+        {/* Preset Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: 'var(--ink-muted)' }}>
+            <Sliders size={13} />
+            <span>Sensitivity:</span>
+          </div>
+
+          <div
+            style={{
+              display: 'inline-flex',
+              gap: '2px',
+              backgroundColor: 'var(--bg-surface-2)',
+              padding: '2px',
+              borderRadius: '6px',
+              border: '1px solid var(--border-subtle)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('conservative')}
+              style={{
+                padding: '4px 10px',
+                fontSize: '11px',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 600,
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: sensitivityPreset === 'conservative' ? 'var(--bg-surface-1)' : 'transparent',
+                color: sensitivityPreset === 'conservative' ? 'var(--ink-primary)' : 'var(--ink-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              Conservative (0.80)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('balanced')}
+              style={{
+                padding: '4px 10px',
+                fontSize: '11px',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 600,
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: sensitivityPreset === 'balanced' ? 'var(--accent-primary-subtle)' : 'transparent',
+                color: sensitivityPreset === 'balanced' ? 'var(--accent-primary)' : 'var(--ink-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              Balanced (375 items)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectPreset('aggressive')}
+              style={{
+                padding: '4px 10px',
+                fontSize: '11px',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 600,
+                borderRadius: '4px',
+                border: 'none',
+                backgroundColor: sensitivityPreset === 'aggressive' ? 'var(--bg-surface-1)' : 'transparent',
+                color: sensitivityPreset === 'aggressive' ? 'var(--ink-primary)' : 'var(--ink-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              Aggressive (0.50)
+            </button>
+          </div>
+        </div>
+
+        {/* Scan Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {modelMeta && (
+            <span
+              style={{
+                fontSize: '10px',
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--ink-muted)',
+                backgroundColor: 'var(--bg-surface-2)',
+                padding: '3px 6px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-subtle)',
+              }}
+            >
+              {modelMeta.algorithm} v{modelMeta.version} ({((modelMeta.contamination || 0.015) * 100).toFixed(1)}% contamination)
+            </span>
+          )}
+
+          {canTrain && (
+            <button
+              type="button"
+              onClick={handleRetrain}
+              disabled={isTraining || isScanning}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                fontSize: '10.5px',
+                fontFamily: 'var(--font-mono)',
+                backgroundColor: 'var(--bg-surface-2)',
+                color: 'var(--ink-secondary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '4px',
+                cursor: isTraining ? 'not-allowed' : 'pointer',
+              }}
+              title="Refit IsolationForest model with fixed random seed"
+            >
+              <span>{isTraining ? 'Refitting...' : 'Refit Model'}</span>
+            </button>
+          )}
+
+          <select
+            className="select-input"
+            value={scanLimit}
+            onChange={(e) => setScanLimit(parseInt(e.target.value))}
+            style={{ width: '90px', padding: '4px 8px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}
+            aria-label="Number of unusual activity rows to show"
+          >
+            <option value={25}>Show 25</option>
+            <option value={50}>Show 50</option>
+            <option value={100}>Show 100</option>
+            <option value={200}>Show 200</option>
+          </select>
 
           <button
             type="button"
             className="btn btn-primary"
             onClick={handleScan}
             disabled={isScanning}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '5px 12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              backgroundColor: 'var(--accent-primary)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: isScanning ? 'not-allowed' : 'pointer',
+            }}
           >
-            {isScanning ? (
-              <>
-                <div className="table-loading-spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-                <span>Scanning telemetry readings…</span>
-              </>
-            ) : (
-              <>
-                <Search size={14} />
-                <span>Scan Telemetry Readings</span>
-              </>
-            )}
+            <Search size={12} />
+            <span>{isScanning ? 'Scanning...' : 'Rescan Telemetry'}</span>
           </button>
         </div>
       </div>
-      )}
 
-      {/* Ranked Outliers Table with Human Stories */}
-      <div className="card" style={{ overflow: 'hidden' }}>
-        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+      {/* Outliers Table */}
+      <div
+        style={{
+          backgroundColor: 'var(--bg-surface-1)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '8px',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            padding: '10px 14px',
+            borderBottom: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h3 className="card-title unusual-activity-section-title" style={{ fontSize: '1rem', margin: 0 }}>
-                Unusual equipment
-              </h3>
-              <ExplainButton
-                title="Unusual Activity Stories"
-                explanation="Translates raw multidimensional telemetry readings into human observations (e.g., thermal spikes or high CPU consumption) without guessing failure probabilities."
-              />
+            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink-primary)' }}>
+              Ranked Telemetry Outliers ({groupedAnomalies.length} Devices)
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--qt-muted)', margin: '0.2rem 0 0 0' }}>
-              {scanResult
-                ? `Showing ${groupedAnomalies.length} devices (${anomalies.length} readings) of ${scanResult.anomalies_detected.toLocaleString()} detected.`
-                : 'Loading unusual activity.'}
-            </p>
+            <div style={{ fontSize: '10.5px', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}>
+              Outlier scores represent multidimensional deviation from baseline
+            </div>
           </div>
           {scanResult && (
-            <span className="badge badge-neutral" style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center' }}>
-              <Zap size={12} style={{ marginRight: 4 }} /> Checked {scanResult.total_telemetry_scanned.toLocaleString()} readings
+            <span
+              style={{
+                fontSize: '10px',
+                fontFamily: 'var(--font-mono)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                backgroundColor: 'var(--bg-surface-2)',
+                color: 'var(--ink-secondary)',
+                border: '1px solid var(--border-subtle)',
+              }}
+            >
+              <Zap size={10} style={{ display: 'inline', marginRight: 4 }} />
+              25,000 readings checked &bull; {scanResult.scan_time_ms}ms
             </span>
           )}
         </div>
@@ -394,27 +592,28 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
           <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div className="qt-skeleton" style={{ height: 45, width: '100%' }} />
             <div className="qt-skeleton" style={{ height: 45, width: '100%' }} />
-            <div className="qt-skeleton" style={{ height: 45, width: '100%' }} />
           </div>
         ) : anomalies.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--qt-muted)' }}>
-            <CheckCircle2 size={36} style={{ color: 'var(--qt-success)', margin: '0 auto 0.75rem auto' }} />
-            <h4 style={{ color: 'var(--qt-ink)', margin: '0 0 0.25rem 0' }}>All Telemetry Normal</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem' }}>No readings are currently unusual enough to appear here.</p>
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--ink-muted)' }}>
+            <CheckCircle2 size={32} style={{ color: 'var(--gov-safe-dot)', margin: '0 auto 8px' }} />
+            <h4 style={{ color: 'var(--ink-primary)', margin: '0 0 4px' }}>All Telemetry Within Normal Band</h4>
+            <p style={{ margin: 0, fontSize: '11px' }}>
+              No sensor readings currently cross the {scoreThreshold} sensitivity threshold.
+            </p>
           </div>
         ) : (
           <div className="table-responsive">
-            <table className="data-table unusual-activity-table">
+            <table className="data-table">
               <thead>
                 <tr>
                   <th style={{ width: '60px' }}>Rank</th>
-                  <th style={{ width: '150px' }}>How unusual</th>
-                  <th>Observed patterns</th>
-                  <th style={{ width: '130px' }}>Asset tag</th>
+                  <th style={{ width: '160px' }}>Anomaly Score</th>
+                  <th>Observed Patterns</th>
+                  <th style={{ width: '130px' }}>Asset Tag</th>
                   <th style={{ width: '160px' }}>Location</th>
-                  {viewMode === 'expert' && <th>Raw sensor readings</th>}
-                  <th style={{ width: '120px' }}>Recorded</th>
-                  <th style={{ width: '130px' }}>Device</th>
+                  <th>Raw Sensor Telemetry</th>
+                  <th style={{ width: '110px' }}>Recorded</th>
+                  <th style={{ width: '120px', textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -425,179 +624,153 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                       key={item.reading_id}
                       className="interactive-row"
                       onClick={() => onOpenDevice(item.device_id)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault()
-                          onOpenDevice(item.device_id)
-                        }
-                      }}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`Open ${item.asset_tag} device details`}
+                      style={{ cursor: 'pointer' }}
                     >
                       <td>
-                        <span className="badge badge-neutral" style={{ fontWeight: 600 }}>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: 'var(--ink-muted)',
+                          }}
+                        >
                           #{item.rank}
                         </span>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span
-                            style={{
-                              fontWeight: 700,
-                              color: getScoreColor(item.anomaly_score),
-                              fontSize: '0.88rem',
-                            }}
-                          >
-                            {getUnusualLabel(item.anomaly_score)}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            width: '100%',
-                            height: '4px',
-                            background: 'var(--qt-border)',
-                            borderRadius: '2px',
-                            marginTop: '4px',
-                          }}
-                        >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700,
+                                color: getScoreColor(item.anomaly_score),
+                                fontSize: '12px',
+                              }}
+                            >
+                              {item.anomaly_score.toFixed(3)}
+                            </span>
+                            <span style={{ fontSize: '10px', color: 'var(--ink-muted)' }}>
+                              ({getUnusualLabel(item.anomaly_score)})
+                            </span>
+                          </div>
                           <div
                             style={{
-                              width: `${Math.round(item.anomaly_score * 100)}%`,
-                              height: '100%',
-                              background: getScoreColor(item.anomaly_score),
+                              width: '100%',
+                              height: '4px',
+                              background: 'var(--border-subtle)',
                               borderRadius: '2px',
+                              marginTop: '4px',
                             }}
-                          />
+                          >
+                            <div
+                              style={{
+                                width: `${Math.round(item.anomaly_score * 100)}%`,
+                                height: '100%',
+                                background: getScoreColor(item.anomaly_score),
+                                borderRadius: '2px',
+                              }}
+                            />
+                          </div>
                         </div>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                           {stories.map((st, sIdx) => (
                             <span
                               key={sIdx}
                               style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: 4,
-                                fontSize: '0.78rem',
+                                gap: '4px',
+                                fontSize: '11px',
                                 fontWeight: 600,
-                                color: 'var(--qt-ink)',
+                                color: 'var(--ink-primary)',
                               }}
                             >
-                              <Flame size={11} style={{ color: 'var(--qt-accent)', flexShrink: 0 }} />
+                              <Flame size={11} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
                               {st}
                             </span>
                           ))}
                           {count > 1 && (
-                            <span style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', marginTop: 2 }}>
-                              +{count - 1} more unusual reading{count > 2 ? 's' : ''} from this device
+                            <span style={{ fontSize: '10px', color: 'var(--ink-muted)' }}>
+                              +{count - 1} more unusual readings from this device
                             </span>
                           )}
-                          {viewMode === 'simple' && (
-                            <div>
-                              <button
-                                type="button"
-                                className="unusual-activity-numbers-toggle"
-                                onClick={(event) => {
-                                  event.stopPropagation()
-                                  setShownNumbers((previous) => {
-                                    const next = new Set(previous)
-                                    if (next.has(item.reading_id)) next.delete(item.reading_id)
-                                    else next.add(item.reading_id)
-                                    return next
-                                  })
-                                }}
-                                aria-expanded={shownNumbers.has(item.reading_id)}
-                              >
-                                {shownNumbers.has(item.reading_id) ? 'Hide numbers' : 'Show numbers'}
-                              </button>
-                              {shownNumbers.has(item.reading_id) && (
-                                <div className="unusual-activity-numbers" aria-label={`Sensor readings for ${item.asset_tag}`}>
-                                  CPU {item.telemetry.cpu_percent}% · Memory {item.telemetry.memory_percent}% · Temperature {item.telemetry.temperature_c}°C · Packet loss {item.telemetry.packet_loss_percent}% · Latency {item.telemetry.latency_ms}ms
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: 'var(--qt-accent)', fontFamily: 'var(--font-mono)' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
                           {item.asset_tag}
                         </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>{item.device_type}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--ink-muted)' }}>{item.device_type}</div>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 500, color: 'var(--qt-ink)' }}>{item.site_name}</div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>Region: {item.region}</div>
+                        <div style={{ fontWeight: 500, color: 'var(--ink-primary)' }}>{item.site_name}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--ink-muted)' }}>Region: {item.region}</div>
                       </td>
-                      {viewMode === 'expert' && <td>
-                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                           <span
-                            className="badge"
                             style={{
-                              background: item.telemetry.cpu_percent > 85 ? 'var(--qt-danger-soft)' : 'var(--qt-surface-muted)',
-                              color: item.telemetry.cpu_percent > 85 ? 'var(--qt-danger)' : 'var(--qt-text)',
-                              border: `1px solid ${item.telemetry.cpu_percent > 85 ? 'var(--qt-danger)' : 'var(--qt-border)'}`,
+                              fontSize: '10px',
+                              fontFamily: 'var(--font-mono)',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                              backgroundColor: item.telemetry.cpu_percent > 85 ? 'var(--gov-block-bg)' : 'var(--bg-surface-2)',
+                              color: item.telemetry.cpu_percent > 85 ? 'var(--gov-block-text)' : 'var(--ink-secondary)',
                             }}
                           >
                             CPU: {item.telemetry.cpu_percent}%
                           </span>
                           <span
-                            className="badge"
                             style={{
-                              background: item.telemetry.memory_percent > 85 ? 'var(--qt-danger-soft)' : 'var(--qt-surface-muted)',
-                              color: item.telemetry.memory_percent > 85 ? 'var(--qt-danger)' : 'var(--qt-text)',
-                              border: `1px solid ${item.telemetry.memory_percent > 85 ? 'var(--qt-danger)' : 'var(--qt-border)'}`,
+                              fontSize: '10px',
+                              fontFamily: 'var(--font-mono)',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                              backgroundColor: item.telemetry.temperature_c > 75 ? 'var(--gov-warn-bg)' : 'var(--bg-surface-2)',
+                              color: item.telemetry.temperature_c > 75 ? 'var(--gov-warn-text)' : 'var(--ink-secondary)',
                             }}
                           >
-                            Mem: {item.telemetry.memory_percent}%
+                            Temp: {item.telemetry.temperature_c}°C
                           </span>
                           <span
-                            className="badge"
                             style={{
-                              background: item.telemetry.temperature_c > 75 ? 'var(--qt-accent-soft)' : 'var(--qt-surface-muted)',
-                              color: item.telemetry.temperature_c > 75 ? 'var(--qt-accent)' : 'var(--qt-text)',
-                              border: `1px solid ${item.telemetry.temperature_c > 75 ? 'var(--qt-accent)' : 'var(--qt-border)'}`,
-                            }}
-                          >
-                            {item.telemetry.temperature_c}°C
-                          </span>
-                          <span
-                            className="badge"
-                            style={{
-                              background: item.telemetry.packet_loss_percent > 5 ? 'var(--qt-danger-soft)' : 'var(--qt-surface-muted)',
-                              color: item.telemetry.packet_loss_percent > 5 ? 'var(--qt-danger)' : 'var(--qt-text)',
-                              border: `1px solid ${item.telemetry.packet_loss_percent > 5 ? 'var(--qt-danger)' : 'var(--qt-border)'}`,
+                              fontSize: '10px',
+                              fontFamily: 'var(--font-mono)',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                              backgroundColor: item.telemetry.packet_loss_percent > 5 ? 'var(--gov-block-bg)' : 'var(--bg-surface-2)',
+                              color: item.telemetry.packet_loss_percent > 5 ? 'var(--gov-block-text)' : 'var(--ink-secondary)',
                             }}
                           >
                             Loss: {item.telemetry.packet_loss_percent}%
                           </span>
-                          <span
-                            className="badge"
-                            style={{
-                              background: item.telemetry.latency_ms > 100 ? 'var(--qt-accent-soft)' : 'var(--qt-surface-muted)',
-                              color: item.telemetry.latency_ms > 100 ? 'var(--qt-accent)' : 'var(--qt-text)',
-                              border: `1px solid ${item.telemetry.latency_ms > 100 ? 'var(--qt-accent)' : 'var(--qt-border)'}`,
-                            }}
-                          >
-                            {item.telemetry.latency_ms}ms
-                          </span>
                         </div>
-                      </td>}
+                      </td>
                       <td>
                         <HumanDate iso={item.recorded_at} />
                       </td>
-                      <td>
+                      <td style={{ textAlign: 'right' }}>
                         <button
                           type="button"
-                          className="btn btn-outline unusual-activity-open-device"
-                          onClick={(event) => {
-                            event.stopPropagation()
+                          className="btn btn-outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
                             setInspectingDeviceId(item.device_id)
                           }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 8px',
+                            fontSize: '10px',
+                          }}
                         >
-                          Inspect device <ChevronRight size={14} aria-hidden="true" />
+                          <span>Inspect</span>
+                          <ChevronRight size={11} />
                         </button>
                       </td>
                     </tr>

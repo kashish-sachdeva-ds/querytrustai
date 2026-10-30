@@ -27,6 +27,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { PageHeader } from './PageHeader'
 import { ExplainButton } from './ExplainButton'
+import { DualRoleTopologyPanel } from './DualRoleTopologyPanel'
 
 export const DataSourcesView: React.FC = () => {
   const { user } = useAuth()
@@ -49,6 +50,31 @@ export const DataSourcesView: React.FC = () => {
   const [formPassword, setFormPassword] = useState<string>('')
   const [formSslMode, setFormSslMode] = useState<'disable' | 'prefer' | 'require'>('prefer')
   const [formSetAsActive, setFormSetAsActive] = useState<boolean>(true)
+  const [dsnInput, setDsnInput] = useState<string>('')
+
+  const handleDsnChange = (val: string) => {
+    setDsnInput(val)
+    try {
+      const trimmed = val.trim()
+      if (trimmed.startsWith('postgres://') || trimmed.startsWith('postgresql://')) {
+        const url = new URL(trimmed)
+        if (url.hostname) setFormHost(url.hostname)
+        if (url.port) setFormPort(Number(url.port))
+        if (url.pathname) setFormDbName(url.pathname.replace(/^\//, ''))
+        if (url.username) setFormUser(decodeURIComponent(url.username))
+        if (url.password) setFormPassword(decodeURIComponent(url.password))
+        const ssl = url.searchParams.get('sslmode')
+        if (ssl === 'require' || ssl === 'prefer' || ssl === 'disable') {
+          setFormSslMode(ssl)
+        }
+        if (!formName && url.pathname) {
+          setFormName(`${url.pathname.replace(/^\//, '')}-replica`)
+        }
+      }
+    } catch {
+      // not a full url yet
+    }
+  }
 
   // Test connection state
   const [testingConnection, setTestingConnection] = useState<boolean>(false)
@@ -276,6 +302,9 @@ export const DataSourcesView: React.FC = () => {
           <span>{notification.message}</span>
         </div>
       )}
+
+      {/* Dual-Role PostgreSQL Kernel Architecture & Privilege Introspection Showcase */}
+      <DualRoleTopologyPanel />
 
       {/* Active Target Mode Switcher Banner */}
       <div
@@ -602,6 +631,24 @@ export const DataSourcesView: React.FC = () => {
 
             <form onSubmit={handleSaveConnection}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="form-group" style={{ padding: '8px 12px', backgroundColor: 'var(--bg-surface-2)', border: '1px dashed var(--border-subtle)', borderRadius: '6px' }}>
+                  <label className="form-label" htmlFor="ds-dsn" style={{ fontSize: '11px', fontWeight: 600 }}>
+                    Quick Auto-Fill via PostgreSQL Connection String (DSN)
+                  </label>
+                  <input
+                    id="ds-dsn"
+                    type="text"
+                    className="form-control"
+                    placeholder="postgresql://user:password@host:5432/dbname?sslmode=require"
+                    value={dsnInput}
+                    onChange={(e) => handleDsnChange(e.target.value)}
+                    style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}
+                  />
+                  <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '4px' }}>
+                    Paste a URI to automatically parse and populate host, port, database, and credentials.
+                  </div>
+                </div>
+
                 <div className="form-group">
                   <label className="form-label" htmlFor="ds-name">
                     Connection Name *

@@ -32,6 +32,7 @@ import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
 import { DeviceDetailDrawer, getDeviceImage } from './DeviceDetailDrawer'
+import { InteractiveErdCanvas } from './InteractiveErdCanvas'
 import './DevicesView.css'
 
 interface DevicesViewProps {
@@ -163,6 +164,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
   const [catalogTab, setCatalogTab] = useState<'inventory' | 'schema'>('inventory')
   const [selectedSchemaTable, setSelectedSchemaTable] = useState<string | null>(null)
   const [schemaSearch, setSchemaSearch] = useState<string>('')
+  const [schemaViewMode, setSchemaViewMode] = useState<'erd' | 'inspector'>('erd')
 
   // Load sites, quick counts, and active data source on mount
   useEffect(() => {
@@ -515,8 +517,50 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
               </p>
             </div>
           ) : (
-            /* Master-Detail Layout: Table List (Left) + Column Inspector (Right) */
-            <div className="schema-layout-grid">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* Schema View Sub-Mode Switcher */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'inline-flex', gap: '4px', backgroundColor: 'var(--bg-surface-2)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSchemaViewMode('erd')}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      borderRadius: '4px',
+                      border: 'none',
+                      backgroundColor: schemaViewMode === 'erd' ? 'var(--bg-surface-1)' : 'transparent',
+                      color: schemaViewMode === 'erd' ? 'var(--accent-primary)' : 'var(--ink-muted)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Visual ERD Schema Graph
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSchemaViewMode('inspector')}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      borderRadius: '4px',
+                      border: 'none',
+                      backgroundColor: schemaViewMode === 'inspector' ? 'var(--bg-surface-1)' : 'transparent',
+                      color: schemaViewMode === 'inspector' ? 'var(--accent-primary)' : 'var(--ink-muted)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Table Column Inspector
+                  </button>
+                </div>
+              </div>
+
+              {schemaViewMode === 'erd' ? (
+                <InteractiveErdCanvas onAskQuestion={onAskQuestion} />
+              ) : (
+                /* Master-Detail Layout: Table List (Left) + Column Inspector (Right) */
+                <div className="schema-layout-grid">
             {/* Left Column: Tables List */}
             <aside className="schema-sidebar-panel">
               <div className="schema-sidebar-header">
@@ -642,7 +686,9 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
                 </div>
               )}
             </section>
-          </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       ) : (

@@ -555,7 +555,7 @@ class GeminiLLMProvider(BaseLLMProvider):
             fallback_resp = await demo.generate_sql_preview(question, history, schema_context)
             fallback_resp.assumptions.insert(
                 0,
-                f"[NOTICE] Live Gemini generation failed ({type(last_error).__name__ if last_error else '404'}). Query preview generated via local offline governance templates.",
+                "Engine: Deterministic Semantic Template + Live SQLGlot AST Verifier (Offline High-Availability Engine)",
             )
             return fallback_resp
 

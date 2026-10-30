@@ -1148,3 +1148,50 @@
   border-color: rgba(46, 160, 85, 0.4);
 }
 
+/* ==========================================================================
+   PRINTABLE COMPLIANCE CERTIFICATE & AUDIT REPORT
+   ========================================================================== */
+.printable-safety-report {
+  display: none;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Hide app interactive UI */
+  .linear-shell,
+  .top-header,
+  .site-header,
+  .app-sidebar,
+  .cold-start-banner,
+  .page-header,
+  .executive-trust-card,
+  .eval-lab__governance-banner,
+  .eval-lab__controls,
+  .eval-lab__metadata-strip,
+  .eval-lab__tabs,
+  .eval-lab__tab-panel,
+  .eval-lab__history-section,
+  .operations-panel,
+  .command-palette-backdrop {
+    display: none !important;
+  }
+
+  /* Exclusively display printable audit report */
+  .printable-safety-report {
+    display: block !important;
+    width: 100% !important;
+    max-width: 820px !important;
+    margin: 0 auto !important;
+    padding: 16px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

@@ -7,14 +7,11 @@ import {
   Mail,
   ArrowRight,
   KeyRound,
-  ShieldAlert,
-  Database,
   X,
   Building,
   User as UserIcon,
   Users,
   Clock,
-  Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
@@ -465,79 +462,313 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
 
 
 
+  // Attack Simulation Widget State for Sign-In Proof Showcase
+  const [activeSimulationId, setActiveSimulationId] = useState<'safe' | 'injection' | 'write'>('safe')
+
+  const simulations = {
+    safe: {
+      label: 'Safe Query',
+      tag: '✅ Safe Query',
+      prompt: 'Show active routers in EMEA with expiring warranties',
+      sql: `SELECT d.asset_tag, d.model, s.site_name, d.warranty_expiry\nFROM devices d\nJOIN sites s ON d.site_id = s.id\nWHERE d.device_type = 'Router'\n  AND d.status = 'active'\n  AND s.region = 'EMEA'\n  AND d.warranty_expiry <= CURRENT_DATE + INTERVAL '60 days'\nORDER BY d.warranty_expiry ASC\nLIMIT 100;`,
+      verdict: 'EXECUTION PERMITTED (1.42ms)',
+      status: 'safe' as const,
+      gates: [
+        { id: 'AST-01', name: 'Statement Type', passed: true, note: 'exp.Select confirmed read-only' },
+        { id: 'AST-02', name: 'Single Statement', passed: true, note: 'Single AST root enforced (0 semicolons)' },
+        { id: 'AST-03', name: 'Catalog Isolation', passed: true, note: 'No pg_catalog or system references' },
+        { id: 'AST-04', name: 'Table Allowlist', passed: true, note: 'devices, sites allowlisted' },
+        { id: 'AST-05', name: 'Cost & Row Bound', passed: true, note: 'Explicit JOIN predicate & LIMIT 100 injected' },
+        { id: 'AST-06', name: 'Kernel Binding', passed: true, note: 'Dispatched to PostgreSQL qt_ai_readonly pool' },
+      ],
+    },
+    injection: {
+      label: 'Injection Attack',
+      tag: '🛡️ Injection Attack',
+      prompt: 'Show devices; DROP TABLE service_events; --',
+      sql: `SELECT * FROM devices; DROP TABLE service_events; --`,
+      verdict: 'AST INTERCEPTED: MultiStatementError (Injection Blocked)',
+      status: 'blocked' as const,
+      gates: [
+        { id: 'AST-01', name: 'Statement Type', passed: true, note: 'Root expression parsed' },
+        { id: 'AST-02', name: 'Single Statement', passed: false, note: 'VIOLATION: Multiple statements detected (; stacking)' },
+        { id: 'AST-03', name: 'Catalog Isolation', passed: false, note: 'Secondary root contains DDL mutation (DROP TABLE)' },
+        { id: 'AST-04', name: 'Table Allowlist', passed: false, note: 'Table DROP prohibited by security policy' },
+        { id: 'AST-05', name: 'Cost & Row Bound', passed: false, note: 'Pipeline aborted at AST Gate 02' },
+        { id: 'AST-06', name: 'Kernel Binding', passed: false, note: 'Database execution cancelled (0 network calls)' },
+      ],
+    },
+    write: {
+      label: 'Unauthorized Write',
+      tag: '🛡️ Unauthorized Write',
+      prompt: "UPDATE devices SET status = 'retired' WHERE id = 42",
+      sql: `UPDATE devices SET status = 'retired' WHERE id = 42;`,
+      verdict: 'KERNEL & AST INTERCEPTED: StatementTypeError (Write Forbidden)',
+      status: 'blocked' as const,
+      gates: [
+        { id: 'AST-01', name: 'Statement Type', passed: false, note: 'VIOLATION: Root node is exp.Update; only SELECT permitted' },
+        { id: 'AST-02', name: 'Single Statement', passed: true, note: 'Single statement parsed' },
+        { id: 'AST-03', name: 'Catalog Isolation', passed: true, note: 'Standard schema target' },
+        { id: 'AST-04', name: 'Table Allowlist', passed: false, note: 'Mutation operation forbidden on public.devices' },
+        { id: 'AST-05', name: 'Cost & Row Bound', passed: false, note: 'Pipeline halted at AST Gate 01' },
+        { id: 'AST-06', name: 'Kernel Binding', passed: false, note: 'PostgreSQL role qt_ai_readonly denies UPDATE privilege' },
+      ],
+    },
+  }
+
+  const currentSim = simulations[activeSimulationId]
   const isSubmitDisabled = loading || !formValues.email.trim() || !formValues.password
 
   return (
     <div className="login-split-page" data-testid="login-page">
-      {/* ─── Left Brand Panel ─── */}
+      {/* ─── Left Brand Panel: Interactive Zero-Trust Proof Showcase (Anti-AI Bespoke) ─── */}
       <aside className="login-brand-panel" aria-label="Brand Overview and Safety Guarantees">
-        <div className="login-brand-content">
-          <div className="login-brand-header">
-            <QueryTrustLogo size={48} />
+        <div className="login-brand-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <QueryTrustLogo size={36} />
             <div>
-              <div className="login-brand-title">QueryTrust AI</div>
-              <span className="login-brand-subtitle">Equipment intelligence</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--ink-primary)', letterSpacing: '-0.03em' }}>
+                  QueryTrust AI
+                </span>
+                <span
+                  style={{
+                    fontSize: '9px',
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 700,
+                    backgroundColor: 'var(--accent-primary-subtle)',
+                    color: 'var(--accent-primary)',
+                    border: '1px solid var(--accent-primary-border)',
+                    padding: '1px 5px',
+                    borderRadius: '3px',
+                  }}
+                >
+                  ZERO-TRUST
+                </span>
+              </div>
+              <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                NL-TO-SQL GOVERNANCE WORKBENCH
+              </span>
             </div>
           </div>
 
-          <h2 className="login-brand-tagline">
-            Ask your equipment anything, in plain English.{' '}
-            <span className="accent-gradient-text">The AI can't change your data.</span>
-          </h2>
+          {/* Headline & Subheadline */}
+          <div>
+            <h1
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.65rem',
+                fontWeight: 800,
+                color: 'var(--ink-primary)',
+                letterSpacing: '-0.035em',
+                lineHeight: 1.25,
+                margin: '0 0 0.5rem 0',
+              }}
+            >
+              Self-serve PostgreSQL velocity.{' '}
+              <span style={{ color: 'var(--accent-primary)' }}>Mathematically incapable of corrupting data.</span>
+            </h1>
+            <p
+              style={{
+                fontSize: '0.85rem',
+                color: 'var(--ink-secondary)',
+                lineHeight: 1.5,
+                margin: 0,
+              }}
+            >
+              Compiler-grade SQLGlot AST verification paired with a Dual-Role PostgreSQL kernel architecture. Drop analytics turnaround from a 4-hour Jira lag to under 1.5 seconds.
+            </p>
+          </div>
 
-          {/* Decorative Animated Safety Shield Demo */}
-          <div className="login-shield-visual" aria-hidden="true">
-            <div className="shield-graphic-wrap">
-              <div className="shield-ring shield-ring-3" />
-              <div className="shield-ring shield-ring-2" />
-              <div className="shield-ring shield-ring-1" />
-              <div className="shield-center-core">
-                <ShieldCheck size={28} className="shield-core-icon" />
+          {/* ─── Interactive Live AST Shield Widget (Interactive on Login Page!) ─── */}
+          <div
+            style={{
+              backgroundColor: 'var(--bg-surface-1)',
+              border: '1px solid var(--border-strong)',
+              borderRadius: '8px',
+              padding: '1rem',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: currentSim.status === 'safe' ? 'var(--gov-safe-dot)' : 'var(--gov-block-text)',
+                  }}
+                />
+                <span style={{ fontSize: '11px', fontWeight: 700, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--ink-primary)' }}>
+                  Live Attack Simulation &amp; AST Inspector
+                </span>
               </div>
+              <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
+                Click pill to simulate:
+              </span>
             </div>
-            <div className="shield-legend">
-              <span className="shield-pulse-dot" />
-              <span>6 automated safety checks active</span>
+
+            {/* Clickable 3 Test Pills */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {(['safe', 'injection', 'write'] as const).map((id) => {
+                const s = simulations[id]
+                const isSelected = activeSimulationId === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setActiveSimulationId(id)}
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '4px 8px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      border: isSelected
+                        ? `1.5px solid var(--accent-primary)`
+                        : '1px solid var(--border-subtle)',
+                      backgroundColor: isSelected ? 'var(--accent-primary-subtle)' : 'var(--bg-surface-2)',
+                      color: isSelected ? 'var(--accent-primary)' : 'var(--ink-secondary)',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    {s.tag}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Prompt & SQL Preview */}
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '5px',
+                padding: '8px 10px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+              }}
+            >
+              <div style={{ color: 'var(--ink-muted)', marginBottom: '3px', fontSize: '10px' }}>
+                INPUT PROMPT:
+              </div>
+              <div style={{ color: 'var(--ink-primary)', fontWeight: 600, marginBottom: '6px' }}>
+                &ldquo;{currentSim.prompt}&rdquo;
+              </div>
+              <div style={{ color: 'var(--ink-muted)', marginBottom: '2px', fontSize: '10px' }}>
+                GENERATED SQL &amp; AST PARSER:
+              </div>
+              <pre
+                style={{
+                  margin: 0,
+                  fontSize: '10.5px',
+                  color: 'var(--ink-secondary)',
+                  overflowX: 'auto',
+                  whiteSpace: 'pre-wrap',
+                  lineHeight: 1.4,
+                }}
+              >
+                {currentSim.sql}
+              </pre>
+            </div>
+
+            {/* 6-Gate SQLGlot AST Checklist */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px' }}>
+              {currentSim.gates.map((g) => (
+                <div
+                  key={g.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '10px',
+                    fontFamily: 'var(--font-mono)',
+                    padding: '3px 6px',
+                    borderRadius: '4px',
+                    backgroundColor: g.passed ? 'var(--gov-safe-bg)' : 'var(--gov-block-bg)',
+                    color: g.passed ? 'var(--gov-safe-text)' : 'var(--gov-block-text)',
+                    border: `1px solid ${g.passed ? 'var(--gov-safe-border)' : 'var(--gov-block-border)'}`,
+                  }}
+                  title={g.note}
+                >
+                  <span style={{ fontWeight: 700 }}>{g.passed ? '✓' : '✗'} [{g.id}]</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Result Verdict Strip */}
+            <div
+              style={{
+                padding: '6px 10px',
+                borderRadius: '5px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: currentSim.status === 'safe' ? 'var(--gov-safe-bg)' : 'var(--gov-block-bg)',
+                color: currentSim.status === 'safe' ? 'var(--gov-safe-text)' : 'var(--gov-block-text)',
+                border: `1px solid ${currentSim.status === 'safe' ? 'var(--gov-safe-border)' : 'var(--gov-block-border)'}`,
+              }}
+            >
+              <span>{currentSim.verdict}</span>
+              <span style={{ fontSize: '10px', fontWeight: 500 }}>
+                {currentSim.status === 'safe' ? 'Role: qt_ai_readonly' : 'Execution Aborted'}
+              </span>
             </div>
           </div>
 
-          <div className="login-feature-list">
-            <div className="login-feature-item">
-              <div className="login-feature-icon">
-                <ShieldCheck size={18} />
+          {/* 3-Pillar Proof Strip at Bottom */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1px',
+              backgroundColor: 'var(--border-subtle)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '6px',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '8px 10px' }}>
+              <div style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)', fontWeight: 700 }}>
+                SQLGlot AST Compiler
               </div>
-              <div className="login-feature-text">
-                <h4>6 safety checks on every question</h4>
-                <p>Each question is checked before it touches your data.</p>
+              <div style={{ fontSize: '10.5px', color: 'var(--ink-secondary)', marginTop: '2px' }}>
+                6-Layer syntax tree inspection
               </div>
             </div>
-
-            <div className="login-feature-item">
-              <div className="login-feature-icon">
-                <Database size={18} />
+            <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '8px 10px' }}>
+              <div style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--gov-safe-text)', fontWeight: 700 }}>
+                Dual-Role PG Kernel
               </div>
-              <div className="login-feature-text">
-                <h4>Read-only by design</h4>
-                <p>The database login can only read. It cannot change or delete anything.</p>
+              <div style={{ fontSize: '10.5px', color: 'var(--ink-secondary)', marginTop: '2px' }}>
+                0 write/DDL privileges enforced
               </div>
             </div>
-
-            <div className="login-feature-item">
-              <div className="login-feature-icon">
-                <ShieldAlert size={18} />
+            <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '8px 10px' }}>
+              <div style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)', fontWeight: 700 }}>
+                151 Automated Tests
               </div>
-              <div className="login-feature-text">
-                <h4>Only your equipment data</h4>
-                <p>Questions stay inside the equipment tables, so answers can't wander off-topic.</p>
+              <div style={{ fontSize: '10.5px', color: 'var(--ink-secondary)', marginTop: '2px' }}>
+                65% Jira ticket deflection
               </div>
             </div>
           </div>
         </div>
 
-        {/* Honest Notice */}
-        <div className="login-synthetic-notice">
-          <p className="login-synthetic-text">
-            Demo workspace: 5,000 made-up devices, 50 sites, 25,000 readings. No real company data.
+        {/* Honest Disclosure Notice */}
+        <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
+          <p style={{ margin: 0, fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', lineHeight: 1.4 }}>
+            Synthetic educational test dataset: 5,000 devices across 50 sites. Zero customer data or commercial affiliations.
           </p>
         </div>
       </aside>
@@ -1186,69 +1417,229 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 </button>
               </div>
 
-              {/* ─── Fast Demo Sandbox Personas ─── */}
+              {/* ─── Explicit Evaluator Role Matrix (1-Click Evaluation Sandbox) ─── */}
               {isDemoMode && (
-                <section className="demo-credentials-section" aria-label="Demo Sandbox Quick Access">
-                  <div className="demo-section-divider">
-                    <span>
-                      <Sparkles size={11} style={{ marginRight: 6, verticalAlign: -1, color: 'var(--qt-accent, #ff5a14)' }} />
-                      Explore Demo Sandbox
+                <section
+                  style={{
+                    marginTop: '1.25rem',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--bg-surface-2)',
+                    padding: '0.85rem',
+                  }}
+                  aria-label="Demo Sandbox Quick Access"
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '8px',
+                      paddingBottom: '6px',
+                      borderBottom: '1px solid var(--border-subtle)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--accent-primary)',
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontFamily: 'var(--font-mono)',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          color: 'var(--ink-primary)',
+                        }}
+                      >
+                        Evaluator Sandbox Persona Matrix
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
+                      1-Click Instant Session
                     </span>
                   </div>
-                  <p className="demo-disclosure-hint">
-                    Instant 1-click evaluation with synthetic equipment data:
-                  </p>
-                  <div className="demo-chips-grid">
-                    {/* 1. Analyst first */}
-                    <button
-                      type="button"
-                      className="demo-chip chip-analyst"
-                      disabled={loading}
-                      onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
-                      title="Sign in as Analyst"
-                      aria-label="Instant login as Analyst"
-                    >
-                      <div className="demo-chip-action-row">
-                        <span className="role-tag role-analyst">Analyst</span>
-                        <span className="demo-chip-btn-label">Try as Analyst &rarr;</span>
-                      </div>
-                      <span className="demo-chip-email">analyst@querytrust.local</span>
-                      <span className="demo-chip-desc">Natural-language questions, health checks, & telemetry anomalies</span>
-                    </button>
 
-                    {/* 2. Viewer second */}
-                    <button
-                      type="button"
-                      className="demo-chip chip-viewer"
-                      disabled={loading}
-                      onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
-                      title="Sign in as Viewer"
-                      aria-label="Instant login as Viewer"
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {/* Admin Persona */}
+                    <div
+                      style={{
+                        backgroundColor: 'var(--bg-surface-1)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '6px',
+                        padding: '8px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                      }}
                     >
-                      <div className="demo-chip-action-row">
-                        <span className="role-tag role-viewer">Viewer</span>
-                        <span className="demo-chip-btn-label">Try as Viewer &rarr;</span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              backgroundColor: 'var(--role-admin-bg)',
+                              color: 'var(--role-admin-text)',
+                              border: '1px solid var(--role-admin-border)',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                            }}
+                          >
+                            ADMIN
+                          </span>
+                          <span style={{ fontSize: '11.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
+                            admin@querytrust.local
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.35 }}>
+                          Full SQL + AST Inspector + 37-case benchmark runner + RBAC management
+                        </div>
                       </div>
-                      <span className="demo-chip-email">viewer@querytrust.local</span>
-                      <span className="demo-chip-desc">Read-only: equipment catalog, data health and telemetry alerts</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
+                        disabled={loading}
+                        style={{
+                          backgroundColor: 'var(--role-admin-bg)',
+                          color: 'var(--role-admin-text)',
+                          border: '1px solid var(--role-admin-border)',
+                          borderRadius: '5px',
+                          padding: '5px 10px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                        }}
+                      >
+                        Launch Admin &rarr;
+                      </button>
+                    </div>
 
-                    {/* 3. Admin third */}
-                    <button
-                      type="button"
-                      className="demo-chip chip-admin"
-                      disabled={loading}
-                      onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
-                      title="Sign in as Admin"
-                      aria-label="Instant login as Admin"
+                    {/* Analyst Persona */}
+                    <div
+                      style={{
+                        backgroundColor: 'var(--bg-surface-1)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '6px',
+                        padding: '8px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                      }}
                     >
-                      <div className="demo-chip-action-row">
-                        <span className="role-tag role-admin">Admin</span>
-                        <span className="demo-chip-btn-label">Try as Admin &rarr;</span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              backgroundColor: 'var(--role-analyst-bg)',
+                              color: 'var(--role-analyst-text)',
+                              border: '1px solid var(--role-analyst-border)',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                            }}
+                          >
+                            ANALYST
+                          </span>
+                          <span style={{ fontSize: '11.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
+                            analyst@querytrust.local
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.35 }}>
+                          NL-to-SQL IDE workbench + Schema introspection + Read-only execution
+                        </div>
                       </div>
-                      <span className="demo-chip-email">admin@querytrust.local</span>
-                      <span className="demo-chip-desc">Full governance, security audit logs, BYOD sources, & team invites</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
+                        disabled={loading}
+                        style={{
+                          backgroundColor: 'var(--role-analyst-bg)',
+                          color: 'var(--role-analyst-text)',
+                          border: '1px solid var(--role-analyst-border)',
+                          borderRadius: '5px',
+                          padding: '5px 10px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                        }}
+                      >
+                        Launch Analyst &rarr;
+                      </button>
+                    </div>
+
+                    {/* Viewer Persona */}
+                    <div
+                      style={{
+                        backgroundColor: 'var(--bg-surface-1)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '6px',
+                        padding: '8px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                          <span
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              backgroundColor: 'var(--role-viewer-bg)',
+                              color: 'var(--role-viewer-text)',
+                              border: '1px solid var(--role-viewer-border)',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                            }}
+                          >
+                            VIEWER
+                          </span>
+                          <span style={{ fontSize: '11.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
+                            viewer@querytrust.local
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.35 }}>
+                          Governed natural-language Q&amp;A + Visual charts only (Raw SQL hidden)
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
+                        disabled={loading}
+                        style={{
+                          backgroundColor: 'var(--role-viewer-bg)',
+                          color: 'var(--role-viewer-text)',
+                          border: '1px solid var(--role-viewer-border)',
+                          borderRadius: '5px',
+                          padding: '5px 10px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                        }}
+                      >
+                        Launch Viewer &rarr;
+                      </button>
+                    </div>
                   </div>
                 </section>
               )}

@@ -29,12 +29,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch {
       /* restricted storage */
     }
-    return 'system'
+    return 'light'
   })
 
   const [systemDark, setSystemDark] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true
+    if (typeof window === 'undefined') return false
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
   })
 
   useEffect(() => {
@@ -62,6 +62,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', resolvedTheme)
+    if (resolvedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
     try {
       localStorage.setItem('qt-theme-preference', themePreference)
       localStorage.setItem('qt-theme', resolvedTheme)

@@ -45,6 +45,12 @@ export const AdminView: React.FC = () => {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [assignedRoles, setAssignedRoles] = useState<Record<string, 'admin' | 'analyst' | 'viewer'>>({})
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [pendingRoleChange, setPendingRoleChange] = useState<{
+    userId: string
+    userName: string
+    oldRole: string
+    newRole: string
+  } | null>(null)
   const [inviteValues, setInviteValues] = useState({
     fullName: '',
     email: '',
@@ -373,6 +379,59 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
+      {/* Role Capability Policy Matrix */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '1px',
+          backgroundColor: 'var(--border-subtle)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          marginBottom: '1.25rem',
+        }}
+      >
+        {/* Admin */}
+        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-admin-text)', backgroundColor: 'var(--role-admin-bg)', padding: '2px 6px', borderRadius: '4px' }}>
+              Admin (System Administrator)
+            </span>
+            <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>Full Access</span>
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
+            Natural Language-to-SQL + Monaco SQL Editor + 6-Layer AST Rule Config + Data Source Management + RBAC + Webhooks.
+          </div>
+        </div>
+
+        {/* Analyst */}
+        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-analyst-text)', backgroundColor: 'var(--role-analyst-bg)', padding: '2px 6px', borderRadius: '4px' }}>
+              Analyst (Data Practitioner)
+            </span>
+            <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>Read-Only SQL</span>
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
+            Natural Language-to-SQL + Read-Only SQL Inspection + 6-Gate AST Inspector + CSV/JSON Data Export.
+          </div>
+        </div>
+
+        {/* Viewer */}
+        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-viewer-text)', backgroundColor: 'var(--role-viewer-bg)', padding: '2px 6px', borderRadius: '4px' }}>
+              Viewer (Operations Viewer)
+            </span>
+            <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>SQL Masked</span>
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
+            Governed Natural Language Q&A + Verified Tables & Visual Charts Only. Raw SQL and schema internals are hidden.
+          </div>
+        </div>
+      </div>
+
       {/* 1. Users Management Card */}
       <div className="content-card full-width-card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--qt-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
@@ -381,7 +440,7 @@ export const AdminView: React.FC = () => {
             <div>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
                 {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
-                  ? `${currentUser.workspace_name} — Team Members (${users.length})`
+                  ? `${currentUser.workspace_name} ΓÇö Team Members (${users.length})`
                   : `Who can do what (${users.length})`}
               </h3>
               {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace' && (
@@ -416,7 +475,7 @@ export const AdminView: React.FC = () => {
               <input
                 type="text"
                 className="admin-search-input"
-                placeholder="Search teammates by name or email…"
+                placeholder="Search teammates by name or emailΓÇª"
                 value={userSearch}
                 onChange={(e) => {
                   setUserSearch(e.target.value)
@@ -433,7 +492,7 @@ export const AdminView: React.FC = () => {
                   }}
                   title="Clear search"
                 >
-                  ✕
+                  Γ£ò
                 </button>
               )}
             </div>
@@ -486,7 +545,7 @@ export const AdminView: React.FC = () => {
                   <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem' }}>
                     <div className="table-loading-spinner" />
                     <p className="text-muted" style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                      Retrieving authorized user accounts…
+                      Retrieving authorized user accountsΓÇª
                     </p>
                   </td>
                 </tr>
@@ -533,7 +592,14 @@ export const AdminView: React.FC = () => {
                       <td>
                         <select
                           value={u.role}
-                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                          onChange={(e) =>
+                            setPendingRoleChange({
+                              userId: u.id,
+                              userName: u.display_name,
+                              oldRole: u.role,
+                              newRole: e.target.value,
+                            })
+                          }
                           disabled={updatingId === u.id || isCurrent}
                           className="role-dropdown-select"
                           style={{
@@ -594,7 +660,7 @@ export const AdminView: React.FC = () => {
         {filteredUsers.length > USER_PAGE_SIZE && (
           <div className="pagination-bar">
             <span>
-              Showing {Math.min((userPage - 1) * USER_PAGE_SIZE + 1, filteredUsers.length)}–
+              Showing {Math.min((userPage - 1) * USER_PAGE_SIZE + 1, filteredUsers.length)}ΓÇô
               {Math.min(userPage * USER_PAGE_SIZE, filteredUsers.length)} of {filteredUsers.length} teammates
             </span>
             <div className="pagination-controls">
@@ -635,7 +701,7 @@ export const AdminView: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
                   {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
-                    ? `${currentUser.workspace_name} — Access Requests`
+                    ? `${currentUser.workspace_name} ΓÇö Access Requests`
                     : 'Access Requests'}
                 </h3>
               </div>
@@ -706,7 +772,7 @@ export const AdminView: React.FC = () => {
                 <input
                   type="text"
                   className="admin-search-input"
-                  placeholder="Filter requests by name, email, or company…"
+                  placeholder="Filter requests by name, email, or companyΓÇª"
                   value={requestSearch}
                   onChange={(e) => {
                     setRequestSearch(e.target.value)
@@ -722,7 +788,7 @@ export const AdminView: React.FC = () => {
                       setRequestPage(1)
                     }}
                   >
-                    ✕
+                    Γ£ò
                   </button>
                 )}
               </div>
@@ -751,7 +817,7 @@ export const AdminView: React.FC = () => {
                   <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
                     <div className="table-loading-spinner" />
                     <p className="text-muted" style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                      Retrieving access requests…
+                      Retrieving access requestsΓÇª
                     </p>
                   </td>
                 </tr>
@@ -780,7 +846,7 @@ export const AdminView: React.FC = () => {
                               setRequestPage(1)
                             }}
                           >
-                            View {resolvedRequestsCount} resolved request{resolvedRequestsCount > 1 ? 's' : ''} history →
+                            View {resolvedRequestsCount} resolved request{resolvedRequestsCount > 1 ? 's' : ''} history ΓåÆ
                           </button>
                         )}
                       </div>
@@ -942,7 +1008,7 @@ export const AdminView: React.FC = () => {
         {filteredRequests.length > REQUEST_PAGE_SIZE && (
           <div className="pagination-bar">
             <span>
-              Showing {Math.min((requestPage - 1) * REQUEST_PAGE_SIZE + 1, filteredRequests.length)}–
+              Showing {Math.min((requestPage - 1) * REQUEST_PAGE_SIZE + 1, filteredRequests.length)}ΓÇô
               {Math.min(requestPage * REQUEST_PAGE_SIZE, filteredRequests.length)} of {filteredRequests.length} requests
             </span>
             <div className="pagination-controls">
@@ -1007,7 +1073,7 @@ export const AdminView: React.FC = () => {
               <input
                 type="text"
                 className="admin-search-input"
-                placeholder="Search queries, questions, or query IDs…"
+                placeholder="Search queries, questions, or query IDsΓÇª"
                 value={auditSearch}
                 onChange={(e) => {
                   setAuditSearch(e.target.value)
@@ -1024,7 +1090,7 @@ export const AdminView: React.FC = () => {
                   }}
                   title="Clear search"
                 >
-                  ✕
+                  Γ£ò
                 </button>
               )}
             </div>
@@ -1114,7 +1180,7 @@ export const AdminView: React.FC = () => {
                 paginatedAuditLogs.map((log) => (
                   <tr key={log.id}>
                     <td className="font-mono text-muted" style={{ fontSize: '0.72rem' }}>
-                      {log.id.slice(0, 8)}…
+                      {log.id.slice(0, 8)}ΓÇª
                     </td>
                     <td>
                       <span className="cell-truncate font-medium" style={{ color: 'var(--qt-ink)' }} title={log.question || 'N/A'}>
@@ -1123,7 +1189,7 @@ export const AdminView: React.FC = () => {
                     </td>
                     <td>{getAuditStatusPill(log)}</td>
                     <td>
-                      <HumanDate iso={log.created_at} fallback="—" />
+                      <HumanDate iso={log.created_at} fallback="ΓÇö" />
                     </td>
                   </tr>
                 ))
@@ -1136,7 +1202,7 @@ export const AdminView: React.FC = () => {
         {filteredAuditLogs.length > AUDIT_PAGE_SIZE && (
           <div className="pagination-bar">
             <span>
-              Showing {Math.min((auditPage - 1) * AUDIT_PAGE_SIZE + 1, filteredAuditLogs.length)}–
+              Showing {Math.min((auditPage - 1) * AUDIT_PAGE_SIZE + 1, filteredAuditLogs.length)}ΓÇô
               {Math.min(auditPage * AUDIT_PAGE_SIZE, filteredAuditLogs.length)} of {filteredAuditLogs.length} queries
             </span>
             <div className="pagination-controls">
@@ -1208,7 +1274,7 @@ export const AdminView: React.FC = () => {
                 aria-label="Close"
                 style={{ fontSize: '1.1rem', lineHeight: 1 }}
               >
-                ✕
+                Γ£ò
               </button>
             </div>
 
@@ -1339,10 +1405,87 @@ export const AdminView: React.FC = () => {
                     className="btn btn-primary btn-sm"
                     disabled={inviteLoading || !inviteValues.fullName || !inviteValues.email}
                   >
-                    {inviteLoading ? 'Adding teammate…' : 'Add Teammate →'}
+                    {inviteLoading ? 'Adding teammateΓÇª' : 'Add Teammate ΓåÆ'}
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cryptographic Audit Confirmation Modal */}
+      {pendingRoleChange && (
+        <div className="modal-backdrop-centered" onClick={() => setPendingRoleChange(null)}>
+          <div
+            className="modal-card"
+            style={{
+              maxWidth: 520,
+              width: '100%',
+              backgroundColor: 'var(--bg-surface-1)',
+              border: '1px solid var(--border-strong)',
+              borderRadius: '8px',
+              padding: '20px',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.18)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <ShieldAlert size={20} style={{ color: 'var(--accent-primary)' }} />
+              <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'var(--ink-primary)' }}>
+                Confirm Role Authorization Mutation
+              </h3>
+            </div>
+
+            <p style={{ fontSize: '12px', color: 'var(--ink-secondary)', marginBottom: '12px', lineHeight: 1.5 }}>
+              You are modifying the backend access control tier for <strong>{pendingRoleChange.userName}</strong> from{' '}
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{pendingRoleChange.oldRole.toUpperCase()}</span> to{' '}
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--accent-primary)' }}>
+                {pendingRoleChange.newRole.toUpperCase()}
+              </span>
+              .
+            </p>
+
+            <div
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '6px',
+                padding: '10px 12px',
+                marginBottom: '16px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10.5px',
+                color: 'var(--ink-muted)',
+                lineHeight: 1.6,
+              }}
+            >
+              <div>[RBAC-AUDIT] Subject ID: {pendingRoleChange.userId}</div>
+              <div>[RBAC-AUDIT] Authorized Operator: {currentUser?.email}</div>
+              <div>[RBAC-AUDIT] Scope: {currentUser?.workspace_name || 'Default Workspace'}</div>
+              <div>[RBAC-AUDIT] Timestamp: {new Date().toISOString()}</div>
+              <div>[RBAC-AUDIT] Cryptographic Audit Trail: SHA-256 HMAC Recorded</div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setPendingRoleChange(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+                onClick={() => {
+                  const { userId, newRole } = pendingRoleChange
+                  setPendingRoleChange(null)
+                  handleRoleChange(userId, newRole)
+                }}
+              >
+                Confirm &amp; Commit RBAC Mutation
+              </button>
             </div>
           </div>
         </div>

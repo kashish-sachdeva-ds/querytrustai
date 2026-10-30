@@ -2,8 +2,6 @@ import React, { useState } from 'react'
 import {
   ShieldAlert,
   ArrowRight,
-  Sun,
-  Moon,
   Sparkles,
   Terminal,
   Lock,
@@ -14,12 +12,12 @@ import {
   Zap,
   Cpu,
 } from 'lucide-react'
-import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
 import { HeroSpotlightBackground } from './HeroSpotlightBackground'
 import { SpotlightCard } from './SpotlightCard'
 import { ASTAnimatedBeam } from './ASTAnimatedBeam'
+import { BagUiNavbar } from './ui/BagUiNavbar'
 import './LandingPage.css'
 
 interface LandingPageProps {
@@ -99,7 +97,6 @@ LIMIT 50;`,
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
-  const { theme, toggleTheme } = useTheme()
   const { enterDemoMode } = useAuth()
   const [selectedPreset, setSelectedPreset] = useState<PresetKey>('warranty')
   const [copied, setCopied] = useState(false)
@@ -114,68 +111,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
 
   return (
     <div className="landing-page-root min-h-screen bg-[var(--bg-page)] text-[var(--text-main)] selection:bg-orange-500/20 selection:text-orange-500 transition-colors duration-200 relative overflow-x-hidden">
-      {/* ─── SECTION A: Keyvo/Framer Floating Glass Navbar ─── */}
-      <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-[var(--bg-glass)] border-b border-[var(--border-subtle)]">
-        <div className="max-w-6xl mx-auto h-16 px-6 flex items-center justify-between">
-          {/* Left Brand */}
-          <div className="flex items-center gap-3">
-            <QueryTrustLogo size={28} />
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold tracking-tight text-base font-display">
-                Query<span className="text-[#F97316]">Trust</span>
-              </span>
-              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-orange-500/10 text-[#F97316] border border-orange-500/20">
-                AI
-              </span>
-            </div>
-          </div>
-
-          {/* Center Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-[var(--text-muted)]" aria-label="Main Navigation">
-            <a href="#interactive-preview" className="hover:text-[var(--text-main)] transition-colors">
-              Live Sandbox
-            </a>
-            <a href="#pillars" className="hover:text-[var(--text-main)] transition-colors">
-              Security Architecture
-            </a>
-            <a href="#metrics" className="hover:text-[var(--text-main)] transition-colors">
-              Compiler Proofs
-            </a>
-          </nav>
-
-          {/* Right Controls */}
-          <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] border border-[var(--border-subtle)] transition-colors cursor-pointer"
-              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
-
-            {/* Sign In Link */}
-            <button
-              type="button"
-              onClick={onGoToLogin}
-              className="text-xs font-medium px-3 py-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
-            >
-              Sign In
-            </button>
-
-            {/* Launch App Primary CTA Pill */}
-            <button
-              type="button"
-              onClick={() => enterDemoMode('analyst')}
-              className="h-8 px-3.5 rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer group"
-            >
-              <span>Launch Studio</span>
-              <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-        </div>
+      {/* ─── SECTION A: Bag\Ui Floating Mega-Menu Navbar ─── */}
+      <header className="sticky top-0 z-50 w-full">
+        <BagUiNavbar
+          onSignIn={onGoToLogin}
+          onRequestDemo={() => enterDemoMode('admin')}
+          onLaunchApp={() => enterDemoMode('analyst')}
+        />
       </header>
 
       {/* ─── SECTION B: Keyvo-Grade Atmospheric Hero ─── */}

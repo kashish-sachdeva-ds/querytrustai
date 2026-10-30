@@ -14,7 +14,11 @@
 3. ✅ **Synchronous 6-Gate AST Inspector (`AstInspectorPanel.tsx`):**
    - Optimized vertical rhythm and padding across AST gate cards (`padding: 5.5px 8px`, `gap: 5px`).
    - All 6 compiler safety gates (`[AST-01]` through `[AST-06] Kernel Execution Role Binding`) now fit cleanly within standard 1080p and 900p viewports without scroll cutoff.
-4. ✅ **Sleek Code Container Scrollbar (`SqlEditorPanel.tsx`, `LinearShell.css`):**
+4. ✅ **Full Application Dark/Light Theme Audit & Visual Harmonization (`EvaluationLabView.css`, `audit_all_views.mjs`):**
+   - Conducted full headless Chromium visual audit across all 10 views in both Dark and Light modes.
+   - Identified and eradicated legacy `--qt-surface: #FFFFFF` hardcoded card background in `EvaluationLabView.css`, replacing it with true semantic tokens `var(--bg-card)` and `var(--border-subtle)`.
+   - Verified that every view (Fleet Overview, Query Studio, Data Catalog, AST Safety Proof, Data Health, Anomalies, Sources & Kernel, People & Access) maintains spotless contrast, 1px hairline borders, and zero theme bleed.
+5. ✅ **Sleek Code Container Scrollbar (`SqlEditorPanel.tsx`, `LinearShell.css`):**
    - Added custom thin webkit scrollbars (`.sql-code-scrollable`) with smooth track blending to prevent Windows native gray scrollbars from breaking dark mode aesthetics.
 5. ✅ **Breadcrumb Synchronization (`Header.tsx`):**
    - Harmonized top breadcrumb labels with sidebar titles (`Query Studio`, `Anomalies`, `AST Safety Proof`, `Sources & Kernel`).

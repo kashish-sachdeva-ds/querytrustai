@@ -117,9 +117,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
       className={`sidebar ${isCollapsed ? 'sidebar--collapsed' : ''}`}
       aria-label="Main Navigation Sidebar"
       style={{
-        width: isCollapsed ? '56px' : '220px',
-        minWidth: isCollapsed ? '56px' : '220px',
-        maxWidth: isCollapsed ? '56px' : '220px',
+        width: isCollapsed ? '56px' : '236px',
+        minWidth: isCollapsed ? '56px' : '236px',
+        maxWidth: isCollapsed ? '56px' : '236px',
         backgroundColor: 'var(--bg-card)',
         borderRight: '1px solid var(--border-subtle)',
         display: 'flex',
@@ -229,11 +229,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
                 type="button"
                 onClick={() => onSelectTab('ask-data')}
                 className={navItemClass('ask-data')}
-                title="Ask Governed Data (Studio)"
+                title="Query Studio (Governed NL-to-SQL)"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Terminal size={14} className={activeTab === 'ask-data' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
-                  {!isCollapsed && <span className="truncate">Ask Governed Data</span>}
+                  {!isCollapsed && <span className="truncate">Query Studio</span>}
                 </div>
               </button>
 
@@ -280,11 +280,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
                 type="button"
                 onClick={() => onSelectTab('anomalies')}
                 className={navItemClass('anomalies')}
-                title={`Unusual Activity (${anomaliesCount} outliers)`}
+                title={`Anomalies (${anomaliesCount} outliers)`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Activity size={14} className={activeTab === 'anomalies' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
-                  {!isCollapsed && <span className="truncate">Unusual Activity</span>}
+                  {!isCollapsed && <span className="truncate">Anomalies</span>}
                 </div>
                 {!isCollapsed && anomaliesCount > 0 && (
                   <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
@@ -307,11 +307,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
                 type="button"
                 onClick={() => onSelectTab('evaluations')}
                 className={navItemClass('evaluations')}
-                title="Safety Proof & AST Lab"
+                title="AST Safety Proof & Compiler Gates"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <FlaskConical size={14} className={activeTab === 'evaluations' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
-                  {!isCollapsed && <span className="truncate">Safety Proof &amp; AST</span>}
+                  {!isCollapsed && <span className="truncate">AST Safety Proof</span>}
                 </div>
               </button>
 
@@ -323,7 +323,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Server size={14} className={activeTab === 'data-sources' ? 'text-[#F97316]' : 'text-[var(--text-muted)]'} />
-                  {!isCollapsed && <span className="truncate">Data Sources &amp; Kernel</span>}
+                  {!isCollapsed && <span className="truncate">Sources &amp; Kernel</span>}
                 </div>
               </button>
 

@@ -68,14 +68,14 @@ const ROLE_PERMISSIONS: Record<string, { title: string; rules: string[] }> = {
 
 const TAB_LABELS: Record<string, string> = {
   overview: 'Fleet Overview',
-  devices: 'Data Catalog & Schema',
-  'ask-data': 'Ask Governed Data',
-  'data-sources': 'Data Sources & Kernel',
-  'data-quality': 'Data Health & Scanner',
-  anomalies: 'Unusual Activity',
-  history: 'Query Audit History',
-  evaluations: 'Safety Proof & AST Lab',
-  admin: 'People & RBAC Access',
+  devices: 'Data Catalog',
+  'ask-data': 'Query Studio',
+  'data-sources': 'Sources & Kernel',
+  'data-quality': 'Data Health',
+  anomalies: 'Anomalies',
+  history: 'Audit History',
+  evaluations: 'AST Safety Proof',
+  admin: 'People & Access',
 }
 
 function getInitials(name?: string, email?: string): string {

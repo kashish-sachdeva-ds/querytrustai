@@ -167,6 +167,7 @@ export const SqlEditorPanel: React.FC<SqlEditorPanelProps> = ({
 
       {/* Code Area with Line Numbers */}
       <div
+        className="sql-code-scrollable"
         style={{
           display: 'flex',
           padding: '8px 0',
@@ -175,6 +176,7 @@ export const SqlEditorPanel: React.FC<SqlEditorPanelProps> = ({
           lineHeight: '1.5',
           overflowX: 'auto',
           backgroundColor: 'var(--bg-surface-2)',
+          scrollbarWidth: 'thin',
         }}
       >
         {/* Line Numbers Gutter */}

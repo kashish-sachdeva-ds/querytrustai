@@ -24,11 +24,11 @@
   color: var(--text-primary);
 }
 
-/* ─── 1. Sidebar (220px compact width, Linear minimalist hierarchy) ─── */
+/* ─── 1. Sidebar (236px compact width, Linear minimalist hierarchy) ─── */
 .sidebar {
-  width: 220px !important;
-  min-width: 220px !important;
-  max-width: 220px !important;
+  width: 236px !important;
+  min-width: 236px !important;
+  max-width: 236px !important;
   background-color: var(--bg-card) !important;
   border-right: 1px solid var(--border-subtle) !important;
   display: flex !important;
@@ -57,6 +57,23 @@
   display: none !important;
   width: 0 !important;
   height: 0 !important;
+}
+
+.sql-code-scrollable::-webkit-scrollbar {
+  height: 4px;
+}
+
+.sql-code-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sql-code-scrollable::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+
+.sql-code-scrollable::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
 }
 
 .sidebar.sidebar--collapsed {

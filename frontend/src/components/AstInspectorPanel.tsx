@@ -238,10 +238,20 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
       </div>
 
       {/* Pane Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '8px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          scrollbarWidth: 'thin',
+        }}
+      >
         {/* TAB A: 6-GATE AST PIPELINE */}
         {activeTab === 'gates' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div
               style={{
                 display: 'flex',
@@ -264,7 +274,7 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
             {assumptions.length > 0 && (
               <div
                 style={{
-                  padding: '6px 8px',
+                  padding: '5px 7px',
                   backgroundColor: 'var(--bg-surface-2)',
                   border: '1px solid var(--border-subtle)',
                   borderRadius: '4px',
@@ -277,39 +287,39 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
             )}
 
             {/* Gates List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               {gates.map((g) => (
                 <div
                   key={g.id}
                   style={{
                     backgroundColor: g.passed ? 'var(--bg-surface-1)' : 'var(--gov-block-bg)',
                     border: `1px solid ${g.passed ? 'var(--border-subtle)' : 'var(--gov-block-border)'}`,
-                    borderRadius: '6px',
-                    padding: '8px 10px',
+                    borderRadius: '5px',
+                    padding: '5.5px 8px',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '3px',
+                    gap: '2px',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       {g.passed ? (
-                        <CheckCircle2 size={13} style={{ color: 'var(--gov-safe-dot)' }} />
+                        <CheckCircle2 size={12} style={{ color: 'var(--gov-safe-dot)' }} />
                       ) : (
-                        <XCircle size={13} style={{ color: 'var(--gov-block-text)' }} />
+                        <XCircle size={12} style={{ color: 'var(--gov-block-text)' }} />
                       )}
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--ink-primary)' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', fontWeight: 700, color: 'var(--ink-primary)' }}>
                         [{g.id}] {g.name}
                       </span>
                     </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--ink-muted)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9.5px', color: 'var(--ink-muted)' }}>
                       {g.latency}
                     </span>
                   </div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--ink-secondary)', paddingLeft: '19px' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--ink-secondary)', paddingLeft: '17px' }}>
                     Rule: <code>{g.rule}</code>
                   </div>
-                  <div style={{ fontSize: '10.5px', color: 'var(--ink-muted)', paddingLeft: '19px', lineHeight: 1.35 }}>
+                  <div style={{ fontSize: '10px', color: 'var(--ink-muted)', paddingLeft: '17px', lineHeight: 1.3 }}>
                     {g.detail}
                   </div>
                 </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import {
   AlertTriangle,
-  Play,
   Flame,
   Plus,
   Trash2,
@@ -14,6 +13,7 @@ import {
   ChevronRight,
   Code2,
   Cpu,
+  ShieldCheck,
 } from 'lucide-react'
 import {
   previewQuery,
@@ -1406,31 +1406,24 @@ LIMIT 100;`
               <span>Verified PostgreSQL (SELECT-Only) Syntax</span>
             </div>
             {activePreview?.can_execute && (
-              <button
-                type="button"
-                onClick={() => handleExecuteQuery(activePreview)}
-                disabled={executingId === activePreview.query_run_id}
+              <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  padding: '3px 8px',
+                  gap: '4.5px',
+                  padding: '2px 7px',
                   fontSize: '10px',
+                  fontFamily: 'var(--font-mono)',
                   fontWeight: 600,
                   backgroundColor: 'var(--gov-safe-bg)',
                   color: 'var(--gov-safe-text)',
                   border: '1px solid var(--gov-safe-border)',
                   borderRadius: '4px',
-                  cursor: 'pointer',
                 }}
               >
-                <Play size={10} fill="currentColor" />
-                <span>
-                  {executingId === activePreview.query_run_id
-                    ? 'Executing in Read-Only...'
-                    : 'Execute via qt_ai_readonly'}
-                </span>
-              </button>
+                <ShieldCheck size={11} />
+                <span>Kernel Role: qt_ai_readonly</span>
+              </div>
             )}
           </div>
 

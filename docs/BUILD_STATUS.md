@@ -1,8 +1,27 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-31  
-**Current milestone:** 38 — Founder-Grade Visual Polish, Schema Workbench & Zero-Scrollbar Elimination  
-**Overall status:** Complete ground-up UI/UX subtraction redesign matching 21st.dev, Linear, and Raycast minimalist standards. Removed 70% of visual clutter, badges, and telemetry strips across Landing, Sign-In, and the Application Sidebar:
+**Current milestone:** 39 — AI Orchestration & Full-Stack Staff Engineer Polish: Zero Truncation, Unified Execution CTA & Viewport-Synchronized 6-Gate AST  
+**Overall status:** Complete AI Orchestration & Full-Stack Founder Polish across the entire governed workbench:
+1. ✅ **Zero Truncation at 236px Linear Width (`Sidebar.tsx`, `LinearShell.css`):**
+   - Expanded sidebar width from 220px to standard Linear width (236px).
+   - Replaced lengthy navigation labels with crisp, professional wayfinding terms: `Query Studio` (was `Ask Governed Data`), `Anomalies` (was `Unusual Activity`), `AST Safety Proof` (was `Safety Proof & AST`), and `Sources & Kernel` (was `Data Sources & Kernel`).
+   - Live Schemas tree items (`devices 5,000`, `sites 50`, `service_events 1,500`, `telemetry_readings 25k`) now render completely without ellipsis truncation (`...`).
+2. ✅ **Unified Primary Execution CTA (`AskDataView.tsx`):**
+   - Eliminated the conflicting dual-execute buttons in the SQL verification block.
+   - Replaced the duplicate top-right action with an authoritative security provenance badge: `[ShieldCheck] Kernel Role: qt_ai_readonly`.
+   - Preserved a single, unambiguous `[Execute]` primary CTA directly within the SQL Compiler Preview toolbar.
+3. ✅ **Synchronous 6-Gate AST Inspector (`AstInspectorPanel.tsx`):**
+   - Optimized vertical rhythm and padding across AST gate cards (`padding: 5.5px 8px`, `gap: 5px`).
+   - All 6 compiler safety gates (`[AST-01]` through `[AST-06] Kernel Execution Role Binding`) now fit cleanly within standard 1080p and 900p viewports without scroll cutoff.
+4. ✅ **Sleek Code Container Scrollbar (`SqlEditorPanel.tsx`, `LinearShell.css`):**
+   - Added custom thin webkit scrollbars (`.sql-code-scrollable`) with smooth track blending to prevent Windows native gray scrollbars from breaking dark mode aesthetics.
+5. ✅ **Breadcrumb Synchronization (`Header.tsx`):**
+   - Harmonized top breadcrumb labels with sidebar titles (`Query Studio`, `Anomalies`, `AST Safety Proof`, `Sources & Kernel`).
+6. ✅ **Build & Lint Verification:**
+   - `oxlint`: 0 warnings, 0 errors across all 60 files.
+   - `tsc -b && vite build`: compiled cleanly in 3.32s with 0 errors.
+   - Playwright visual capture verified via `5_workspace_overview.png` and `6_workspace_ask_data.png`.
 1. ✅ **Founder-Grade Micro-Polish & Zero-Scrollbar Elimination (`Sidebar.tsx`, `Header.tsx`, `LinearShell.css`):**
    - Eliminated the leaking Windows horizontal scrollbar and vertical arrow thumb using `overflow-x: hidden !important` and `scrollbar-width: none`.
    - Eliminated the 500px dead space void by adding a quiet **Live Schemas** workbench tree (`devices 5,000`, `sites 50`, `service_events 1,500`, `telemetry_readings 25k`) with 1-click query shortcuts.

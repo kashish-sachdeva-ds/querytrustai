@@ -1207,11 +1207,69 @@ LIMIT 100;`
         {/* Natural Language Prompt Omnibar */}
         <div
           style={{
-            padding: '12px',
+            padding: '10px 12px',
             borderBottom: '1px solid var(--border-subtle)',
             backgroundColor: 'var(--bg-surface-1)',
           }}
         >
+          {/* Quick Scenario Starter Chips (Keyvo/Framer style) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
+              Suggested:
+            </span>
+            <button
+              type="button"
+              onClick={() => setInputQuestion('Show all active devices with warranty expiring within 60 days')}
+              style={{
+                fontSize: '11px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-surface-2)',
+                color: 'var(--ink-secondary)',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+              className="hover:border-[#F97316] hover:text-[var(--ink-primary)] transition-colors"
+            >
+              Hardware Expiring &lt; 60d
+            </button>
+            <button
+              type="button"
+              onClick={() => setInputQuestion('Find core routers with temperature > 65°C and packet drop rate > 0.05%')}
+              style={{
+                fontSize: '11px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-surface-2)',
+                color: 'var(--ink-secondary)',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+              className="hover:border-[#F97316] hover:text-[var(--ink-primary)] transition-colors"
+            >
+              Sensor Anomaly &gt; 65°C
+            </button>
+            <button
+              type="button"
+              onClick={() => setInputQuestion('List open Critical service events with device model and site location')}
+              style={{
+                fontSize: '11px',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-surface-2)',
+                color: 'var(--ink-secondary)',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+              className="hover:border-[#F97316] hover:text-[var(--ink-primary)] transition-colors"
+            >
+              Critical Service Repairs
+            </button>
+          </div>
+
           <div
             style={{
               border: '1px solid var(--border-subtle)',

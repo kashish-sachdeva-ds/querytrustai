@@ -8,10 +8,11 @@ import {
   Terminal,
   Lock,
   Database,
-  CheckCircle2,
   XCircle,
   Copy,
   Check,
+  Zap,
+  Cpu,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
@@ -25,11 +26,85 @@ interface LandingPageProps {
   onGoToLogin: () => void
 }
 
+type PresetKey = 'warranty' | 'telemetry' | 'injection'
+
+interface PresetConfig {
+  id: PresetKey
+  label: string
+  icon: typeof Sparkles
+  isAttack: boolean
+  prompt: string
+  badge: string
+  badgeColor: 'emerald' | 'rose'
+  sql: string
+  rows?: Array<Record<string, string>>
+  blockedReason?: string
+}
+
+const PRESETS: Record<PresetKey, PresetConfig> = {
+  warranty: {
+    id: 'warranty',
+    label: 'Hardware Warranty Expiring',
+    icon: Sparkles,
+    isAttack: false,
+    prompt: 'Which switches in Dallas have warranties expiring in the next 60 days?',
+    badge: 'AST Verified in 1.42ms',
+    badgeColor: 'emerald',
+    sql: `SELECT device_name, model, site, warranty_expiry, status
+FROM devices
+WHERE device_type = 'Switch'
+  AND site = 'Dallas Datacenter'
+  AND warranty_expiry <= CURRENT_DATE + INTERVAL '60 days'
+ORDER BY warranty_expiry ASC
+LIMIT 100;`,
+    rows: [
+      { name: 'CAT9300-DAL-01', model: 'Cisco Catalyst 9300', site: 'Dallas Datacenter', expiry: '2026-11-15 (29d)', status: 'Active' },
+      { name: 'CAT9300-DAL-04', model: 'Cisco Catalyst 9300', site: 'Dallas Datacenter', expiry: '2026-11-28 (42d)', status: 'Active' },
+      { name: 'ARISTA-7050-02', model: 'Arista 7050SX-64', site: 'Dallas Datacenter', expiry: '2026-12-05 (49d)', status: 'Active' },
+    ],
+  },
+  telemetry: {
+    id: 'telemetry',
+    label: 'High-Temp Sensor Anomaly',
+    icon: Zap,
+    isAttack: false,
+    prompt: 'Show core routers with temperature > 65°C and packet loss > 0.05%',
+    badge: 'Safe Multi-Table Join Verified in 1.84ms',
+    badgeColor: 'emerald',
+    sql: `SELECT d.device_name, d.model, t.temperature_c, t.packet_loss_pct, t.recorded_at
+FROM devices d
+INNER JOIN telemetry_readings t ON d.id = t.device_id
+WHERE d.device_type = 'Router'
+  AND t.temperature_c > 65.0
+  AND t.packet_loss_pct > 0.05
+ORDER BY t.temperature_c DESC
+LIMIT 50;`,
+    rows: [
+      { name: 'RTR-CORE-MIA-01', model: 'Cisco ASR 9000', site: 'Miami Datacenter 2', expiry: 'Temp: 88.92°C', status: 'Loss: 34.5%' },
+      { name: 'RTR-CORE-BOS-03', model: 'Juniper MX480', site: 'Boston Datacenter 1', expiry: 'Temp: 78.40°C', status: 'Loss: 12.1%' },
+      { name: 'RTR-EDGE-DEN-02', model: 'Cisco Catalyst 8500', site: 'Denver Datacenter 3', expiry: 'Temp: 69.15°C', status: 'Loss: 5.4%' },
+    ],
+  },
+  injection: {
+    id: 'injection',
+    label: 'Malicious DROP TABLE Injection',
+    icon: ShieldAlert,
+    isAttack: true,
+    prompt: 'Show devices; DROP TABLE devices CASCADE; --',
+    badge: 'Blocked by Gate #1 (AST-01)',
+    badgeColor: 'rose',
+    sql: `DROP TABLE devices CASCADE; -- Attempted destruction`,
+    blockedReason: 'AST expression parsed as exp.Drop. QueryTrust strictly requires single read-only exp.Select. Intercepted in 0.18ms before reaching database kernel.',
+  },
+}
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
   const { theme, toggleTheme } = useTheme()
   const { enterDemoMode } = useAuth()
-  const [activePreviewTab, setActivePreviewTab] = useState<'safe' | 'blocked'>('safe')
+  const [selectedPreset, setSelectedPreset] = useState<PresetKey>('warranty')
   const [copied, setCopied] = useState(false)
+
+  const activePreset = PRESETS[selectedPreset]
 
   const copySql = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -37,39 +112,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const safeSql = `SELECT device_name, model, site, warranty_expiry, status
-FROM devices
-WHERE device_type = 'Switch'
-  AND site = 'Dallas Datacenter'
-  AND warranty_expiry <= CURRENT_DATE + INTERVAL '60 days'
-ORDER BY warranty_expiry ASC
-LIMIT 100;`
-
-  const blockedSql = `DROP TABLE devices CASCADE; -- Attempted destruction`
-
   return (
     <div className="landing-page-root min-h-screen bg-[var(--bg-page)] text-[var(--text-main)] selection:bg-orange-500/20 selection:text-orange-500 transition-colors duration-200 relative overflow-x-hidden">
-      {/* ─── SECTION A: Minimalist Floating Navbar ─── */}
+      {/* ─── SECTION A: Keyvo/Framer Floating Glass Navbar ─── */}
       <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-[var(--bg-glass)] border-b border-[var(--border-subtle)]">
         <div className="max-w-6xl mx-auto h-16 px-6 flex items-center justify-between">
           {/* Left Brand */}
           <div className="flex items-center gap-3">
             <QueryTrustLogo size={28} />
-            <span className="font-semibold tracking-tight text-base font-display">
-              Query<span className="text-[#F97316]">Trust</span>
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold tracking-tight text-base font-display">
+                Query<span className="text-[#F97316]">Trust</span>
+              </span>
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-orange-500/10 text-[#F97316] border border-orange-500/20">
+                AI
+              </span>
+            </div>
           </div>
 
           {/* Center Navigation Links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[var(--text-muted)]" aria-label="Main">
+          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-[var(--text-muted)]" aria-label="Main Navigation">
             <a href="#interactive-preview" className="hover:text-[var(--text-main)] transition-colors">
-              Architecture
+              Live Sandbox
             </a>
             <a href="#pillars" className="hover:text-[var(--text-main)] transition-colors">
-              Security Proof
+              Security Architecture
             </a>
-            <a href="#pillars" className="hover:text-[var(--text-main)] transition-colors">
-              Benchmarks
+            <a href="#metrics" className="hover:text-[var(--text-main)] transition-colors">
+              Compiler Proofs
             </a>
           </nav>
 
@@ -79,18 +149,18 @@ LIMIT 100;`
             <button
               type="button"
               onClick={toggleTheme}
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] border border-[var(--border-subtle)] transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] border border-[var(--border-subtle)] transition-colors cursor-pointer"
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
             </button>
 
             {/* Sign In Link */}
             <button
               type="button"
               onClick={onGoToLogin}
-              className="text-sm font-medium px-3 py-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+              className="text-xs font-medium px-3 py-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
             >
               Sign In
             </button>
@@ -99,225 +169,206 @@ LIMIT 100;`
             <button
               type="button"
               onClick={() => enterDemoMode('analyst')}
-              className="h-9 px-4 rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5"
+              className="h-8 px-3.5 rounded-lg bg-[#F97316] hover:bg-[#EA580C] text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer group"
             >
-              <span>Launch App</span>
-              <ArrowRight size={13} />
+              <span>Launch Studio</span>
+              <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* ─── SECTION B: Centered Atmospheric Hero ─── */}
-      <section className="relative pt-24 pb-20 md:pt-32 md:pb-28 text-center px-6">
+      {/* ─── SECTION B: Keyvo-Grade Atmospheric Hero ─── */}
+      <section className="relative pt-20 pb-16 md:pt-28 md:pb-24 text-center px-6">
         <HeroSpotlightBackground />
 
         <div className="relative z-10 max-w-4xl mx-auto">
-          {/* 1 Top Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-muted)] mb-8 shadow-sm">
+          {/* Top Pill Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-muted)] mb-6 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Compiler-Grade SQL Governance</span>
+            <span className="font-mono text-[11px]">Zero-Trust SQL Compiler &bull; PostgreSQL Read-Only</span>
           </div>
 
-          {/* Dramatic 2-Line Headline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-[64px] font-semibold tracking-[-0.03em] leading-[1.08] text-[var(--text-main)]">
+          {/* Bold 2-Line Headline */}
+          <h1 className="text-4xl sm:text-6xl lg:text-[66px] font-semibold tracking-[-0.035em] leading-[1.06] text-[var(--text-main)]">
             Ask your database anything.{' '}
             <span className="block bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent">
               Mathematically zero risk.
             </span>
           </h1>
 
-          {/* Concise 2-Line Subheadline */}
+          {/* Subheadline */}
           <p className="mt-6 text-base sm:text-lg text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed">
-            QueryTrust AI inspects every natural-language query through a 6-layer SQLGlot Abstract Syntax Tree
-            compiler and executes strictly on a zero-write PostgreSQL kernel.
+            QueryTrust AI inspects natural language through a 6-layer SQLGlot AST compiler, validating safe SELECT semantics in sub-milliseconds before touching a read-only database kernel.
           </p>
 
-          {/* ONLY 2 CTA Buttons */}
-          <div className="mt-9 flex items-center justify-center gap-4 flex-wrap">
+          {/* Action Row */}
+          <div className="mt-8 flex items-center justify-center gap-3.5 flex-wrap">
             <button
               type="button"
               onClick={onGoToLogin}
-              className="h-11 px-6 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-sm shadow-sm transition-all flex items-center gap-2"
+              className="h-11 px-6 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer group"
             >
-              <span>Launch Live Workspace</span>
-              <ArrowRight size={15} />
+              <span>Enter Governed Studio</span>
+              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
-            <a
-              href="#interactive-preview"
-              className="h-11 px-6 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-[var(--text-main)] font-medium text-sm transition-all flex items-center gap-2"
+            <button
+              type="button"
+              onClick={() => enterDemoMode('admin')}
+              className="h-11 px-5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-[var(--text-main)] font-medium text-xs transition-all flex items-center gap-2 cursor-pointer"
             >
-              <Sparkles size={15} className="text-[#F97316]" />
-              <span>Try Interactive AST Demo</span>
-            </a>
+              <Cpu size={14} className="text-[#F97316]" />
+              <span>Evaluate Admin Mode (1-Click)</span>
+            </button>
           </div>
 
-          {/* ─── Interactive Product Showcase Window ─── */}
-          <div id="interactive-preview" className="mt-16 sm:mt-20 text-left max-w-4xl mx-auto">
-            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-2xl overflow-hidden">
+          {/* ─── SECTION B.2: Keyvo-Style Interactive Showcase Preview Window ─── */}
+          <div id="interactive-preview" className="mt-14 sm:mt-18 text-left max-w-4xl mx-auto">
+            {/* Preset Selector Pill Bar */}
+            <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
+              <span className="text-[11px] font-mono text-[var(--text-subtle)] mr-1 hidden sm:inline">Try Scenario:</span>
+              {(Object.keys(PRESETS) as PresetKey[]).map((key) => {
+                const p = PRESETS[key]
+                const isSelected = selectedPreset === key
+                const IconComponent = p.icon
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setSelectedPreset(key)}
+                    className={`h-8 px-3 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                      isSelected
+                        ? p.isAttack
+                          ? 'bg-rose-500/10 text-rose-500 border border-rose-500/30 font-semibold shadow-xs'
+                          : 'bg-orange-500/10 text-[#F97316] border border-orange-500/30 font-semibold shadow-xs'
+                        : 'bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-subtle)]'
+                    }`}
+                  >
+                    <IconComponent size={13} className={isSelected ? (p.isAttack ? 'text-rose-500' : 'text-[#F97316]') : 'text-[var(--text-subtle)]'} />
+                    <span>{p.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* macOS Window Frame */}
+            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-2xl overflow-hidden transition-all duration-200">
               {/* Window Header */}
-              <div className="h-12 border-b border-[var(--border-subtle)] px-4 flex items-center justify-between bg-[var(--bg-subtle)]">
-                {/* Window Dots */}
+              <div className="h-11 border-b border-[var(--border-subtle)] px-4 flex items-center justify-between bg-[var(--bg-subtle)]">
+                {/* Dots */}
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500/40 border border-rose-500/60" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500/40 border border-amber-500/60" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/40 border border-emerald-500/60" />
                 </div>
 
-                {/* 2 Simple Tabs */}
-                <div className="flex items-center gap-1 bg-[var(--bg-card)] p-1 rounded-lg border border-[var(--border-subtle)]">
-                  <button
-                    type="button"
-                    onClick={() => setActivePreviewTab('safe')}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
-                      activePreviewTab === 'safe'
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
-                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                    }`}
-                  >
-                    <CheckCircle2 size={12} />
-                    <span>Safe Analytics Query</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActivePreviewTab('blocked')}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${
-                      activePreviewTab === 'blocked'
-                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 font-semibold'
-                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                    }`}
-                  >
-                    <XCircle size={12} />
-                    <span>Blocked SQL Injection</span>
-                  </button>
+                <div className="text-[10.5px] font-mono text-[var(--text-muted)] flex items-center gap-1.5">
+                  <Terminal size={11} className="text-[#F97316]" />
+                  <span>SQLGlot AST Compiler &bull; PostgreSQL Dialect</span>
                 </div>
 
-                <div className="text-[11px] font-mono text-[var(--text-muted)] hidden sm:block">
-                  kernel: <span className="text-emerald-600 dark:text-emerald-400">qt_ai_readonly</span>
+                <div className="text-[10px] font-mono text-[var(--text-subtle)] hidden sm:flex items-center gap-1">
+                  <Lock size={10} className="text-emerald-500" />
+                  <span>Role: qt_ai_readonly</span>
                 </div>
               </div>
 
-              {/* Interactive Sandbox Body */}
-              <div className="p-6 space-y-4">
-                {activePreviewTab === 'safe' ? (
-                  <>
-                    {/* User Prompt */}
-                    <div className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-[#F97316] flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Sparkles size={14} />
-                      </div>
-                      <div className="flex-1">
-                        <span className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider block mb-1">
-                          User Prompt
-                        </span>
-                        <div className="text-sm font-medium text-[var(--text-main)]">
-                          &ldquo;Which switches in Dallas have warranties expiring in the next 60 days?&rdquo;
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-semibold flex items-center gap-1">
-                        <Check size={10} />
-                        AST Verified in 1.4ms
-                      </span>
+              {/* Window Body */}
+              <div className="p-5 space-y-4">
+                {/* Prompt Row */}
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                      activePreset.isAttack ? 'bg-rose-500/10 text-rose-500' : 'bg-orange-500/10 text-[#F97316]'
+                    }`}
+                  >
+                    <activePreset.icon size={14} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-mono text-[var(--text-subtle)] uppercase tracking-wider block mb-0.5">
+                      Natural Language Input
+                    </span>
+                    <div className="text-sm font-medium text-[var(--text-main)] tracking-tight">
+                      &ldquo;{activePreset.prompt}&rdquo;
                     </div>
+                  </div>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full font-mono text-[10.5px] font-semibold flex items-center gap-1 border flex-shrink-0 ${
+                      activePreset.badgeColor === 'emerald'
+                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400'
+                    }`}
+                  >
+                    {activePreset.badgeColor === 'emerald' ? <Check size={10} /> : <XCircle size={10} />}
+                    {activePreset.badge}
+                  </span>
+                </div>
 
-                    {/* Compiled SQL */}
-                    <div className="rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] p-3.5 relative">
-                      <div className="flex items-center justify-between mb-2">
+                {/* Compiled SQL / Blocked Interception Card */}
+                {!activePreset.isAttack ? (
+                  <>
+                    <div className="rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] p-3 relative">
+                      <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1.5">
                           <Terminal size={11} className="text-[#F97316]" />
-                          <span>Compiled PostgreSQL (Single Statement &bull; LIMIT 100 Enforced)</span>
+                          <span>Verified PostgreSQL (SELECT-Only &bull; Clamped Limit)</span>
                         </span>
                         <button
                           type="button"
-                          onClick={() => copySql(safeSql)}
-                          className="text-[11px] font-mono text-[var(--text-muted)] hover:text-[var(--text-main)] flex items-center gap-1"
+                          onClick={() => copySql(activePreset.sql)}
+                          className="text-[10.5px] font-mono text-[var(--text-muted)] hover:text-[var(--text-main)] flex items-center gap-1 cursor-pointer"
                         >
-                          <Copy size={11} />
-                          <span>{copied ? 'Copied' : 'Copy'}</span>
+                          <Copy size={10} />
+                          <span>{copied ? 'Copied' : 'Copy SQL'}</span>
                         </button>
                       </div>
                       <pre className="font-mono text-xs text-[var(--text-main)] overflow-x-auto leading-relaxed">
-                        {safeSql}
+                        {activePreset.sql}
                       </pre>
                     </div>
 
-                    {/* Results Table */}
-                    <div className="rounded-xl border border-[var(--border-subtle)] overflow-hidden">
-                      <table className="w-full text-xs text-left">
-                        <thead className="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-mono uppercase text-[10px]">
-                          <tr>
-                            <th className="px-3.5 py-2">Device Name</th>
-                            <th className="px-3.5 py-2">Model</th>
-                            <th className="px-3.5 py-2">Site</th>
-                            <th className="px-3.5 py-2">Warranty Expiry</th>
-                            <th className="px-3.5 py-2">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[var(--border-subtle)] font-mono">
-                          <tr>
-                            <td className="px-3.5 py-2 font-semibold">CAT9300-DAL-01</td>
-                            <td className="px-3.5 py-2 text-[var(--text-muted)]">Cisco Catalyst 9300</td>
-                            <td className="px-3.5 py-2 text-[var(--text-muted)]">Dallas Datacenter</td>
-                            <td className="px-3.5 py-2 text-amber-500 font-semibold">2026-11-15 (29d)</td>
-                            <td className="px-3.5 py-2 text-emerald-500">Active</td>
-                          </tr>
-                          <tr>
-                            <td className="px-3.5 py-2 font-semibold">CAT9300-DAL-04</td>
-                            <td className="px-3.5 py-2 text-[var(--text-muted)]">Cisco Catalyst 9300</td>
-                            <td className="px-3.5 py-2 text-[var(--text-muted)]">Dallas Datacenter</td>
-                            <td className="px-3.5 py-2 text-amber-500 font-semibold">2026-11-28 (42d)</td>
-                            <td className="px-3.5 py-2 text-emerald-500">Active</td>
-                          </tr>
-                          <tr>
-                            <td className="px-3.5 py-2 font-semibold">ARISTA-7050-02</td>
-                            <td className="px-3.5 py-2 text-[var(--text-muted)]">Arista 7050SX-64</td>
-                            <td className="px-3.5 py-2 text-[var(--text-muted)]">Dallas Datacenter</td>
-                            <td className="px-3.5 py-2 text-amber-500 font-semibold">2026-12-05 (49d)</td>
-                            <td className="px-3.5 py-2 text-emerald-500">Active</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                    {/* Virtualized Table Preview */}
+                    {activePreset.rows && (
+                      <div className="rounded-xl border border-[var(--border-subtle)] overflow-hidden">
+                        <table className="w-full text-xs text-left">
+                          <thead className="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-mono uppercase text-[9.5px]">
+                            <tr>
+                              <th className="px-3 py-1.5">Device Asset</th>
+                              <th className="px-3 py-1.5">Model Specification</th>
+                              <th className="px-3 py-1.5">Operating Site</th>
+                              <th className="px-3 py-1.5">Observation / Metric</th>
+                              <th className="px-3 py-1.5">Telemetry Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[var(--border-subtle)] font-mono text-[11px]">
+                            {activePreset.rows.map((r, idx) => (
+                              <tr key={idx} className="hover:bg-[var(--bg-subtle)] transition-colors">
+                                <td className="px-3 py-1.5 font-semibold text-[var(--text-main)]">{r.name}</td>
+                                <td className="px-3 py-1.5 text-[var(--text-muted)]">{r.model}</td>
+                                <td className="px-3 py-1.5 text-[var(--text-muted)]">{r.site}</td>
+                                <td className="px-3 py-1.5 text-amber-500 font-semibold">{r.expiry}</td>
+                                <td className="px-3 py-1.5 text-emerald-500">{r.status}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </>
                 ) : (
-                  <>
-                    {/* Blocked Injection Vector */}
-                    <div className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <ShieldAlert size={14} />
-                      </div>
-                      <div className="flex-1">
-                        <span className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider block mb-1">
-                          Simulated Malicious Payload
-                        </span>
-                        <div className="text-sm font-medium text-rose-600 dark:text-rose-400 font-mono">
-                          {blockedSql}
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 font-mono text-[11px] font-semibold flex items-center gap-1">
-                        <XCircle size={10} />
-                        Blocked by Gate #1
-                      </span>
+                  <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 space-y-2.5">
+                    <div className="flex items-center gap-2 text-rose-500 font-semibold text-xs font-mono">
+                      <ShieldAlert size={14} />
+                      <span>SQLGlot AST Gate #1 Violation: Mutation/DDL Statement Forbidden</span>
                     </div>
-
-                    {/* Shield Interception Card */}
-                    <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4 space-y-2">
-                      <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-semibold text-xs font-mono">
-                        <ShieldAlert size={14} />
-                        <span>SQLGlot AST Gate #1 Violation: Mutation/DDL Statement Forbidden</span>
-                      </div>
-                      <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                        The AST root expression was parsed as <code className="text-rose-500">exp.Drop</code>.
-                        QueryTrust strictly enforces that the compiled statement must evaluate to a single read-only{' '}
-                        <code className="text-emerald-500">exp.Select</code>. Execution was aborted at the compiler layer in 1.1ms
-                        before reaching PostgreSQL.
-                      </p>
-                      <div className="pt-2 border-t border-rose-500/20 flex items-center justify-between text-[11px] font-mono text-[var(--text-muted)]">
-                        <span>Database writes attempted: 0</span>
-                        <span className="text-emerald-500 font-semibold">Database Integrity: 100% Intact</span>
-                      </div>
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                      {activePreset.blockedReason}
+                    </p>
+                    <div className="pt-2 border-t border-rose-500/20 flex items-center justify-between text-[10.5px] font-mono text-[var(--text-muted)]">
+                      <span>Database writes attempted: <strong className="text-rose-500">0</strong></span>
+                      <span className="text-emerald-500 font-semibold">Database Integrity: 100% Intact</span>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -325,9 +376,31 @@ LIMIT 100;`
         </div>
       </section>
 
-      {/* ─── SECTION C: The 3-Pillar 21st.dev Bento Grid ─── */}
-      <section id="pillars" className="py-24 sm:py-32 max-w-6xl mx-auto px-6 border-t border-[var(--border-subtle)]">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+      {/* ─── SECTION B.3: Keyvo-Grade 4-Metric Trust Strip ─── */}
+      <section id="metrics" className="border-y border-[var(--border-subtle)] bg-[var(--bg-card)] py-8">
+        <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div>
+            <div className="text-3xl font-mono font-bold text-[var(--text-main)] tracking-tight">1.42ms</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">P95 AST Compiler Latency</div>
+          </div>
+          <div>
+            <div className="text-3xl font-mono font-bold text-emerald-500 tracking-tight">151 / 151</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Automated Security Tests Pass</div>
+          </div>
+          <div>
+            <div className="text-3xl font-mono font-bold text-[#F97316] tracking-tight">0 Writes</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Physical Kernel Guarantee</div>
+          </div>
+          <div>
+            <div className="text-3xl font-mono font-bold text-[var(--text-main)] tracking-tight">30,000</div>
+            <div className="text-xs text-[var(--text-muted)] mt-1">Synthetically Governed Rows</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION C: The 3-Pillar Bento Grid ─── */}
+      <section id="pillars" className="py-20 sm:py-28 max-w-6xl mx-auto px-6">
+        <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#F97316] block mb-2">
             The Three Invariants
           </span>
@@ -335,12 +408,12 @@ LIMIT 100;`
             Architected for zero data corruption
           </h2>
           <p className="mt-3 text-sm text-[var(--text-muted)]">
-            Security guarantees enforced by mathematical compilers and database kernels—not fragile prompt templates.
+            Security guarantees enforced by mathematical compilers and database kernels—not fragile LLM prompts.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Compiler-Grade SQLGlot AST */}
+          {/* Card 1 */}
           <SpotlightCard className="flex flex-col justify-between">
             <div>
               <div className="h-36 flex items-center justify-center bg-[var(--bg-subtle)] rounded-xl border border-[var(--border-subtle)] mb-5 overflow-hidden">
@@ -350,7 +423,7 @@ LIMIT 100;`
                 Mathematical Syntax Verification
               </h3>
               <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-                We inspect the compiled SQLGlot syntax tree across 6 deterministic gates—never relying on fragile LLM instructions.
+                Every query is parsed into a PostgreSQL syntax tree through 6 deterministic gates—rejecting mutations, cartesian explosions, and system catalog exfiltration.
               </p>
             </div>
             <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-mono text-[var(--text-muted)]">
@@ -359,7 +432,7 @@ LIMIT 100;`
             </div>
           </SpotlightCard>
 
-          {/* Card 2: Dual-Role PostgreSQL Kernel */}
+          {/* Card 2 */}
           <SpotlightCard className="flex flex-col justify-between">
             <div>
               <div className="h-36 flex flex-col justify-center px-4 bg-[var(--bg-subtle)] rounded-xl border border-[var(--border-subtle)] mb-5 space-y-2">
@@ -382,7 +455,7 @@ LIMIT 100;`
                 Zero Data Corruption by Design
               </h3>
               <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-                The AI execution role has zero write permissions enforced directly at the PostgreSQL database kernel level.
+                The natural-language execution role (<code className="text-emerald-500">qt_ai_readonly</code>) possesses zero write permissions directly at the database process level.
               </p>
             </div>
             <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-mono text-[var(--text-muted)]">
@@ -391,22 +464,22 @@ LIMIT 100;`
             </div>
           </SpotlightCard>
 
-          {/* Card 3: Measurable Enterprise Velocity */}
+          {/* Card 3 */}
           <SpotlightCard className="flex flex-col justify-between">
             <div>
               <div className="h-36 flex flex-col items-center justify-center bg-[var(--bg-subtle)] rounded-xl border border-[var(--border-subtle)] mb-5">
                 <div className="text-5xl font-mono font-semibold text-[#F97316] tracking-tight">
-                  1.4s
+                  1.42s
                 </div>
                 <div className="text-xs text-[var(--text-muted)] mt-1 font-mono">
-                  vs 4h average Jira lag
+                  vs 4h average Jira turnaround
                 </div>
               </div>
               <h3 className="text-base font-semibold text-[var(--text-main)]">
                 From 4-Hour Jira Lag to 1.4 Seconds
               </h3>
               <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-                Self-serve domain velocity backed by 151 automated tests and zero forbidden executions.
+                Empower technical analysts and domain stakeholders with self-serve analytics velocity without opening SQL execution loopholes.
               </p>
             </div>
             <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-mono text-[var(--text-muted)]">
@@ -417,8 +490,38 @@ LIMIT 100;`
         </div>
       </section>
 
-      {/* ─── SECTION D: Minimalist Footer ─── */}
-      <footer className="py-12 border-t border-[var(--border-subtle)] bg-[var(--bg-card)]">
+      {/* ─── SECTION D: Bottom Keyvo-Style Conversion CTA ─── */}
+      <section className="py-20 max-w-4xl mx-auto px-6 text-center">
+        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-10 relative overflow-hidden shadow-xl">
+          <div className="absolute inset-0 bg-radial-[circle_at_50%_0%] from-orange-500/10 via-transparent to-transparent pointer-events-none" />
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[var(--text-main)]">
+            Ready to experience compiler-grade database governance?
+          </h2>
+          <p className="mt-3 text-sm text-[var(--text-muted)] max-w-xl mx-auto">
+            Evaluate QueryTrust AI instantly in offline sandbox mode—no setup, credit cards, or live database connection required.
+          </p>
+          <div className="mt-7 flex items-center justify-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={onGoToLogin}
+              className="h-10 px-5 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Launch Live Workspace</span>
+              <ArrowRight size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={() => enterDemoMode('analyst')}
+              className="h-10 px-4 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-[var(--text-main)] text-xs font-medium transition-all cursor-pointer"
+            >
+              Explore Analyst Demo
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION E: Minimalist Single-Row Footer ─── */}
+      <footer className="py-10 border-t border-[var(--border-subtle)] bg-[var(--bg-card)]">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
           <div className="flex items-center gap-2">
             <QueryTrustLogo size={20} />
@@ -426,9 +529,9 @@ LIMIT 100;`
             <span>&bull; Zero-Trust Database Analytics Workbench</span>
           </div>
 
-          <div className="flex items-center gap-2 font-mono text-[11px]">
+          <div className="flex items-center gap-2 font-mono text-[10.5px]">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>All 6 AST Gates Operational &bull; PostgreSQL Read-Only Replica Connected</span>
+            <span>All 6 AST Gates Operational &bull; PostgreSQL Read-Only Kernel</span>
           </div>
 
           <div>

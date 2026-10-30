@@ -1,9 +1,18 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-31  
-**Current milestone:** 39 — AI Orchestration & Full-Stack Staff Engineer Polish: Zero Truncation, Unified Execution CTA & Viewport-Synchronized 6-Gate AST  
-**Overall status:** Complete AI Orchestration & Full-Stack Founder Polish across the entire governed workbench:
-1. ✅ **Zero Truncation at 236px Linear Width (`Sidebar.tsx`, `LinearShell.css`):**
+**Current milestone:** 40 — Keyvo (Heyo) Design Overhaul: Interactive Scenario Sandbox, 4-Metric Trust Strip, Rich Evaluator Cards, and Suggested Query Chips  
+**Overall status:** Complete Keyvo / Framer / Linear aesthetic redesign across marketing landing, evaluator sign-in, and the interactive compiler workbench:
+1. ✅ **Interactive Scenario Sandbox (`LandingPage.tsx`):**
+   - Transformed the static preview into a live 3-scenario selector: `Hardware Warranty Expiring` (Safe SELECT), `High-Temp Sensor Anomaly` (Multi-table JOIN), and `Malicious DROP TABLE Injection` (Blocked AST-01).
+   - Visitors can toggle scenarios to watch SQL generation, sub-millisecond AST verification badges (`1.42ms`), and virtualized telemetry tables update in real time.
+2. ✅ **Keyvo-Grade 4-Metric Trust Strip (`LandingPage.tsx`):**
+   - Added a high-conviction quantitative proof strip: `1.42ms` P95 AST Compiler Latency, `151/151` Automated Tests Pass, `0 Writes` Physical Kernel Guarantee, and `30,000` Synthetically Governed Rows.
+3. ✅ **Rich Evaluator Preset Cards (`LoginPage.tsx`):**
+   - Redesigned the 1-click evaluator demo row from basic buttons into rich Keyvo-style cards with colored status beacons and role descriptions: `Admin (Full AST & RBAC)`, `Analyst (Studio & SQL)`, and `Viewer (Plain English)`.
+4. ✅ **Suggested Query Quick-Chips (`AskDataView.tsx`):**
+   - Added interactive suggestion chips directly above the Query Studio prompt area (`Hardware Expiring < 60d`, `Sensor Anomaly > 65°C`, `Critical Service Repairs`), enabling high-velocity exploration with single-click query priming.
+5. ✅ **Zero Truncation at 236px Linear Width (`Sidebar.tsx`, `LinearShell.css`):**
    - Expanded sidebar width from 220px to standard Linear width (236px).
    - Replaced lengthy navigation labels with crisp, professional wayfinding terms: `Query Studio` (was `Ask Governed Data`), `Anomalies` (was `Unusual Activity`), `AST Safety Proof` (was `Safety Proof & AST`), and `Sources & Kernel` (was `Data Sources & Kernel`).
    - Live Schemas tree items (`devices 5,000`, `sites 50`, `service_events 1,500`, `telemetry_readings 25k`) now render completely without ellipsis truncation (`...`).

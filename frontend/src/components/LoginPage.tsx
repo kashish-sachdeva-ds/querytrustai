@@ -550,29 +550,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           <button
             type="button"
             onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
-            className="h-8 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-[11px] font-medium text-[var(--text-main)] flex items-center justify-center gap-1.5 transition-all"
+            className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-purple-500/40 text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate full admin governance & AST configuration"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-            <span>Admin</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-[var(--text-main)]">Admin</span>
+            </div>
+            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)]">Full AST &amp; RBAC</span>
           </button>
           <button
             type="button"
             onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
-            className="h-8 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-[11px] font-medium text-[var(--text-main)] flex items-center justify-center gap-1.5 transition-all"
+            className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-blue-500/40 text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate analyst NL-to-SQL & diagnostics"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            <span>Analyst</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-[var(--text-main)]">Analyst</span>
+            </div>
+            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)]">Studio &amp; SQL</span>
           </button>
           <button
             type="button"
             onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
-            className="h-8 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-[11px] font-medium text-[var(--text-main)] flex items-center justify-center gap-1.5 transition-all"
+            className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-emerald-500/40 text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate read-only consumer charts & answers"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>Viewer</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-[var(--text-main)]">Viewer</span>
+            </div>
+            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)]">Plain English</span>
           </button>
         </div>
       </div>

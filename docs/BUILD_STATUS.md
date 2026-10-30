@@ -1,9 +1,16 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-10-31  
-**Current milestone:** 37 — Linear Ultra-Clean Sidebar Redesign & Information Architecture Refinement  
+**Current milestone:** 38 — Founder-Grade Visual Polish, Schema Workbench & Zero-Scrollbar Elimination  
 **Overall status:** Complete ground-up UI/UX subtraction redesign matching 21st.dev, Linear, and Raycast minimalist standards. Removed 70% of visual clutter, badges, and telemetry strips across Landing, Sign-In, and the Application Sidebar:
-1. ✅ **Linear Minimalist Sidebar Architecture (`Sidebar.tsx`, `LinearShell.css`):**
+1. ✅ **Founder-Grade Micro-Polish & Zero-Scrollbar Elimination (`Sidebar.tsx`, `Header.tsx`, `LinearShell.css`):**
+   - Eliminated the leaking Windows horizontal scrollbar and vertical arrow thumb using `overflow-x: hidden !important` and `scrollbar-width: none`.
+   - Eliminated the 500px dead space void by adding a quiet **Live Schemas** workbench tree (`devices 5,000`, `sites 50`, `service_events 1,500`, `telemetry_readings 25k`) with 1-click query shortcuts.
+   - Replaced redundant sidebar search well with a Linear-style `+ New Query` (`⌘N`) primary trigger.
+   - Replaced raw breadcrumb text with a sleek company badge (`[Building2] Workspace Name`).
+   - Replaced orphan theme toggle icon with a 32px bordered box matching adjacent pills.
+   - Integrated active nav state (`bg-orange-500/10 text-[#F97316] font-semibold border border-orange-500/20`).
+2. ✅ **Linear Minimalist Sidebar Architecture:**
    - Streamlined width from 240px to compact 220px (collapsed to 56px icon rail with `⌘B` keyboard persistence).
    - Removed triple "Ask Data" redundancy: replaced bulky gradient button with a quiet 32px `[Sparkles] Ask data... [⌘K]` well.
    - Removed cramped 3-row "Recent Verified" text truncation strip (conversations live cleanly in `AskDataView` session history and the `⌘K` palette).

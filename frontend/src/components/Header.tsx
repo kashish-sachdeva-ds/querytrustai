@@ -8,6 +8,7 @@ import {
   Check,
   Loader2,
   Search,
+  Building2,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -223,26 +224,33 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={() => onNavigate?.('overview')}
               style={{
-                background: 'transparent',
-                border: 'none',
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '6px',
                 color: 'var(--text-muted)',
-                padding: 0,
+                padding: '2px 8px',
                 cursor: 'pointer',
-                fontSize: '12.5px',
+                fontSize: '11.5px',
+                fontWeight: 500,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                transition: 'all 120ms ease',
               }}
-              title="Return to fleet overview"
+              title="Workspace scope: Click to return to fleet overview"
             >
-              {user?.workspace_name || 'Workspace'}
+              <Building2 size={11} style={{ color: 'var(--text-subtle)' }} />
+              <span>{user?.workspace_name || 'Workspace'}</span>
             </button>
             <span style={{ color: 'var(--text-subtle)' }}>/</span>
-            <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+            <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '12px' }}>
               {activeTab ? TAB_LABELS[activeTab] || activeTab : 'Fleet Overview'}
             </span>
           </nav>
         </div>
 
         {/* ─── Center: ⌘K Global Command Palette Trigger ─── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, maxWidth: '340px', margin: '0 auto' }}>
           <button
             type="button"
             onClick={onOpenCommandPalette}
@@ -250,7 +258,7 @@ export const Header: React.FC<HeaderProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              width: '280px',
+              width: '100%',
               height: '32px',
               backgroundColor: 'var(--bg-subtle)',
               border: '1px solid var(--border-subtle)',
@@ -472,20 +480,22 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={toggleTheme}
             style={{
-              background: 'transparent',
+              width: '32px',
+              height: '32px',
+              backgroundColor: 'var(--bg-subtle)',
               border: '1px solid var(--border-subtle)',
-              borderRadius: '6px',
-              padding: '5px',
-              color: 'var(--ink-secondary)',
+              borderRadius: '8px',
+              color: 'var(--text-muted)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              transition: 'all 120ms ease',
             }}
             title={`Switch to ${theme === 'light' ? 'Obsidian Carbon Dark' : 'Warm Stone Light'} theme`}
             aria-label="Toggle visual theme"
           >
-            {theme === 'light' ? <Moon size={13} /> : <Sun size={13} />}
+            {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
           </button>
 
           {/* User Profile Avatar / Menu Trigger */}

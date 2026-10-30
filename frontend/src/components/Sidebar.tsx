@@ -10,7 +10,8 @@ import {
   ChevronRight,
   Database,
   Terminal,
-  Sparkles,
+  Plus,
+  Table2,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -37,7 +38,14 @@ interface SidebarProps {
   onAskQuestion?: (question: string) => void
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
+const PINNED_TABLES = [
+  { name: 'devices', schema: 'public', rows: '5,000', query: 'Show all active devices' },
+  { name: 'sites', schema: 'public', rows: '50', query: 'List all sites by region' },
+  { name: 'service_events', schema: 'public', rows: '1,500', query: 'List open Critical service events' },
+  { name: 'telemetry_readings', schema: 'public', rows: '25k', query: 'Find devices with temperature > 65°C' },
+]
+
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQuestion }) => {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
 
@@ -98,10 +106,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
   }, [])
 
   const navItemClass = (tab: ActiveTab) =>
-    `group relative flex items-center justify-between h-8 mx-2 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+    `group flex items-center justify-between w-full h-8 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
       activeTab === tab
-        ? 'bg-[var(--bg-subtle)] text-[var(--text-main)] font-semibold before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:bg-[#F97316] before:rounded-r'
-        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)]'
+        ? 'bg-orange-500/10 text-[#F97316] font-semibold border border-orange-500/20 shadow-xs'
+        : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] border border-transparent'
     }`
 
   return (
@@ -119,6 +127,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
         justifyContent: 'space-between',
         height: '100%',
         overflow: 'hidden',
+        overflowX: 'hidden',
+        overflowY: 'hidden',
         boxSizing: 'border-box',
         flexShrink: 0,
         zIndex: 40,
@@ -126,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
       }}
     >
       {/* ─── Top Brand & Navigation Section ─── */}
-      <div className="flex flex-col min-h-0 flex-1">
+      <div className="flex flex-col min-h-0 flex-1 overflow-x-hidden">
         {/* Header flush with top navigation bar */}
         <div className="h-14 border-b border-[var(--border-subtle)] px-3 flex items-center justify-between bg-[var(--bg-card)] flex-shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -161,41 +171,44 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           </button>
         </div>
 
-        {/* ─── Quick Action Omnibar Shortcut ─── */}
-        <div className="p-2 border-b border-[var(--border-subtle)]">
+        {/* ─── Linear-Grade Quick Action: + New Query (⌘N) ─── */}
+        <div className="p-2 border-b border-[var(--border-subtle)] flex-shrink-0">
           {isCollapsed ? (
             <button
               type="button"
               onClick={() => onSelectTab('ask-data')}
               className="w-8 h-8 mx-auto rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] flex items-center justify-center text-[#F97316] transition-all cursor-pointer"
-              title="Ask Governed Data (⌘K)"
+              title="New Governed Query (⌘N)"
             >
-              <Sparkles size={14} />
+              <Plus size={15} />
             </button>
           ) : (
             <button
               type="button"
               onClick={() => onSelectTab('ask-data')}
-              className="w-full h-8 px-2.5 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] flex items-center justify-between transition-all cursor-pointer group"
-              title="Ask anything across 5,000 devices (⌘K)"
+              className="w-full h-8 px-2.5 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-xs text-[var(--text-main)] flex items-center justify-between transition-all cursor-pointer group"
+              title="Compose New Governed Query (⌘N)"
             >
-              <div className="flex items-center gap-2">
-                <Sparkles size={13} className="text-[#F97316]" />
-                <span className="text-[11px] font-medium">Ask data...</span>
+              <div className="flex items-center gap-1.5">
+                <Plus size={13} className="text-[#F97316]" />
+                <span className="text-[11px] font-semibold">New Query</span>
               </div>
               <kbd className="text-[10px] font-mono text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] px-1.5 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-subtle)]">
-                ⌘K
+                ⌘N
               </kbd>
             </button>
           )}
         </div>
 
-        {/* ─── Scrollable Navigation Body ─── */}
-        <div className="flex-1 overflow-y-auto py-2 space-y-4">
+        {/* ─── Scrollable Navigation Body (Zero Overflow Leak) ─── */}
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 space-y-4"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {/* GROUP 1: WORKSPACE */}
           <div>
             {!isCollapsed && (
-              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-3 mb-1">
+              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-2 mb-1.5">
                 Workspace
               </div>
             )}
@@ -241,7 +254,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
           {/* GROUP 2: SIGNALS & HYGIENE */}
           <div>
             {!isCollapsed && (
-              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-3 mb-1">
+              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-2 mb-1.5">
                 Hygiene &amp; Signals
               </div>
             )}
@@ -282,10 +295,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
             </div>
           </div>
 
-          {/* GROUP 3: COMPLIANCE & KERNEL */}
+          {/* GROUP 3: GOVERNANCE & COMPLIANCE */}
           <div>
             {!isCollapsed && (
-              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-3 mb-1">
+              <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)] px-2 mb-1.5">
                 Governance
               </div>
             )}
@@ -329,20 +342,58 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
               )}
             </div>
           </div>
+
+          {/* GROUP 4: PINNED DATABASE SCHEMAS (Eliminates the "Dead Space Abyss") */}
+          {!isCollapsed && (
+            <div className="pt-2 border-t border-[var(--border-subtle)]">
+              <div className="flex items-center justify-between px-2 mb-1.5">
+                <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--text-subtle)]">
+                  Live Schemas
+                </span>
+                <span className="text-[9px] font-mono text-emerald-500 font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  PostgreSQL
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                {PINNED_TABLES.map((t) => (
+                  <button
+                    key={t.name}
+                    type="button"
+                    onClick={() => {
+                      if (onAskQuestion) {
+                        onAskQuestion(t.query)
+                      } else {
+                        onSelectTab('devices')
+                      }
+                    }}
+                    className="group flex items-center justify-between w-full h-7 px-2 rounded-md text-[11px] font-mono text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] transition-all cursor-pointer text-left"
+                    title={`Click to query ${t.schema}.${t.name} (${t.rows} rows)`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Table2 size={12} className="text-[var(--text-subtle)] group-hover:text-[#F97316] transition-colors" />
+                      <span className="truncate">{t.name}</span>
+                    </div>
+                    <span className="text-[10px] text-[var(--text-subtle)] font-mono">{t.rows}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ─── Bottom Status Beacon (Kernel Integrity) ─── */}
-      <div className="p-3 border-t border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex-shrink-0">
-        <div className="flex items-center gap-2">
+      {/* ─── Bottom Status Beacon (Kernel Integrity - No Scrollbar Leak) ─── */}
+      <div className="p-3 border-t border-[var(--border-subtle)] bg-[var(--bg-card)] flex-shrink-0">
+        <div className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
           {!isCollapsed && (
             <div className="flex flex-col min-w-0">
-              <div className="text-[11px] font-mono font-semibold text-[var(--text-main)] truncate">
+              <div className="text-[11px] font-semibold text-[var(--text-main)] truncate tracking-tight">
                 PostgreSQL Read-Only
               </div>
               <div className="text-[10px] font-mono text-[var(--text-muted)] truncate">
-                Zero-Write Lock &bull; 1.4ms
+                Zero-Write Lock &bull; 1.4ms P95
               </div>
             </div>
           )}

@@ -1029,14 +1029,14 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
                       <td data-label="Status">{renderStatusPill(dev.status)}</td>
 
                       {/* Installed Date */}
-                      <td data-label="Installed">
+                      <td data-label="Installed" className="cell-installed">
                         <span className="mono-date-text">
                           <HumanDate iso={dev.installed_at} fallback="—" />
                         </span>
                       </td>
 
                       {/* Warranty Column: Inverted -> 'Date error', Missing -> 'No warranty on record', else relative */}
-                      <td data-label="Warranty">
+                      <td data-label="Warranty" className="cell-warranty">
                         {isInverted ? (
                           <span
                             className="warranty-status-pill warning"

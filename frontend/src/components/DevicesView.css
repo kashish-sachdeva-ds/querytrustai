@@ -257,6 +257,7 @@
 
 .devices-table {
   width: 100%;
+  min-width: 960px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -271,7 +272,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 10px 18px;
+  padding: 8px 12px;
   white-space: nowrap;
   box-sizing: border-box;
 }
@@ -288,9 +289,16 @@
 }
 
 .devices-table-row td {
-  padding: 12px 18px;
+  padding: 8px 12px;
   vertical-align: middle;
   box-sizing: border-box;
+}
+
+.cell-installed,
+.cell-warranty,
+.mono-date-text {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Asset Tag Token */

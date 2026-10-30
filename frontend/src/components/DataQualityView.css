@@ -140,10 +140,18 @@
 }
 
 .dq-rule-id {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: var(--qt-accent);
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(244, 63, 94, 0.10);
+  color: #F43F5E;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  letter-spacing: 0.02em;
+  width: fit-content;
 }
 
 .dq-rule-subtag {

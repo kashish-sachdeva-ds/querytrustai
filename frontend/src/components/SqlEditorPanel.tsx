@@ -85,14 +85,17 @@ export const SqlEditorPanel: React.FC<SqlEditorPanelProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '5px 10px',
+          flexWrap: 'wrap',
+          gap: '8px',
+          minWidth: 0,
+          padding: '6px 10px',
           backgroundColor: 'var(--bg-surface-3)',
           borderBottom: '1px solid var(--border-subtle)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Terminal size={12} style={{ color: 'var(--accent-primary)' }} />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', fontWeight: 600, color: 'var(--ink-primary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', minWidth: 0, flexShrink: 0 }}>
+          <Terminal size={12} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', fontWeight: 600, color: 'var(--ink-primary)', whiteSpace: 'nowrap' }}>
             PostgreSQL Compiler Preview
           </span>
           <span
@@ -102,16 +105,18 @@ export const SqlEditorPanel: React.FC<SqlEditorPanelProps> = ({
               backgroundColor: 'var(--gov-safe-bg)',
               color: 'var(--gov-safe-text)',
               border: '1px solid var(--gov-safe-border)',
-              padding: '1px 5px',
+              padding: '1px 6px',
               borderRadius: '3px',
               fontWeight: 600,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
             }}
           >
             LIMIT {limit} ENFORCED
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           {onExecute && canExecute && (
             <button
               type="button"

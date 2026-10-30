@@ -1191,8 +1191,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     <span className="lifecycle-legend-count">{formatNumber(item.value)}</span>
                     <span className="lifecycle-legend-pct">{pct}%</span>
                     {isUnapproved && (
-                      <span className="lifecycle-unapproved-label" title="Unapproved lifecycle status flagged by data health rule">
-                        {mode === 'expert' ? 'Not an approved status (DQ-005)' : 'Not an approved status'}
+                      <span
+                        className="lifecycle-unapproved-label"
+                        title={
+                          mode === 'expert'
+                            ? 'Policy Rule DQ-005: Status value is outside verified production lifecycle taxonomy (Pending Audit / Staged).'
+                            : 'Policy Rule POL-02: Non-production lifecycle staging.'
+                        }
+                      >
+                        {mode === 'expert' ? '[DQ-005: Unapproved Taxonomy]' : '[POL-02: Non-Prod Staging]'}
                       </span>
                     )}
                   </button>

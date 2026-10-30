@@ -440,7 +440,7 @@ export const AdminView: React.FC = () => {
             <div>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
                 {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
-                  ? `${currentUser.workspace_name} ΓÇö Team Members (${users.length})`
+                  ? `${currentUser.workspace_name} — Team Members (${users.length})`
                   : `Who can do what (${users.length})`}
               </h3>
               {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace' && (
@@ -475,7 +475,7 @@ export const AdminView: React.FC = () => {
               <input
                 type="text"
                 className="admin-search-input"
-                placeholder="Search teammates by name or emailΓÇª"
+                placeholder="Search teammates by name or email..."
                 value={userSearch}
                 onChange={(e) => {
                   setUserSearch(e.target.value)
@@ -492,7 +492,7 @@ export const AdminView: React.FC = () => {
                   }}
                   title="Clear search"
                 >
-                  Γ£ò
+                  <X size={12} />
                 </button>
               )}
             </div>
@@ -545,7 +545,7 @@ export const AdminView: React.FC = () => {
                   <td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem' }}>
                     <div className="table-loading-spinner" />
                     <p className="text-muted" style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                      Retrieving authorized user accountsΓÇª
+                      Retrieving authorized user accounts...
                     </p>
                   </td>
                 </tr>
@@ -660,7 +660,7 @@ export const AdminView: React.FC = () => {
         {filteredUsers.length > USER_PAGE_SIZE && (
           <div className="pagination-bar">
             <span>
-              Showing {Math.min((userPage - 1) * USER_PAGE_SIZE + 1, filteredUsers.length)}ΓÇô
+              Showing {Math.min((userPage - 1) * USER_PAGE_SIZE + 1, filteredUsers.length)}–
               {Math.min(userPage * USER_PAGE_SIZE, filteredUsers.length)} of {filteredUsers.length} teammates
             </span>
             <div className="pagination-controls">
@@ -701,7 +701,7 @@ export const AdminView: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
                   {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
-                    ? `${currentUser.workspace_name} ΓÇö Access Requests`
+                    ? `${currentUser.workspace_name} — Access Requests`
                     : 'Access Requests'}
                 </h3>
               </div>
@@ -772,7 +772,7 @@ export const AdminView: React.FC = () => {
                 <input
                   type="text"
                   className="admin-search-input"
-                  placeholder="Filter requests by name, email, or companyΓÇª"
+                  placeholder="Filter requests by name, email, or company..."
                   value={requestSearch}
                   onChange={(e) => {
                     setRequestSearch(e.target.value)
@@ -788,7 +788,7 @@ export const AdminView: React.FC = () => {
                       setRequestPage(1)
                     }}
                   >
-                    Γ£ò
+                    <X size={12} />
                   </button>
                 )}
               </div>
@@ -817,7 +817,7 @@ export const AdminView: React.FC = () => {
                   <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
                     <div className="table-loading-spinner" />
                     <p className="text-muted" style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                      Retrieving access requestsΓÇª
+                      Retrieving access requests...
                     </p>
                   </td>
                 </tr>
@@ -846,7 +846,7 @@ export const AdminView: React.FC = () => {
                               setRequestPage(1)
                             }}
                           >
-                            View {resolvedRequestsCount} resolved request{resolvedRequestsCount > 1 ? 's' : ''} history ΓåÆ
+                            View {resolvedRequestsCount} resolved request{resolvedRequestsCount > 1 ? 's' : ''} history →
                           </button>
                         )}
                       </div>
@@ -1008,7 +1008,7 @@ export const AdminView: React.FC = () => {
         {filteredRequests.length > REQUEST_PAGE_SIZE && (
           <div className="pagination-bar">
             <span>
-              Showing {Math.min((requestPage - 1) * REQUEST_PAGE_SIZE + 1, filteredRequests.length)}ΓÇô
+              Showing {Math.min((requestPage - 1) * REQUEST_PAGE_SIZE + 1, filteredRequests.length)}–
               {Math.min(requestPage * REQUEST_PAGE_SIZE, filteredRequests.length)} of {filteredRequests.length} requests
             </span>
             <div className="pagination-controls">
@@ -1073,7 +1073,7 @@ export const AdminView: React.FC = () => {
               <input
                 type="text"
                 className="admin-search-input"
-                placeholder="Search queries, questions, or query IDsΓÇª"
+                placeholder="Search queries, questions, or query IDs..."
                 value={auditSearch}
                 onChange={(e) => {
                   setAuditSearch(e.target.value)
@@ -1090,7 +1090,7 @@ export const AdminView: React.FC = () => {
                   }}
                   title="Clear search"
                 >
-                  Γ£ò
+                  <X size={12} />
                 </button>
               )}
             </div>
@@ -1180,7 +1180,7 @@ export const AdminView: React.FC = () => {
                 paginatedAuditLogs.map((log) => (
                   <tr key={log.id}>
                     <td className="font-mono text-muted" style={{ fontSize: '0.72rem' }}>
-                      {log.id.slice(0, 8)}ΓÇª
+                      {log.id.slice(0, 8)}...
                     </td>
                     <td>
                       <span className="cell-truncate font-medium" style={{ color: 'var(--qt-ink)' }} title={log.question || 'N/A'}>
@@ -1189,7 +1189,7 @@ export const AdminView: React.FC = () => {
                     </td>
                     <td>{getAuditStatusPill(log)}</td>
                     <td>
-                      <HumanDate iso={log.created_at} fallback="ΓÇö" />
+                      <HumanDate iso={log.created_at} fallback="—" />
                     </td>
                   </tr>
                 ))
@@ -1202,7 +1202,7 @@ export const AdminView: React.FC = () => {
         {filteredAuditLogs.length > AUDIT_PAGE_SIZE && (
           <div className="pagination-bar">
             <span>
-              Showing {Math.min((auditPage - 1) * AUDIT_PAGE_SIZE + 1, filteredAuditLogs.length)}ΓÇô
+              Showing {Math.min((auditPage - 1) * AUDIT_PAGE_SIZE + 1, filteredAuditLogs.length)}–
               {Math.min(auditPage * AUDIT_PAGE_SIZE, filteredAuditLogs.length)} of {filteredAuditLogs.length} queries
             </span>
             <div className="pagination-controls">
@@ -1272,9 +1272,9 @@ export const AdminView: React.FC = () => {
                 className="btn btn-icon btn-sm"
                 onClick={() => setShowInviteModal(false)}
                 aria-label="Close"
-                style={{ fontSize: '1.1rem', lineHeight: 1 }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                Γ£ò
+                <X size={16} />
               </button>
             </div>
 
@@ -1405,7 +1405,7 @@ export const AdminView: React.FC = () => {
                     className="btn btn-primary btn-sm"
                     disabled={inviteLoading || !inviteValues.fullName || !inviteValues.email}
                   >
-                    {inviteLoading ? 'Adding teammateΓÇª' : 'Add Teammate ΓåÆ'}
+                    {inviteLoading ? 'Adding teammate...' : 'Add Teammate →'}
                   </button>
                 </div>
               </form>

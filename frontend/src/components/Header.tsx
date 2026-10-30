@@ -7,6 +7,7 @@ import {
   Moon,
   Check,
   Loader2,
+  Search,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -102,6 +103,7 @@ function formatRole(role?: string): string {
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onNavigate,
+  onOpenCommandPalette,
   onOpenOnboarding,
 }) => {
   const { user, login, logout, enterDemoMode } = useAuth()
@@ -188,12 +190,12 @@ export const Header: React.FC<HeaderProps> = ({
         role="banner"
         aria-label="Top Navigation Bar"
         style={{
-          height: '48px',
-          minHeight: '48px',
-          maxHeight: '48px',
+          height: '52px',
+          minHeight: '52px',
+          maxHeight: '52px',
           borderBottom: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-surface-1)',
-          padding: '0 1rem',
+          backgroundColor: 'var(--bg-card)',
+          padding: '0 1.25rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -201,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
           zIndex: 30,
         }}
       >
-        {/* ─── Left Side: Workspace Breadcrumb + Environment Selector ─── */}
+        {/* ─── Left Side: Workspace Breadcrumb ─── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
           <nav
             style={{
@@ -213,125 +215,109 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             aria-label="Breadcrumb navigation"
           >
-            <span style={{ fontWeight: 700, color: 'var(--ink-primary)', letterSpacing: '-0.01em' }}>
-              QueryTrust AI
+            <span style={{ fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+              QueryTrust
             </span>
-            <span style={{ color: 'var(--border-strong)' }}>/</span>
+            <span style={{ color: 'var(--text-subtle)' }}>/</span>
             <button
               type="button"
               onClick={() => onNavigate?.('overview')}
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--ink-muted)',
+                color: 'var(--text-muted)',
                 padding: 0,
                 cursor: 'pointer',
                 fontSize: '12.5px',
               }}
               title="Return to fleet overview"
             >
-              {user?.workspace_name || 'Default Workspace'}
+              {user?.workspace_name || 'Workspace'}
             </button>
-            <span style={{ color: 'var(--border-strong)' }}>/</span>
-            <span style={{ fontWeight: 600, color: 'var(--ink-primary)' }}>
+            <span style={{ color: 'var(--text-subtle)' }}>/</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
               {activeTab ? TAB_LABELS[activeTab] || activeTab : 'Fleet Overview'}
             </span>
           </nav>
+        </div>
 
-          {/* Environment Selector */}
-          <div
+        {/* ─── Center: ⌘K Global Command Palette Trigger ─── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={onOpenCommandPalette}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
-              backgroundColor: 'var(--bg-surface-2)',
+              justifyContent: 'space-between',
+              width: '280px',
+              height: '32px',
+              backgroundColor: 'var(--bg-subtle)',
               border: '1px solid var(--border-subtle)',
-              borderRadius: '4px',
-              padding: '2px 6px',
-              fontSize: '10.5px',
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--ink-muted)',
-              marginLeft: '4px',
+              borderRadius: '8px',
+              padding: '0 10px',
+              fontSize: '11.5px',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 120ms ease',
             }}
-            title="Database Connection Mode: PostgreSQL Dedicated Read-Only Replica"
+            title="Press ⌘K or Ctrl+K to open global command palette"
           >
-            <span
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Search size={12} style={{ color: 'var(--text-subtle)' }} />
+              <span>Ask data or search actions...</span>
+            </span>
+            <kbd
               style={{
-                width: '5px',
-                height: '5px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--gov-safe-dot)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-subtle)',
               }}
-            />
-            <span>Production Replica &bull; Read-Only</span>
-          </div>
+            >
+              ⌘K
+            </kbd>
+          </button>
         </div>
 
-        {/* ─── Center: Interactive ROI & Velocity Ticker Pill ─── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* ─── Right Side: Single Status Pill + Controls ─── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Single Consolidated Status Pill */}
           <button
             type="button"
             onClick={() => setRoiModalOpen(true)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px',
-              backgroundColor: 'var(--bg-surface-2)',
+              gap: '6px',
+              backgroundColor: 'var(--bg-subtle)',
               border: '1px solid var(--border-subtle)',
               borderRadius: '9999px',
-              padding: '3px 12px',
+              padding: '4px 10px',
               fontSize: '11px',
               fontFamily: 'var(--font-mono)',
-              color: 'var(--ink-secondary)',
+              color: 'var(--text-main)',
               cursor: 'pointer',
               transition: 'all 120ms ease',
             }}
-            title="Click to inspect Enterprise ROI, 151/151 Test Metrics, and Turnaround Proof"
+            title="Kernel Status: 6/6 AST Gates Enforced • Dedicated SELECT-Only Replica • Click for Metrics"
           >
-            <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>⚡ 1.4s Avg Turnaround</span>
-            <span style={{ color: 'var(--border-strong)' }}>&bull;</span>
-            <span style={{ color: 'var(--ink-primary)', fontWeight: 600 }}>65% Tickets Deflected</span>
-            <span style={{ color: 'var(--border-strong)' }}>&bull;</span>
-            <span style={{ color: 'var(--gov-safe-text)', fontWeight: 600 }}>151/151 Tests Pass</span>
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--gov-safe-dot)',
+                boxShadow: '0 0 0 2px var(--gov-safe-bg)',
+              }}
+            />
+            <span style={{ fontWeight: 600 }}>Kernel Read-Only</span>
+            <span style={{ color: 'var(--text-subtle)' }}>&bull;</span>
+            <span style={{ color: 'var(--text-muted)' }}>1.4ms</span>
           </button>
-        </div>
-
-        {/* ─── Right Side: Consolidated Hardware Status Strip ─── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Hardware Monospace Status Strip */}
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '11px',
-              backgroundColor: 'var(--bg-surface-2)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '6px',
-              padding: '3px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: 'var(--ink-secondary)',
-            }}
-            title="Kernel Security: PostgreSQL SELECT-only role active | 6-Layer AST Guard enforced"
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--gov-safe-dot)',
-                  display: 'inline-block',
-                  boxShadow: '0 0 0 2px var(--gov-safe-bg)',
-                }}
-              />
-              <span style={{ color: 'var(--gov-safe-text)', fontWeight: 600 }}>AST GUARD: 6/6 ENFORCED</span>
-            </span>
-            <span style={{ color: 'var(--border-strong)' }}>|</span>
-            <span style={{ color: 'var(--ink-primary)' }}>PG_ROLE: qt_ai_readonly (0 WRITE)</span>
-            <span style={{ color: 'var(--border-strong)' }}>|</span>
-            <span style={{ color: 'var(--ink-muted)' }}>P95: 1.8ms</span>
-          </div>
 
           {/* Instant 1-Click Role Switcher Dropdown */}
           <div style={{ position: 'relative' }}>

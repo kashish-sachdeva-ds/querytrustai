@@ -27,7 +27,6 @@ import {
   resetWorkspaceSandbox,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
@@ -154,7 +153,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   onAskQuestion,
   onOpenDevice,
 }) => {
-  const { mode } = useTheme()
   const { user, logout } = useAuth()
   const [data, setData] = useState<DashboardSummaryResponse | null>(null)
   const [activeSource, setActiveSource] = useState<ActiveDataSourceResponse | null>(null)
@@ -1175,7 +1173,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             {/* Legend with Counts (Rule 6) */}
             <div className="lifecycle-legend-grid">
               {normalizedFleetBreakdown.map((item) => {
-                const isUnapproved = item.name === 'Pending Audit' || item.name === 'Staged'
                 const pct = totalBreakdownCount > 0 ? ((item.value / totalBreakdownCount) * 100).toFixed(1) : '0'
 
                 return (
@@ -1190,18 +1187,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     <span className="lifecycle-legend-name">{item.name}</span>
                     <span className="lifecycle-legend-count">{formatNumber(item.value)}</span>
                     <span className="lifecycle-legend-pct">{pct}%</span>
-                    {isUnapproved && (
-                      <span
-                        className="lifecycle-unapproved-label"
-                        title={
-                          mode === 'expert'
-                            ? 'Policy Rule DQ-005: Status value is outside verified production lifecycle taxonomy (Pending Audit / Staged).'
-                            : 'Policy Rule POL-02: Non-production lifecycle staging.'
-                        }
-                      >
-                        {mode === 'expert' ? '[DQ-005: Unapproved Taxonomy]' : '[POL-02: Non-Prod Staging]'}
-                      </span>
-                    )}
                   </button>
                 )
               })}

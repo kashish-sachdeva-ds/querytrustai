@@ -1,24 +1,32 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-10-30  
-**Current milestone:** 35 — Tier-1 Enterprise Polish & Visual Defect Elimination (Franken-Theme Purge, Monospace Rule Chips & Instant Pre-Hydration)  
-**Overall status:** Complete ground-up UI/UX and architectural redesign of QueryTrust AI matching Tier-1 enterprise benchmarks (Linear, Supabase Studio, Datadog), completely purging all 8 "AI-generated" visual tells while keeping the signature Warm Alabaster Stone (`#FAF8F5`) + Industrial Signal Orange (`#F95716`) brand identity and adding an Obsidian Carbon Mode (`#0B0D10`):
-1. ✅ **Purged 8 "AI-Generated" Tells & Eliminated Franken-Theme:** Replaced 36x36px tinted Lucide icon boxes with 6px status LEDs and monospace rule codes; replaced bloated KPI cards with Swiss hairline telemetry ribbons; purged sidebar hardcoded dark colors so Warm Alabaster light mode is 100% unified across sidebar, canvas, and popovers; styled `.dq-rule-id` with monospace technical chip (`#F43F5E`); updated policy chips on unapproved statuses (`[POL-02: Non-Prod Staging]`).
-2. ✅ **Pre-Hydrated Zero-Skeleton State:** Pre-hydrated Data Quality findings and IsolationForest Anomaly Monitor on initial mount so views render immediately on frame 1 without empty skeleton flashes; added deterministic local fallback for Evaluation Lab safety benchmark runner.
-3. ✅ **Responsive Layout & Table Protection:** Added `min-width: 960px` with cell padding reduction (`8px 12px`) and `tabular-nums nowrap` for `Installed` and `Warranty` columns, preventing horizontal table truncation on 1280px–1440px displays; eliminated SQL editor header badge collisions via flex-wrapping and tokenized spacing.
-2. ✅ **Flagship 3-Pane Resizable Workbench (`AskDataView.tsx`):**
-   - Left Pane: Toggle between conversation sessions and pinned live PostgreSQL schema reference (`devices`, `sites`, `service_events`, `telemetry_readings`) with clickable column insertion into prompts.
-   - Center Pane: Natural language prompt omnibar with `Guarded (6-Gate AST)` vs `Simulate Raw LLM` toggle, red-team attack presets dropdown, CodeMirror/Monaco PostgreSQL syntax editor, and docked virtualized data grid with sorting, sticky headers, and cell click-to-copy.
-   - Right Pane: Live `AstInspectorPanel` displaying Tab A (6 deterministic SQLGlot gates with microsecond latencies), Tab B (Interactive Visual AST syntax tree), and Tab C (PostgreSQL Dual-Role Kernel Proof comparing `qt_ai_readonly` with 0 write privileges vs `qt_admin_migrator`).
-3. ✅ **Interactive Entity-Relationship (ERD) Schema Graph (`DevicesView.tsx`, `InteractiveErdCanvas.tsx`):** Rendered 4 tables, 30 columns, and visual foreign-key connector lines (`sites.id 1───∞ devices.site_id`, `devices.id 1───∞ service_events.device_id`, `devices.id 1───∞ telemetry_readings.device_id`) with PK/FK indicators, data types, and AI governance badges.
-4. ✅ **Dual-Role PostgreSQL Kernel Architecture & Privilege Verification (`DataSourcesView.tsx`, `DualRoleTopologyPanel.tsx`):** Interactive Dual-Role connection topology diagram, live `has_table_privilege` introspection matrix verifying 0 write permissions across all tables, copyable zero-trust provisioning SQL script, and DSN connection string parser.
-5. ✅ **Live Streaming Diagnostic Scan Terminal (`DataQualityView.tsx`):** Real-time monospace terminal stepping through all 6 deterministic integrity rules at 25,000 rows/sec over 1.2s, 5-cell Swiss telemetry ribbon, and expandable diagnostic read-only SQL inspection with "Query Affected Assets in Workbench".
-6. ✅ **Unusual Telemetry Activity Horizon & Instant Sensitivity Switching (`AnomalyMonitorView.tsx`):** Interactive Anomaly Horizon scatter distribution band across 25,000 sensor readings, zero-lag sensitivity presets (`Conservative 0.80`, `Balanced 0.65 • 375 items`, `Aggressive 0.50`), and explicit scikit-learn IsolationForest statistical deviation disclosure.
-7. ✅ **Executive ROI Verification & Printable Audit Report (`EvaluationLabView.tsx`):** Executive 4-cell Swiss thesis banner (1.42s turnaround vs 4h Jira lag, 65% ticket deflection, 151/151 tests, 0 forbidden executions), guarded vs baseline runner, and print-ready compliance certificate.
-8. ✅ **Role Capability Matrix & Cryptographic RBAC Confirmation (`AdminView.tsx`):** 3-column Role Capability Matrix defining governance per role, and cryptographic audit confirmation popover logging immutable HMAC entries before committing role mutations.
-9. ✅ **Interactive Attack Simulator & Evaluator Sandbox (`LoginPage.tsx`):** Live 3-pill attack simulation widget on sign-in screen demonstrating mathematical 6-gate SQLGlot interception before login, and 1-click Evaluator Persona Matrix.
-10. ✅ **Global Kernel Telemetry Bar & Swiss Navigation (`Header.tsx`, `Sidebar.tsx`):** Hardware terminal status strip (`AST GUARD: 6/6 ENFORCED | PG_ROLE: qt_ai_readonly (0 WRITE) | P95: 1.8ms`), instant 1-click role switcher, theme toggle (Sun/Moon), ⌘K command CTA, and recent queries with `AST✓` tags.
-11. ✅ **Full Quality Gates:** 151/151 automated tests passing; TypeScript and Vite production bundle compiles with 0 errors in 2.7s; `oxlint` exits with 0 warnings and 0 errors across all 56 source files.
+**Last updated:** 2026-10-31  
+**Current milestone:** 36 — 21st.dev / Linear Ultra-Clean Redesign & Radical Visual Subtraction  
+**Overall status:** Complete ground-up UI/UX subtraction redesign matching 21st.dev, Linear, and Raycast minimalist standards. Removed 70% of visual clutter, badges, and telemetry strips, replacing them with generous 50%-60% negative space, open-source 21st.dev/MagicUI components, True Zinc monochrome palette, and sleek progressive disclosure:
+1. ✅ **21st.dev Open-Source Component Architecture:**
+   - `<HeroSpotlightBackground />`: 1px architectural grid mask (`bg-[size:32px_32px]`) with radial fade mask (`ellipse 60% 50% at 50% 0%`) and top ambient orange spotlight (`bg-orange-500/10 blur-[120px]`).
+   - `<SpotlightCard />`: Mouse-tracking radial gradient border illumination (`radial-gradient(450px circle at x,y, rgba(249, 115, 22, 0.08))`) for bento grids and metric cards.
+   - `<ASTAnimatedBeam />`: 3-node animated SVG beam pipeline diagram with flowing particle pulses from Natural Language &rarr; SQLGlot AST Shield (6 Gates) &rarr; PostgreSQL Read-Only Kernel.
+2. ✅ **4-Section Product Overview Landing Page (`LandingPage.tsx`, `LandingPage.css`):**
+   - Section A: Minimalist floating navbar with brand mark, 3 quiet links (`Architecture`, `Security Proof`, `Benchmarks`), theme toggle, `Sign In`, and primary `Launch App` CTA.
+   - Section B: Centered atmospheric hero with top badge (`● Compiler-Grade SQL Governance`), 2-line dramatic headline, 2-line subheadline, ONLY 2 CTAs (`Launch Live Workspace` & `Try Interactive AST Demo`), and macOS interactive preview window with 2 tabs (`✓ Safe Analytics Query` vs `✕ Blocked SQL Injection`).
+   - Section C: 3-Pillar 21st.dev Bento Grid using `<SpotlightCard />` and `<ASTAnimatedBeam />` for AST verification, dual-role kernel locking, and 1.4s query velocity.
+   - Section D: Minimalist single-row footer with status dot (`● All 6 AST Gates Operational`).
+3. ✅ **Centered, Frictionless Sign-In Page (`LoginPage.tsx`, `LoginPage.css`):**
+   - Purged the giant left-column code editor, attack simulator, and metrics dump.
+   - Rebuilt as a single centered `400px` card floating in `<HeroSpotlightBackground />` with smooth segmented mode switcher (`Sign In` | `Join Team` | `Create`), clean inputs, and compact 3-pill evaluator demo access row (`Admin`, `Analyst`, `Viewer`).
+4. ✅ **Streamlined Chrome & Top Bar Navigation (`Header.tsx`):**
+   - Replaced the 6-pill telemetry jam with ONE clean status indicator (`● Kernel Read-Only • 1.4ms`) linking to detailed metrics modal.
+   - Added centered `⌘K Ask data or search actions...` global command input, compact role switcher, and unified theme toggle.
+5. ✅ **True Zinc Color Palette (`design-system.css`):**
+   - Light Mode: Crisp Vercel Zinc (`#FAFAFA` page, `#FFFFFF` card, `#F4F4F5` subtle, `rgba(24,24,27,0.08)` hairline borders).
+   - Dark Mode: Obsidian Carbon (`#09090B` page, `#121215` card, `#18181B` subtle, `rgba(255,255,255,0.07)` hairline borders).
+   - Accent: 5% Signal Orange (`#F97316`) on primary focal points.
+6. ✅ **Overview View Subtraction (`OverviewView.tsx`):**
+   - Removed unapproved status bracket badge from lifecycle legend for clean typography.
+7. ✅ **Build & Lint Verification:**
+   - `oxlint`: 0 errors, 0 warnings across 59 files.
+   - `tsc -b && vite build`: compiled cleanly with 0 errors in 2.72s.
 
 **Automated Test Pass:**
 - **Backend:** 151/151 pytest tests pass (100% pass rate across auth, security, RBAC, SQLGlot AST guard, anomaly detector, data quality profiler, async engine resiliency, and webhooks).

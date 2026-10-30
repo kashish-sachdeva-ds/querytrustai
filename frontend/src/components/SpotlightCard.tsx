@@ -39,3 +39,4 @@ export function SpotlightCard({ children, className = '', style, onClick }: Spot
     </div>
   )
 }
+

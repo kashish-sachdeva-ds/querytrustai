@@ -369,7 +369,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                   onChange={handleEmailChange}
                   placeholder="analyst@company.com"
                   autoComplete="email"
-                  className="w-full h-10 px-3 pl-9 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-[#F97316] focus:outline-none transition-colors"
+                  className="w-full h-10 pl-10 pr-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-[#F97316] focus:outline-none transition-colors"
                 />
                 <Mail size={14} className="absolute left-3 top-3 text-[var(--text-muted)] pointer-events-none" />
               </div>
@@ -388,7 +388,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                   onChange={handlePasswordChange}
                   placeholder="••••••••••••"
                   autoComplete="current-password"
-                  className="w-full h-10 px-3 pl-9 pr-9 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-[#F97316] focus:outline-none transition-colors"
+                  className="w-full h-10 pl-10 pr-10 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-[#F97316] focus:outline-none transition-colors"
                 />
                 <Lock size={14} className="absolute left-3 top-3 text-[var(--text-muted)] pointer-events-none" />
                 <button

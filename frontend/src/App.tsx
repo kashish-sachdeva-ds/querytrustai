@@ -80,7 +80,7 @@ const AppShell: React.FC = () => {
   const joinParam = readUrlParam('join') || readUrlParam('workspace')
   const [unauthView, setUnauthView] = useState<'landing' | 'login'>(() => {
     const tab = readUrlParam('tab')
-    return tab === 'landing' ? 'landing' : 'login'
+    return tab === 'login' ? 'login' : 'landing'
   })
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
 
@@ -337,7 +337,7 @@ export default function App() {
   const requestedTab = readUrlParam('tab')
   const isKnownRoute =
     window.location.pathname === '/' &&
-    (!requestedTab || tabs.includes(requestedTab as ActiveTab) || requestedTab === 'login')
+    (!requestedTab || tabs.includes(requestedTab as ActiveTab) || requestedTab === 'login' || requestedTab === 'landing')
 
   if (!isKnownRoute) {
     return <NotFoundPage />

@@ -1,3 +1,7 @@
+@import "tailwindcss";
+@source "./**/*.{js,ts,jsx,tsx,html}";
+@source "../index.html";
+
 /* ==========================================================================
    QueryTrust AI — Base Reset & Structural Styles
    This file provides layout primitives, the application shell, and shared
@@ -5,7 +9,9 @@
    ========================================================================== */
 
 /* --- Reset ---------------------------------------------------------------- */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+}
 
 /* --- App Shell ------------------------------------------------------------ */
 .app-container {

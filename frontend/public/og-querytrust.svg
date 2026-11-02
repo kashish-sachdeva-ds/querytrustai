@@ -1,29 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">QueryTrust AI — Governed analytics workbench</title>
-  <desc id="desc">A warm editorial preview card for the QueryTrust AI synthetic-data analytics workbench.</desc>
-  <rect width="1200" height="630" fill="#FAF8F5"/>
-  <rect x="50" y="48" width="1100" height="534" rx="24" fill="#FFFFFF" stroke="#E6E4E0" stroke-width="2"/>
-  <rect x="50" y="48" width="1100" height="86" rx="24" fill="#25221F"/>
+  <desc id="desc">A minimal, clean preview card for the QueryTrust AI analytics workbench.</desc>
+  <rect width="1200" height="630" fill="#F8FAFC"/>
+  <rect x="50" y="48" width="1100" height="534" rx="24" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="50" y="48" width="1100" height="86" rx="24" fill="#0F172A"/>
   <g transform="translate(88, 73)">
-    <path d="M19 3 L5 10 C5 21 11 30 19 35 C19 30 19 24 19 19 L10 14 L19 9 Z" fill="#FF7A00"/>
-    <path d="M19 3 L33 10 C33 21 27 30 19 35 C19 30 19 24 19 19 L28 14 L19 9 Z" fill="#E04400"/>
+    <path d="M19 3 L5 10 C5 21 11 30 19 35 C19 30 19 24 19 19 L10 14 L19 9 Z" fill="#18181B"/>
+    <path d="M19 3 L33 10 C33 21 27 30 19 35 C19 30 19 24 19 19 L28 14 L19 9 Z" fill="#27272A"/>
     <path d="M19 9 L28 14 L19 19 L10 14 Z" fill="#FFFFFF"/>
-    <path d="M20 21 L33 33 C34 34 36 33 35 32 L32 24 L25 20 Z" fill="#FFA000"/>
+    <path d="M20 21 L33 33 C34 34 36 33 35 32 L32 24 L25 20 Z" fill="#3F3F46"/>
     <circle cx="19" cy="19" r="2" fill="#FFFFFF"/>
+    <circle cx="33" cy="33" r="1.5" fill="#38BDF8"/>
   </g>
-  <text x="146" y="91" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#FFFAF5">QueryTrust AI</text>
-  <text x="146" y="112" font-family="Arial, sans-serif" font-size="12" letter-spacing="2" fill="#C6BDB3">GOVERNANCE WORKBENCH</text>
-  <text x="100" y="208" font-family="Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="2" fill="#FF4F00">GOVERNED ANALYTICS / SYNTHETIC DATA</text>
-  <text x="100" y="282" font-family="Arial, sans-serif" font-size="60" font-weight="700" fill="#191817">Ask data. Verify SQL.</text>
-  <text x="100" y="350" font-family="Arial, sans-serif" font-size="60" font-weight="700" fill="#191817">Keep control.</text>
-  <text x="100" y="412" font-family="Arial, sans-serif" font-size="23" fill="#4F4A45">A read-only natural-language analytics workbench with visible validation,</text>
-  <text x="100" y="444" font-family="Arial, sans-serif" font-size="23" fill="#4F4A45">data quality diagnostics, and transparent evaluation.</text>
-  <rect x="820" y="205" width="250" height="280" rx="14" fill="#F5F2ED" stroke="#E6E4E0"/>
-  <rect x="852" y="239" width="124" height="12" rx="6" fill="#D7D2CA"/>
-  <rect x="852" y="273" width="178" height="48" rx="8" fill="#FFFFFF" stroke="#E6E4E0"/>
-  <rect x="870" y="290" width="76" height="12" rx="6" fill="#FF4F00" opacity=".9"/>
-  <rect x="852" y="342" width="178" height="16" rx="8" fill="#D7D2CA"/>
-  <rect x="852" y="376" width="146" height="16" rx="8" fill="#D7D2CA"/>
-  <rect x="852" y="420" width="118" height="30" rx="6" fill="#FF4F00"/>
-  <text x="100" y="526" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#766F68">SQLGLOT SAFETY • ROLE-BASED ACCESS • AUDITABLE PREVIEWS</text>
+  <text x="146" y="91" font-family="system-ui, -apple-system, sans-serif" font-size="23" font-weight="700" fill="#FFFFFF">QueryTrust AI</text>
+  <text x="146" y="112" font-family="system-ui, -apple-system, sans-serif" font-size="12" letter-spacing="2" fill="#94A3B8">ZERO-TRUST DATABASE GOVERNANCE</text>
+  <text x="100" y="208" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700" letter-spacing="2" fill="#0EA5E9">GOVERNED ANALYTICS / READ-ONLY KERNEL</text>
+  <text x="100" y="282" font-family="system-ui, -apple-system, sans-serif" font-size="60" font-weight="800" fill="#0F172A">Ask data. Verify SQL.</text>
+  <text x="100" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="60" font-weight="800" fill="#0F172A">Keep control.</text>
+  <text x="100" y="412" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#475569">A read-only natural-language analytics workbench with visible AST validation,</text>
+  <text x="100" y="444" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#475569">data quality diagnostics, and mathematical zero write guarantees.</text>
+  <rect x="820" y="205" width="250" height="280" rx="14" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <rect x="852" y="239" width="124" height="12" rx="6" fill="#CBD5E1"/>
+  <rect x="852" y="273" width="178" height="48" rx="8" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="870" y="290" width="76" height="12" rx="6" fill="#0EA5E9" opacity=".9"/>
+  <rect x="852" y="342" width="178" height="16" rx="8" fill="#E2E8F0"/>
+  <rect x="852" y="376" width="146" height="16" rx="8" fill="#E2E8F0"/>
+  <rect x="852" y="420" width="118" height="30" rx="6" fill="#0F172A"/>
+  <text x="100" y="526" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700" fill="#64748B">SQLGLOT AST VERIFICATION • POSTGRESQL 16 READ-ONLY • AUDITABLE PREVIEWS</text>
 </svg>

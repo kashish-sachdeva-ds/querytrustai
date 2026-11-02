@@ -6,7 +6,7 @@ import fs from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const frontendRoot = path.resolve(__dirname, '..')
-const auditDir = 'C:\\Users\\Lenovo\\.gemini\\antigravity\\brain\\d998ba12-922c-4430-8e40-449d2097c160\\audit_screens'
+const auditDir = 'C:\\Users\\Lenovo\\.gemini\\antigravity\\brain\\466157d9-cbd7-4e17-b1d9-842df31efe25\\audit_screens'
 
 if (!fs.existsSync(auditDir)) {
   fs.mkdirSync(auditDir, { recursive: true })

@@ -90,7 +90,7 @@ export const GlobalErrorBanner: React.FC<GlobalErrorBannerProps> = ({
                 fontSize: '0.78rem',
                 fontWeight: 600,
                 color: '#fff',
-                backgroundColor: 'var(--qt-accent, #ff5a14)',
+                backgroundColor: 'var(--qt-accent, #0ea5e9)',
                 border: 'none',
                 borderRadius: 4,
                 cursor: 'pointer',

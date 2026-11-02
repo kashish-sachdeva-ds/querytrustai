@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { LucideIcon } from 'lucide-react'
 import { Command, Search } from 'lucide-react'
+import './CommandPalette.css'
 
 export interface CommandPaletteAction {
   id: string

@@ -18,13 +18,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>(() => {
     try {
-      const stored = localStorage.getItem('qt-theme-preference')
+      const stored = localStorage.getItem('qt-theme-v2')
       if (stored === 'light' || stored === 'dark' || stored === 'system') {
         return stored
-      }
-      const legacy = localStorage.getItem('qt-theme')
-      if (legacy === 'light' || legacy === 'dark') {
-        return legacy
       }
     } catch {
       /* restricted storage */
@@ -68,6 +64,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       document.documentElement.classList.remove('dark')
     }
     try {
+      localStorage.setItem('qt-theme-v2', themePreference)
       localStorage.setItem('qt-theme-preference', themePreference)
       localStorage.setItem('qt-theme', resolvedTheme)
     } catch {

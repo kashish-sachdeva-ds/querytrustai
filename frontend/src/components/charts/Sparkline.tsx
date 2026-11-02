@@ -14,7 +14,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
   data,
   width = '100%',
   height = 24,
-  color = 'var(--qt-accent, #FF4F00)',
+  color = 'var(--accent-sky, #0284C7)',
   fill = false,
   className = '',
   ariaLabel = 'Metric trend sparkline',

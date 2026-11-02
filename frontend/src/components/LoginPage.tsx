@@ -278,18 +278,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
       )}
 
       {/* Centered Auth Card */}
-      <div className="w-full max-w-[400px] rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-8 shadow-2xl relative z-10 backdrop-blur-sm">
+      <div className="w-full max-w-[420px] rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#09090C] p-8 shadow-[0_24px_70px_rgba(0,0,0,0.4)] relative z-10 backdrop-blur-xl transition-all">
         {/* Emblem & Title */}
         <div className="flex flex-col items-center text-center">
           <QueryTrustLogo size={36} />
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-main)] mt-3">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text-main)] mt-3.5">
             {authMode === 'signin'
               ? 'Sign in to QueryTrust'
               : authMode === 'join'
               ? 'Join Team Workspace'
               : 'Create Company Workspace'}
           </h1>
-          <p className="text-xs text-[var(--text-muted)] mt-1">
+          <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
             Governed natural-language SQL analytics workbench
           </p>
         </div>
@@ -369,7 +369,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                   onChange={handleEmailChange}
                   placeholder="analyst@company.com"
                   autoComplete="email"
-                  className="w-full h-10 pl-10 pr-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-[#F97316] focus:outline-none transition-colors"
+                  className="w-full h-10 pl-10 pr-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-sky-500 focus:outline-none transition-colors"
                 />
                 <Mail size={14} className="absolute left-3 top-3 text-[var(--text-muted)] pointer-events-none" />
               </div>
@@ -388,7 +388,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                   onChange={handlePasswordChange}
                   placeholder="••••••••••••"
                   autoComplete="current-password"
-                  className="w-full h-10 pl-10 pr-10 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-[#F97316] focus:outline-none transition-colors"
+                  className="w-full h-10 pl-10 pr-10 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-sky-500 focus:outline-none transition-colors"
                 />
                 <Lock size={14} className="absolute left-3 top-3 text-[var(--text-muted)] pointer-events-none" />
                 <button
@@ -406,7 +406,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-10 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+              className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
             >
               <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
               <ArrowRight size={13} />
@@ -423,7 +423,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 value={joinValues.workspaceName}
                 onChange={(e) => setJoinValues((prev) => ({ ...prev, workspaceName: e.target.value }))}
                 placeholder="Acme Corp"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-[#F97316] focus:outline-none"
+                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
               />
               {joinErrors.workspaceName && <p className="text-[11px] text-rose-500 mt-1">{joinErrors.workspaceName}</p>}
             </div>
@@ -435,7 +435,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 value={joinValues.fullName}
                 onChange={(e) => setJoinValues((prev) => ({ ...prev, fullName: e.target.value }))}
                 placeholder="Jane Doe"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-[#F97316] focus:outline-none"
+                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
               />
               {joinErrors.fullName && <p className="text-[11px] text-rose-500 mt-1">{joinErrors.fullName}</p>}
             </div>
@@ -447,7 +447,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 value={joinValues.email}
                 onChange={(e) => setJoinValues((prev) => ({ ...prev, email: e.target.value }))}
                 placeholder="jane@acme.com"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-[#F97316] focus:outline-none"
+                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
               />
               {joinErrors.email && <p className="text-[11px] text-rose-500 mt-1">{joinErrors.email}</p>}
             </div>
@@ -459,7 +459,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 value={joinValues.password}
                 onChange={(e) => setJoinValues((prev) => ({ ...prev, password: e.target.value }))}
                 placeholder="••••••••••••"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-[#F97316] focus:outline-none"
+                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
               />
               {joinErrors.password && <p className="text-[11px] text-rose-500 mt-1">{joinErrors.password}</p>}
             </div>
@@ -467,7 +467,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             <button
               type="submit"
               disabled={joinLoading}
-              className="w-full h-10 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2"
+              className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2 cursor-pointer"
             >
               <span>{joinLoading ? 'Joining...' : 'Join Team Workspace'}</span>
               <ArrowRight size={13} />
@@ -484,7 +484,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 value={registerValues.workspaceName}
                 onChange={(e) => setRegisterValues((prev) => ({ ...prev, workspaceName: e.target.value }))}
                 placeholder="Enterprise Tech"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-[#F97316] focus:outline-none"
+                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
               />
               {registerErrors.workspaceName && <p className="text-[11px] text-rose-500 mt-1">{registerErrors.workspaceName}</p>}
             </div>
@@ -496,7 +496,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 value={registerValues.fullName}
                 onChange={(e) => setRegisterValues((prev) => ({ ...prev, fullName: e.target.value }))}
                 placeholder="Alex Morgan"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-[#F97316] focus:outline-none"
+                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
               />
               {registerErrors.fullName && <p className="text-[11px] text-rose-500 mt-1">{registerErrors.fullName}</p>}
             </div>
@@ -508,7 +508,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 value={registerValues.email}
                 onChange={(e) => setRegisterValues((prev) => ({ ...prev, email: e.target.value }))}
                 placeholder="alex@enterprisetech.com"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-[#F97316] focus:outline-none"
+                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
               />
               {registerErrors.email && <p className="text-[11px] text-rose-500 mt-1">{registerErrors.email}</p>}
             </div>
@@ -520,7 +520,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                 value={registerValues.password}
                 onChange={(e) => setRegisterValues((prev) => ({ ...prev, password: e.target.value }))}
                 placeholder="••••••••••••"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-[#F97316] focus:outline-none"
+                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
               />
               <PasswordStrengthMeter strength={registerPasswordStrength} passwordLength={registerValues.password.length} />
             </div>
@@ -528,7 +528,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             <button
               type="submit"
               disabled={registerLoading}
-              className="w-full h-10 rounded-xl bg-[#F97316] hover:bg-[#EA580C] text-white font-medium text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2"
+              className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2 cursor-pointer"
             >
               <span>{registerLoading ? 'Creating...' : 'Create Workspace'}</span>
               <ArrowRight size={13} />
@@ -550,38 +550,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           <button
             type="button"
             onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
-            className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-purple-500/40 text-left transition-all cursor-pointer group flex flex-col justify-between"
+            className="p-3 rounded-2xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-purple-500/50 text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate full admin governance & AST configuration"
           >
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
-              <span className="text-[11px] font-semibold text-[var(--text-main)]">Admin</span>
+              <span className="text-[11px] font-bold text-[var(--text-main)] font-mono">Admin</span>
             </div>
-            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)]">Full AST &amp; RBAC</span>
+            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] font-mono">Full AST &amp; RBAC</span>
           </button>
           <button
             type="button"
             onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
-            className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-blue-500/40 text-left transition-all cursor-pointer group flex flex-col justify-between"
+            className="p-3 rounded-2xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-sky-500/50 text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate analyst NL-to-SQL & diagnostics"
           >
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-              <span className="text-[11px] font-semibold text-[var(--text-main)]">Analyst</span>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0" />
+              <span className="text-[11px] font-bold text-[var(--text-main)] font-mono">Analyst</span>
             </div>
-            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)]">Studio &amp; SQL</span>
+            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] font-mono">Studio &amp; SQL</span>
           </button>
           <button
             type="button"
             onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
-            className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-emerald-500/40 text-left transition-all cursor-pointer group flex flex-col justify-between"
+            className="p-3 rounded-2xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-emerald-500/50 text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate read-only consumer charts & answers"
           >
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-              <span className="text-[11px] font-semibold text-[var(--text-main)]">Viewer</span>
+              <span className="text-[11px] font-bold text-[var(--text-main)] font-mono">Viewer</span>
             </div>
-            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)]">Plain English</span>
+            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] font-mono">Plain English</span>
           </button>
         </div>
       </div>

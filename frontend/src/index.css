@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 @source "./**/*.{js,ts,jsx,tsx,html}";
 @source "../index.html";
 
@@ -11,6 +12,46 @@
 /* --- Reset ---------------------------------------------------------------- */
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
+
+  /* Global Sleek Minimalist Scrollbars (Zero Chunky Windows OS Scrollbars) */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  }
+
+  [data-theme="light"] * {
+    scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.16);
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.28);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 /* --- App Shell ------------------------------------------------------------ */
@@ -151,11 +192,11 @@
   color: #FFFFFF;
   font-weight: 600;
   border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 3px 0 0 var(--qt-accent, #FF5A14);
+  box-shadow: inset 3px 0 0 var(--qt-accent, #0EA5E9);
 }
 
 .nav-item.active svg {
-  color: var(--qt-accent, #FF5A14);
+  color: var(--qt-accent, #0EA5E9);
 }
 
 .nav-item.disabled {
@@ -719,7 +760,7 @@
 }
 
 .enterprise-governance-icon {
-  color: var(--qt-accent, #ff5a14);
+  color: var(--qt-accent, #0ea5e9);
   flex-shrink: 0;
 }
 
@@ -3223,15 +3264,6 @@ select.form-input {
 
 @media (max-width: 1200px) {
   .breakdown-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-}
-
-/* --- Responsive ----------------------------------------------------------- */
-@media (max-width: 768px) {
-  .app-container { flex-direction: column; }
-  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #39342f; }
-  .app-header { padding: 0 1rem; }
-  .content-area { padding: 1.4rem 1.1rem 2.5rem; }
-  .filter-toolbar { flex-direction: column; align-items: stretch; }
 }
 
 /* --- Reduced Motion ------------------------------------------------------- */

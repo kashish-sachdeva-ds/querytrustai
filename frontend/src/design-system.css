@@ -18,16 +18,16 @@
 
 /* QueryTrust Dual-Mode System: 21st.dev / Linear Ultra-Clean System */
 :root, [data-theme="light"] {
-  /* === LIGHT MODE: VERCEL / LINEAR CRISP ZINC === */
-  --bg-page: #FAFAFA;                  /* Ultra-clean outer canvas */
-  --bg-card: #FFFFFF;                  /* Pure white bento & workspace surfaces */
-  --bg-subtle: #F4F4F5;                /* Zinc-100 inset wells, code blocks, hover rows */
-  --border-subtle: rgba(24, 24, 27, 0.08); /* Crisp 1px hairline */
-  --border-hover: rgba(24, 24, 27, 0.16);
-  --text-main: #09090B;                /* Zinc-950 deep ink */
-  --text-muted: #71717A;               /* Zinc-500 clean secondary prose */
-  --text-subtle: #A1A1AA;              /* Zinc-400 metadata */
-  --brand: #F97316;                    /* QueryTrust Orange — used ONLY on primary focal points */
+  /* === LIGHT MODE: MECHA / LINEAR CRISP MONOCHROME WHITE & GREY === */
+  --bg-page: #F4F5F7;                  /* MECHA architectural soft light grey canvas */
+  --bg-card: #FFFFFF;                  /* Pure crisp white cards & workspace surfaces */
+  --bg-subtle: #ECEEF1;                /* Soft light grey inset wells, code blocks, hover rows */
+  --border-subtle: rgba(0, 0, 0, 0.07); /* Whisper-thin hairline border */
+  --border-hover: rgba(0, 0, 0, 0.14);
+  --text-main: #09090B;                /* Deep ink black for high-contrast legibility */
+  --text-muted: #52525B;               /* Zinc-600 clean secondary copy */
+  --text-subtle: #71717A;              /* Zinc-500 metadata */
+  --brand: #0EA5E9;                    /* QueryTrust Classy Sky Blue focal accent */
 
   /* Architectural Bindings */
   --bg-shell: var(--bg-page);
@@ -37,18 +37,21 @@
   --bg-surface-3: #E4E4E7;
   --bg-glass: rgba(250, 250, 250, 0.88);
 
-  /* Subtle Ambient Aura */
-  --aura-orange: radial-gradient(600px circle at 12% 8%, rgba(249, 115, 22, 0.06), transparent 70%);
+  /* Subtle Ambient Sky Aura */
+  --aura-orange: radial-gradient(600px circle at 12% 8%, rgba(14, 165, 233, 0.06), transparent 70%);
+  --aura-sky: radial-gradient(600px circle at 12% 8%, rgba(14, 165, 233, 0.08), transparent 70%);
 
-  /* Signature Brand Accents */
-  --accent-primary: #F97316;
-  --accent-primary-hover: #EA580C;
-  --accent-primary-subtle: rgba(249, 115, 22, 0.08);
-  --accent-primary-border: rgba(249, 115, 22, 0.28);
-  --accent-orange: #F97316;
-  --accent-orange-hover: #EA580C;
-  --accent-orange-SoftBg: rgba(249, 115, 22, 0.08);
-  --accent-orange-Border: rgba(249, 115, 22, 0.28);
+  /* Signature Classy Sky Blue & Monochrome Accents */
+  --accent-primary: #0EA5E9;
+  --accent-primary-hover: #0284C7;
+  --accent-primary-subtle: rgba(14, 165, 233, 0.08);
+  --accent-primary-border: rgba(14, 165, 233, 0.28);
+  --accent-orange: #0EA5E9;
+  --accent-orange-hover: #0284C7;
+  --accent-orange-SoftBg: rgba(14, 165, 233, 0.08);
+  --accent-orange-Border: rgba(14, 165, 233, 0.28);
+  --sky-light: #F0F9FF;
+  --sky-tint: rgba(14, 165, 233, 0.12);
 
   /* Ink & Typography Hierarchy */
   --ink-primary: var(--text-main);
@@ -141,37 +144,40 @@
 }
 
 .dark, [data-theme="dark"] {
-  /* === DARK MODE: 21ST.DEV OBSIDIAN BLACK (ZERO BLUE TINT!) === */
-  --bg-page: #09090B;                  /* True Zinc-950 pitch carbon */
-  --bg-card: #121215;                  /* Elevated obsidian card surface */
-  --bg-subtle: #18181B;                /* Zinc-900 secondary controls & table headers */
-  --border-subtle: rgba(255, 255, 255, 0.07); /* Whisper-thin translucent hairline */
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --text-main: #FAFAFA;                /* Zinc-50 pure crisp white */
-  --text-muted: #A1A1AA;               /* Zinc-400 easy-reading secondary text */
-  --text-subtle: #52525B;              /* Zinc-600 subtle labels */
-  --brand: #F97316;                    /* Signal Orange focal accent */
+  /* === DARK MODE: MINIMAL OBSIDIAN GRAPHITE & MONOCHROME === */
+  --bg-page: #09090B;                  /* Pure deep neutral graphite */
+  --bg-card: #121214;                  /* Elevated minimal card surface */
+  --bg-subtle: #1C1C1F;                /* Clean inset wells & hover backgrounds */
+  --border-subtle: rgba(255, 255, 255, 0.08); /* Whisper-thin translucent hairline */
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --text-main: #FAFAFA;                /* Pure crisp high-contrast white */
+  --text-muted: #A1A1AA;               /* Slate-400 easy-reading secondary text */
+  --text-subtle: #71717A;              /* Subtle labels */
+  --brand: #38BDF8;                    /* Luminous Sky Blue focal accent */
 
   /* Architectural Bindings */
   --bg-shell: var(--bg-page);
   --bg-canvas: var(--bg-page);
   --bg-surface-1: var(--bg-card);
   --bg-surface-2: var(--bg-subtle);
-  --bg-surface-3: #27272A;
-  --bg-glass: rgba(9, 9, 11, 0.85);
+  --bg-surface-3: #334155;
+  --bg-glass: rgba(11, 15, 23, 0.85);
 
-  --surface-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-  --surface-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --surface-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  --surface-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
 
-  --aura-orange: radial-gradient(600px circle at 12% 8%, rgba(249, 115, 22, 0.08), transparent 70%);
-  --accent-primary: #F97316;
-  --accent-primary-hover: #FB923C;
-  --accent-primary-subtle: rgba(249, 115, 22, 0.10);
-  --accent-primary-border: rgba(249, 115, 22, 0.30);
-  --accent-orange: #F97316;
-  --accent-orange-hover: #FB923C;
-  --accent-orange-SoftBg: rgba(249, 115, 22, 0.10);
-  --accent-orange-Border: rgba(249, 115, 22, 0.30);
+  --aura-orange: radial-gradient(600px circle at 12% 8%, rgba(56, 189, 248, 0.10), transparent 70%);
+  --aura-sky: radial-gradient(600px circle at 12% 8%, rgba(56, 189, 248, 0.12), transparent 70%);
+  --accent-primary: #38BDF8;
+  --accent-primary-hover: #7DD3FC;
+  --accent-primary-subtle: rgba(56, 189, 248, 0.12);
+  --accent-primary-border: rgba(56, 189, 248, 0.35);
+  --accent-orange: #38BDF8;
+  --accent-orange-hover: #7DD3FC;
+  --accent-orange-SoftBg: rgba(56, 189, 248, 0.12);
+  --accent-orange-Border: rgba(56, 189, 248, 0.35);
+  --sky-light: rgba(56, 189, 248, 0.1);
+  --sky-tint: rgba(56, 189, 248, 0.16);
 
   /* Text Hierarchy */
   --ink-primary: var(--text-main);
@@ -346,7 +352,7 @@ button:active:not(:disabled) { transform: scale(.98); }
 .nav-item { background: transparent; color: #94a3b8; border-radius: 6px; font-weight: 500; position: relative; transition: color 140ms ease, background-color 140ms ease; }
 .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #f1f5f9; }
 .nav-item.active { background: rgba(255, 255, 255, 0.06) !important; border-color: transparent !important; color: #ffffff !important; }
-.nav-item:focus-visible { outline: 2px solid var(--qt-accent, #F97316); outline-offset: 2px; }
+.nav-item:focus-visible { outline: 2px solid var(--qt-accent, #0EA5E9); outline-offset: 2px; }
 .nav-badge, .nav-badge-pill { background: rgba(255, 255, 255, 0.06) !important; border-color: rgba(255, 255, 255, 0.08) !important; color: #cbd5e1 !important; border-radius: 4px !important; }
 .sidebar-footer { border-color: rgba(255, 255, 255, 0.07); color: #94a3b8; }
 
@@ -690,7 +696,7 @@ body.command-palette-open { overflow: hidden; }
 .app-recovery-card .btn { align-self: flex-start; text-decoration: none; }
 
 @media (max-width: 767px) {
-  .app-container { display: block; }
+  /* Maintain flex row structure */
   .sidebar {
     padding: .7rem .8rem .55rem;
     position: sticky;
@@ -1291,12 +1297,12 @@ body.command-palette-open { overflow: hidden; }
   width: 100%;
 }
 
-/* 1. Solid Orange Primary Ask CTA button */
+/* 1. Classy Sky Blue Primary Ask CTA button */
 .sidebar-ask-cta {
   width: 100%;
   height: 38px;
-  background: linear-gradient(135deg, #FF6B2B 0%, #EA4800 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
   border-radius: 8px;
   color: #FFFFFF !important;
   display: flex;
@@ -1306,7 +1312,7 @@ body.command-palette-open { overflow: hidden; }
   font-weight: 600;
   font-size: 0.84rem;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(234, 72, 0, 0.35);
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.28);
   transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
 }
@@ -1317,23 +1323,23 @@ body.command-palette-open { overflow: hidden; }
 }
 
 .sidebar-ask-cta:hover {
-  background: linear-gradient(135deg, #FF7738 0%, #F5520A 100%) !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
+  background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
   color: #FFFFFF !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(234, 72, 0, 0.45);
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.38);
 }
 
 .sidebar-ask-cta:active {
   transform: scale(0.98);
 }
 
-/* When on Ask page: solid orange + luminous focus ring */
+/* When on Ask page: solid sky blue + luminous focus ring */
 .sidebar-ask-cta.is-current-page,
 .sidebar-ask-cta.active {
-  background: linear-gradient(135deg, #FF7533 0%, #E64500 100%) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 0 0 0 2px #181512, 0 0 0 3.5px #FF6B2B, 0 4px 14px rgba(234, 72, 0, 0.45) !important;
+  background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px rgba(14, 165, 233, 0.45), 0 4px 14px rgba(14, 165, 233, 0.35) !important;
 }
 
 .sidebar-ask-here-badge {
@@ -2482,50 +2488,4 @@ body.command-palette-open { overflow: hidden; }
 }
 
 /* --- Mobile Viewport (<= 768px) Adaptation --- */
-@media (max-width: 768px) {
-  .app-container {
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 100vh !important;
-  }
-  .sidebar {
-    width: 100% !important;
-    height: auto !important;
-    min-height: auto !important;
-    position: static !important;
-    padding: 0.6rem 0.85rem !important;
-    border-right: none !important;
-    border-bottom: 1px solid var(--qt-border, rgba(255, 255, 255, 0.08)) !important;
-    overflow-y: visible !important;
-    z-index: 40 !important;
-  }
-  .nav-menu {
-    flex: 0 0 auto !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    overflow-x: auto !important;
-    gap: 0.35rem !important;
-    margin: 0 !important;
-    padding: 0.25rem 0 !important;
-    scrollbar-width: none !important;
-  }
-  .nav-menu::-webkit-scrollbar {
-    display: none !important;
-  }
-  .nav-item {
-    flex: 0 0 auto !important;
-    height: 36px !important;
-    min-height: 36px !important;
-    padding: 0 0.75rem !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    white-space: nowrap !important;
-  }
-  .sidebar-recent-section,
-  .sidebar-cta-wrap,
-  .sidebar-safety-shield-card,
-  .sidebar-footer {
-    display: none !important;
-  }
-}
 

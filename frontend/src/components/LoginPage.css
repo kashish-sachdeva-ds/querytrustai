@@ -1,5 +1,5 @@
 /* ==========================================================================
-   QueryTrust AI — 21st.dev Centered Frictionless Sign-In Styles
+   QueryTrust AI — Minimalist Classy Centered Sign-In Styles
    ========================================================================== */
 
 .login-page-root {
@@ -11,6 +11,6 @@
 
 .login-page-root input:focus {
   outline: none;
-  border-color: var(--brand, #F97316);
-  box-shadow: 0 0 0 1px var(--brand, #F97316);
+  border-color: var(--brand, #0EA5E9);
+  box-shadow: 0 0 0 1px var(--brand, #0EA5E9);
 }

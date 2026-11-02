@@ -31,6 +31,7 @@ import { withLayoutTransition } from './motion'
 import { pushUrlParams, readUrlParam } from './urlState'
 import { NotFoundPage } from './components/NotFoundPage'
 import { ApiFailureToast } from './components/ApiFailureToast'
+import { NoiseOverlay } from './components/NoiseOverlay'
 import './ProductExperience.css'
 
 // Code-split all 8 primary workbench views
@@ -115,10 +116,20 @@ const AppShell: React.FC = () => {
 
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
+      const isInput = ['INPUT', 'TEXTAREA'].includes((event.target as HTMLElement)?.tagName)
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         setIsCommandPaletteOpen((open) => !open)
-      } else if (event.key === '?' && !['INPUT', 'TEXTAREA'].includes((event.target as HTMLElement)?.tagName)) {
+      } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+        event.preventDefault()
+        window.dispatchEvent(new CustomEvent('querytrust:toggle-sidebar'))
+      } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'n' && !isInput) {
+        event.preventDefault()
+        selectTab('ask-data')
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('querytrust:new-session'))
+        }, 50)
+      } else if (event.key === '?' && !isInput) {
         event.preventDefault()
         setIsOnboardingOpen((open) => !open)
       }
@@ -190,6 +201,7 @@ const AppShell: React.FC = () => {
     if (unauthView === 'login') {
       return (
         <>
+          <NoiseOverlay />
           <ColdStartBanner />
           <LoginPage onBackToLanding={() => setUnauthView('landing')} />
         </>
@@ -197,7 +209,7 @@ const AppShell: React.FC = () => {
     }
     return (
       <>
-        <ColdStartBanner />
+        <NoiseOverlay />
         <LandingPage onGoToLogin={() => setUnauthView('login')} />
       </>
     )
@@ -207,6 +219,7 @@ const AppShell: React.FC = () => {
   if (isLoading && !user) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+        <NoiseOverlay />
         <ColdStartBanner />
         <div style={{ flex: 1, padding: '24px' }}>
           <ViewShimmerSkeleton title="Initializing Workspace" />
@@ -217,12 +230,13 @@ const AppShell: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      <NoiseOverlay />
       <ColdStartBanner />
 
       {/* Invite Workspace Awareness Banner if logged into another account */}
       {joinParam && user && user.workspace_name?.toLowerCase() !== joinParam.toLowerCase() && (
         <div style={{
-          background: 'linear-gradient(90deg, #ff5a14 0%, #ea4800 100%)',
+          background: 'linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%)',
           color: '#ffffff',
           padding: '9px 18px',
           display: 'flex',
@@ -230,7 +244,7 @@ const AppShell: React.FC = () => {
           justifyContent: 'space-between',
           fontSize: '0.82rem',
           fontWeight: 500,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
           zIndex: 9999,
           flexShrink: 0,
         }}>
@@ -246,7 +260,7 @@ const AppShell: React.FC = () => {
               }}
               style={{
                 background: '#ffffff',
-                color: '#ea4800',
+                color: '#0284c7',
                 border: 'none',
                 borderRadius: 4,
                 padding: '4px 12px',

@@ -1,0 +1,391 @@
+/* ==========================================================================
+   QueryTrust AI — RoiBenchmarkModal.css (Awwwards Obsidian Luxury Modal)
+   - Deep obsidian glassmorphism
+   - Specular 1px rim highlight
+   - Tabular typography
+   - Ambient pulse beacon
+   - Keyboard accessible dismissal
+   ========================================================================== */
+
+.roi-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(16px);
+  animation: roiFadeIn 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.roi-modal-card {
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.35);
+  animation: roiZoomIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .roi-modal-card,
+.dark .roi-modal-card {
+  background: linear-gradient(180deg, #13161F 0%, #0B0D12 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 24px 64px -12px rgba(0, 0, 0, 0.85), 0 0 40px rgba(56, 189, 248, 0.05) !important;
+}
+
+@keyframes roiFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes roiZoomIn {
+  from { opacity: 0; transform: scale(0.97) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ─── Header ─── */
+.roi-modal-header {
+  padding: 1.15rem 1.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+[data-theme="dark"] .roi-modal-header,
+.dark .roi-modal-header {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+.roi-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.roi-beacon-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #38BDF8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.85);
+  display: inline-block;
+}
+
+.roi-modal-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+[data-theme="dark"] .roi-modal-title,
+.dark .roi-modal-title {
+  color: #F8FAFC !important;
+}
+
+.roi-version-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #38BDF8;
+  letter-spacing: 0.02em;
+}
+
+.roi-close-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 130ms ease;
+}
+
+.roi-close-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .roi-close-btn,
+.dark .roi-close-btn {
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .roi-close-btn:hover,
+.dark .roi-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+}
+
+/* ─── Body ─── */
+.roi-modal-body {
+  padding: 1.35rem 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ─── 4-Card KPI Ribbon ─── */
+.roi-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.65rem;
+}
+
+.roi-kpi-tile {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.35rem;
+  transition: all 140ms ease;
+}
+
+[data-theme="dark"] .roi-kpi-tile,
+.dark .roi-kpi-tile {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.roi-kpi-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.roi-kpi-val {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+[data-theme="dark"] .roi-kpi-val,
+.dark .roi-kpi-val {
+  color: #F8FAFC !important;
+}
+
+.roi-kpi-sub {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ─── 3 Architectural Pillars ─── */
+.roi-section-title {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
+}
+
+[data-theme="dark"] .roi-section-title,
+.dark .roi-section-title {
+  color: #64748B !important;
+}
+
+.roi-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.roi-pillar-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+[data-theme="dark"] .roi-pillar-card,
+.dark .roi-pillar-card {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.roi-pillar-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .roi-pillar-head,
+.dark .roi-pillar-head {
+  color: #F1F5F9 !important;
+}
+
+.roi-pillar-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+[data-theme="dark"] .roi-pillar-desc,
+.dark .roi-pillar-desc {
+  color: #94A3B8 !important;
+}
+
+.roi-pillar-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+/* ─── Technical Verification Console Box ─── */
+.roi-tech-box {
+  padding: 0.85rem 1.15rem;
+  background: #080A0E;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: #94A3B8;
+  line-height: 1.65;
+}
+
+.roi-tech-box strong {
+  color: #F1F5F9;
+}
+
+.roi-tech-box code {
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+/* ─── Footer ─── */
+.roi-modal-footer {
+  padding: 0.85rem 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+[data-theme="dark"] .roi-modal-footer,
+.dark .roi-modal-footer {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-top-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+.roi-footer-spec {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .roi-footer-spec,
+.dark .roi-footer-spec {
+  color: #64748B !important;
+}
+
+.roi-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roi-btn-proof {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #38BDF8;
+  color: #020617;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 7px 16px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+  transition: all 130ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.roi-btn-proof:hover {
+  background: #7DD3FC;
+  transform: translateY(-0.5px);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+}
+
+.roi-btn-close {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-subtle);
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: 9999px;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 130ms ease;
+}
+
+[data-theme="dark"] .roi-btn-close,
+.dark .roi-btn-close {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #CBD5E1;
+}
+
+[data-theme="dark"] .roi-btn-close:hover,
+.dark .roi-btn-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  transform: translateY(-0.5px);
+}
+

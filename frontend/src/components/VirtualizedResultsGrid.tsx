@@ -135,14 +135,16 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
 
   return (
     <div
+      spellCheck={false}
       style={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        backgroundColor: 'var(--bg-surface-1)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: '6px',
+        backgroundColor: 'rgba(11, 13, 17, 0.85)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: '12px',
         overflow: 'hidden',
+        boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
       }}
     >
       {/* Grid Toolbar & Telemetry Execution Strip */}
@@ -151,9 +153,9 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '6px 12px',
-          backgroundColor: 'var(--bg-surface-2)',
-          borderBottom: '1px solid var(--border-subtle)',
+          padding: '8px 14px',
+          backgroundColor: 'rgba(14, 16, 22, 0.95)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
           flexWrap: 'wrap',
           gap: '8px',
         }}
@@ -164,34 +166,46 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              backgroundColor: 'var(--gov-safe-dot)',
+              backgroundColor: '#10B981',
+              boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
             }}
           />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--gov-safe-text)', fontWeight: 600 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#34D399', fontWeight: 600 }}>
             Executed in {executionLatencyMs ? `${executionLatencyMs}ms` : '1.42ms'} via qt_ai_readonly
           </span>
-          <span style={{ color: 'var(--border-strong)' }}>&bull;</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--ink-secondary)' }}>
+          <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>&bull;</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#94A3B8' }}>
             {rows.length} rows &bull; {columns.length} columns
           </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {/* Mode Switcher */}
-          <div style={{ display: 'flex', gap: '2px', backgroundColor: 'var(--bg-surface-3)', padding: '2px', borderRadius: '4px' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '2px',
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              padding: '2px',
+              borderRadius: '6px',
+            }}
+          >
             <button
               type="button"
               onClick={() => setViewMode('table')}
               style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: '10.5px',
+                fontSize: '11px',
                 fontWeight: 600,
-                padding: '2px 8px',
-                borderRadius: '3px',
+                padding: '3px 10px',
+                borderRadius: '4px',
                 border: 'none',
                 cursor: 'pointer',
-                backgroundColor: viewMode === 'table' ? 'var(--bg-surface-1)' : 'transparent',
-                color: viewMode === 'table' ? 'var(--ink-primary)' : 'var(--ink-muted)',
+                backgroundColor: viewMode === 'table' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                color: viewMode === 'table' ? '#FFFFFF' : '#94A3B8',
+                boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0, 0, 0, 0.3)' : 'none',
+                transition: 'all 120ms ease',
               }}
             >
               Table
@@ -201,14 +215,16 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
               onClick={() => setViewMode('chart')}
               style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: '10.5px',
+                fontSize: '11px',
                 fontWeight: 600,
-                padding: '2px 8px',
-                borderRadius: '3px',
+                padding: '3px 10px',
+                borderRadius: '4px',
                 border: 'none',
                 cursor: 'pointer',
-                backgroundColor: viewMode === 'chart' ? 'var(--bg-surface-1)' : 'transparent',
-                color: viewMode === 'chart' ? 'var(--ink-primary)' : 'var(--ink-muted)',
+                backgroundColor: viewMode === 'chart' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                color: viewMode === 'chart' ? '#FFFFFF' : '#94A3B8',
+                boxShadow: viewMode === 'chart' ? '0 1px 3px rgba(0, 0, 0, 0.3)' : 'none',
+                transition: 'all 120ms ease',
               }}
             >
               Visual
@@ -223,18 +239,20 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              backgroundColor: 'var(--bg-surface-1)',
-              color: 'var(--ink-secondary)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '4px',
-              padding: '3px 8px',
-              fontSize: '10.5px',
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              color: '#CBD5E1',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '6px',
+              padding: '4px 9px',
+              fontSize: '11px',
               fontFamily: 'var(--font-mono)',
+              fontWeight: 500,
               cursor: 'pointer',
+              transition: 'all 120ms ease',
             }}
             title="Export complete result set as CSV"
           >
-            <FileSpreadsheet size={11} />
+            <FileSpreadsheet size={12} />
             <span>CSV</span>
           </button>
           <button
@@ -244,18 +262,20 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              backgroundColor: 'var(--bg-surface-1)',
-              color: 'var(--ink-secondary)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '4px',
-              padding: '3px 8px',
-              fontSize: '10.5px',
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              color: '#CBD5E1',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '6px',
+              padding: '4px 9px',
+              fontSize: '11px',
               fontFamily: 'var(--font-mono)',
+              fontWeight: 500,
               cursor: 'pointer',
+              transition: 'all 120ms ease',
             }}
             title="Export complete result set as JSON"
           >
-            <Download size={11} />
+            <Download size={12} />
             <span>JSON</span>
           </button>
         </div>
@@ -265,17 +285,28 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
       <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
         {viewMode === 'table' ? (
           <table
+            spellCheck={false}
             style={{
               width: '100%',
               borderCollapse: 'collapse',
               fontSize: '11px',
               fontFamily: 'var(--font-mono)',
               textAlign: 'left',
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
             {/* Sticky Header */}
             <thead>
-              <tr style={{ backgroundColor: 'var(--bg-surface-2)', borderBottom: '1px solid var(--border-strong)', position: 'sticky', top: 0, zIndex: 10 }}>
+              <tr
+                style={{
+                  backgroundColor: 'rgba(16, 18, 24, 0.98)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 10,
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
                 {columns.map((col) => {
                   const isSorted = sortCol === col
                   const type = columnTypes[col] || 'VARCHAR'
@@ -284,36 +315,39 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
                       key={col}
                       onClick={() => toggleSort(col)}
                       style={{
-                        padding: '6px 10px',
+                        padding: '8px 12px',
                         fontWeight: 600,
-                        color: 'var(--ink-primary)',
+                        color: '#F1F5F9',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         userSelect: 'none',
-                        borderRight: '1px solid var(--border-subtle)',
+                        borderRight: '1px solid rgba(255, 255, 255, 0.06)',
                       }}
                       title={`Click to sort by ${col}`}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span>{col}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ letterSpacing: '-0.01em' }}>{col}</span>
                           <span
                             style={{
-                              fontSize: '8.5px',
-                              padding: '1px 3px',
-                              borderRadius: '2px',
-                              backgroundColor: 'var(--bg-surface-3)',
-                              color: 'var(--ink-muted)',
+                              fontSize: '9px',
+                              fontFamily: 'var(--font-mono)',
+                              padding: '1px 5px',
+                              borderRadius: '9999px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              color: '#94A3B8',
                               fontWeight: 500,
+                              letterSpacing: '0.02em',
                             }}
                           >
                             {type}
                           </span>
                         </div>
                         {isSorted ? (
-                          sortDir === 'asc' ? <ArrowUp size={10} /> : <ArrowDown size={10} />
+                          sortDir === 'asc' ? <ArrowUp size={11} style={{ color: '#38BDF8' }} /> : <ArrowDown size={11} style={{ color: '#38BDF8' }} />
                         ) : (
-                          <ArrowUpDown size={10} style={{ opacity: 0.35 }} />
+                          <ArrowUpDown size={11} style={{ opacity: 0.3 }} />
                         )}
                       </div>
                     </th>
@@ -326,16 +360,16 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
                 <tr
                   key={rIdx}
                   style={{
-                    backgroundColor: rIdx % 2 === 0 ? 'var(--bg-surface-1)' : 'var(--bg-surface-2)',
-                    borderBottom: '1px solid var(--border-subtle)',
+                    backgroundColor: rIdx % 2 === 0 ? 'rgba(11, 13, 17, 0.6)' : 'rgba(16, 18, 24, 0.6)',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
                     transition: 'background-color 80ms ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-surface-3)'
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor =
-                      rIdx % 2 === 0 ? 'var(--bg-surface-1)' : 'var(--bg-surface-2)'
+                      rIdx % 2 === 0 ? 'rgba(11, 13, 17, 0.6)' : 'rgba(16, 18, 24, 0.6)'
                   }}
                 >
                   {columns.map((col) => {
@@ -348,20 +382,23 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
                       <td
                         key={col}
                         onClick={() => handleCellClick(rawVal, cellKey)}
+                        spellCheck={false}
                         style={{
-                          padding: '6px 10px',
-                          color: rawVal === null ? 'var(--ink-muted)' : 'var(--ink-primary)',
-                          borderRight: '1px solid var(--border-subtle)',
+                          padding: '7px 12px',
+                          color: rawVal === null ? '#64748B' : '#E2E8F0',
+                          borderRight: '1px solid rgba(255, 255, 255, 0.04)',
                           cursor: 'pointer',
                           whiteSpace: 'nowrap',
                           maxWidth: '280px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
+                          fontVariantNumeric: 'tabular-nums',
+                          lineHeight: '1.4',
                         }}
                         title={`Click to copy: ${val}`}
                       >
                         {isCopied ? (
-                          <span style={{ color: 'var(--gov-safe-text)', fontWeight: 600 }}>✓ Copied</span>
+                          <span style={{ color: '#34D399', fontWeight: 600 }}>✓ Copied</span>
                         ) : (
                           val
                         )}

@@ -368,48 +368,107 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
       />
 
       {/* Board-Ready Executive Trust Card (Ground Truth Project Thesis) */}
-      <section className="executive-trust-card" aria-label="Executive Trust Proof" style={{ padding: '16px', borderRadius: '8px', border: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface-1)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1px', backgroundColor: 'var(--border-subtle)', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+      <section className="executive-trust-card" aria-label="Executive Trust Proof">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '10px',
+            width: '100%',
+          }}
+        >
           {/* Pillar 1 */}
-          <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>Turnaround Velocity</div>
-            <div style={{ fontSize: '22px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)', marginTop: '2px' }}>
+          <div
+            style={{
+              padding: '1rem 1.25rem',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '4px',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Turnaround Velocity
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#38BDF8', fontVariantNumeric: 'tabular-nums' }}>
               1.42s
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--gov-safe-text)', fontWeight: 600, fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: '#34D399', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
               -99.9% vs 4h Jira Ticket Lag
             </div>
           </div>
 
           {/* Pillar 2 */}
-          <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>Ticket Deflection</div>
-            <div style={{ fontSize: '22px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)', marginTop: '2px' }}>
+          <div
+            style={{
+              padding: '1rem 1.25rem',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '4px',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Ticket Deflection
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#F8FAFC', fontVariantNumeric: 'tabular-nums' }}>
               65.0%
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: '#94A3B8', fontFamily: 'var(--font-mono)' }}>
               Self-Serve Domain Analytics
             </div>
           </div>
 
           {/* Pillar 3 */}
-          <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>Automated Test Suite</div>
-            <div style={{ fontSize: '22px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--gov-safe-text)', marginTop: '2px' }}>
+          <div
+            style={{
+              padding: '1rem 1.25rem',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '4px',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Automated Test Suite
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#34D399', fontVariantNumeric: 'tabular-nums' }}>
               151 / 151
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--gov-safe-text)', fontWeight: 600, fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: '#34D399', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
               100% Automated Test Pass Rate
             </div>
           </div>
 
           {/* Pillar 4 */}
-          <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>Forbidden Mutations</div>
-            <div style={{ fontSize: '22px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--gov-safe-text)', marginTop: '2px' }}>
+          <div
+            style={{
+              padding: '1rem 1.25rem',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: '4px',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Forbidden Mutations
+            </div>
+            <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#34D399', fontVariantNumeric: 'tabular-nums' }}>
               0 Executed
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--gov-safe-text)', fontWeight: 600, fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: '#34D399', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
               100% Interception Rate
             </div>
           </div>

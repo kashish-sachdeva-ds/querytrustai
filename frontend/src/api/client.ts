@@ -378,9 +378,11 @@ async function authFetch(
     // Token may have expired
     clearStoredToken()
     try {
-      localStorage.removeItem('qt_cached_user')
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('querytrust:auth-unauthorized'))
+      if (localStorage.getItem('qt_offline_demo') !== 'true') {
+        localStorage.removeItem('qt_cached_user')
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('querytrust:auth-unauthorized'))
+        }
       }
     } catch {}
   }

@@ -36,7 +36,7 @@
 }
 
 .eval-lab__eyebrow-dot {
-  color: var(--qt-accent, #FF4F00);
+  color: #0284C7;
 }
 
 .eval-lab__heading {
@@ -75,7 +75,7 @@
 }
 
 .eval-lab__governance-icon {
-  color: var(--qt-accent, #FF4F00);
+  color: #0284C7;
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -163,29 +163,29 @@
 }
 
 .eval-lab__mode-btn--active {
-  border-color: rgba(249, 115, 22, 0.4);
-  background: rgba(249, 115, 22, 0.12);
-  color: #F97316;
+  border-color: rgba(14, 165, 233, 0.4);
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284c7;
 }
 
 .eval-lab__mode-btn--active .eval-lab__mode-desc {
-  color: #FB923C;
+  color: #0ea5e9;
 }
 
 .eval-lab__run-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: var(--qt-accent, #FF4F00);
-  color: #111110;
-  border: 1px solid var(--qt-accent, #FF4F00);
+  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+  color: #ffffff;
+  border: 1px solid #0284c7;
   border-radius: var(--qt-radius-control, 6px);
   padding: 0.625rem 1.125rem;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.28);
 }
 
 .eval-lab__run-btn:hover:not(:disabled) {
@@ -424,7 +424,7 @@
   position: absolute;
   bottom: -1px;
   height: 2px;
-  background: var(--qt-accent, #FF4F00);
+  background: #09090B;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -481,7 +481,7 @@
 }
 
 .eval-lab__metric-card--primary {
-  border-left: 3px solid var(--qt-accent, #FF4F00);
+  border-left: 3px solid #09090B;
 }
 
 .eval-lab__metric-value {
@@ -534,8 +534,8 @@
 }
 
 .eval-lab__category-card--selected {
-  border-color: var(--qt-accent, #FF4F00);
-  box-shadow: 0 0 0 1px var(--qt-accent, #FF4F00);
+  border-color: #09090B;
+  box-shadow: 0 0 0 1px #09090B;
 }
 
 .eval-lab__cat-header {
@@ -989,16 +989,21 @@
 
 /* Executive Trust Proof Card */
 .executive-trust-card {
-  background: var(--qt-surface);
-  border: 1px solid rgba(46, 160, 85, 0.35);
-  background: linear-gradient(180deg, rgba(46, 160, 85, 0.05) 0%, var(--qt-surface) 100%);
-  border-radius: var(--qt-radius-inner);
-  padding: 1.5rem 1.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  flex-wrap: wrap;
+  display: block !important;
+  width: 100% !important;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .executive-trust-card,
+.dark .executive-trust-card {
+  background: linear-gradient(180deg, rgba(18, 21, 28, 0.8) 0%, rgba(11, 13, 17, 0.94) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.07), 0 12px 32px -4px rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(16px);
 }
 
 .executive-trust-main {
@@ -1074,14 +1079,27 @@
 /* ==========================================================================
    DARK THEME OVERRIDES
    ========================================================================== */
-[data-theme="dark"] .eval-lab__governance-banner {
-  background: rgba(255, 79, 0, 0.08);
-  border-color: rgba(255, 79, 0, 0.25);
-  color: var(--qt-text);
+[data-theme="dark"] .eval-lab__governance-banner,
+.dark .eval-lab__governance-banner {
+  background: rgba(56, 189, 248, 0.06) !important;
+  border-color: rgba(56, 189, 248, 0.2) !important;
+  color: #94A3B8 !important;
+  border-radius: 12px !important;
 }
 
-[data-theme="dark"] .eval-lab__governance-banner strong {
-  color: var(--qt-ink);
+[data-theme="dark"] .eval-lab__governance-banner strong,
+.dark .eval-lab__governance-banner strong {
+  color: #F1F5F9 !important;
+}
+
+[data-theme="dark"] .eval-lab__governance-banner p,
+.dark .eval-lab__governance-banner p {
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] .eval-lab__governance-icon,
+.dark .eval-lab__governance-icon {
+  color: #38BDF8 !important;
 }
 
 [data-theme="dark"] .eval-lab__mode-btn {
@@ -1096,13 +1114,13 @@
 }
 
 [data-theme="dark"] .eval-lab__mode-btn--active {
-  background: rgba(255, 79, 0, 0.14);
-  border-color: var(--qt-accent);
-  color: #ff7840;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38BDF8;
+  color: #38BDF8;
 }
 
 [data-theme="dark"] .eval-lab__mode-btn--active .eval-lab__mode-desc {
-  color: #ff9d73;
+  color: #7DD3FC;
 }
 
 [data-theme="dark"] .eval-lab__history-section {

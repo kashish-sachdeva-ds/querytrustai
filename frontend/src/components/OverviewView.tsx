@@ -10,9 +10,6 @@ import {
   Send,
   Server,
   ShieldCheck,
-  Sun,
-  Zap,
-  TrendingDown,
 } from 'lucide-react'
 import {
   type DashboardSummaryResponse,
@@ -143,11 +140,6 @@ const displayFleetStatus = (value: string) => {
   return formatStatus(value)
 }
 
-const formatReferenceDate = (value: string) =>
-  new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(
-    new Date(`${value}T00:00:00Z`)
-  )
-
 export const OverviewView: React.FC<OverviewViewProps> = ({
   onNavigate,
   onAskQuestion,
@@ -164,6 +156,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState('')
   const [activeBentoTab, setActiveBentoTab] = useState<'warranty' | 'severity'>('warranty')
+  const [activeSectionTab, setActiveSectionTab] = useState<'briefing' | 'lifecycle' | 'topology'>('briefing')
   const [seeding, setSeeding] = useState(false)
 
   const isDemo = !user?.workspace_name || user.workspace_name === 'Default Workspace' || (user.email ? user.email.endsWith('@querytrust.local') : false)
@@ -370,32 +363,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       ? 'medium'
       : 'low'
 
-  const warrantyClass = (name: string) =>
-    name.toLowerCase() === 'already expired'
-      ? 'expired'
-      : name.toLowerCase() === '0 - 30 days'
-      ? 'soon'
-      : 'neutral'
-
-  const getLifecycleColorClass = (statusName: string) => {
-    switch (statusName) {
-      case 'Active':
-        return 'segment-active'
-      case 'Offline':
-        return 'segment-offline'
-      case 'Maintenance':
-        return 'segment-maintenance'
-      case 'Retired':
-        return 'segment-retired'
-      case 'Pending Audit':
-        return 'segment-audit'
-      case 'Staged':
-        return 'segment-staged'
-      default:
-        return 'segment-neutral'
-    }
-  }
-
   const submitQuestion = (event: React.FormEvent) => {
     event.preventDefault()
     const nextQuestion = question.trim()
@@ -403,7 +370,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   }
 
   const scrollToRepairs = () => {
-    repairsTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setActiveSectionTab('briefing')
+    window.setTimeout(() => {
+      repairsTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 60)
   }
 
   return (
@@ -428,30 +398,29 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         actions={
           <div className="overview-hero-actions">
             {lastUpdated && (
-              <span className="snapshot-pill" title="Last snapshot timestamp">
+              <span className="mecha-snapshot-pill" title="Last snapshot timestamp">
                 <Clock size={12} />
                 <span>Snapshot {lastUpdated}</span>
               </span>
             )}
             <button
               type="button"
-              className="hero-refresh-btn"
+              className="mecha-pill-btn mecha-pill-btn--secondary"
               onClick={() => loadData(true)}
               disabled={loading || refreshing}
               title="Refresh this overview (Press R)"
             >
               <RefreshCw size={13} className={refreshing ? 'spin-icon' : ''} />
               <span>{refreshing ? 'Updating…' : 'Refresh'}</span>
-              <kbd className="hero-kbd-badge">R</kbd>
+              <kbd className="mecha-kbd">R</kbd>
             </button>
             {!isDemo && !isUnconfigured && activeSource?.mode === 'sandbox' && user?.role === 'admin' && (
               <button
                 type="button"
-                className="hero-refresh-btn"
+                className="mecha-pill-btn mecha-pill-btn--secondary"
                 onClick={handleResetSandbox}
                 disabled={loading || refreshing || seeding}
                 title="Reset workspace back to clean unconfigured state"
-                style={{ borderColor: 'var(--qt-border)' }}
               >
                 <RotateCcw size={13} className={seeding ? 'spin-icon' : ''} />
                 <span>{seeding ? 'Resetting…' : 'Reset to Clean Workspace'}</span>
@@ -570,10 +539,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
       {/* ─── 3. ENTERPRISE WORKSPACE SAMPLE SANDBOX BANNER (When Sample Data Active) ─── */}
       {!isDemo && !isUnconfigured && activeSource?.mode === 'sandbox' && (
-        <div className="workspace-hero-banner" style={{ borderLeft: '3px solid var(--qt-accent, #ff5a14)' }}>
+        <div className="workspace-hero-banner" style={{ borderLeft: '3px solid var(--qt-accent, #0ea5e9)' }}>
           <div className="workspace-hero-left">
             <div className="workspace-hero-status">
-              <span className="workspace-pulse-dot" style={{ background: 'var(--qt-accent, #ff5a14)' }} />
+              <span className="workspace-pulse-dot" style={{ background: 'var(--qt-accent, #0ea5e9)' }} />
               <span className="workspace-badge-text">Sample Sandbox Telemetry Active</span>
               <span className="workspace-name-badge">{activeSource.name}</span>
             </div>
@@ -611,495 +580,176 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       )}
 
-      {/* ─── 2. TOP COMMAND & NATURAL LANGUAGE OMNIBAR (Linear / Raycast Ergonomics) ─── */}
-      <section
-        style={{
-          backgroundColor: 'var(--bg-surface-1)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-          marginBottom: '1rem',
-        }}
-        aria-label="Ask equipment AI"
-      >
-        <form onSubmit={submitQuestion} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Search size={16} style={{ color: 'var(--ink-muted)', flexShrink: 0 }} aria-hidden="true" />
-          <input
-            ref={searchInputRef}
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-            placeholder={
-              isUnconfigured
-                ? "No database connected yet. Connect a database or load sample data to query..."
-                : "Ask a governed question across 5,000 devices, 50 sites, and 25,000 telemetry readings..."
-            }
-            aria-label="Ask equipment intelligence question"
-            disabled={isUnconfigured}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              fontSize: '13px',
-              fontFamily: 'var(--font-sans)',
-              color: 'var(--ink-primary)',
-            }}
-          />
-          <kbd
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '10px',
-              backgroundColor: 'var(--bg-surface-3)',
-              color: 'var(--ink-muted)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: '4px',
-              padding: '2px 5px',
-            }}
-          >
-            /
-          </kbd>
-          <button
-            type="submit"
-            disabled={!question.trim() || isUnconfigured}
-            style={{
-              backgroundColor: 'var(--accent-primary)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: question.trim() ? 'pointer' : 'default',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              opacity: question.trim() ? 1 : 0.6,
-            }}
-          >
-            <span>Ask</span>
-            <Send size={12} />
-          </button>
+      {/* ─── 2. MECHA HERO ASK BOX (Expansive, High-End White Card) ─── */}
+      <section className="mecha-hero-prompt" aria-label="Ask Governed Fleet Intelligence">
+        <form onSubmit={submitQuestion} className="mecha-prompt-form">
+          <div className="mecha-prompt-input-wrap">
+            <Search size={18} className="mecha-search-icon" aria-hidden="true" />
+            <input
+              ref={searchInputRef}
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
+              placeholder={
+                isUnconfigured
+                  ? "Connect a database or load sample data to query..."
+                  : "Ask a governed question across 5,000 devices, 50 sites, and telemetry..."
+              }
+              aria-label="Ask equipment intelligence question"
+              disabled={isUnconfigured}
+              className="mecha-prompt-input"
+            />
+            <kbd className="mecha-prompt-slash-kbd">/</kbd>
+            <button
+              type="submit"
+              disabled={!question.trim() || isUnconfigured}
+              className="mecha-prompt-submit-btn"
+            >
+              <span>Ask Query</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
         </form>
 
-        {/* Autocomplete Monospace Schema Tokens */}
         {!isUnconfigured && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
-              Schema tokens:
-            </span>
+          <div className="mecha-prompt-chips">
+            <span className="mecha-chips-lead">Suggested:</span>
             <button
               type="button"
-              onClick={() => onAskQuestion('Show devices where warranty_expiry <= CURRENT_DATE + INTERVAL 30 days')}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10.5px',
-                backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--ink-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '4px',
-                padding: '2px 6px',
-                cursor: 'pointer',
-              }}
+              className="mecha-chip"
+              onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
             >
-              devices.warranty_expiry
+              Warranties expiring &lt; 30 days
             </button>
             <button
               type="button"
-              onClick={() => onAskQuestion("List devices where status = 'offline'")}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10.5px',
-                backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--ink-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '4px',
-                padding: '2px 6px',
-                cursor: 'pointer',
-              }}
+              className="mecha-chip"
+              onClick={() => onAskQuestion('Find core routers with temperature > 65°C and packet drop rate > 0.05%')}
             >
-              devices.status
+              High-temp routers (&gt; 65°C)
             </button>
             <button
               type="button"
-              onClick={() => onAskQuestion('How many active devices are in each sites.region?')}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10.5px',
-                backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--ink-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '4px',
-                padding: '2px 6px',
-                cursor: 'pointer',
-              }}
+              className="mecha-chip"
+              onClick={() => onAskQuestion('List open Critical service events with device model and site location')}
             >
-              sites.region
-            </button>
-            <button
-              type="button"
-              onClick={() => onAskQuestion("List open service_events where severity = 'Critical'")}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10.5px',
-                backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--ink-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '4px',
-                padding: '2px 6px',
-                cursor: 'pointer',
-              }}
-            >
-              service_events.severity
+              Critical open repair incidents
             </button>
           </div>
         )}
       </section>
 
-      {/* ─── 3. UNIFIED 5-CELL TELEMETRY RIBBON (Swiss Hairline Grid - Anti-AI) ─── */}
+      {/* ─── 3. EXECUTIVE PULSE METRICS (4 Spacious High-Impact Cards) ─── */}
       {data && (
-        <section
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: '1px',
-            backgroundColor: 'var(--border-subtle)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            marginBottom: '1rem',
-          }}
-          aria-label="Unified Telemetry Ribbon"
-        >
-          {/* Cell 1: Total Managed Fleet */}
+        <section className="mecha-pulse-grid" aria-label="Executive Pulse Metrics">
+          {/* Card 1: Total Managed Fleet */}
           <div
+            className="mecha-pulse-card"
             onClick={() => onNavigate('devices')}
-            style={{
-              backgroundColor: 'var(--bg-surface-1)',
-              padding: '12px 14px',
-              cursor: 'pointer',
-              transition: 'background-color 100ms ease',
-            }}
             title="View all 5,000 equipment records"
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Managed Fleet
-              </span>
-              <Server size={13} style={{ color: 'var(--ink-muted)' }} />
+            <div className="mecha-pulse-header">
+              <span className="mecha-pulse-label">Managed Fleet</span>
+              <span className="mecha-pulse-icon"><Server size={15} /></span>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink-primary)', letterSpacing: '-0.02em' }}>
+            <div className="mecha-pulse-value">
               <AnimatedNumber value={data.total_devices} />
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '2px' }}>
-              {data.total_sites} Sites &bull; 4 Relational Tables
+            <div className="mecha-pulse-sub">
+              {data.total_sites} Sites Across 3 Global Regions
             </div>
           </div>
 
-          {/* Cell 2: Active Fleet with Sparkline */}
+          {/* Card 2: Active Fleet */}
           <div
+            className="mecha-pulse-card"
             onClick={() => onNavigate('devices', { status: 'active' })}
-            style={{
-              backgroundColor: 'var(--bg-surface-1)',
-              padding: '12px 14px',
-              cursor: 'pointer',
-              transition: 'background-color 100ms ease',
-            }}
             title="View active operational equipment"
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Active Fleet
-              </span>
-              <span
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--gov-safe-dot)',
-                }}
-              />
+            <div className="mecha-pulse-header">
+              <span className="mecha-pulse-label">Active &amp; Operational</span>
+              <span className="mecha-pulse-dot" style={{ backgroundColor: '#10B981' }} />
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink-primary)', letterSpacing: '-0.02em' }}>
+            <div className="mecha-pulse-value">
               <AnimatedNumber value={data.active_devices} />
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--gov-safe-text)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
-              <span>{activeShare}% operational</span>
-              <span style={{ color: 'var(--ink-muted)', fontWeight: 400 }}>&bull; +124 30d</span>
+            <div className="mecha-pulse-sub">
+              <span style={{ color: '#047857', fontWeight: 600 }}>{activeShare}% operational</span>
+              <span className="mecha-sub-divider">&bull;</span>
+              <span>+124 30d</span>
             </div>
           </div>
 
-          {/* Cell 3: Warranties Expiring (<30d) */}
+          {/* Card 3: Attention Required */}
           <div
+            className="mecha-pulse-card"
             onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
-            style={{
-              backgroundColor: 'var(--bg-surface-1)',
-              padding: '12px 14px',
-              cursor: 'pointer',
-              transition: 'background-color 100ms ease',
-            }}
             title="Filter devices with urgent SLA expirations"
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Warranty &lt; 30d
-              </span>
-              <Clock size={13} style={{ color: '#d97706' }} />
+            <div className="mecha-pulse-header">
+              <span className="mecha-pulse-label">Attention Required</span>
+              <span className="mecha-pulse-icon" style={{ color: '#D97706' }}><Clock size={15} /></span>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 700, color: '#d97706', letterSpacing: '-0.02em' }}>
+            <div className="mecha-pulse-value" style={{ color: '#D97706' }}>
               <AnimatedNumber value={urgentWarrantyCount} />
             </div>
-            <div style={{ fontSize: '11px', color: '#d97706', fontWeight: 500, marginTop: '2px' }}>
-              Action Required &bull; Review
+            <div className="mecha-pulse-sub" style={{ color: '#B45309' }}>
+              Warranties expiring &lt; 30 days
             </div>
           </div>
 
-          {/* Cell 4: Open Repair Events */}
+          {/* Card 4: Open Repairs */}
           <div
+            className="mecha-pulse-card"
             onClick={scrollToRepairs}
-            style={{
-              backgroundColor: 'var(--bg-surface-1)',
-              padding: '12px 14px',
-              cursor: 'pointer',
-              transition: 'background-color 100ms ease',
-            }}
-            title="Scroll to open repair service events"
+            title="View open repair service events"
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Open Repairs
-              </span>
-              <AlertTriangle size={13} style={{ color: '#dc2626' }} />
+            <div className="mecha-pulse-header">
+              <span className="mecha-pulse-label">Open Repairs</span>
+              <span className="mecha-pulse-icon" style={{ color: '#DC2626' }}><AlertTriangle size={15} /></span>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 700, color: '#dc2626', letterSpacing: '-0.02em' }}>
+            <div className="mecha-pulse-value" style={{ color: '#DC2626' }}>
               <AnimatedNumber value={data.open_service_events} />
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginTop: '2px' }}>
-              1,295 Assets Affected
-            </div>
-          </div>
-
-          {/* Cell 5: Governance Velocity ROI */}
-          <div
-            onClick={() => onNavigate('evaluations')}
-            style={{
-              backgroundColor: 'var(--bg-surface-1)',
-              padding: '12px 14px',
-              cursor: 'pointer',
-              transition: 'background-color 100ms ease',
-            }}
-            title="View Safety Proof & Performance Benchmarks"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Velocity ROI
-              </span>
-              <Zap size={13} style={{ color: 'var(--accent-primary)' }} />
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-primary)', letterSpacing: '-0.02em' }}>
-              1.42s
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--gov-safe-text)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
-              <TrendingDown size={11} />
-              <span>-99.9% vs 4h Jira Lag</span>
+            <div className="mecha-pulse-sub">
+              1,295 Unique Hardware Assets
             </div>
           </div>
         </section>
       )}
 
-      {/* ─── 4. INTERACTIVE MORNING OPERATIONAL BRIEFING (Actionable Runcards) ─── */}
+      {/* ─── 4. SEGMENTED SECTION NAVIGATION (Eliminating Clutter) ─── */}
       {!isUnconfigured && data && (
-        <section
-          style={{
-            backgroundColor: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '8px',
-            padding: '14px 16px',
-            marginBottom: '1rem',
-          }}
-          aria-label="Morning briefing"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sun size={15} style={{ color: 'var(--accent-primary)' }} />
-              <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--ink-primary)' }}>
-                Morning Operational Briefing
-              </h3>
-              <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '10px',
-                  backgroundColor: 'var(--bg-surface-2)',
-                  color: 'var(--ink-muted)',
-                  padding: '1px 6px',
-                  borderRadius: '4px',
-                  border: '1px solid var(--border-subtle)',
-                }}
-              >
-                3 PRIORITIZED RUN-CARDS
-              </span>
-            </div>
-            <ExplainButton
-              title="Morning briefing"
-              explanation="Items are strictly ranked 1 to 3 by operational impact. Click 'Verify in AST Workbench' to inspect the mathematical AST validation and execute the read-only query."
-            />
+        <div className="mecha-section-nav">
+          <div className="mecha-segmented-control" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSectionTab === 'briefing'}
+              className={`mecha-segment-btn ${activeSectionTab === 'briefing' ? 'active' : ''}`}
+              onClick={() => setActiveSectionTab('briefing')}
+            >
+              Executive Briefing
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSectionTab === 'lifecycle'}
+              className={`mecha-segment-btn ${activeSectionTab === 'lifecycle' ? 'active' : ''}`}
+              onClick={() => setActiveSectionTab('lifecycle')}
+            >
+              Fleet Lifecycle &amp; Distribution
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeSectionTab === 'topology'}
+              className={`mecha-segment-btn ${activeSectionTab === 'topology' ? 'active' : ''}`}
+              onClick={() => setActiveSectionTab('topology')}
+            >
+              Global Telemetry Map
+            </button>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-            {/* Runcard 1: Open repair requests */}
-            <div
-              style={{
-                backgroundColor: 'var(--bg-surface-2)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '10px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '8px',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#dc2626' }}>
-                    [RUN-01] CRITICAL
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: '#dc2626' }}>
-                    {formatNumber(data.open_service_events)} Active
-                  </span>
-                </div>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-primary)' }}>
-                  Open Repair Incidents
-                </div>
-                <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--ink-muted)', lineHeight: 1.4 }}>
-                  Unresolved hardware faults and line-rate flapping across edge routers.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onAskQuestion('List critical open service events grouped by site')}
-                style={{
-                  backgroundColor: 'var(--bg-surface-1)',
-                  color: 'var(--ink-primary)',
-                  border: '1px solid var(--border-strong)',
-                  borderRadius: '4px',
-                  padding: '5px 8px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>Verify in AST Workbench</span>
-                <ArrowRight size={12} />
-              </button>
-            </div>
-
-            {/* Runcard 2: Warranties ending soon */}
-            <div
-              style={{
-                backgroundColor: 'var(--bg-surface-2)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '10px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '8px',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#d97706' }}>
-                    [RUN-02] ATTENTION
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: '#d97706' }}>
-                    {formatNumber(urgentWarrantyCount)} Devices
-                  </span>
-                </div>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-primary)' }}>
-                  Upcoming SLA Expirations
-                </div>
-                <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--ink-muted)', lineHeight: 1.4 }}>
-                  {formatNumber(endingSoonCount)} contracts expiring &bull; {formatNumber(alreadyExpiredCount)} already expired.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
-                style={{
-                  backgroundColor: 'var(--bg-surface-1)',
-                  color: 'var(--ink-primary)',
-                  border: '1px solid var(--border-strong)',
-                  borderRadius: '4px',
-                  padding: '5px 8px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>Verify in AST Workbench</span>
-                <ArrowRight size={12} />
-              </button>
-            </div>
-
-            {/* Runcard 3: Data health findings */}
-            <div
-              style={{
-                backgroundColor: 'var(--bg-surface-2)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '6px',
-                padding: '10px 12px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '8px',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--gov-safe-text)' }}>
-                    [RUN-03] HYGIENE
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: 'var(--ink-primary)' }}>
-                    {dataHealth?.total_findings ?? 6} Anomalies
-                  </span>
-                </div>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-primary)' }}>
-                  Data Health Diagnostics
-                </div>
-                <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--ink-muted)', lineHeight: 1.4 }}>
-                  Deterministic schema profiler flagged unapproved statuses and serial glitches.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onNavigate('data-quality')}
-                style={{
-                  backgroundColor: 'var(--bg-surface-1)',
-                  color: 'var(--ink-primary)',
-                  border: '1px solid var(--border-strong)',
-                  borderRadius: '4px',
-                  padding: '5px 8px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                }}
-              >
-                <span>Inspect 6 Integrity Rules</span>
-                <ArrowRight size={12} />
-              </button>
-            </div>
-          </div>
-        </section>
+        </div>
       )}
 
       {error && (
@@ -1119,258 +769,135 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 Sign in again →
               </button>
             ) : null}
-            <button type="button" className="hero-refresh-btn" onClick={() => loadData()}>
+            <button type="button" className="mecha-pill-btn mecha-pill-btn--secondary" onClick={() => loadData()}>
               Retry connection
             </button>
           </div>
         </div>
       )}
 
-      {/* ─── SKELETON LOADING (Rule 8: Section-by-section graceful loading) ─── */}
+      {/* ─── SKELETON LOADING ─── */}
       {loading && !data && (
         <div className="overview-skeleton" role="status" aria-live="polite">
-          <div className="qt-skeleton" style={{ height: 110, borderRadius: 8 }} />
-          <div className="qt-skeleton" style={{ height: 140, borderRadius: 8 }} />
-          <div className="overview-skeleton-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-            <div className="qt-skeleton" style={{ height: 95, borderRadius: 8 }} />
-            <div className="qt-skeleton" style={{ height: 95, borderRadius: 8 }} />
-            <div className="qt-skeleton" style={{ height: 95, borderRadius: 8 }} />
-            <div className="qt-skeleton" style={{ height: 95, borderRadius: 8 }} />
+          <div className="qt-skeleton" style={{ height: 110, borderRadius: 16 }} />
+          <div className="overview-skeleton-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
+            <div className="qt-skeleton" style={{ height: 130, borderRadius: 16 }} />
+            <div className="qt-skeleton" style={{ height: 130, borderRadius: 16 }} />
+            <div className="qt-skeleton" style={{ height: 130, borderRadius: 16 }} />
+            <div className="qt-skeleton" style={{ height: 130, borderRadius: 16 }} />
           </div>
-          <div className="qt-skeleton" style={{ height: 85, borderRadius: 8 }} />
-          <div className="overview-skeleton-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-            <div className="qt-skeleton" style={{ height: 260, borderRadius: 8 }} />
-            <div className="qt-skeleton" style={{ height: 260, borderRadius: 8 }} />
-          </div>
-          <div className="qt-skeleton" style={{ height: 280, borderRadius: 8 }} />
+          <div className="qt-skeleton" style={{ height: 260, borderRadius: 16 }} />
         </div>
       )}
 
-      {data && (
-        <>
-          {/* ─── 5. EQUIPMENT LIFECYCLE DISTRIBUTION (One Stacked Proportion Bar + Legend) ─── */}
-          <section className="lifecycle-strip-card" aria-label="Equipment lifecycle breakdown">
-            <div className="lifecycle-header">
-              <span className="lifecycle-title">Equipment lifecycle distribution</span>
-              <span className="lifecycle-meta">Total: {formatNumber(totalBreakdownCount)} devices &bull; Read-only audit</span>
-            </div>
-
-            {/* Single Stacked Proportion Bar (Rule 6) */}
-            <div className="lifecycle-stacked-bar" role="progressbar" aria-label="Fleet lifecycle status proportions">
-              {normalizedFleetBreakdown.map((item) => {
-                const pct = totalBreakdownCount > 0 ? (item.value / totalBreakdownCount) * 100 : 0
-                return (
-                  <div
-                    key={item.name}
-                    className={`lifecycle-bar-segment ${getLifecycleColorClass(item.name)}`}
-                    style={{ width: `${pct}%` }}
-                    title={`${item.name}: ${formatNumber(item.value)} (${pct.toFixed(1)}%)`}
-                  />
-                )
-              })}
-            </div>
-
-            {/* Legend with Counts (Rule 6) */}
-            <div className="lifecycle-legend-grid">
-              {normalizedFleetBreakdown.map((item) => {
-                const pct = totalBreakdownCount > 0 ? ((item.value / totalBreakdownCount) * 100).toFixed(1) : '0'
-
-                return (
-                  <button
-                    key={item.name}
-                    type="button"
-                    className="lifecycle-legend-item"
-                    onClick={() => onNavigate('devices', { status: item.name.toLowerCase() })}
-                    title={`Filter equipment by ${item.name}`}
-                  >
-                    <span className={`lifecycle-legend-dot ${getLifecycleColorClass(item.name)}`} />
-                    <span className="lifecycle-legend-name">{item.name}</span>
-                    <span className="lifecycle-legend-count">{formatNumber(item.value)}</span>
-                    <span className="lifecycle-legend-pct">{pct}%</span>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-
-          {/* ─── 6. BENTO CHARTS (Neutral Data Bars, Red Expired / Amber Soon) ─── */}
-          <section className="overview-bento-grid" aria-label="Fleet distributions">
-            {/* Left Card: Equipment by type (Neutral Data Bars) */}
-            <article className="bento-card">
-              <div className="bento-card-header">
-                <div className="bento-card-title-group">
-                  <span className="bento-card-icon">
-                    <Database size={16} />
+      {/* ─── TAB 1: EXECUTIVE BRIEFING ─── */}
+      {data && activeSectionTab === 'briefing' && (
+        <div className="mecha-actions-container">
+          {/* Priority Action Cards */}
+          <div className="mecha-action-grid">
+            {/* Action 1: Open repair requests */}
+            <div className="mecha-action-card">
+              <div>
+                <div className="mecha-action-header">
+                  <span className="mecha-action-badge mecha-action-badge--critical">
+                    Critical Issue
                   </span>
-                  <h3 className="bento-card-title">Equipment by type</h3>
+                  <span className="mecha-action-metric" style={{ color: '#DC2626' }}>
+                    {formatNumber(data.open_service_events)} Active
+                  </span>
                 </div>
-                <div className="bento-card-header-actions">
-                  <span className="bento-card-meta-badge">{data.devices_by_type.length} types</span>
-                  <ExplainButton
-                    title="Equipment categories"
-                    explanation="Category counts are grouped case-insensitively into the approved device vocabulary. Formatting defects remain visible in Data health."
-                  />
-                </div>
-              </div>
-              <p className="bento-insight">
-                {topEquipmentType
-                  ? `${topEquipmentType.name} is the largest equipment group at ${topEquipmentType.percentage}% of the fleet.`
-                  : 'No equipment type data is available.'}
-              </p>
-              <div className="bento-distribution-list">
-                {data.devices_by_type.length ? (
-                  data.devices_by_type.map((item) => (
-                    <div className="bento-distribution-row" key={item.name}>
-                      <div className="distribution-name-wrap">
-                        <span className="distribution-name">{item.name}</span>
-                      </div>
-                      <div className="distribution-track">
-                        {/* Rule 2: Neutral data bar tone (NOT orange!) */}
-                        <div
-                          className="distribution-fill distribution-fill--neutral"
-                          style={{ width: `${item.percentage || 0}%` }}
-                        />
-                      </div>
-                      <div className="distribution-value">
-                        {formatNumber(item.value)} / {item.percentage}%
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="empty-data-message">No device distribution available.</p>
-                )}
-              </div>
-              {typeFormattingIssues !== null && (
-                <p className="bento-data-note">
-                  {formatNumber(typeFormattingIssues)} records have inconsistent spelling.{' '}
-                  <button type="button" onClick={() => onNavigate('data-quality')}>
-                    See Data health
-                  </button>
+                <h4 className="mecha-action-title">Open Repair Incidents</h4>
+                <p className="mecha-action-desc">
+                  Unresolved hardware faults and line-rate flapping across edge routers.
                 </p>
-              )}
-            </article>
+              </div>
+              <button
+                type="button"
+                onClick={() => onAskQuestion('List critical open service events grouped by site')}
+                className="mecha-action-btn"
+              >
+                <span>Verify in Studio</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
 
-            {/* Right Card: Coverage and service (Red Expired, Amber Soon, Unified 'repair requests') */}
-            <article className="bento-card">
-              <div className="bento-card-header">
-                <div className="bento-card-title-group">
-                  <span className="bento-card-icon">
-                    <ShieldCheck size={16} />
+            {/* Action 2: Warranties ending soon */}
+            <div className="mecha-action-card">
+              <div>
+                <div className="mecha-action-header">
+                  <span className="mecha-action-badge mecha-action-badge--attention">
+                    SLA Attention
                   </span>
-                  <h3 className="bento-card-title">Coverage and service</h3>
+                  <span className="mecha-action-metric" style={{ color: '#D97706' }}>
+                    {formatNumber(urgentWarrantyCount)} Devices
+                  </span>
                 </div>
-                <div className="bento-card-header-actions">
-                  <div className="bento-segmented-tabs">
-                    <button
-                      type="button"
-                      className={`bento-tab-btn ${activeBentoTab === 'warranty' ? 'active' : ''}`}
-                      onClick={() => setActiveBentoTab('warranty')}
-                    >
-                      Coverage dates
-                    </button>
-                    <button
-                      type="button"
-                      className={`bento-tab-btn ${activeBentoTab === 'severity' ? 'active' : ''}`}
-                      onClick={() => setActiveBentoTab('severity')}
-                    >
-                      Service urgency
-                    </button>
-                  </div>
-                  <ExplainButton
-                    title="Coverage and service"
-                    explanation="Coverage buckets use the visible dataset baseline. Service urgency reflects the recorded severity of live repair requests."
-                  />
+                <h4 className="mecha-action-title">Upcoming SLA Expirations</h4>
+                <p className="mecha-action-desc">
+                  {formatNumber(endingSoonCount)} contracts expiring &bull; {formatNumber(alreadyExpiredCount)} already expired.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
+                className="mecha-action-btn"
+              >
+                <span>Verify in Studio</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
+            {/* Action 3: Data health findings */}
+            <div className="mecha-action-card">
+              <div>
+                <div className="mecha-action-header">
+                  <span className="mecha-action-badge mecha-action-badge--hygiene">
+                    Data Hygiene
+                  </span>
+                  <span className="mecha-action-metric" style={{ color: '#0EA5E9' }}>
+                    {dataHealth?.total_findings ?? 6} Anomalies
+                  </span>
                 </div>
+                <h4 className="mecha-action-title">Data Health Diagnostics</h4>
+                <p className="mecha-action-desc">
+                  Deterministic schema profiler flagged unapproved statuses and serial glitches.
+                </p>
               </div>
-              <p className="bento-insight">
-                {activeBentoTab === 'warranty'
-                  ? `${formatNumber(urgentWarrantyCount)} warranties expired or ending within 30 days`
-                  : 'Open repair requests grouped by recorded urgency'}
-              </p>
-              <p className="bento-card-desc">
-                {activeBentoTab === 'warranty'
-                  ? `as of ${formatReferenceDate(data.reference_date)}`
-                  : 'Newest repair requests are shown below.'}
-              </p>
-              <div className="bento-distribution-list">
-                {activeBentoTab === 'warranty'
-                  ? data.warranties_by_bucket.map((bucket) => {
-                      const percent = data.total_devices
-                        ? Math.round((bucket.value / data.total_devices) * 100)
-                        : 0
-                      return (
-                        <div className="bento-distribution-row" key={bucket.name}>
-                          <div className="distribution-name-wrap">
-                            <span className="distribution-name">{bucket.name}</span>
-                          </div>
-                          <div className="distribution-track">
-                            {/* Rule 2: Expired is red, 0-30 days is amber, others neutral */}
-                            <div
-                              className={`distribution-fill warranty ${warrantyClass(bucket.name)}`}
-                              style={{ width: `${percent}%` }}
-                            />
-                          </div>
-                          <div className="distribution-value">
-                            {formatNumber(bucket.value)} / {percent}%
-                          </div>
-                        </div>
-                      )
-                    })
-                  : data.events_by_severity.map((item) => {
-                      const severity = severityClass(item.name)
-                      return (
-                        <div className="bento-distribution-row" key={item.name}>
-                          <div className="distribution-name-wrap">
-                            <span className={`distribution-dot ${severity}`} />
-                            <span className="distribution-name">{item.name}</span>
-                          </div>
-                          <div className="distribution-track">
-                            <div
-                              className={`distribution-fill ${severity}`}
-                              style={{ width: `${item.percentage || 0}%` }}
-                            />
-                          </div>
-                          <div className="distribution-value">
-                            {formatNumber(item.value)} / {item.percentage}%
-                          </div>
-                        </div>
-                      )
-                    })}
-              </div>
-            </article>
-          </section>
+              <button
+                type="button"
+                onClick={() => onNavigate('data-quality')}
+                className="mecha-action-btn"
+              >
+                <span>Inspect 6 Rules</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+          </div>
 
-          {/* ─── 6.5 INTERACTIVE VECTOR GLOBAL FLEET TELEMETRY MAP (Americas, EMEA, APAC) ─── */}
-          {!isUnconfigured && data.total_devices > 0 && (
-            <section style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }} aria-label="Global equipment telemetry topology">
-              <GlobalFleetTelemetryMap onSelectSite={() => onNavigate('devices')} />
-            </section>
-          )}
-
-          {/* ─── 7. RECENT REPAIR REQUESTS TABLE (Rule 5: 'repair requests' Unified Term) ─── */}
+          {/* Recent Repair Requests Table */}
           <section
             ref={repairsTableRef}
-            className="overview-table-card"
+            className="mecha-table-card"
             id="recent-repairs-table"
             aria-labelledby="incidents-heading"
           >
-            <div className="overview-table-header-bar">
+            <div className="mecha-table-top">
               <div>
-                <h3 className="overview-table-title" id="incidents-heading">
-                  Recent repair requests
+                <h3 className="mecha-table-title" id="incidents-heading">
+                  Recent Repair Requests
                 </h3>
-                <div className="overview-table-sub">
-                  Newest repair requests, with the exact opening time available on hover.
+                <div className="mecha-table-subtitle">
+                  Newest logged hardware maintenance events across operational sites.
                 </div>
               </div>
-              <div className="overview-table-actions">
+              <div className="mecha-table-actions">
                 <button
                   type="button"
-                  className="overview-view-all"
+                  className="mecha-pill-btn mecha-pill-btn--secondary"
                   onClick={() => onNavigate('devices')}
                 >
-                  View all
-                  <ArrowRight size={14} />
+                  <span>View All Assets</span>
+                  <ArrowRight size={13} />
                 </button>
                 <ExplainButton
                   title="Repair request audit"
@@ -1378,12 +905,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 />
               </div>
             </div>
-            <div className="overview-table-container">
-              <table className="overview-table">
+
+            <div className="mecha-table-wrap">
+              <table className="mecha-table">
                 <thead>
                   <tr>
                     <th>Request</th>
-                    <th>Asset</th>
+                    <th>Asset Tag</th>
                     <th>Type</th>
                     <th>Severity</th>
                     <th>Status</th>
@@ -1396,29 +924,29 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       const severity = severityClass(event.severity)
                       return (
                         <tr key={event.id}>
-                          <td className="event-id-cell">#{event.id}</td>
+                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px' }}>#{event.id}</td>
                           <td>
                             <button
                               type="button"
-                              className="asset-tag-cell"
+                              className="mecha-tag-btn"
                               onClick={() => onOpenDevice(event.device_id)}
                               title={`Inspect asset ${event.asset_tag}`}
                             >
                               {event.asset_tag}
                             </button>
                           </td>
-                          <td className="event-type-cell">{formatStatus(event.event_type)}</td>
+                          <td style={{ color: 'var(--text-muted)' }}>{formatStatus(event.event_type)}</td>
                           <td>
                             <span className={`severity-pill ${severity}`}>
                               {formatStatus(event.severity)}
                             </span>
                           </td>
                           <td>
-                            <span className={`status-tag-cell ${severityClass(event.status)}`}>
+                            <span className="status-tag-cell">
                               {formatStatus(event.status)}
                             </span>
                           </td>
-                          <td className="date-opened-cell">
+                          <td style={{ color: 'var(--text-muted)' }}>
                             <HumanDate iso={event.opened_at} />
                           </td>
                         </tr>
@@ -1426,8 +954,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     })
                   ) : (
                     <tr>
-                      <td colSpan={6} className="overview-table-empty">
-                        No recent repair requests were returned.
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                        No recent repair requests recorded.
                       </td>
                     </tr>
                   )}
@@ -1435,7 +963,239 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               </table>
             </div>
           </section>
-        </>
+        </div>
+      )}
+
+      {/* ─── TAB 2: FLEET LIFECYCLE & DISTRIBUTION ─── */}
+      {data && activeSectionTab === 'lifecycle' && (
+        <div className="mecha-actions-container">
+          {/* Equipment Lifecycle Distribution Card */}
+          <section className="mecha-lifecycle-card" aria-label="Equipment lifecycle breakdown">
+            <div className="mecha-lifecycle-header">
+              <span className="mecha-lifecycle-title">Equipment Lifecycle Distribution</span>
+              <span className="mecha-lifecycle-meta">Total: {formatNumber(totalBreakdownCount)} Devices &bull; Read-Only Audit</span>
+            </div>
+
+            {/* Single Stacked Proportion Bar */}
+            <div className="mecha-stacked-bar" role="progressbar" aria-label="Fleet lifecycle status proportions">
+              {normalizedFleetBreakdown.map((item) => {
+                const pct = totalBreakdownCount > 0 ? (item.value / totalBreakdownCount) * 100 : 0
+                return (
+                  <div
+                    key={item.name}
+                    className="mecha-bar-segment"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor:
+                        item.name === 'Active'
+                          ? '#10B981'
+                          : item.name === 'Maintenance'
+                          ? '#F59E0B'
+                          : item.name === 'Retired'
+                          ? '#64748B'
+                          : item.name === 'Offline'
+                          ? '#94A3B8'
+                          : item.name === 'Pending Audit'
+                          ? '#8B5CF6'
+                          : '#0EA5E9',
+                    }}
+                    title={`${item.name}: ${formatNumber(item.value)} (${pct.toFixed(1)}%)`}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Legend with Counts */}
+            <div className="mecha-legend-grid">
+              {normalizedFleetBreakdown.map((item) => {
+                const pct = totalBreakdownCount > 0 ? ((item.value / totalBreakdownCount) * 100).toFixed(1) : '0'
+                const dotColor =
+                  item.name === 'Active'
+                    ? '#10B981'
+                    : item.name === 'Maintenance'
+                    ? '#F59E0B'
+                    : item.name === 'Retired'
+                    ? '#64748B'
+                    : item.name === 'Offline'
+                    ? '#94A3B8'
+                    : item.name === 'Pending Audit'
+                    ? '#8B5CF6'
+                    : '#0EA5E9'
+
+                return (
+                  <button
+                    key={item.name}
+                    type="button"
+                    className="mecha-legend-pill"
+                    onClick={() => onNavigate('devices', { status: item.name.toLowerCase() })}
+                    title={`Filter equipment by ${item.name}`}
+                  >
+                    <span className="mecha-legend-dot" style={{ backgroundColor: dotColor }} />
+                    <span>{item.name}</span>
+                    <span className="mecha-legend-count">{formatNumber(item.value)}</span>
+                    <span className="mecha-legend-pct">({pct}%)</span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+
+          {/* Bento Charts */}
+          <section className="mecha-bento-grid" aria-label="Fleet distributions">
+            {/* Equipment by Type */}
+            <article className="mecha-bento-card">
+              <div className="mecha-bento-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Database size={16} style={{ color: 'var(--text-muted)' }} />
+                  <h4 className="mecha-bento-title">Equipment by Type</h4>
+                </div>
+                <span className="mecha-kbd">{data.devices_by_type.length} types</span>
+              </div>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
+                {topEquipmentType
+                  ? `${topEquipmentType.name} is the largest equipment group at ${topEquipmentType.percentage}% of the fleet.`
+                  : 'No equipment type data is available.'}
+              </p>
+              <div className="mecha-bento-list">
+                {data.devices_by_type.length ? (
+                  data.devices_by_type.map((item) => (
+                    <div className="mecha-bento-row" key={item.name}>
+                      <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                      <div className="mecha-bento-track">
+                        <div
+                          className="mecha-bento-fill"
+                          style={{ width: `${item.percentage || 0}%` }}
+                        />
+                      </div>
+                      <span className="mecha-bento-val">{formatNumber(item.value)} ({item.percentage}%)</span>
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No distribution data available.</p>
+                )}
+              </div>
+              {typeFormattingIssues !== null && (
+                <p style={{ margin: '0.35rem 0 0', fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                  {formatNumber(typeFormattingIssues)} records have inconsistent spelling.{' '}
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('data-quality')}
+                    style={{ background: 'none', border: 'none', padding: 0, textDecoration: 'underline', color: 'var(--text-main)', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    See Data Health
+                  </button>
+                </p>
+              )}
+            </article>
+
+            {/* Coverage and Service */}
+            <article className="mecha-bento-card">
+              <div className="mecha-bento-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={16} style={{ color: 'var(--text-muted)' }} />
+                  <h4 className="mecha-bento-title">Coverage &amp; Urgency</h4>
+                </div>
+                <div style={{ display: 'inline-flex', gap: '4px', background: 'var(--bg-subtle)', padding: '2px', borderRadius: '9999px' }}>
+                  <button
+                    type="button"
+                    style={{
+                      border: 'none',
+                      background: activeBentoTab === 'warranty' ? 'var(--bg-card)' : 'transparent',
+                      color: activeBentoTab === 'warranty' ? 'var(--text-main)' : 'var(--text-muted)',
+                      padding: '3px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setActiveBentoTab('warranty')}
+                  >
+                    Warranty
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      border: 'none',
+                      background: activeBentoTab === 'severity' ? 'var(--bg-card)' : 'transparent',
+                      color: activeBentoTab === 'severity' ? 'var(--text-main)' : 'var(--text-muted)',
+                      padding: '3px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setActiveBentoTab('severity')}
+                  >
+                    Severity
+                  </button>
+                </div>
+              </div>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
+                {activeBentoTab === 'warranty'
+                  ? `${formatNumber(urgentWarrantyCount)} warranties expired or ending within 30 days.`
+                  : 'Open repair incidents grouped by recorded severity.'}
+              </p>
+              <div className="mecha-bento-list">
+                {activeBentoTab === 'warranty'
+                  ? data.warranties_by_bucket.map((bucket) => {
+                      const percent = data.total_devices
+                        ? Math.round((bucket.value / data.total_devices) * 100)
+                        : 0
+                      const isExpired = bucket.name.toLowerCase() === 'already expired'
+                      const isSoon = bucket.name.toLowerCase() === '0 - 30 days'
+                      return (
+                        <div className="mecha-bento-row" key={bucket.name}>
+                          <span style={{ fontWeight: 500 }}>{bucket.name}</span>
+                          <div className="mecha-bento-track">
+                            <div
+                              className="mecha-bento-fill"
+                              style={{
+                                width: `${percent}%`,
+                                backgroundColor: isExpired ? '#DC2626' : isSoon ? '#D97706' : 'var(--text-main)',
+                              }}
+                            />
+                          </div>
+                          <span className="mecha-bento-val">{formatNumber(bucket.value)} ({percent}%)</span>
+                        </div>
+                      )
+                    })
+                  : data.events_by_severity.map((item) => {
+                      const severity = severityClass(item.name)
+                      return (
+                        <div className="mecha-bento-row" key={item.name}>
+                          <span style={{ fontWeight: 500 }}>{item.name}</span>
+                          <div className="mecha-bento-track">
+                            <div
+                              className="mecha-bento-fill"
+                              style={{
+                                width: `${item.percentage || 0}%`,
+                                backgroundColor: severity === 'high' ? '#DC2626' : severity === 'medium' ? '#D97706' : '#0EA5E9',
+                              }}
+                            />
+                          </div>
+                          <span className="mecha-bento-val">{formatNumber(item.value)} ({item.percentage}%)</span>
+                        </div>
+                      )
+                    })}
+              </div>
+            </article>
+          </section>
+        </div>
+      )}
+
+      {/* ─── TAB 3: GLOBAL TELEMETRY MAP ─── */}
+      {!isUnconfigured && data && activeSectionTab === 'topology' && data.total_devices > 0 && (
+        <section className="mecha-actions-container" aria-label="Global equipment telemetry topology">
+          <div className="mecha-lifecycle-card">
+            <div className="mecha-lifecycle-header">
+              <div>
+                <h3 className="mecha-lifecycle-title">Global Fleet Telemetry Map</h3>
+                <span className="mecha-lifecycle-meta">Interactive sensor observation grid across 50 active sites (Americas, EMEA, APAC)</span>
+              </div>
+            </div>
+            <GlobalFleetTelemetryMap onSelectSite={() => onNavigate('devices')} />
+          </div>
+        </section>
       )}
     </div>
   )

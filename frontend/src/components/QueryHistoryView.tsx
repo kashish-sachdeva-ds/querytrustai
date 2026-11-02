@@ -739,7 +739,7 @@ export const QueryHistoryView: React.FC<QueryHistoryViewProps> = ({ onAskQuestio
                     >
                       <span>run_id:</span>
                       <span>{selectedItem.id.slice(0, 8)}...</span>
-                      {copiedRunId ? <Check size={12} color="var(--qt-accent, #FF4F00)" /> : <Copy size={12} />}
+                      {copiedRunId ? <Check size={12} color="#10B981" /> : <Copy size={12} />}
                     </button>
 
                     {renderStatusBadge(selectedItem.status)}
@@ -833,7 +833,7 @@ export const QueryHistoryView: React.FC<QueryHistoryViewProps> = ({ onAskQuestio
                         >
                           {copiedSql ? (
                             <>
-                              <Check size={12} color="var(--qt-accent, #FF4F00)" /> Copied!
+                              <Check size={12} color="#10B981" /> Copied!
                             </>
                           ) : (
                             <>

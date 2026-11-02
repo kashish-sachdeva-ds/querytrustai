@@ -71,6 +71,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const retryTimerRef = useRef<number | null>(null)
 
   const verifySession = useCallback(async (_isInitial = false): Promise<void> => {
+    // If running in intentional offline demo mode, keep the demo session active across reloads
+    try {
+      if (localStorage.getItem(DEMO_MODE_FLAG) === 'true') {
+        const raw = localStorage.getItem(CACHED_USER_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (parsed && typeof parsed.email === 'string') {
+            setUser(parsed as UserMeResponse)
+            setConnectionState('offline_demo')
+            setIsLoading(false)
+            return
+          }
+        }
+        setUser(demoUser)
+        setConnectionState('offline_demo')
+        setIsLoading(false)
+        return
+      }
+    } catch {}
+
     try {
       const me = await apiGetMe(PROBE_TIMEOUT_MS)
       setUser(me)
@@ -108,6 +128,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Listen for unauthorized 401 events dispatched by API client
   useEffect(() => {
     const handleUnauthorized = () => {
+      try {
+        if (localStorage.getItem(DEMO_MODE_FLAG) === 'true') {
+          return
+        }
+      } catch {}
+
       setUser(null)
       try {
         localStorage.removeItem(CACHED_USER_KEY)

@@ -6,8 +6,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 10px 1.4rem;
-  background: var(--qt-canvas, #151821);
-  border-bottom: 1px solid var(--qt-border);
+  background: var(--bg-card, #FFFFFF);
+  border-bottom: 1px solid var(--border-subtle, #E4E4E7);
   flex-wrap: wrap;
 }
 
@@ -55,8 +55,8 @@
 
 .admin-search-input:focus {
   outline: none;
-  border-color: var(--qt-accent);
-  box-shadow: 0 0 0 2px rgba(255, 92, 0, 0.12);
+  border-color: #0284C7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
 }
 
 .admin-search-input::placeholder {
@@ -104,13 +104,13 @@
 
 /* Segmented Tabs Control */
 .admin-segmented-tabs {
-  background: var(--qt-canvas, #151821);
-  padding: 2px;
-  border-radius: 6px;
+  background: var(--bg-subtle, #F4F5F7);
+  padding: 3px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  border: 1px solid var(--qt-border);
+  gap: 3px;
+  border: 1px solid var(--border-subtle, #E4E4E7);
 }
 
 .admin-tab-btn {
@@ -152,8 +152,8 @@
 }
 
 .admin-tab-btn.active .admin-tab-badge {
-  background: var(--qt-accent-soft, rgba(255, 92, 0, 0.14));
-  color: var(--qt-accent);
+  background: #09090B;
+  color: #FFFFFF;
 }
 
 /* Empty State Box */
@@ -197,7 +197,7 @@
 .admin-empty-state-action {
   margin-top: 6px;
   font-size: 0.78rem;
-  color: var(--qt-accent);
+  color: #0284C7;
   background: none;
   border: none;
   cursor: pointer;
@@ -207,7 +207,7 @@
 }
 
 .admin-empty-state-action:hover {
-  opacity: 0.85;
+  color: #0369A1;
 }
 
 /* Dark mode specific tweaks */
@@ -217,5 +217,5 @@
 }
 
 [data-theme="dark"] .admin-toolbar-row {
-  background: #11131a;
+  background: #121214;
 }

@@ -177,7 +177,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
     <div className="asset-drawer-backdrop" onClick={onClose}>
       <div
         ref={drawerPanelRef}
-        className="asset-drawer-panel"
+        className="asset-drawer-panel bg-white dark:bg-[#121214] text-zinc-950 dark:text-zinc-100"
         role="dialog"
         aria-modal="true"
         aria-labelledby="asset-drawer-title"
@@ -185,7 +185,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
         onKeyDown={handleDrawerKeyDown}
       >
         {/* Header */}
-        <div className="asset-drawer-header">
+        <div className="asset-drawer-header bg-white dark:bg-[#121214] border-b border-zinc-200 dark:border-zinc-800/80">
           <div className="asset-drawer-header-top">
             <div className="asset-drawer-badges">
               <button
@@ -197,7 +197,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
                 disabled={!deviceDetail?.asset_tag}
               >
                 <span>{deviceDetail?.asset_tag || `Asset #${deviceId}`}</span>
-                {copiedAssetId ? <Check size={12} color="#FF4F00" /> : <Copy size={12} />}
+                {copiedAssetId ? <Check size={12} color="#10B981" /> : <Copy size={12} />}
               </button>
 
               {deviceDetail && (
@@ -216,59 +216,56 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
 
             <button
               type="button"
-              className="asset-close-btn"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               onClick={onClose}
               title="Close inspector (Esc)"
               aria-label="Close device inspection drawer"
             >
-              <X size={16} />
+              <X size={15} />
             </button>
           </div>
 
-          <div className="asset-drawer-meta-sub" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.4rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* High contrast white text for drawer title */}
-              <h3 id="asset-drawer-title" style={{ fontSize: '1.05rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
-                {deviceDetail ? `${deviceDetail.asset_tag} — ${deviceDetail.model}` : `Device #${deviceId}`}
-              </h3>
-            </div>
+          <div className="flex items-center justify-between gap-2 mt-1">
+            <h3 id="asset-drawer-title" className="text-base font-bold text-zinc-950 dark:text-white truncate m-0">
+              {deviceDetail ? `${deviceDetail.asset_tag} — ${deviceDetail.model}` : `Device #${deviceId}`}
+            </h3>
             <ExplainButton
               title="Hardware Specification Drawer"
               explanation="Detailed network device telemetry, site location, warranty dates, and recent service incidents."
             />
           </div>
 
-          {/* Drawer Quick Action Buttons */}
+          {/* Drawer Quick Action Buttons (Laser-Aligned h-8 Grid) */}
           {deviceDetail && (
-            <div className="drawer-action-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.65rem' }}>
+            <div className="flex items-center gap-2 flex-wrap mt-1">
               <button
                 type="button"
-                className="btn btn-primary btn-sm"
+                className="h-8 px-3 rounded-full text-xs font-semibold bg-sky-500 hover:bg-sky-600 text-white shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
                 onClick={() => {
                   onClose()
                   onAskQuestion?.(`Show all telemetry and open events for device ${deviceDetail.asset_tag}`)
                 }}
                 title="Ask a governed question about this device"
               >
-                <MessageSquareText size={13} style={{ marginRight: 5 }} />
-                Ask about this device
+                <MessageSquareText size={12} />
+                <span>Ask about device</span>
               </button>
 
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
+                className="h-8 px-3 rounded-full text-xs font-semibold bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
                 onClick={() => handleCopyAssetId(deviceDetail.asset_tag)}
                 title="Copy asset tag to clipboard"
               >
                 {copiedAssetId ? (
                   <>
-                    <Check size={13} style={{ marginRight: 5, color: '#FF5A14' }} />
-                    Copied
+                    <Check size={12} className="text-emerald-500" />
+                    <span>Copied</span>
                   </>
                 ) : (
                   <>
-                    <Copy size={13} style={{ marginRight: 5 }} />
-                    Copy asset tag
+                    <Copy size={12} />
+                    <span>Copy tag</span>
                   </>
                 )}
               </button>
@@ -276,37 +273,42 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
               {onNavigateToEquipment && (
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  className="h-8 px-3 rounded-full text-xs font-semibold bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
                   onClick={() => {
                     onClose()
                     onNavigateToEquipment(deviceDetail.id)
                   }}
                   title="View this asset in Equipment Explorer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <ExternalLink size={13} />
-                  Equipment Explorer
+                  <ExternalLink size={12} />
+                  <span>Explorer</span>
                 </button>
               )}
             </div>
           )}
 
-          {/* Hardware Device Render Visual Card */}
+          {/* Compact Enterprise Hardware Capsule Card (Space-saving 68px header vs 190px billboard) */}
           {deviceDetail && (
-            <div className="asset-hardware-visual-card">
-              <img
-                src={getDeviceImage(deviceDetail.device_type)}
-                alt={`${deviceDetail.model} ${deviceDetail.device_type}`}
-                className="asset-hardware-img"
-                loading="lazy"
-              />
-              <div className="asset-hardware-overlay">
-                <div>
-                  <div className="asset-hardware-model">{deviceDetail.model}</div>
-                  <div className="asset-hardware-vendor">{deviceDetail.vendor}</div>
+            <div className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 mt-1">
+              <div className="relative w-20 h-13 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-950 flex-shrink-0">
+                <img
+                  src={getDeviceImage(deviceDetail.device_type)}
+                  alt={`${deviceDetail.model} ${deviceDetail.device_type}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-xs text-zinc-950 dark:text-white truncate">
+                    {deviceDetail.model}
+                  </span>
+                  <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex-shrink-0">
+                    {deviceDetail.device_type}
+                  </span>
                 </div>
-                <div className="asset-hardware-type-tag">
-                  {deviceDetail.device_type}
+                <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                  {deviceDetail.vendor} &bull; <span className="font-mono">{deviceDetail.serial_number || 'SN-UNASSIGNED'}</span>
                 </div>
               </div>
             </div>
@@ -317,7 +319,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
         {loading ? (
           <div style={{ padding: '3.5rem', textAlign: 'center' }}>
             <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
-            <p style={{ fontSize: '13px', color: '#9CA3AF' }}>
+            <p className="text-xs text-zinc-500">
               Loading device specifications &amp; events...
             </p>
           </div>
@@ -325,57 +327,44 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
           <div className="asset-drawer-body">
             {/* Data hygiene note if glitch detected */}
             {checkDataGlitch(deviceDetail).hasGlitch && (
-              <div
-                className="data-hygiene-note"
-                style={{
-                  background: 'rgba(245, 158, 11, 0.12)',
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  borderRadius: '8px',
-                  padding: '0.85rem 1rem',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '0.75rem',
-                }}
-              >
-                <AlertTriangle size={16} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 2 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <strong style={{ color: '#F59E0B', fontSize: '12px', fontWeight: 600 }}>Data hygiene note</strong>
-                  <span style={{ color: '#E2E8F0', fontSize: '12px', lineHeight: 1.45 }}>
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5">
+                <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex flex-col gap-0.5">
+                  <strong className="text-amber-600 dark:text-amber-400 text-xs font-semibold">Data hygiene note</strong>
+                  <span className="text-zinc-700 dark:text-zinc-300 text-xs leading-relaxed">
                     {checkDataGlitch(deviceDetail).message}. Preserved as-is in read-only mode.
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Section 1: Hardware */}
+            {/* Section 1: Hardware Specifications */}
             <div>
-              <div className="asset-section-label" style={{ color: '#A1A09A' }}>
-                <span>Hardware</span>
-                <Cpu size={13} />
+              <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
+                <span>Hardware Specifications</span>
+                <Cpu size={12} className="text-sky-500" />
               </div>
-              <div className="asset-spec-card" style={{ background: '#1A1A18', border: '1px solid #2B2B28' }}>
-                <div className="asset-spec-grid-2">
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Model</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF', fontWeight: 500 }}>{deviceDetail.model}</span>
+              <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Model</span>
+                    <span className="font-semibold text-zinc-950 dark:text-white mt-0.5 block">{deviceDetail.model}</span>
                   </div>
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Vendor</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF', fontWeight: 500 }}>{deviceDetail.vendor}</span>
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Vendor</span>
+                    <span className="font-semibold text-zinc-950 dark:text-white mt-0.5 block">{deviceDetail.vendor}</span>
                   </div>
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Firmware version</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF' }}>{formatFirmwareVersion(deviceDetail.firmware_version)}</span>
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Firmware version</span>
+                    <span className="font-mono text-zinc-900 dark:text-zinc-200 mt-0.5 block">{formatFirmwareVersion(deviceDetail.firmware_version)}</span>
                   </div>
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Serial number</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF' }}>
-                      {deviceDetail.serial_number || '—'}
-                    </span>
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Serial number</span>
+                    <span className="font-mono text-zinc-900 dark:text-zinc-200 mt-0.5 block">{deviceDetail.serial_number || '—'}</span>
                   </div>
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Device ID</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF' }}>#{deviceDetail.id}</span>
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Device ID</span>
+                    <span className="font-mono text-zinc-900 dark:text-zinc-200 mt-0.5 block">#{deviceDetail.id}</span>
                   </div>
                 </div>
               </div>
@@ -383,27 +372,27 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
 
             {/* Section 2: Location */}
             <div>
-              <div className="asset-section-label" style={{ color: '#A1A09A' }}>
-                <span>Location</span>
-                <Building size={13} />
+              <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
+                <span>Facility &amp; Location</span>
+                <Building size={12} className="text-sky-500" />
               </div>
-              <div className="asset-spec-card" style={{ background: '#1A1A18', border: '1px solid #2B2B28' }}>
-                <div className="asset-spec-grid-2">
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Facility name</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF', fontWeight: 500 }}>{deviceDetail.site_name}</span>
+              <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Facility name</span>
+                    <span className="font-semibold text-zinc-950 dark:text-white mt-0.5 block">{deviceDetail.site_name}</span>
                   </div>
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Site code</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF' }}>{deviceDetail.site_code}</span>
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Site code</span>
+                    <span className="font-mono text-zinc-900 dark:text-zinc-200 mt-0.5 block">{deviceDetail.site_code}</span>
                   </div>
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Geographic region</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF' }}>{deviceDetail.region}</span>
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Geographic region</span>
+                    <span className="font-medium text-zinc-900 dark:text-zinc-200 mt-0.5 block">{deviceDetail.region}</span>
                   </div>
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Installation date</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF' }}>
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Installation date</span>
+                    <span className="font-mono text-zinc-900 dark:text-zinc-200 mt-0.5 block">
                       <HumanDate iso={deviceDetail.installed_at} />
                     </span>
                   </div>
@@ -411,29 +400,27 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
               </div>
             </div>
 
-            {/* Section 3: Warranty */}
+            {/* Section 3: Warranty Status */}
             <div>
-              <div className="asset-section-label" style={{ color: '#A1A09A' }}>
-                <span>Warranty</span>
-                <Calendar size={13} />
+              <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
+                <span>Lifecycle &amp; Warranty</span>
+                <Calendar size={12} className="text-sky-500" />
               </div>
-              <div className="asset-spec-card" style={{ background: '#1A1A18', border: '1px solid #2B2B28' }}>
-                <div className="asset-spec-grid-2">
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Coverage status</span>
-                    <span className="asset-spec-val">
-                      {deviceDetail.warranty_expiry ? (
-                        <span className={`warranty-status-pill ${getWarrantyStatus(deviceDetail.warranty_expiry).variant}`}>
-                          {getWarrantyStatus(deviceDetail.warranty_expiry).label}
-                        </span>
-                      ) : (
-                        <span style={{ color: '#9CA3AF' }}>No warranty on record</span>
-                      )}
-                    </span>
+              <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase mb-1">Coverage status</span>
+                    {deviceDetail.warranty_expiry ? (
+                      <span className={`warranty-status-pill ${getWarrantyStatus(deviceDetail.warranty_expiry).variant}`}>
+                        {getWarrantyStatus(deviceDetail.warranty_expiry).label}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-400">No warranty on record</span>
+                    )}
                   </div>
-                  <div className="asset-spec-item">
-                    <span className="asset-spec-name" style={{ color: '#9CA3AF' }}>Exact expiration</span>
-                    <span className="asset-spec-val" style={{ color: '#FFFFFF' }}>
+                  <div>
+                    <span className="block text-[10.5px] font-mono text-zinc-500 dark:text-zinc-400 uppercase">Exact expiration</span>
+                    <span className="font-mono text-zinc-900 dark:text-zinc-200 mt-1 block">
                       <HumanDate iso={deviceDetail.warranty_expiry} fallback="No warranty on record" />
                     </span>
                   </div>
@@ -443,80 +430,86 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
 
             {/* Section 4: Recent repair requests */}
             <div>
-              <div className="asset-section-label" style={{ color: '#A1A09A' }}>
-                <span>Recent repair requests</span>
-                <Activity size={13} />
+              <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
+                <span>Recent Repair Requests</span>
+                <Activity size={12} className="text-sky-500" />
               </div>
               {deviceDetail.recent_events && deviceDetail.recent_events.length > 0 ? (
-                <div className="asset-events-list">
+                <div className="space-y-2">
                   {deviceDetail.recent_events.map((evt) => (
-                    <div key={evt.id} className="asset-event-card">
-                      <div className="asset-event-top">
-                        <span className="asset-event-type">{evt.event_type}</span>
+                    <div key={evt.id} className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-zinc-950 dark:text-white">{evt.event_type}</span>
                         <span className={`asset-event-sev ${evt.severity.toLowerCase()}`}>
                           {evt.severity}
                         </span>
                       </div>
-                      <div className="asset-event-desc">{evt.description}</div>
-                      <div className="asset-event-date">
+                      <div className="text-zinc-600 dark:text-zinc-400 text-[11.5px] leading-relaxed">{evt.description}</div>
+                      <div className="text-[10.5px] font-mono text-zinc-400">
                         <HumanDate iso={evt.opened_at} />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="asset-events-empty">
-                  <span>No historical or open repair requests recorded.</span>
+                <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-center text-xs text-zinc-400">
+                  No historical or open repair requests recorded.
                 </div>
               )}
             </div>
-              {/* Section 5: Telemetry Health & Sparklines */}
-              <div style={{ marginTop: '1.25rem' }}>
-                <div className="asset-section-label" style={{ color: '#A1A09A', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Operational Telemetry (5 Dimensions)</span>
-                  <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: 600 }}>● Live Ingested</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '12px' }}>
-                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                      <span>CPU Util</span>
-                      <strong style={{ color: '#FF5E1A' }}>{telemetryPoints[telemetryPoints.length - 1]?.cpu_utilization_pct}%</strong>
-                    </div>
-                    <Sparkline data={telemetryPoints.map((p) => p.cpu_utilization_pct || 0)} color="#FF5E1A" fill />
-                  </div>
-                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Memory</span>
-                      <strong style={{ color: '#3B82F6' }}>{telemetryPoints[telemetryPoints.length - 1]?.memory_utilization_pct}%</strong>
-                    </div>
-                    <Sparkline data={telemetryPoints.map((p) => p.memory_utilization_pct || 0)} color="#3B82F6" fill />
-                  </div>
-                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Temp °C</span>
-                      <strong style={{ color: '#F59E0B' }}>{telemetryPoints[telemetryPoints.length - 1]?.temperature_celsius}°C</strong>
-                    </div>
-                    <Sparkline data={telemetryPoints.map((p) => p.temperature_celsius || 0)} color="#F59E0B" fill />
-                  </div>
-                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Loss %</span>
-                      <strong style={{ color: '#EC4899' }}>{telemetryPoints[telemetryPoints.length - 1]?.packet_loss_pct}%</strong>
-                    </div>
-                    <Sparkline data={telemetryPoints.map((p) => p.packet_loss_pct || 0)} color="#EC4899" fill />
-                  </div>
-                  <div style={{ background: '#1A1A18', border: '1px solid #2B2B28', borderRadius: 6, padding: '8px' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Latency</span>
-                      <strong style={{ color: '#10B981' }}>{telemetryPoints[telemetryPoints.length - 1]?.latency_ms}ms</strong>
-                    </div>
-                    <Sparkline data={telemetryPoints.map((p) => p.latency_ms || 0)} color="#10B981" fill />
-                  </div>
-                </div>
 
-                <TelemetryTimeSeriesChart data={telemetryPoints} title={`Telemetry Stream (Device #${deviceDetail.id})`} height={220} />
+            {/* Section 5: Telemetry Health & Sparklines */}
+            <div className="mt-1">
+              <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
+                <span>Operational Telemetry (5 Dimensions)</span>
+                <span className="text-[11px] font-mono text-emerald-500 font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Ingested
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
+                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                    <span>CPU</span>
+                    <strong className="text-orange-500">{telemetryPoints[telemetryPoints.length - 1]?.cpu_utilization_pct}%</strong>
+                  </div>
+                  <Sparkline data={telemetryPoints.map((p) => p.cpu_utilization_pct || 0)} color="#F97316" fill />
+                </div>
+                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                    <span>RAM</span>
+                    <strong className="text-blue-500">{telemetryPoints[telemetryPoints.length - 1]?.memory_utilization_pct}%</strong>
+                  </div>
+                  <Sparkline data={telemetryPoints.map((p) => p.memory_utilization_pct || 0)} color="#3B82F6" fill />
+                </div>
+                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                    <span>TEMP</span>
+                    <strong className="text-amber-500">{telemetryPoints[telemetryPoints.length - 1]?.temperature_celsius}°C</strong>
+                  </div>
+                  <Sparkline data={telemetryPoints.map((p) => p.temperature_celsius || 0)} color="#F59E0B" fill />
+                </div>
+                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                    <span>LOSS</span>
+                    <strong className="text-rose-500">{telemetryPoints[telemetryPoints.length - 1]?.packet_loss_pct}%</strong>
+                  </div>
+                  <Sparkline data={telemetryPoints.map((p) => p.packet_loss_pct || 0)} color="#F43F5E" fill />
+                </div>
+                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                    <span>PING</span>
+                    <strong className="text-emerald-500">{telemetryPoints[telemetryPoints.length - 1]?.latency_ms}ms</strong>
+                  </div>
+                  <Sparkline data={telemetryPoints.map((p) => p.latency_ms || 0)} color="#10B981" fill />
+                </div>
+              </div>
+
+              <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                <TelemetryTimeSeriesChart data={telemetryPoints} title={`Telemetry Stream (Device #${deviceDetail.id})`} height={200} />
               </div>
             </div>
+          </div>
         ) : (
           <div style={{ padding: '2rem', textAlign: 'center', color: '#9CA3AF' }}>
             Unable to load specifications for device #{deviceId}

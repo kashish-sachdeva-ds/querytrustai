@@ -463,10 +463,10 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                       : isOutlier
                       ? item.anomaly_score >= 0.85
                         ? '#DC2626'
-                        : '#F95716'
+                        : '#F59E0B'
                       : '#94A3B8'
                   }
-                  stroke={isSelected ? '#F95716' : isOutlier ? '#ffffff' : 'transparent'}
+                  stroke={isSelected ? '#0284C7' : isOutlier ? '#ffffff' : 'transparent'}
                   strokeWidth={isSelected ? 2 : 1}
                   style={{ cursor: 'pointer', transition: 'all 80ms ease' }}
                   onClick={() => setSelectedDotDeviceId(isSelected ? null : item.device_id)}

@@ -17,7 +17,7 @@ interface MetricConfig {
 }
 
 const METRICS: MetricConfig[] = [
-  { key: 'cpu_utilization_pct', label: 'CPU Utilization', unit: '%', color: '#FF4F00' },
+  { key: 'cpu_utilization_pct', label: 'CPU Utilization', unit: '%', color: '#0284C7' },
   { key: 'memory_utilization_pct', label: 'Memory', unit: '%', color: '#B45309' },
   { key: 'temperature_celsius', label: 'Temperature', unit: '°C', color: '#A7382C' },
   { key: 'packet_loss_pct', label: 'Packet Loss', unit: '%', color: '#34D399' },

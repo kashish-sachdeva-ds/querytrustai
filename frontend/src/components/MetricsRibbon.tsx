@@ -69,7 +69,7 @@ export const MetricsRibbon: React.FC = () => {
         }}
         title="P95 Query Validation Latency"
       >
-        <Activity size={12} style={{ color: '#FF4F00' }} />
+        <Activity size={12} style={{ color: '#0284C7' }} />
         <span>P95: 1.8ms</span>
       </div>
 
@@ -92,7 +92,7 @@ export const MetricsRibbon: React.FC = () => {
         }}
         title={`Current mode: ${mode}. Click to switch to ${mode === 'simple' ? 'Expert' : 'Simple'}`}
       >
-        <Sparkles size={12} style={{ color: '#FF4F00' }} />
+        <Sparkles size={12} style={{ color: '#0284C7' }} />
         <span>{mode === 'simple' ? 'Simple' : 'Expert'}</span>
       </button>
 

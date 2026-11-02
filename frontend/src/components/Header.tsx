@@ -4,17 +4,12 @@ import {
   LogOut,
   Shield,
   ChevronDown,
-  ChevronRight,
   Sun,
   Moon,
   Check,
   Loader2,
   Search,
-  Building2,
-  LayoutDashboard,
-  Terminal,
-  FlaskConical,
-  Database,
+  Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -99,14 +94,6 @@ function getInitials(name?: string, email?: string): string {
   return 'SA'
 }
 
-function formatRole(role?: string): string {
-  if (!role) return 'Viewer'
-  const normalized = role.toLowerCase().trim()
-  if (normalized === 'admin') return 'Admin'
-  if (normalized === 'analyst') return 'Analyst'
-  return 'Viewer'
-}
-
 const popoverVariants: Variants = {
   hidden: { opacity: 0, y: -6, scale: 0.98 },
   visible: {
@@ -123,7 +110,7 @@ const popoverVariants: Variants = {
     opacity: 0,
     y: -4,
     scale: 0.98,
-    transition: { duration: 0.1 },
+    transition: { duration: 0.12 },
   },
 }
 
@@ -133,37 +120,30 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCommandPalette,
   onOpenOnboarding,
 }) => {
-  const { user, login, logout, enterDemoMode } = useAuth()
+  const { user, logout, enterDemoMode } = useAuth()
   const { theme, toggleTheme } = useTheme()
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [roleSwitcherOpen, setRoleSwitcherOpen] = useState(false)
-  const [roiModalOpen, setRoiModalOpen] = useState(false)
-  const [showPermissions, setShowPermissions] = useState(false)
-  const [switchingRole, setSwitchingRole] = useState<DemoRoleKey | null>(null)
 
-  const profileTriggerRef = useRef<HTMLButtonElement>(null)
-  const profileMenuRef = useRef<HTMLDivElement>(null)
+  const [roleSwitcherOpen, setRoleSwitcherOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [showPermissions, setShowPermissions] = useState(false)
+  const [switchingRole, setSwitchingRole] = useState<string | null>(null)
+  const [roiModalOpen, setRoiModalOpen] = useState(false)
+
   const roleTriggerRef = useRef<HTMLButtonElement>(null)
   const roleMenuRef = useRef<HTMLDivElement>(null)
+  const profileTriggerRef = useRef<HTMLButtonElement>(null)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
 
-  const userRole = (user?.role || 'viewer').toLowerCase()
+  const userRole = (user?.role || 'admin').toLowerCase()
+  const roleDisplay = userRole === 'admin' ? 'Admin' : userRole === 'analyst' ? 'Analyst' : 'Viewer'
   const initials = getInitials(user?.display_name, user?.email)
-  const roleDisplay = formatRole(user?.role)
-  const permissionsData = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS.viewer
+
+  const permissionsData = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS.admin
 
   // Handle outside click & global escape for profile & role menus
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(target) &&
-        profileTriggerRef.current &&
-        !profileTriggerRef.current.contains(target)
-      ) {
-        setProfileOpen(false)
-        setShowPermissions(false)
-      }
       if (
         roleMenuRef.current &&
         !roleMenuRef.current.contains(target) &&
@@ -172,13 +152,20 @@ export const Header: React.FC<HeaderProps> = ({
       ) {
         setRoleSwitcherOpen(false)
       }
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(target) &&
+        profileTriggerRef.current &&
+        !profileTriggerRef.current.contains(target)
+      ) {
+        setProfileOpen(false)
+      }
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setProfileOpen(false)
         setRoleSwitcherOpen(false)
-        setRoiModalOpen(false)
+        setProfileOpen(false)
       }
     }
 
@@ -190,21 +177,11 @@ export const Header: React.FC<HeaderProps> = ({
     }
   }, [])
 
-  // Fast demo role switch with zero-wait fallback
   const handleSwitchDemoRole = async (targetRole: DemoRoleKey) => {
-    if (userRole === targetRole || switchingRole) return
-    setSwitchingRole(targetRole)
     try {
-      await logout()
-      const target = DEMO_ACCOUNTS[targetRole]
-      await login(target.email, target.pass)
-      setRoleSwitcherOpen(false)
-      setProfileOpen(false)
-    } catch (err) {
-      console.warn('Backend login unavailable for demo switch, using offline sandbox:', err)
+      setSwitchingRole(targetRole)
       enterDemoMode(targetRole)
       setRoleSwitcherOpen(false)
-      setProfileOpen(false)
     } finally {
       setSwitchingRole(null)
     }
@@ -213,67 +190,75 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header
-        className="app-top-navbar h-[52px] min-h-[52px] max-h-[52px] border-b border-[var(--border-subtle)] bg-[var(--bg-card)] px-4 flex items-center justify-between gap-4 z-30 flex-shrink-0"
+        className="app-top-navbar h-12 min-h-[48px] max-h-[48px] border-b border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-[#0B0C0E] px-3.5 flex items-center justify-between gap-3 z-30 flex-shrink-0 transition-colors"
         role="banner"
         aria-label="Top Navigation Bar"
       >
-        {/* ─── Left Side: Clean Workspace Breadcrumbs ─── */}
+        {/* ─── Left Side: Architectural Breadcrumbs ─── */}
         <div className="flex items-center gap-2 min-w-0">
           <nav
-            className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] font-medium"
+            className="flex items-center gap-1.5 sm:gap-2 text-xs min-w-0"
             aria-label="Breadcrumb navigation"
           >
-            <span className="font-semibold text-[var(--text-main)] tracking-tight">
-              Query<span className="text-[#F97316]">Trust</span>
-            </span>
-            <span className="text-[var(--text-subtle)]">/</span>
             <button
               type="button"
               onClick={() => onNavigate?.('overview')}
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-subtle)] text-[11.5px] font-medium transition-colors cursor-pointer"
-              title="Workspace scope: Click to return to fleet overview"
+              className="text-xs font-semibold text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0"
+              title="QueryTrust AI"
             >
-              <Building2 size={11} className="text-[var(--text-subtle)]" />
-              <span className="max-w-[130px] truncate">{user?.workspace_name || 'Workspace'}</span>
+              <span>QueryTrust</span>
             </button>
-            <span className="text-[var(--text-subtle)]">/</span>
-            <span className="font-semibold text-[var(--text-main)] text-xs">
+            <span className="text-zinc-400 dark:text-zinc-600 font-normal select-none">/</span>
+            <span className="font-semibold text-xs text-zinc-950 dark:text-white tracking-tight truncate">
               {activeTab ? TAB_LABELS[activeTab] || activeTab : 'Fleet Overview'}
             </span>
           </nav>
         </div>
 
-        {/* ─── Center: ⌘K Global Command Palette Trigger ─── */}
-        <div className="flex items-center justify-center flex-1 max-w-[320px] mx-2 min-w-0">
+        {/* ─── Center: ⌘K Command Palette Trigger (Desktop) ─── */}
+        <div className="hidden md:flex items-center justify-center flex-1 max-w-[280px] mx-2 min-w-0">
           <button
             type="button"
             onClick={onOpenCommandPalette}
-            className="group flex items-center justify-between w-full h-8 px-3 rounded-lg bg-[var(--bg-subtle)] hover:bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] text-xs text-[var(--text-muted)] transition-all cursor-pointer shadow-2xs min-w-0"
+            className="group flex items-center justify-between w-full h-7.5 px-3 rounded-lg bg-zinc-100/80 hover:bg-zinc-100 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 border border-zinc-200/80 dark:border-white/[0.08] hover:border-zinc-300 dark:hover:border-white/[0.16] text-xs text-zinc-500 transition-all cursor-pointer shadow-2xs min-w-0"
             title="Press ⌘K or Ctrl+K to open global command palette"
           >
             <span className="flex items-center gap-2 min-w-0 truncate">
-              <Search size={13} className="text-[var(--text-subtle)] group-hover:text-[#F97316] transition-colors flex-shrink-0" />
-              <span className="text-[11.5px] truncate whitespace-nowrap">Ask data or search actions...</span>
+              <Search size={13} className="text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors flex-shrink-0" />
+              <span className="text-[11px] truncate whitespace-nowrap text-zinc-500 group-hover:text-zinc-800 dark:group-hover:text-zinc-200">
+                Search or ask query...
+              </span>
             </span>
-            <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] transition-colors flex-shrink-0 ml-1.5">
+            <kbd className="font-mono text-[9.5px] font-semibold px-1.5 py-0.5 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/[0.08] text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors flex-shrink-0 ml-1.5">
               ⌘K
             </kbd>
           </button>
         </div>
 
-        {/* ─── Right Side: Security Pill, Role Switcher & Profile ─── */}
-        <div className="flex items-center gap-2">
-          {/* Security Integrity Status Pill */}
+        {/* ─── Right Side: Precision Toolbar Controls ─── */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          {/* Quick search icon trigger for compact viewports */}
+          <button
+            type="button"
+            onClick={onOpenCommandPalette}
+            className="flex md:hidden w-7.5 h-7.5 rounded-lg items-center justify-center bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-white/[0.08] text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer shadow-2xs"
+            title="Open search (⌘K)"
+            aria-label="Open search command palette"
+          >
+            <Search size={13} />
+          </button>
+
+          {/* Security Integrity Telemetry Chip */}
           <button
             type="button"
             onClick={() => setRoiModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-[11px] font-mono text-[var(--text-main)] transition-all cursor-pointer"
+            className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] text-[11px] font-mono text-zinc-600 dark:text-zinc-300 transition-all cursor-pointer shadow-2xs"
             title="Kernel Status: 6/6 AST Gates Enforced • Dedicated SELECT-Only Replica • Click for Metrics"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">Kernel Read-Only</span>
-            <span className="text-[var(--text-subtle)]">&bull;</span>
-            <span className="text-[var(--text-muted)]">1.4ms</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">Read-Only</span>
+            <span className="text-zinc-300 dark:text-zinc-700">•</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">1.4ms</span>
           </button>
 
           {/* Instant 1-Click Role Switcher Dropdown */}
@@ -282,29 +267,24 @@ export const Header: React.FC<HeaderProps> = ({
               ref={roleTriggerRef}
               type="button"
               onClick={() => setRoleSwitcherOpen((prev) => !prev)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold transition-all cursor-pointer border ${
-                userRole === 'admin'
-                  ? 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/15'
-                  : userRole === 'analyst'
-                  ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300 border-sky-500/20 hover:bg-sky-500/15'
-                  : 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-300 border-zinc-500/20 hover:bg-zinc-500/15'
-              }`}
+              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white shadow-2xs"
               title="Click to switch evaluation persona (Admin, Analyst, Viewer)"
               aria-label={`Current role: ${roleDisplay}. Click to switch role`}
               aria-expanded={roleSwitcherOpen}
             >
-              <span>Demo: {roleDisplay.toUpperCase()}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${userRole === 'admin' ? 'bg-purple-500' : userRole === 'analyst' ? 'bg-sky-500' : 'bg-emerald-500'}`} />
+              <span>{roleDisplay}</span>
               {switchingRole ? (
-                <Loader2 size={11} className="animate-spin" />
+                <Loader2 size={11} className="animate-spin text-sky-500" />
               ) : (
                 <ChevronDown
                   size={11}
-                  className={`transition-transform duration-150 ${roleSwitcherOpen ? 'rotate-180' : ''}`}
+                  className={`transition-transform duration-150 text-zinc-400 ${roleSwitcherOpen ? 'rotate-180' : ''}`}
                 />
               )}
             </button>
 
-            {/* Role Switcher Menu (framer-motion) */}
+            {/* Role Switcher Menu (Solid 100% Opaque Surface) */}
             <AnimatePresence>
               {roleSwitcherOpen && (
                 <motion.div
@@ -313,10 +293,10 @@ export const Header: React.FC<HeaderProps> = ({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="absolute top-[calc(100%+6px)] right-0 w-64 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-2 text-[var(--text-main)] shadow-xl z-50 flex flex-col gap-1"
+                  className="absolute top-[calc(100%+8px)] right-0 w-68 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#121216] p-2.5 text-zinc-900 dark:text-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.7)] z-[100] flex flex-col gap-1"
                 >
-                  <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--text-subtle)] border-b border-[var(--border-subtle)] pb-1.5 mb-1">
-                    Switch Evaluator Role (1-Click)
+                  <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500 border-b border-zinc-100 dark:border-zinc-800/80 pb-1.5 mb-1">
+                    Switch Evaluator Persona
                   </div>
 
                   {(Object.keys(DEMO_ACCOUNTS) as DemoRoleKey[]).map((rKey) => {
@@ -328,14 +308,14 @@ export const Header: React.FC<HeaderProps> = ({
                         type="button"
                         onClick={() => handleSwitchDemoRole(rKey)}
                         disabled={switchingRole !== null}
-                        className={`flex items-start gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer w-full ${
+                        className={`flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer w-full ${
                           isActive
-                            ? 'bg-[var(--bg-subtle)] border border-[var(--border-subtle)]'
-                            : 'hover:bg-[var(--bg-subtle)] border border-transparent'
+                            ? 'bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700'
+                            : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent'
                         }`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
+                          className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
                             rKey === 'admin'
                               ? 'bg-purple-500'
                               : rKey === 'analyst'
@@ -345,12 +325,12 @@ export const Header: React.FC<HeaderProps> = ({
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-[var(--text-main)]">
+                            <span className="text-xs font-bold text-zinc-950 dark:text-white">
                               {target.label}
                             </span>
-                            {isActive && <Check size={12} className="text-[#F97316]" />}
+                            {isActive && <Check size={12} className="text-sky-500 dark:text-sky-400" />}
                           </div>
-                          <div className="text-[10.5px] text-[var(--text-muted)] leading-tight mt-0.5 truncate">
+                          <div className="text-[11px] text-zinc-500 leading-tight mt-0.5 truncate">
                             {target.desc}
                           </div>
                         </div>
@@ -366,11 +346,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={toggleTheme}
-            className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-subtle)] transition-all cursor-pointer"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:hover:text-white bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] transition-all cursor-pointer shadow-2xs"
             title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} mode`}
             aria-label="Toggle visual theme"
           >
-            {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+            {theme === 'light' ? <Moon size={13} /> : <Sun size={13} />}
           </button>
 
           {/* User Profile Menu Trigger */}
@@ -379,23 +359,20 @@ export const Header: React.FC<HeaderProps> = ({
               ref={profileTriggerRef}
               type="button"
               onClick={() => setProfileOpen((prev) => !prev)}
-              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-subtle)] transition-all cursor-pointer"
+              className="flex items-center gap-1.5 h-8 pl-1 pr-2 rounded-lg bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] transition-all cursor-pointer shadow-2xs"
               aria-label="User account menu"
               aria-expanded={profileOpen}
             >
-              <div className="w-6 h-6 rounded-md bg-orange-500/15 text-[#F97316] font-mono text-[11px] font-bold flex items-center justify-center border border-orange-500/25">
+              <div className="w-5.5 h-5.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-mono text-[9.5px] font-bold flex items-center justify-center shadow-xs">
                 {initials}
               </div>
-              <span className="text-xs font-medium text-[var(--text-main)] max-w-[120px] truncate">
-                {user?.display_name || 'User'}
-              </span>
               <ChevronDown
-                size={11}
-                className={`text-[var(--text-subtle)] transition-transform duration-150 ${profileOpen ? 'rotate-180' : ''}`}
+                size={10}
+                className={`text-zinc-400 transition-transform duration-150 ${profileOpen ? 'rotate-180' : ''}`}
               />
             </button>
 
-            {/* Profile Popover Card (framer-motion, based on UserProfileSidebar) */}
+            {/* Profile Popover Card (Solid 100% Opaque Luxury Surface) */}
             <AnimatePresence>
               {profileOpen && (
                 <motion.div
@@ -404,118 +381,119 @@ export const Header: React.FC<HeaderProps> = ({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="absolute top-[calc(100%+6px)] right-0 w-72 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-card)] p-3 text-[var(--text-main)] shadow-xl z-50 flex flex-col gap-2.5"
+                  className="absolute top-[calc(100%+8px)] right-0 w-80 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#121216] p-4 text-zinc-900 dark:text-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.7)] z-[100] flex flex-col gap-3"
                 >
-                  {/* User Identity Header */}
-                  <div className="flex items-center gap-3 p-1">
-                    <div className="w-10 h-10 rounded-lg bg-orange-500/15 text-[#F97316] font-mono text-xs font-bold flex items-center justify-center border border-orange-500/25 flex-shrink-0">
+                  {/* Executive Identity Header */}
+                  <div className="flex items-center gap-3 pb-1">
+                    <div className="w-11 h-11 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 font-mono text-sm font-bold flex items-center justify-center border border-zinc-200 dark:border-zinc-700 flex-shrink-0 shadow-xs">
                       {initials}
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-xs text-[var(--text-main)] truncate">
+                        <span className="font-bold text-sm text-zinc-950 dark:text-white truncate">
                           {user?.display_name || 'System Administrator'}
                         </span>
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-orange-500/10 text-[#F97316] border border-orange-500/20">
-                          {roleDisplay}
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                          {roleDisplay.toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-[11px] text-[var(--text-muted)] truncate">
+                      <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
                         {user?.email || 'admin@querytrust.local'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="border-t border-[var(--border-subtle)]" />
-
-                  {/* Navigation Links with Hover Chevron */}
-                  <div className="space-y-0.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileOpen(false)
-                        onNavigate?.('overview')
-                      }}
-                      className="group flex items-center justify-between w-full h-8 px-2.5 rounded-md text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <LayoutDashboard size={13} className="text-[var(--text-subtle)] group-hover:text-[#F97316] transition-colors" />
-                        <span>Fleet Overview</span>
-                      </div>
-                      <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 text-[var(--text-subtle)] transition-opacity" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileOpen(false)
-                        onNavigate?.('ask-data')
-                      }}
-                      className="group flex items-center justify-between w-full h-8 px-2.5 rounded-md text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Terminal size={13} className="text-[var(--text-subtle)] group-hover:text-[#F97316] transition-colors" />
-                        <span>Query Studio</span>
-                      </div>
-                      <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 text-[var(--text-subtle)] transition-opacity" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileOpen(false)
-                        onNavigate?.('evaluations')
-                      }}
-                      className="group flex items-center justify-between w-full h-8 px-2.5 rounded-md text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <FlaskConical size={13} className="text-[var(--text-subtle)] group-hover:text-[#F97316] transition-colors" />
-                        <span>AST Safety Proof</span>
-                      </div>
-                      <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 text-[var(--text-subtle)] transition-opacity" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileOpen(false)
-                        onNavigate?.('devices')
-                      }}
-                      className="group flex items-center justify-between w-full h-8 px-2.5 rounded-md text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Database size={13} className="text-[var(--text-subtle)] group-hover:text-[#F97316] transition-colors" />
-                        <span>Data Catalog</span>
-                      </div>
-                      <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 text-[var(--text-subtle)] transition-opacity" />
-                    </button>
+                  {/* Zero-Trust Telemetry Credentials & Environment Strip */}
+                  <div className="rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/90 dark:border-white/[0.08] p-3 flex flex-col gap-2 text-[11px] font-mono">
+                    <div className="flex items-center justify-between">
+                      <span className="text-zinc-500 dark:text-zinc-400">Environment</span>
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-200 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Default Workspace
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-zinc-500 dark:text-zinc-400">Database Role</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">qt_ai_readonly</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-zinc-500 dark:text-zinc-400">AST Safety Proof</span>
+                      <span className="text-sky-600 dark:text-sky-400 font-semibold">6/6 Gates Active</span>
+                    </div>
                   </div>
 
-                  <div className="border-t border-[var(--border-subtle)]" />
+                  <div className="border-t border-zinc-100 dark:border-zinc-800" />
 
-                  {/* Role Permissions Accordion */}
+                  {/* Keyboard Shortcuts Quick Reference */}
+                  <div className="space-y-1 px-0.5">
+                    <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2 mb-1">
+                      Quick Shortcuts
+                    </div>
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileOpen(false)
+                          onOpenCommandPalette?.()
+                        }}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer text-left"
+                      >
+                        <span className="font-medium">Command Palette</span>
+                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 flex-shrink-0">⌘K</kbd>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileOpen(false)
+                          window.dispatchEvent(new CustomEvent('querytrust:toggle-sidebar'))
+                        }}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer text-left"
+                      >
+                        <span className="font-medium">Toggle Sidebar</span>
+                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 flex-shrink-0">⌘B</kbd>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileOpen(false)
+                          onNavigate?.('ask-data')
+                          setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('querytrust:new-session'))
+                          }, 50)
+                        }}
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer text-left"
+                      >
+                        <span className="font-medium">New Governed Query</span>
+                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 flex-shrink-0">⌘N</kbd>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-zinc-100 dark:border-zinc-800" />
+
+                  {/* Role Capabilities Accordion */}
                   <div>
                     <button
                       type="button"
                       onClick={() => setShowPermissions((prev) => !prev)}
-                      className="group flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-subtle)] border border-[var(--border-subtle)] transition-all cursor-pointer"
+                      className="group flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
-                        <Shield size={12} className="text-emerald-500" />
-                        <span className="text-[11.5px] font-medium">What can a {roleDisplay} do?</span>
+                        <Shield size={13} className="text-emerald-500" />
+                        <span className="text-xs font-semibold">What can an {roleDisplay} do?</span>
                       </div>
                       <ChevronDown
-                        size={11}
-                        className={`text-[var(--text-subtle)] transition-transform duration-150 ${showPermissions ? 'rotate-180' : ''}`}
+                        size={12}
+                        className={`text-zinc-400 transition-transform duration-150 ${showPermissions ? 'rotate-180' : ''}`}
                       />
                     </button>
 
                     {showPermissions && (
-                      <div className="mt-1.5 p-2 rounded-md bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[11px] leading-relaxed text-[var(--text-muted)] space-y-1">
-                        <div className="font-semibold text-[var(--text-main)] text-[11px]">
+                      <div className="mt-2 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 space-y-1.5 font-sans">
+                        <div className="font-semibold text-zinc-900 dark:text-white text-[11.5px]">
                           {permissionsData.title}
                         </div>
-                        <ul className="list-disc list-inside space-y-0.5 text-[10.5px]">
+                        <ul className="list-disc list-inside space-y-1 text-[11px]">
                           {permissionsData.rules.slice(0, 4).map((rule, idx) => (
                             <li key={idx} className="truncate">{rule}</li>
                           ))}
@@ -524,7 +502,7 @@ export const Header: React.FC<HeaderProps> = ({
                     )}
                   </div>
 
-                  <div className="border-t border-[var(--border-subtle)]" />
+                  <div className="border-t border-zinc-100 dark:border-zinc-800" />
 
                   {/* Bottom Actions */}
                   <div className="flex items-center justify-between pt-0.5">
@@ -535,9 +513,10 @@ export const Header: React.FC<HeaderProps> = ({
                           setProfileOpen(false)
                           onOpenOnboarding()
                         }}
-                        className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
+                        className="text-xs text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
                       >
-                        Welcome Tour
+                        <Sparkles size={12} className="text-sky-500" />
+                        <span>Welcome Tour</span>
                       </button>
                     )}
                     <button
@@ -546,7 +525,7 @@ export const Header: React.FC<HeaderProps> = ({
                         setProfileOpen(false)
                         await logout()
                       }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer ml-auto"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer ml-auto"
                     >
                       <LogOut size={13} />
                       <span>Sign Out</span>

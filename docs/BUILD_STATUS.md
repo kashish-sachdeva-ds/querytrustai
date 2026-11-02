@@ -1,36 +1,41 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-11-02  
-**Current milestone:** 56 — Dual-Theme Sidebar Architecture: White-on-White Text Collision Fix, High-Contrast Light Mode & Obsidian Preservation  
-**Overall status:** Resolved the light mode sidebar active item white-on-white text collision, low contrast inactive links, washed-out action buttons, and dark smudge footer while preserving 100% of the award-winning obsidian dark mode aesthetic:
-1. ✅ **Active Item Light Mode Contrast & Indented Geometry (`Sidebar.tsx`, `LinearShell.css`):**
-   - Eliminated the bug in light mode where active items (e.g. `Fleet Overview`) rendered white text on a white card background, rendering the label completely invisible.
-   - Re-architected `getExpandedItemClasses` to dynamically apply `bg-zinc-100/90 border-zinc-200/90 text-zinc-900 font-semibold shadow-xs` in light mode while preserving `dark:bg-white/[0.06] dark:border-white/[0.12] dark:text-white dark:font-medium` in dark mode.
-   - Saturated the left active neon indicator line to `#0284C7` (Sky-600) in light mode (`bg-sky-600 shadow-[0_0_8px_rgba(2,132,199,0.5)]`) and `#38BDF8` (Sky-400) in dark mode.
-2. ✅ **Inactive Links, Icons & Category Hierarchy (`Sidebar.tsx`):**
-   - Replaced washed-out `text-slate-400` with high-contrast `text-zinc-600 dark:text-slate-400` and `hover:text-zinc-900 dark:hover:text-white`.
-   - Prevented hover text from turning pure white on white in light mode (`hover:bg-zinc-100/70 dark:hover:bg-white/[0.035]`).
-   - Upgraded category headers (`WORKSPACE`, `HYGIENE & SIGNALS`, `GOVERNANCE`) to `text-zinc-500 dark:text-[#64748B]` and dividers to `via-zinc-200/80 dark:via-white/[0.06]`.
-   - Refined `Data Health` and `Anomalies` badges to organic glass pills with rich readable contrast in both themes (`text-amber-700 bg-amber-50 border-amber-300` in light, `text-amber-300 bg-amber-500/10 border-amber-500/25` in dark).
-3. ✅ **Tactile `+ New Query` (⌘N) Button & Clean System Telemetry Footer (`Sidebar.tsx`):**
-   - Transformed `+ New Query` from faint invisible slate into a crisp satin container in light mode (`bg-zinc-100/90 border-zinc-200/90 text-zinc-800` with blue `+` icon and crisp `⌘N` kbd badge).
-   - Replaced muddy `bg-black/20` footer in light mode with a clean `bg-zinc-50/80 border-t border-zinc-200/80` container with dark `text-zinc-800` and glowing green breathing beacon.
-4. ✅ **Collapsed Rail Mode Dual-Theme Harmony (`Sidebar.tsx`):**
-   - Re-architected collapsed rail items for both themes with clear active state cues and micro-indicator lines.
-5. ✅ **Automated Build & Playwright Verification:**
-   - `oxlint`: 0 warnings, 0 errors across 88 files.
-   - `tsc -b && vite build`: compiled cleanly with 0 errors in 6.59s.
-   - Automated test script `test_sidebar_light_dark.mjs` captured and verified:
-     - Light Mode Fleet Overview Fullscreen: [`01_fleet_overview_light_fullscreen.png`](file:///C:/Users/Lenovo/.gemini/antigravity/brain/b9989ae8-555f-4f2f-901b-33912bdff412/sidebar_light_dark_audit/01_fleet_overview_light_fullscreen.png)
-     - Light Mode Sidebar (Fleet Overview Active): [`02_sidebar_light_fleet_active.png`](file:///C:/Users/Lenovo/.gemini/antigravity/brain/b9989ae8-555f-4f2f-901b-33912bdff412/sidebar_light_dark_audit/02_sidebar_light_fleet_active.png)
-     - Light Mode Sidebar (Query Studio Active): [`03_sidebar_light_studio_active.png`](file:///C:/Users/Lenovo/.gemini/antigravity/brain/b9989ae8-555f-4f2f-901b-33912bdff412/sidebar_light_dark_audit/03_sidebar_light_studio_active.png)
-     - Light Mode Schemas Accordion Open: [`04_sidebar_light_schemas_open.png`](file:///C:/Users/Lenovo/.gemini/antigravity/brain/b9989ae8-555f-4f2f-901b-33912bdff412/sidebar_light_dark_audit/04_sidebar_light_schemas_open.png)
-     - Light Mode Collapsed Rail: [`05_sidebar_light_rail_collapsed.png`](file:///C:/Users/Lenovo/.gemini/antigravity/brain/b9989ae8-555f-4f2f-901b-33912bdff412/sidebar_light_dark_audit/05_sidebar_light_rail_collapsed.png)
-     - Dark Mode Sidebar (Query Studio Active): [`06_sidebar_dark_studio_active.png`](file:///C:/Users/Lenovo/.gemini/antigravity/brain/b9989ae8-555f-4f2f-901b-33912bdff412/sidebar_light_dark_audit/06_sidebar_dark_studio_active.png)
-     - Dark Mode Sidebar (Fleet Overview Active): [`07_sidebar_dark_fleet_active.png`](file:///C:/Users/Lenovo/.gemini/antigravity/brain/b9989ae8-555f-4f2f-901b-33912bdff412/sidebar_light_dark_audit/07_sidebar_dark_fleet_active.png)
-     - Dark Mode Collapsed Rail: [`08_sidebar_dark_rail_collapsed.png`](file:///C:/Users/Lenovo/.gemini/antigravity/brain/b9989ae8-555f-4f2f-901b-33912bdff412/sidebar_light_dark_audit/08_sidebar_dark_rail_collapsed.png)
+**Current milestone:** 58 — Visual-First 12-Column Hero & 4-Layer 3D Artwork Stage Overhaul  
+**Overall status:** Completed the strict visual-first redesign for QueryTrust AI, replacing text-heavy centered layouts with an asymmetric 12-column split stage, 4-layer 3D visual centerpiece with `/hero-ast-vault.png` artwork, custom connected SVG AST node trees, and 200px-tall animated SVG architectural illustrations while preserving 100% of domain metrics and functional routing:
+1. ✅ **12-Column Visual-First Split Hero (`LandingPage.tsx`, `HeroVisualStage.tsx`):**
+   - **Left Column (`col-span-12 lg:col-span-5`):**
+     - Scaled-down, left-aligned typography (`text-3xl sm:text-5xl xl:text-6xl`) with electric blue shimmer across *"Mathematically zero risk."*
+     - Compact top capsule badge (`AWWWARDS NOMINEE · ZERO-TRUST BENCHMARK · SCORE 9.94 / 10`).
+     - Magnetic primary button (`Launch Studio as Admin ↗`) with border-beam shaders and secondary terminal CTA (`>_ Evaluate Analyst Sandbox`).
+     - Integrated compact 2x2 HUD Metric Grid directly below CTAs: `5,000 Devices`, `100% Isolation`, `0 Bytes Mutated`, and `1.42ms Latency` with live SVG sparkline.
+   - **Right Column (`col-span-12 lg:col-span-7`) — 4-Layer 3D Visual Centerpiece:**
+     - **Layer 1:** 3D artwork backdrop (`/hero-ast-vault.png`) blended over ambient obsidian neon radial glows (`#050B14` to black).
+     - **Layer 2:** Bespoke animated SVG 6-Gate AST Prism & PostgreSQL Vault with cyan holographic beams, 6 isometric glass rings, and periodic crimson threat lasers (`DROP TABLE devices CASCADE;`) with deflection sparks and badge: `⚡ BLOCKED IN 0.18ms`.
+     - **Layer 3:** Tilted 3D perspective Studio workbench preview window (`perspective(1200px) rotateX(8deg) rotateY(-12deg) rotateZ(2deg)`) with hover flatten transition, dark macOS chrome, SQL preview, and `✓ 6/6 GATES VERIFIED (1.42ms)`.
+     - **Layer 4:** Two floating parallax HUD cards (Top-Right Global Fleet Topology Map with pulsing beacons in AMER, EMEA, APAC + Bottom-Left Kernel Lockout Badge with glowing emerald padlock).
+2. ✅ **Section 01: Interactive Connected SVG AST Tree Diagram (`ASTCompilerLab.tsx`):**
+   - Added an interactive SVG node tree (`Query` → `Parser` → `exp.Select` → `devices` → `LIMIT` → `Pool`).
+   - When malicious scenarios (*Malicious DROP TABLE*, *Catalog Harvester Attack*) are triggered, the node tree turns crimson red with an active barrier shut and subtle card shake.
+3. ✅ **Section 02: Full-Stack Capabilities 3D Bento Showcase (`PlatformShowcase.tsx`):**
+   - Conversational Studio Tab: Single-canvas prompt omnibar, clickable fleet chips, live virtualized grid, and expandable SQL syntax disclosure.
+   - Fleet Overview Tab: Interactive SVG Global Datacenter Map with intercontinental topology arcs between 50 sites and 4 hardware health gauges (OmniSwitch 9300, ApexEdge 7050, SkyBridge 9000, NetMatrix 480).
+   - Dual-Role Kernel Tab: OS/DB hardware architecture diagram with active SQL permissions switchboard (`GRANT SELECT` vs `REVOKE INSERT/UPDATE/DROP`).
+4. ✅ **Section 03: 200px-Tall Custom Animated SVG Invariant Illustrations (`ArchitecturalMonoliths.tsx`):**
+   - Card 1: 200px animated 6-layer laser sieve filtering blue circles and deflecting red threat triangles.
+   - Card 2: 200px physical database switchboard with green glowing `SELECT [GRANTED]` vs bolted red `INSERT/DROP [REVOKED]` and interactive write attempt simulator.
+   - Card 3: 200px velocity race visualizer contrasting a `1.42s` QueryTrust cyan laser beam against a slow `4-Hour Jira DBA Queue` progress bar.
+5. ✅ **Section 04: Cyber-Defense Radar & Firewall Visualizer (`AttackDefenseMatrix.tsx`):**
+   - Live threat radar and firewall packet deflection animation against 5 adversarial vectors with sub-0.2ms interception traces.
+6. ✅ **Section 05 & 06: Oscilloscope Benchmarks & 3D Portal Footer (`MetricsStrip.tsx`, `CyberFooter.tsx`):**
+   - Oversized editorial telemetry counters (`1.42ms`, `151/151`, `0 WRITES`, `30,000+`) with background oscilloscope waves.
+   - 3D Portal Footer CTA with vortex warp grid animation upon hovering over `Enter Admin Studio ↗`.
+7. ✅ **Build & Quality Verification:**
+   - `npx oxlint`: 0 warnings, 0 errors across 95 files.
+   - `npx tsc -b`: 0 TypeScript compilation errors.
+   - `npm run build`: Vite production build passed in 4.46s (2,474 modules transformed).
 
-**Previous milestone:** 55 — Global Command Palette (Cmd+K) Obsidian Frosted Glass Re-Architecture & AST Safety Proof Balanced 4-Column Layout  
+**Previous milestone:** 57 — Awwwards Site of the Day (SOTD) Visual, Motion & Spatial UI Overhaul  
 1. ✅ **Command Palette (`Cmd+K`) Re-Architecture (`CommandPalette.tsx`, `CommandPalette.css`):**
    - Eliminated the bug where the Command Palette had a see-through 26% opacity backdrop and transparent container, allowing underlying page text ("Unusual telemetry activity") to collide and overlap.
    - Built dedicated [`CommandPalette.css`](file:///d:/Important/00-Projects/QueryTrustAI/frontend/src/components/CommandPalette.css):
@@ -1503,6 +1508,35 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 
 ---
 
+## Milestone 59 — Visual-First Hero Redesign: Dead Space Elimination & 3D Stage Holographic Harmony — 2026-11-02
+
+**Status:** Completed — 0 warnings/0 errors on `oxlint` (95 files in 88ms), production build verified (`tsc -b && vite build` passing cleanly in 4.40s).
+
+### Key Architectural & Layout Improvements:
+
+1. **Eliminated Awkward Vertical Void & Dead Space:**
+   - Removed `min-h-[calc(100vh-64px)] flex flex-col justify-center` from the hero container in [`LandingPage.tsx`](file:///d:/Important/00-Projects/QueryTrustAI/frontend/src/components/LandingPage.tsx), which had been forcing an excessive 300px+ vertical void above Section 01 on standard displays.
+   - Reduced hero bottom padding from `pb-16 sm:pb-24` to `pb-6 sm:pb-8`.
+   - Reduced Section 01 (`#compiler-lab`) top margin from `mt-12 sm:mt-16` to `mt-4 sm:mt-6`.
+   - The hero cards and the interactive Section 01 header now flow with a natural, tight ~48px editorial rhythm, keeping content balanced and connected above/at the fold.
+
+2. **3D Hero Stage Holographic Overlay Harmony ([`HeroVisualStage.tsx`](file:///d:/Important/00-Projects/QueryTrustAI/frontend/src/components/HeroVisualStage.tsx)):**
+   - Elevated the `/hero-ast-vault.png` render visibility to `opacity-90` with edge vignette blending, ensuring the high-res 3D isometric rings and metallic cube vault are crisp and vivid.
+   - Refactored the SVG layer to act as an augmented holographic telemetry overlay rather than drawing clashing flat cylinders or redundant vertical rings:
+     - Diagonal scanning sweep tracking the true ~35° isometric ring axis.
+     - Sleek HUD callout reticles for all 6 AST Gates (`exp.Select` through `LIMIT 100`).
+     - Tactical targeting bracket framing the 3D metallic cube vault with `POSTGRESQL 16 · qt_ai_readonly` and `[IMMUTABLE KERNEL]`.
+     - Crimson threat laser and deflecting spark burst synchronized with the artwork's sparks, triggering the `⚡ BLOCKED AT GATE #1` badge.
+     - Preserved full standalone SVG fallback mode when `imgError` occurs.
+   - Snugged the floating 3D studio window and kernel lockout badge offsets (`-bottom-5`/`-bottom-4`) for tight spatial alignment with the left column's 2x2 metric cards.
+
+### Verification Summary:
+- `oxlint`: 0 warnings, 0 errors across 95 files.
+- `tsc -b`: 0 errors.
+- `npm run build`: Production bundle built in 4.40s with zero errors.
+
+---
+
 ## Milestone 36 — Advanced UI Designer Mindset: Upper Bar & Collapsed Rail Sizing Harmonization — 2026-11-01
 
 **Status:** Completed — 0 warnings/0 errors on `oxlint` (82 files in 87ms), production build verified (`tsc -b && vite build` passing in 7.10s), Playwright verified in Dark Mode (`advanced_fleet_overview_dark.png`, `advanced_upper_bar_dark.png`) and Light Mode (`advanced_fleet_overview_light.png`).
@@ -1532,4 +1566,33 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 - `oxlint`: 0 warnings, 0 errors across 82 files in 87ms.
 - `tsc -b && vite build`: Exited 0 in 7.10s; 2,469 modules transformed.
 - Playwright verified across both visual themes.
+
+---
+
+## Milestone 59 — Visual-First Hero Redesign: Dead Space Elimination & 3D Stage Holographic Harmony — 2026-11-02
+
+**Status:** Completed — 0 warnings/0 errors on `oxlint` (95 files in 88ms), production build verified (`tsc -b && vite build` passing cleanly in 4.40s).
+
+### Key Architectural & Layout Improvements:
+
+1. **Eliminated Awkward Vertical Void & Dead Space:**
+   - Removed `min-h-[calc(100vh-64px)] flex flex-col justify-center` from the hero container in [`LandingPage.tsx`](file:///d:/Important/00-Projects/QueryTrustAI/frontend/src/components/LandingPage.tsx), which had been forcing an excessive 300px+ vertical void above Section 01 on standard displays.
+   - Reduced hero bottom padding from `pb-16 sm:pb-24` to `pb-6 sm:pb-8`.
+   - Reduced Section 01 (`#compiler-lab`) top margin from `mt-12 sm:mt-16` to `mt-4 sm:mt-6`.
+   - The hero cards and the interactive Section 01 header now flow with a natural, tight ~48px editorial rhythm, keeping content balanced and connected above/at the fold.
+
+2. **3D Hero Stage Holographic Overlay Harmony ([`HeroVisualStage.tsx`](file:///d:/Important/00-Projects/QueryTrustAI/frontend/src/components/HeroVisualStage.tsx)):**
+   - Elevated the `/hero-ast-vault.png` render visibility to `opacity-90` with edge vignette blending, ensuring the high-res 3D isometric rings and metallic cube vault are crisp and vivid.
+   - Refactored the SVG layer to act as an augmented holographic telemetry overlay rather than drawing clashing flat cylinders or redundant vertical rings:
+     - Diagonal scanning sweep tracking the true ~35° isometric ring axis.
+     - Sleek HUD callout reticles for all 6 AST Gates (`exp.Select` through `LIMIT 100`).
+     - Tactical targeting bracket framing the 3D metallic cube vault with `POSTGRESQL 16 · qt_ai_readonly` and `[IMMUTABLE KERNEL]`.
+     - Crimson threat laser and deflecting spark burst synchronized with the artwork's sparks, triggering the `⚡ BLOCKED AT GATE #1` badge.
+     - Preserved full standalone SVG fallback mode when `imgError` occurs.
+   - Snugged the floating 3D studio window and kernel lockout badge offsets (`-bottom-5`/`-bottom-4`) for tight spatial alignment with the left column's 2x2 metric cards.
+
+### Verification Summary:
+- `oxlint`: 0 warnings, 0 errors across 95 files.
+- `tsc -b`: 0 errors.
+- `npm run build`: Production bundle built in 4.40s with zero errors.
 

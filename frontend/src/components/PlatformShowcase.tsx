@@ -7,8 +7,8 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
-  Globe,
-  Server,
+  Cpu,
+  Lock,
 } from 'lucide-react'
 
 interface StudioDemoQuery {
@@ -84,6 +84,7 @@ export const PlatformShowcase: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'studio' | 'topology' | 'kernel'>('studio')
   const [selectedDemoId, setSelectedDemoId] = useState<string>('temp')
   const [showSql, setShowSql] = useState<boolean>(false)
+  const [selectedRegion, setSelectedRegion] = useState<'ALL' | 'AMER' | 'EMEA' | 'APAC'>('ALL')
 
   const activeDemo = DEMO_QUERIES.find((q) => q.id === selectedDemoId) || DEMO_QUERIES[0]
 
@@ -102,7 +103,7 @@ export const PlatformShowcase: React.FC = () => {
             <span className="text-sky-500 dark:text-sky-400">enterprise telemetry.</span>
           </h2>
           <p className="mt-4 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-            Explore how QueryTrust AI unites conversational natural language with compiler-grade AST mathematical verification, 5,000-device telemetry tracking, and physical read-only database isolation.
+            Explore how QueryTrust AI unites conversational natural language with compiler-grade AST mathematical verification, 5,000-device telemetry tracking across 50 global sites, and physical read-only database isolation.
           </p>
         </div>
 
@@ -148,8 +149,10 @@ export const PlatformShowcase: React.FC = () => {
           </button>
         </div>
 
-        {/* Tab Content Display Area */}
+        {/* ── Tab Content: 3D Perspective Bento Showcase ── */}
         <div className="rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-10 shadow-sm transition-all">
+          
+          {/* TAB 1: Conversational Studio */}
           {activeTab === 'studio' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-5 space-y-4">
@@ -222,7 +225,7 @@ export const PlatformShowcase: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowSql(!showSql)}
-                    className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                    className="text-zinc-500 hover:text-zinc-950 dark:hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <span>&lt;/&gt; {showSql ? 'Hide SQL' : 'View SQL'}</span>
                     {showSql ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -273,133 +276,293 @@ export const PlatformShowcase: React.FC = () => {
             </div>
           )}
 
+          {/* TAB 2: Fleet Overview & Interactive Datacenter Topology Graph */}
           {activeTab === 'topology' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-5 space-y-4">
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold uppercase">
-                  Executive Briefing &amp; Distribution
-                </span>
-                <h3 className="text-2xl sm:text-3xl font-display font-bold text-zinc-950 dark:text-white tracking-tight">
-                  Fleet Topology Across 50 Global Sites
-                </h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-                  Decluttered executive pulse metrics replace crowded data dumps. Instant visibility into 5,000 devices across Americas, EMEA, and APAC with 6 deterministic integrity scanners flagging serial glitches and unapproved statuses.
-                </p>
-
-                {/* Regional Breakdown Card */}
-                <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 space-y-2 text-xs font-mono">
-                  <div className="text-[10.5px] text-zinc-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <Globe size={12} className="text-sky-500" />
-                    <span>Regional Device Distribution</span>
-                  </div>
-                  <div className="flex items-center justify-between text-zinc-700 dark:text-zinc-300">
-                    <span>Americas (AMER)</span>
-                    <strong className="text-zinc-950 dark:text-white">2,150 devices &bull; 22 sites</strong>
-                  </div>
-                  <div className="flex items-center justify-between text-zinc-700 dark:text-zinc-300">
-                    <span>Europe &amp; Middle East (EMEA)</span>
-                    <strong className="text-zinc-950 dark:text-white">1,650 devices &bull; 18 sites</strong>
-                  </div>
-                  <div className="flex items-center justify-between text-zinc-700 dark:text-zinc-300">
-                    <span>Asia Pacific (APAC)</span>
-                    <strong className="text-zinc-950 dark:text-white">1,200 devices &bull; 10 sites</strong>
-                  </div>
+            <div className="space-y-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold uppercase">
+                    Interactive Datacenter Topology Graph
+                  </span>
+                  <h3 className="text-2xl sm:text-3xl font-display font-bold text-zinc-950 dark:text-white tracking-tight mt-1">
+                    5,000 Governed Devices Across 50 Global Sites
+                  </h3>
                 </div>
 
-                <div className="space-y-2 pt-2 text-xs font-mono text-zinc-600 dark:text-zinc-400">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
-                    <span>4 Executive Pulse Cards: Managed, Active, Attention, Open Repairs</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
-                    <span>Synthetic Hardware Breakdown: OmniSwitch, SkyBridge, NetMatrix, ApexEdge</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
-                    <span>Continuous data hygiene profiling across 30,000 relational records</span>
-                  </div>
+                {/* Region Filter Buttons */}
+                <div className="flex items-center gap-1.5 p-1 rounded-full bg-zinc-100 dark:bg-zinc-800 w-fit">
+                  {(['ALL', 'AMER', 'EMEA', 'APAC'] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setSelectedRegion(r)}
+                      className={`px-3 py-1 rounded-full text-xs font-mono font-semibold transition-all cursor-pointer ${
+                        selectedRegion === r
+                          ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="lg:col-span-7 grid grid-cols-2 gap-3.5 font-mono text-xs">
-                <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 p-5 space-y-2 shadow-2xs">
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Managed Fleet</span>
-                  <div className="text-3xl sm:text-4xl font-display font-extrabold text-zinc-950 dark:text-white">5,000</div>
-                  <div className="text-[11px] text-zinc-500">50 Datacenter Sites Across 3 Regions</div>
+              {/* ── Interactive SVG Datacenter World Topology Map ── */}
+              <div className="relative rounded-2xl bg-zinc-950 border border-zinc-800 p-4 sm:p-6 overflow-hidden">
+                <div className="absolute top-3 left-4 text-[10px] font-mono text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  <span>Global Telemetry Ring &bull; Active Latency: 1.42ms</span>
                 </div>
-                <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 p-5 space-y-2 shadow-2xs">
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Active &amp; Operational</span>
-                  <div className="text-3xl sm:text-4xl font-display font-extrabold text-emerald-600 dark:text-emerald-400">3,019</div>
-                  <div className="text-[11px] text-zinc-500">60.4% Operational &bull; +124 30d</div>
+
+                <svg viewBox="0 0 900 360" className="w-full h-auto max-h-[360px] select-none">
+                  <defs>
+                    <radialGradient id="node-glow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
+                    </radialGradient>
+                    <radialGradient id="amer-glow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
+                    </radialGradient>
+                    <radialGradient id="emea-glow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#10B981" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                    </radialGradient>
+                    <radialGradient id="apac-glow" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#818CF8" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#818CF8" stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+
+                  {/* World Grid Lines */}
+                  <g stroke="#ffffff08" strokeWidth="1">
+                    <line x1="50" y1="90" x2="850" y2="90" strokeDasharray="4 4" />
+                    <line x1="50" y1="180" x2="850" y2="180" strokeDasharray="4 4" />
+                    <line x1="50" y1="270" x2="850" y2="270" strokeDasharray="4 4" />
+                    <line x1="220" y1="30" x2="220" y2="330" strokeDasharray="4 4" />
+                    <line x1="450" y1="30" x2="450" y2="330" strokeDasharray="4 4" />
+                    <line x1="680" y1="30" x2="680" y2="330" strokeDasharray="4 4" />
+                  </g>
+
+                  {/* Intercontinental Topology Trunks */}
+                  <path
+                    d="M 220 160 Q 330 110 460 140 T 700 170"
+                    fill="none"
+                    stroke="#38bdf833"
+                    strokeWidth="1.5"
+                    strokeDasharray="6 4"
+                  />
+                  <path
+                    d="M 220 160 Q 300 240 460 210 T 700 170"
+                    fill="none"
+                    stroke="#10b98133"
+                    strokeWidth="1.5"
+                    strokeDasharray="6 4"
+                  />
+
+                  {/* ── REGION 1: AMER (Americas) ── */}
+                  <g opacity={selectedRegion === 'ALL' || selectedRegion === 'AMER' ? 1 : 0.25} className="transition-opacity">
+                    <circle cx="220" cy="160" r="55" fill="url(#amer-glow)" />
+                    <circle cx="220" cy="160" r="8" fill="#38BDF8" />
+                    <circle cx="220" cy="160" r="16" fill="none" stroke="#38BDF8" strokeWidth="1.5" opacity="0.6" strokeDasharray="4 2" />
+                    
+                    {/* AMER Satellite Nodes */}
+                    <circle cx="180" cy="120" r="4" fill="#38BDF8" />
+                    <line x1="220" y1="160" x2="180" y2="120" stroke="#38bdf844" strokeWidth="1" />
+                    <circle cx="260" cy="210" r="4" fill="#38BDF8" />
+                    <line x1="220" y1="160" x2="260" y2="210" stroke="#38bdf844" strokeWidth="1" />
+                    <circle cx="160" cy="180" r="4" fill="#38BDF8" />
+                    <line x1="220" y1="160" x2="160" y2="180" stroke="#38bdf844" strokeWidth="1" />
+
+                    <text x="220" y="240" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
+                      AMER HUB (Dallas DC 1)
+                    </text>
+                    <text x="220" y="258" textAnchor="middle" fill="#38BDF8" fontSize="11" fontFamily="monospace">
+                      2,150 Devices · 22 Sites
+                    </text>
+                  </g>
+
+                  {/* ── REGION 2: EMEA (Europe & Middle East) ── */}
+                  <g opacity={selectedRegion === 'ALL' || selectedRegion === 'EMEA' ? 1 : 0.25} className="transition-opacity">
+                    <circle cx="470" cy="140" r="55" fill="url(#emea-glow)" />
+                    <circle cx="470" cy="140" r="8" fill="#10B981" />
+                    <circle cx="470" cy="140" r="16" fill="none" stroke="#10B981" strokeWidth="1.5" opacity="0.6" strokeDasharray="4 2" />
+                    
+                    {/* EMEA Satellite Nodes */}
+                    <circle cx="430" cy="110" r="4" fill="#10B981" />
+                    <line x1="470" y1="140" x2="430" y2="110" stroke="#10b98144" strokeWidth="1" />
+                    <circle cx="510" cy="170" r="4" fill="#10B981" />
+                    <line x1="470" y1="140" x2="510" y2="170" stroke="#10b98144" strokeWidth="1" />
+
+                    <text x="470" y="210" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
+                      EMEA HUB (Frankfurt DC 2)
+                    </text>
+                    <text x="470" y="228" textAnchor="middle" fill="#10B981" fontSize="11" fontFamily="monospace">
+                      1,650 Devices · 18 Sites
+                    </text>
+                  </g>
+
+                  {/* ── REGION 3: APAC (Asia Pacific) ── */}
+                  <g opacity={selectedRegion === 'ALL' || selectedRegion === 'APAC' ? 1 : 0.25} className="transition-opacity">
+                    <circle cx="710" cy="170" r="55" fill="url(#apac-glow)" />
+                    <circle cx="710" cy="170" r="8" fill="#818CF8" />
+                    <circle cx="710" cy="170" r="16" fill="none" stroke="#818CF8" strokeWidth="1.5" opacity="0.6" strokeDasharray="4 2" />
+                    
+                    {/* APAC Satellite Nodes */}
+                    <circle cx="670" cy="130" r="4" fill="#818CF8" />
+                    <line x1="710" y1="170" x2="670" y2="130" stroke="#818cf844" strokeWidth="1" />
+                    <circle cx="750" cy="220" r="4" fill="#818CF8" />
+                    <line x1="710" y1="170" x2="750" y2="220" stroke="#818cf844" strokeWidth="1" />
+
+                    <text x="710" y="245" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
+                      APAC HUB (Tokyo DC 1)
+                    </text>
+                    <text x="710" y="263" textAnchor="middle" fill="#818CF8" fontSize="11" fontFamily="monospace">
+                      1,200 Devices · 10 Sites
+                    </text>
+                  </g>
+                </svg>
+              </div>
+
+              {/* 4 Hardware Model Health Gauges */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 font-mono text-xs">
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] text-zinc-500 uppercase">
+                    <span>OmniSwitch 9300</span>
+                    <span className="text-emerald-500 font-bold">99.4% Nominal</span>
+                  </div>
+                  <div className="text-xl font-bold font-display text-zinc-950 dark:text-white">1,820 Units</div>
+                  <div className="text-[10px] text-zinc-400">Core Aggregation · 29 Sites</div>
                 </div>
-                <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 p-5 space-y-2 shadow-2xs">
-                  <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">Attention Required</span>
-                  <div className="text-3xl sm:text-4xl font-display font-extrabold text-amber-600 dark:text-amber-400">258</div>
-                  <div className="text-[11px] text-zinc-500">Warranties Expiring &lt; 30 Days</div>
+
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] text-zinc-500 uppercase">
+                    <span>ApexEdge 7050</span>
+                    <span className="text-emerald-500 font-bold">98.8% Nominal</span>
+                  </div>
+                  <div className="text-xl font-bold font-display text-zinc-950 dark:text-white">1,450 Units</div>
+                  <div className="text-[10px] text-zinc-400">Edge Gateway · 18 Sites</div>
                 </div>
-                <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 p-5 space-y-2 shadow-2xs">
-                  <span className="text-[10px] uppercase font-bold text-rose-600 dark:text-rose-400 tracking-wider">Open Repairs</span>
-                  <div className="text-3xl sm:text-4xl font-display font-extrabold text-rose-600 dark:text-rose-400">1,500</div>
-                  <div className="text-[11px] text-zinc-500">1,295 Unique Hardware Assets</div>
+
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] text-zinc-500 uppercase">
+                    <span>SkyBridge 9000</span>
+                    <span className="text-amber-500 font-bold">96.2% High-Temp</span>
+                  </div>
+                  <div className="text-xl font-bold font-display text-zinc-950 dark:text-white">980 Units</div>
+                  <div className="text-[10px] text-zinc-400">Core Backbone · 14 Sites</div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/90 dark:border-zinc-800 space-y-1.5">
+                  <div className="flex items-center justify-between text-[10px] text-zinc-500 uppercase">
+                    <span>NetMatrix 480</span>
+                    <span className="text-emerald-500 font-bold">99.1% Nominal</span>
+                  </div>
+                  <div className="text-xl font-bold font-display text-zinc-950 dark:text-white">750 Units</div>
+                  <div className="text-[10px] text-zinc-400">Telemetry Sensor Hub · 8 Sites</div>
                 </div>
               </div>
             </div>
           )}
 
+          {/* TAB 3: Dual-Role Kernel Hardware Architecture */}
           {activeTab === 'kernel' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-5 space-y-4">
+            <div className="space-y-6">
+              <div>
                 <span className="px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 font-mono text-[11px] font-bold uppercase">
                   Physical OS / DB Boundary
                 </span>
-                <h3 className="text-2xl sm:text-3xl font-display font-bold text-zinc-950 dark:text-white tracking-tight">
+                <h3 className="text-2xl sm:text-3xl font-display font-bold text-zinc-950 dark:text-white tracking-tight mt-1">
                   Dual-Role PostgreSQL Kernel Isolation
                 </h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans mt-2 max-w-3xl">
                   LLM prompt instructions are not a security perimeter. Even if an attacker were to bypass all compiler AST stages, the physical database connection pool enforces an immutable read-only role with zero write grants.
                 </p>
-                <div className="space-y-2 pt-2 text-xs font-mono text-zinc-600 dark:text-zinc-400">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
-                    <span>Dedicated PostgreSQL role: qt_ai_readonly (SELECT only)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
-                    <span>Physical OS/DB command: SET default_transaction_read_only = ON</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
-                    <span>0 mutating statements permitted. 0 bytes altered guaranteed.</span>
-                  </div>
-                </div>
               </div>
 
-              <div className="lg:col-span-7 rounded-2xl bg-zinc-950 p-6 font-mono text-xs text-zinc-300 space-y-3.5 shadow-md border border-zinc-800">
-                <div className="flex items-center justify-between text-zinc-500 border-b border-zinc-800 pb-2.5 text-[11px]">
-                  <div className="flex items-center gap-2">
-                    <Server size={13} className="text-sky-400" />
-                    <span>// PostgreSQL 16 Kernel Isolation Invariant</span>
+              {/* ── Visual OS / Hardware Architecture Diagram ── */}
+              <div className="p-6 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-300 font-mono text-xs space-y-6">
+                
+                {/* 3 Physical Isolation Blocks */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  
+                  {/* Block 1: Untrusted Client Browser */}
+                  <div className="p-4 rounded-xl bg-zinc-900/90 border border-zinc-800 space-y-2">
+                    <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      <span>ZONE 0: UNTRUSTED CLIENT</span>
+                    </div>
+                    <div className="text-sm font-bold text-white">Browser Environment</div>
+                    <div className="text-[11px] text-zinc-400">
+                      Cannot submit arbitrary SQL. Only executes verified server-stored query run IDs.
+                    </div>
                   </div>
-                  <span className="text-emerald-400 font-bold">ROLE_VERIFIED: PASS</span>
+
+                  {/* Block 2: SQLGlot AST Compiler */}
+                  <div className="p-4 rounded-xl bg-zinc-900/90 border border-sky-800/60 space-y-2">
+                    <div className="text-[10px] text-sky-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <Cpu size={12} />
+                      <span>ZONE 1: DETERMINISTIC AST</span>
+                    </div>
+                    <div className="text-sm font-bold text-white">SQLGlot 6-Gate Guard</div>
+                    <div className="text-[11px] text-zinc-400">
+                      Parses abstract syntax tree in 1.42ms P95. Rejects DDL/DML before DB socket pool.
+                    </div>
+                  </div>
+
+                  {/* Block 3: Dedicated Read-Only Kernel */}
+                  <div className="p-4 rounded-xl bg-zinc-900/90 border border-emerald-800/60 space-y-2">
+                    <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <Lock size={12} />
+                      <span>ZONE 2: IMMUTABLE KERNEL</span>
+                    </div>
+                    <div className="text-sm font-bold text-white">qt_ai_readonly Pool</div>
+                    <div className="text-[11px] text-zinc-400">
+                      Hardware-level read-only socket. 0 mutated bytes. Statement timeout 5,000ms.
+                    </div>
+                  </div>
+
                 </div>
-                <div className="space-y-1.5 text-zinc-400">
-                  <div className="text-zinc-500">-- 1. Grant strict SELECT on public schema</div>
-                  <div>GRANT SELECT ON ALL TABLES IN SCHEMA public TO <span className="text-sky-400 font-semibold">qt_ai_readonly</span>;</div>
-                  <div className="text-zinc-500 pt-1">-- 2. Revoke all DDL and DML write capabilities</div>
-                  <div>REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES FROM <span className="text-sky-400 font-semibold">qt_ai_readonly</span>;</div>
-                  <div>REVOKE CREATE, DROP, ALTER ON SCHEMA public FROM <span className="text-sky-400 font-semibold">qt_ai_readonly</span>;</div>
-                  <div className="text-zinc-500 pt-1">-- 3. Hardware socket session enforcement</div>
-                  <div className="text-emerald-400 font-semibold">SET default_transaction_read_only = ON;</div>
-                  <div className="text-emerald-400 font-semibold">SET statement_timeout = '5000ms';</div>
+
+                {/* SQL Permissions Switchboard */}
+                <div className="p-4 rounded-xl bg-black/60 border border-zinc-800/80 space-y-2">
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                    // PostgreSQL 16 Kernel Role Switchboard Configuration
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 space-y-1">
+                      <div className="font-bold flex items-center gap-1.5 text-xs">
+                        <CheckCircle2 size={13} />
+                        <span>SELECT ON ALL TABLES: GRANTED</span>
+                      </div>
+                      <div className="text-[11px] text-emerald-300/80">
+                        GRANT SELECT ON ALL TABLES IN SCHEMA public TO qt_ai_readonly;
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-rose-950/20 border border-rose-900/40 text-rose-400 space-y-1">
+                      <div className="font-bold flex items-center gap-1.5 text-xs">
+                        <Lock size={13} />
+                        <span>INSERT, UPDATE, DROP: PHYSICALLY REVOKED</span>
+                      </div>
+                      <div className="text-[11px] text-rose-300/80">
+                        REVOKE INSERT, UPDATE, DELETE, TRUNCATE FROM qt_ai_readonly;
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="pt-2 text-[11px] text-zinc-500 border-t border-zinc-800/80 flex items-center justify-between">
-                  <span>Connection: Read-Only Socket Replica</span>
-                  <span className="text-sky-400">Pool Latency: 1.42ms P95</span>
+
+                <div className="flex items-center justify-between text-[11px] text-zinc-400 border-t border-zinc-800 pt-3">
+                  <span>default_transaction_read_only = ON</span>
+                  <span>Row Limit Clamping: LIMIT 100</span>
+                  <span className="text-emerald-400 font-semibold">151/151 Security Tests Passing</span>
                 </div>
+
               </div>
             </div>
           )}
+
         </div>
 
       </div>

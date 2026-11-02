@@ -1,5 +1,5 @@
 /* ==========================================================================
-   QueryTrust AI — Classy Minimalist Landing Page Styles
+   QueryTrust AI — Awwwards Site of the Day Visual & Motion Styles
    ========================================================================== */
 
 .landing-page-root {
@@ -7,6 +7,51 @@
   background-color: var(--bg-page);
   color: var(--text-main);
   font-family: var(--font-sans);
+}
+
+/* ── Liquid-Metal / Electric-Blue Text Shimmer ── */
+@keyframes liquid-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.shimmer-liquid-blue {
+  background: linear-gradient(
+    90deg,
+    #0284C7 0%,
+    #38BDF8 25%,
+    #E0F2FE 50%,
+    #38BDF8 75%,
+    #0284C7 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: liquid-shimmer 5s ease infinite;
+}
+
+.dark .shimmer-liquid-blue {
+  background: linear-gradient(
+    90deg,
+    #38BDF8 0%,
+    #7DD3FC 25%,
+    #FFFFFF 50%,
+    #38BDF8 75%,
+    #0284C7 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: liquid-shimmer 5s ease infinite;
 }
 
 /* Subtle Shimmer Animation for Sky Blue Highlights */
@@ -26,6 +71,28 @@
   background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 50%, #0EA5E9 100%);
   background-size: 200% 200%;
   animation: button-shimmer 4s ease infinite;
+}
+
+/* ── 1px Specular Border Illumination ── */
+.specular-border {
+  position: relative;
+}
+.specular-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 /* Code Mirror & Monospace Elements */

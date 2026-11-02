@@ -7,6 +7,8 @@ import {
   ShieldCheck,
   Shield,
   FileCode,
+  Radio,
+  Zap,
 } from 'lucide-react'
 
 interface ThreatVector {
@@ -14,10 +16,12 @@ interface ThreatVector {
   name: string
   classification: string
   sampleAttack: string
+  gateNumber: number
   gateIntercepted: string
   latencyMs: string
   mitigationEngine: string
   description: string
+  cweCode: string
 }
 
 const THREAT_VECTORS: ThreatVector[] = [
@@ -25,7 +29,9 @@ const THREAT_VECTORS: ThreatVector[] = [
     id: 'ddl-drop',
     name: 'Destructive DDL Table Deletion',
     classification: 'CWE-89: SQL Injection / Table Dropping',
+    cweCode: 'CWE-89',
     sampleAttack: "DROP TABLE devices CASCADE; -- wipe production asset catalog",
+    gateNumber: 1,
     gateIntercepted: 'Gate #1: AST Statement Classifier',
     latencyMs: '0.18ms',
     mitigationEngine: 'SQLGlot checks root AST node is strictly exp.Select. Found exp.Drop.',
@@ -35,7 +41,9 @@ const THREAT_VECTORS: ThreatVector[] = [
     id: 'dml-privilege',
     name: 'Privilege Escalation Mutation',
     classification: 'CWE-285: Improper Authorization / Role Tampering',
+    cweCode: 'CWE-285',
     sampleAttack: "UPDATE user_accounts SET role = 'superadmin' WHERE email = current_user;",
+    gateNumber: 1,
     gateIntercepted: 'Gate #1 & Gate #3: DML Mutator Lockout',
     latencyMs: '0.19ms',
     mitigationEngine: 'SQLGlot checks for exp.Update. Zero mutating statements permitted.',
@@ -45,7 +53,9 @@ const THREAT_VECTORS: ThreatVector[] = [
     id: 'catalog-exfil',
     name: 'System Catalog & Password Exfiltration',
     classification: 'CWE-200: Exposure of Sensitive Information',
+    cweCode: 'CWE-200',
     sampleAttack: 'SELECT usename, passwd FROM pg_shadow UNION SELECT 1, 2;',
+    gateNumber: 2,
     gateIntercepted: 'Gate #2: Schema Catalog Whitelist',
     latencyMs: '0.24ms',
     mitigationEngine: 'Table "pg_shadow" rejected. Only explicitly whitelisted business tables permitted.',
@@ -55,7 +65,9 @@ const THREAT_VECTORS: ThreatVector[] = [
     id: 'cartesian-dos',
     name: 'Cartesian Product Denial of Service',
     classification: 'CWE-400: Uncontrolled Resource Consumption',
+    cweCode: 'CWE-400',
     sampleAttack: 'SELECT * FROM devices, telemetry_readings, service_events;',
+    gateNumber: 5,
     gateIntercepted: 'Gate #5: Unbounded Join Guard',
     latencyMs: '0.31ms',
     mitigationEngine: 'Cross join detected without explicit joining predicates. Query rejected.',
@@ -65,7 +77,9 @@ const THREAT_VECTORS: ThreatVector[] = [
     id: 'unbounded-dump',
     name: 'Mass Data Exfiltration / Table Scrape',
     classification: 'CWE-770: Allocation of Resources Without Limits',
+    cweCode: 'CWE-770',
     sampleAttack: 'SELECT * FROM telemetry_readings; -- dump all 10M rows',
+    gateNumber: 6,
     gateIntercepted: 'Gate #6: Deterministic Clamp',
     latencyMs: '0.42ms',
     mitigationEngine: 'AST rewrite injects LIMIT 100 clamp regardless of client input.',
@@ -75,14 +89,22 @@ const THREAT_VECTORS: ThreatVector[] = [
 
 export const AttackDefenseMatrix: React.FC = () => {
   const [selectedThreatId, setSelectedThreatId] = useState<string>('ddl-drop')
+  const [animatingPacket, setAnimatingPacket] = useState<boolean>(false)
+
   const activeThreat = THREAT_VECTORS.find((t) => t.id === selectedThreatId) || THREAT_VECTORS[0]
+
+  const handleSelectThreat = (id: string) => {
+    setSelectedThreatId(id)
+    setAnimatingPacket(true)
+    setTimeout(() => setAnimatingPacket(false), 800)
+  }
 
   return (
     <section id="attack-matrix" className="py-20 sm:py-28 relative text-left bg-white dark:bg-[#0B0F17] transition-colors border-t border-zinc-200 dark:border-zinc-800">
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
         
         {/* Section Header */}
-        <div className="max-w-3xl mb-14">
+        <div className="max-w-3xl mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs font-semibold text-rose-600 dark:text-rose-400 mb-4 font-mono">
             <Shield size={13} />
             <span>04 // LIVE ATTACK &amp; DEFENSE PROOF MATRIX</span>
@@ -98,6 +120,61 @@ export const AttackDefenseMatrix: React.FC = () => {
           </p>
         </div>
 
+        {/* ── Interactive Cyber-Defense Radar & Firewall Visualizer ── */}
+        <div className="mb-10 p-5 rounded-3xl bg-zinc-950 border border-zinc-800 relative overflow-hidden">
+          <div className="flex items-center justify-between pb-4 border-b border-zinc-800/80 text-[11px] font-mono">
+            <span className="text-zinc-400 flex items-center gap-2">
+              <Radio size={13} className="text-rose-500 animate-pulse" />
+              <span>LIVE INTERCEPTION RADAR &bull; THREAT RADAR ACTIVE</span>
+            </span>
+            <span className="text-emerald-400 font-bold">
+              0 SOCKET PAYLOADS TRANSMITTED
+            </span>
+          </div>
+
+          <div className="relative py-6 grid grid-cols-6 gap-2">
+            {[1, 2, 3, 4, 5, 6].map((gateNum) => {
+              const isTargetGate = activeThreat.gateNumber === gateNum
+              return (
+                <div
+                  key={gateNum}
+                  className={`p-3 rounded-xl border text-center font-mono transition-all duration-300 relative ${
+                    isTargetGate
+                      ? 'bg-rose-500/20 border-rose-500 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.4)]'
+                      : 'bg-zinc-900/60 border-zinc-800 text-zinc-500'
+                  }`}
+                >
+                  <div className="text-[10px] uppercase">Gate #{gateNum}</div>
+                  <div className="text-xs font-bold mt-1 text-white">
+                    {gateNum === 1
+                      ? 'exp.Select'
+                      : gateNum === 2
+                      ? 'Catalog'
+                      : gateNum === 3
+                      ? 'Column'
+                      : gateNum === 4
+                      ? 'Where'
+                      : gateNum === 5
+                      ? 'Join'
+                      : 'LIMIT'}
+                  </div>
+                  {isTargetGate && (
+                    <div className="mt-1 text-[9px] text-rose-400 font-bold flex items-center justify-center gap-1">
+                      <Zap size={9} />
+                      <span>BLOCKED {activeThreat.latencyMs}</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Packet Trajectory Ray */}
+          {animatingPacket && (
+            <div className="h-1 w-full bg-gradient-to-r from-rose-500 via-rose-400 to-transparent animate-pulse rounded-full" />
+          )}
+        </div>
+
         {/* Interactive Matrix Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
@@ -109,7 +186,7 @@ export const AttackDefenseMatrix: React.FC = () => {
                 <button
                   key={threat.id}
                   type="button"
-                  onClick={() => setSelectedThreatId(threat.id)}
+                  onClick={() => handleSelectThreat(threat.id)}
                   className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                     isSelected
                       ? 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800/80 shadow-xs'

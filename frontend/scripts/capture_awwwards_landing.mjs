@@ -6,187 +6,125 @@ import fs from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const frontendRoot = path.resolve(__dirname, '..')
-const targetDir = 'C:\\Users\\Lenovo\\.gemini\\antigravity\\brain\\b9989ae8-555f-4f2f-901b-33912bdff412\\awwwards_audit'
+const targetDir = 'C:\\Users\\Lenovo\\.gemini\\antigravity\\brain\\1a7eeb4a-320e-4c42-b13a-113852ae1e49\\awwwards_landing_audit'
 
 if (!fs.existsSync(targetDir)) {
   fs.mkdirSync(targetDir, { recursive: true })
 }
 
 async function run() {
-  console.log('Starting Vite preview...')
   const previewServer = await preview({
     root: frontendRoot,
-    preview: {
-      port: 4173,
-      host: '127.0.0.1',
-    },
+    preview: { port: 4175, host: '127.0.0.1' },
   })
 
   let browser
-  const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-  const edgePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
-
   try {
-    browser = await chromium.launch({ executablePath: chromePath, headless: true })
+    browser = await chromium.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true })
   } catch {
-    browser = await chromium.launch({ executablePath: edgePath, headless: true })
+    browser = await chromium.launch({ executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', headless: true })
   }
 
-  const context = await browser.newContext({
-    viewport: { width: 1440, height: 900 },
-  })
-
+  const context = await browser.newContext({ viewport: { width: 1440, height: 960 } })
   const page = await context.newPage()
 
   try {
-    console.log('Navigating to landing page...')
-    await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' })
+    console.log('Navigating to http://127.0.0.1:4175/ ...')
+    await page.goto('http://127.0.0.1:4175/', { waitUntil: 'networkidle' })
     await page.waitForTimeout(1000)
 
-    // 1. Full page light
-    console.log('Capturing full page light...')
-    await page.screenshot({
-      path: path.join(targetDir, 'landing_fullpage_light.png'),
-      fullPage: true,
-    })
+    // 1. Capture Hero in Light Mode
+    await page.screenshot({ path: path.join(targetDir, '01_hero_light_mode.png') })
+    console.log('Captured 01_hero_light_mode.png')
 
-    // 2. Hero + top capsule + trust strip
-    console.log('Capturing Hero...')
-    await page.screenshot({
-      path: path.join(targetDir, '1_hero_nominee.png'),
-      fullPage: false,
-    })
+    // Switch to Dark Mode via Theme Toggle in Header
+    const themeBtn = page.locator('button[title*="Dark"], button[title*="Light"]').first()
+    if (await themeBtn.isVisible()) {
+      await themeBtn.click()
+      await page.waitForTimeout(600)
+    }
 
-    // 3. Compiler Lab Safe
-    console.log('Capturing Compiler Lab Safe...')
+    // 2. Capture Hero in Dark Mode (Monumental headline, liquid-metal shimmer, HUD counters, 3D Centerpiece)
+    await page.screenshot({ path: path.join(targetDir, '02_hero_dark_mode.png') })
+    console.log('Captured 02_hero_dark_mode.png')
+
+    // 3. Scroll to AST Compiler & Interception Lab
     const compilerLab = page.locator('#compiler-lab')
     await compilerLab.scrollIntoViewIfNeeded()
     await page.waitForTimeout(500)
-    await page.screenshot({
-      path: path.join(targetDir, '2_compiler_lab_safe.png'),
-      fullPage: false,
-    })
+    await page.screenshot({ path: path.join(targetDir, '03_ast_compiler_lab_dark.png') })
+    console.log('Captured 03_ast_compiler_lab_dark.png')
 
-    // 3b. Compiler Lab Attack (click Malicious DROP TABLE)
-    console.log('Clicking Malicious DROP TABLE scenario...')
-    const dropBtn = page.locator('button:has-text("Malicious DROP TABLE")')
-    if (await dropBtn.count() > 0) {
-      await dropBtn.click()
-      await page.waitForTimeout(500)
-      await page.screenshot({
-        path: path.join(targetDir, '2b_compiler_lab_attack.png'),
-        fullPage: false,
-      })
+    // Click on Malicious DROP TABLE scenario
+    const dropTableBtn = page.locator('button:has-text("Malicious DROP TABLE")').first()
+    if (await dropTableBtn.isVisible()) {
+      await dropTableBtn.click()
+      await page.waitForTimeout(600)
+      await page.screenshot({ path: path.join(targetDir, '04_ast_compiler_drop_table_deflected.png') })
+      console.log('Captured 04_ast_compiler_drop_table_deflected.png')
     }
 
-    // 4. Capabilities Section - Studio Tab
-    console.log('Capturing Capabilities - Studio Tab...')
-    const capabilities = page.locator('#platform-showcase')
-    await capabilities.scrollIntoViewIfNeeded()
+    // 4. Scroll to Section 02: Platform Capabilities Showcase
+    const platformShowcase = page.locator('#platform-showcase')
+    await platformShowcase.scrollIntoViewIfNeeded()
     await page.waitForTimeout(500)
-    await page.screenshot({
-      path: path.join(targetDir, '3a_capabilities_studio.png'),
-      fullPage: false,
-    })
+    await page.screenshot({ path: path.join(targetDir, '05_platform_capabilities_studio_tab.png') })
+    console.log('Captured 05_platform_capabilities_studio_tab.png')
 
-    // Click View SQL in Studio
-    const viewSqlBtn = page.locator('button:has-text("View SQL")')
-    if (await viewSqlBtn.count() > 0) {
-      await viewSqlBtn.click()
-      await page.waitForTimeout(400)
-      await page.screenshot({
-        path: path.join(targetDir, '3a2_capabilities_sql_expanded.png'),
-        fullPage: false,
-      })
+    // Switch to Fleet Overview & Telemetry Tab (SVG World Map / Datacenter Topology Graph)
+    const topologyTabBtn = page.locator('button:has-text("Fleet Overview & Telemetry")').first()
+    if (await topologyTabBtn.isVisible()) {
+      await topologyTabBtn.click()
+      await page.waitForTimeout(600)
+      await page.screenshot({ path: path.join(targetDir, '06_platform_capabilities_topology_tab.png') })
+      console.log('Captured 06_platform_capabilities_topology_tab.png')
     }
 
-    // 4b. Topology Tab
-    console.log('Clicking Fleet Overview & Telemetry tab...')
-    const topologyTab = page.locator('button:has-text("Fleet Overview & Telemetry")')
-    if (await topologyTab.count() > 0) {
-      await topologyTab.click()
-      await page.waitForTimeout(500)
-      await page.screenshot({
-        path: path.join(targetDir, '3b_capabilities_topology.png'),
-        fullPage: false,
-      })
+    // Switch to Dual-Role PostgreSQL Kernel Tab
+    const kernelTabBtn = page.locator('button:has-text("Dual-Role PostgreSQL Kernel")').first()
+    if (await kernelTabBtn.isVisible()) {
+      await kernelTabBtn.click()
+      await page.waitForTimeout(600)
+      await page.screenshot({ path: path.join(targetDir, '07_platform_capabilities_kernel_tab.png') })
+      console.log('Captured 07_platform_capabilities_kernel_tab.png')
     }
 
-    // 4c. Kernel Tab
-    console.log('Clicking Dual-Role PostgreSQL Kernel tab...')
-    const kernelTab = page.locator('button:has-text("Dual-Role PostgreSQL Kernel")')
-    if (await kernelTab.count() > 0) {
-      await kernelTab.click()
-      await page.waitForTimeout(500)
-      await page.screenshot({
-        path: path.join(targetDir, '3c_capabilities_kernel.png'),
-        fullPage: false,
-      })
-    }
-
-    // 5. Architectural Monoliths
-    console.log('Capturing Architectural Monoliths...')
-    const monoliths = page.locator('#three-invariants')
-    await monoliths.scrollIntoViewIfNeeded()
+    // 5. Scroll to Section 03: Core Architectural Invariants (3 Bento Cards)
+    const invariantsSec = page.locator('#three-invariants')
+    await invariantsSec.scrollIntoViewIfNeeded()
     await page.waitForTimeout(500)
-    await page.screenshot({
-      path: path.join(targetDir, '4_architectural_monoliths.png'),
-      fullPage: false,
-    })
+    await page.screenshot({ path: path.join(targetDir, '08_architectural_monoliths_3_bentos.png') })
+    console.log('Captured 08_architectural_monoliths_3_bentos.png')
 
-    // 6. Threat Defense Matrix
-    console.log('Capturing Threat Defense Matrix...')
-    const threatMatrix = page.locator('#attack-matrix')
-    await threatMatrix.scrollIntoViewIfNeeded()
+    // 6. Scroll to Section 04: Live Attack & Defense Proof Matrix
+    const attackSec = page.locator('#attack-matrix')
+    await attackSec.scrollIntoViewIfNeeded()
     await page.waitForTimeout(500)
-    await page.screenshot({
-      path: path.join(targetDir, '5_threat_matrix.png'),
-      fullPage: false,
-    })
+    await page.screenshot({ path: path.join(targetDir, '09_attack_defense_matrix_radar.png') })
+    console.log('Captured 09_attack_defense_matrix_radar.png')
 
-    // Click another threat in matrix
-    const threat2 = page.locator('button:has-text("System Catalog & Password Exfiltration")')
-    if (await threat2.count() > 0) {
-      await threat2.click()
-      await page.waitForTimeout(500)
-      await page.screenshot({
-        path: path.join(targetDir, '5b_threat_matrix_catalog_exfil.png'),
-        fullPage: false,
-      })
-    }
+    // 7. Scroll to Section 05: Benchmarks & Section 06: Cyber Footer (3D Portal CTA)
+    const metricsSec = page.locator('#metrics')
+    await metricsSec.scrollIntoViewIfNeeded()
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: path.join(targetDir, '10_metrics_strip_oscilloscope.png') })
+    console.log('Captured 10_metrics_strip_oscilloscope.png')
 
-    // 7. Benchmarks & Editorial Footer
-    console.log('Capturing Benchmarks & Editorial Footer...')
+    // Scroll to bottom footer
     const footer = page.locator('footer')
     await footer.scrollIntoViewIfNeeded()
     await page.waitForTimeout(500)
-    await page.screenshot({
-      path: path.join(targetDir, '6_editorial_footer.png'),
-      fullPage: false,
-    })
+    await page.screenshot({ path: path.join(targetDir, '11_cyber_footer_portal_cta.png') })
+    console.log('Captured 11_cyber_footer_portal_cta.png')
 
-    // 8. Toggle Dark Mode & Capture Full Page Dark
-    console.log('Toggling Dark Mode...')
-    const themeBtn = page.locator('header button[title*="Dark"]').first()
-    if (await themeBtn.count() > 0) {
-      await themeBtn.click()
-      await page.waitForTimeout(600)
-      await page.screenshot({
-        path: path.join(targetDir, 'landing_fullpage_dark.png'),
-        fullPage: true,
-      })
-      console.log('Saved landing_fullpage_dark.png')
-    }
-
-    console.log('All screenshots captured successfully!')
-  } catch (err) {
-    console.error('Error during capture:', err)
+    console.log('ALL 11 SCREENSHOTS CAPTURED SUCCESSFULLY!')
   } finally {
     await browser.close()
-    await previewServer.close()
-    process.exit(0)
+    await new Promise((res) => previewServer.httpServer.close(res))
   }
 }
 
-run()
-
+run().catch((err) => {
+  console.error('Playwright Error:', err)
+  process.exit(1)
+})

@@ -54,7 +54,7 @@ export const ArchitecturalMonoliths: React.FC = () => {
           {/* ── CARD 01: 200px Custom SVG Animated 6-Layer Laser Sieve ── */}
           <div className="group relative rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-6 flex flex-col justify-between hover:border-sky-300 dark:hover:border-sky-700/60 transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden">
             {/* Watermark Numeral */}
-            <span className="absolute -top-3 right-4 font-display font-black text-7xl text-zinc-100 dark:text-zinc-800/40 select-none pointer-events-none group-hover:text-sky-100 dark:group-hover:text-sky-950/40 transition-colors">
+            <span className="absolute top-3 right-4 font-display font-black text-6xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none">
               01
             </span>
 
@@ -151,7 +151,7 @@ export const ArchitecturalMonoliths: React.FC = () => {
           {/* ── CARD 02: 200px Custom SVG Physical Switchboard Illustration ── */}
           <div className="group relative rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-6 flex flex-col justify-between hover:border-sky-300 dark:hover:border-sky-700/60 transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden">
             {/* Watermark Numeral */}
-            <span className="absolute -top-3 right-4 font-display font-black text-7xl text-zinc-100 dark:text-zinc-800/40 select-none pointer-events-none group-hover:text-sky-100 dark:group-hover:text-sky-950/40 transition-colors">
+            <span className="absolute top-3 right-4 font-display font-black text-6xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none">
               02
             </span>
 
@@ -240,7 +240,7 @@ export const ArchitecturalMonoliths: React.FC = () => {
           {/* ── CARD 03: 200px Custom SVG Speed Race Illustration ── */}
           <div className="group relative rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-6 flex flex-col justify-between hover:border-sky-300 dark:hover:border-sky-700/60 transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden">
             {/* Watermark Numeral */}
-            <span className="absolute -top-3 right-4 font-display font-black text-7xl text-zinc-100 dark:text-zinc-800/40 select-none pointer-events-none group-hover:text-sky-100 dark:group-hover:text-sky-950/40 transition-colors">
+            <span className="absolute top-3 right-4 font-display font-black text-6xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none">
               03
             </span>
 
@@ -266,7 +266,7 @@ export const ArchitecturalMonoliths: React.FC = () => {
                 <svg viewBox="0 0 320 120" className="w-full h-auto">
                   {/* Track 1: QueryTrust AI Laser Pulse (1.42s) */}
                   <g transform="translate(10, 15)">
-                    <text x="0" y="10" fill="#38BDF8" fontSize="8.5" fontFamily="monospace" fontWeight="bold">QUERYTRUST AI (1.42s)</text>
+                    <text x="0" y="8" fill="#38BDF8" fontSize="8.5" fontFamily="monospace" fontWeight="bold">QUERYTRUST AI (1.42s)</text>
                     <rect x="0" y="16" width="300" height="18" rx="9" fill="#0c4a6e" />
                     <rect
                       x="0"
@@ -281,10 +281,10 @@ export const ArchitecturalMonoliths: React.FC = () => {
 
                   {/* Track 2: 4-Hour Jira DBA Queue */}
                   <g transform="translate(10, 65)">
-                    <text x="0" y="10" fill="#71717A" fontSize="8.5" fontFamily="monospace">4-HOUR JIRA DBA QUEUE</text>
+                    <text x="0" y="8" fill="#94A3B8" fontSize="8.5" fontFamily="monospace">4-HOUR JIRA DBA QUEUE</text>
                     <rect x="0" y="16" width="300" height="18" rx="9" fill="#27272a" />
                     <rect x="0" y="16" width="12" height="18" rx="6" fill="#71717a" />
-                    <text x="20" y="29" fill="#52525b" fontSize="7.5" fontFamily="monospace">0.01% — Waiting in DBA Triage</text>
+                    <text x="20" y="28" fill="#E2E8F0" fontSize="7.5" fontFamily="monospace" fontWeight="500">0.01% — Waiting in DBA Triage</text>
                   </g>
                 </svg>
 

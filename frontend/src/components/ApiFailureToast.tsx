@@ -21,6 +21,15 @@ export function ApiFailureToast() {
     return () => window.removeEventListener('querytrust:api-failure', onFailure)
   }, [])
 
+  // Automatically dismiss the toast after 5 seconds so it never gets stuck
+  useEffect(() => {
+    if (!message) return
+    const timer = setTimeout(() => {
+      setMessage(null)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [message])
+
   if (!message) return null
 
   return (

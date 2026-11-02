@@ -309,7 +309,7 @@ export const PlatformShowcase: React.FC = () => {
               </div>
 
               {/* ── Interactive SVG Datacenter World Topology Map ── */}
-              <div className="relative rounded-2xl bg-zinc-950 border border-zinc-800 p-4 sm:p-6 overflow-hidden">
+              <div className="relative rounded-2xl bg-zinc-950 border border-zinc-800 p-4 sm:p-6 pb-8 overflow-hidden">
                 <div className="absolute top-3 left-4 text-[10px] font-mono text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                   <span>Global Telemetry Ring &bull; Active Latency: 1.42ms</span>
@@ -375,10 +375,10 @@ export const PlatformShowcase: React.FC = () => {
                     <circle cx="160" cy="180" r="4" fill="#38BDF8" />
                     <line x1="220" y1="160" x2="160" y2="180" stroke="#38bdf844" strokeWidth="1" />
 
-                    <text x="220" y="240" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
+                    <text x="220" y="220" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
                       AMER HUB (Dallas DC 1)
                     </text>
-                    <text x="220" y="258" textAnchor="middle" fill="#38BDF8" fontSize="11" fontFamily="monospace">
+                    <text x="220" y="238" textAnchor="middle" fill="#38BDF8" fontSize="11" fontFamily="monospace">
                       2,150 Devices · 22 Sites
                     </text>
                   </g>
@@ -395,10 +395,10 @@ export const PlatformShowcase: React.FC = () => {
                     <circle cx="510" cy="170" r="4" fill="#10B981" />
                     <line x1="470" y1="140" x2="510" y2="170" stroke="#10b98144" strokeWidth="1" />
 
-                    <text x="470" y="210" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
+                    <text x="470" y="190" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
                       EMEA HUB (Frankfurt DC 2)
                     </text>
-                    <text x="470" y="228" textAnchor="middle" fill="#10B981" fontSize="11" fontFamily="monospace">
+                    <text x="470" y="208" textAnchor="middle" fill="#10B981" fontSize="11" fontFamily="monospace">
                       1,650 Devices · 18 Sites
                     </text>
                   </g>
@@ -415,10 +415,10 @@ export const PlatformShowcase: React.FC = () => {
                     <circle cx="750" cy="220" r="4" fill="#818CF8" />
                     <line x1="710" y1="170" x2="750" y2="220" stroke="#818cf844" strokeWidth="1" />
 
-                    <text x="710" y="245" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
+                    <text x="710" y="225" textAnchor="middle" fill="#FFFFFF" fontSize="13" fontWeight="bold" fontFamily="sans-serif">
                       APAC HUB (Tokyo DC 1)
                     </text>
-                    <text x="710" y="263" textAnchor="middle" fill="#818CF8" fontSize="11" fontFamily="monospace">
+                    <text x="710" y="243" textAnchor="middle" fill="#818CF8" fontSize="11" fontFamily="monospace">
                       1,200 Devices · 10 Sites
                     </text>
                   </g>

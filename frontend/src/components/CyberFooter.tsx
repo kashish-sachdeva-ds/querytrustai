@@ -16,7 +16,7 @@ export const CyberFooter: React.FC<CyberFooterProps> = ({
   const [isHoveringPortal, setIsHoveringPortal] = useState(false)
 
   return (
-    <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-[#F4F5F7] dark:bg-[#080C14] text-zinc-900 dark:text-white pt-16 pb-14 relative text-left transition-colors overflow-hidden">
+    <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-[#F4F5F7] dark:bg-[#080C14] text-zinc-900 dark:text-white pt-16 pb-28 sm:pb-36 relative text-left transition-colors overflow-hidden">
       
       {/* 3D Portal Vortex Warp Grid Background */}
       <div

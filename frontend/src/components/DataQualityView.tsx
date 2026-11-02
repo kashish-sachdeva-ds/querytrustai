@@ -310,21 +310,6 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
     setTimeout(() => setCopiedSqlRuleId(null), 2000)
   }
 
-  const getSeverityBadgeClass = (severity: string) => {
-    switch (severity.toLowerCase()) {
-      case 'critical':
-        return 'badge-danger'
-      case 'high':
-        return 'badge-warning'
-      case 'medium':
-        return 'badge-info'
-      case 'passed':
-        return 'badge-success'
-      default:
-        return 'badge-neutral'
-    }
-  }
-
   return (
     <div className="dq-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Standardized PageHeader */}
@@ -501,15 +486,16 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
           </span>
         </div>
         <span
+          className="whitespace-nowrap px-3 py-1"
           style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '10px',
             backgroundColor: 'var(--gov-safe-bg)',
             color: 'var(--gov-safe-text)',
             border: '1px solid var(--gov-safe-border)',
-            padding: '2px 6px',
             borderRadius: '4px',
             fontWeight: 600,
+            whiteSpace: 'nowrap',
           }}
         >
           qt_ai_readonly enforced
@@ -739,7 +725,15 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
                           {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </td>
                         <td>
-                          <span className={`badge ${getSeverityBadgeClass(finding.severity)}`}>
+                          <span
+                            className={
+                              finding.severity.toLowerCase() === 'critical'
+                                ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-500 border border-red-500/30'
+                                : finding.severity.toLowerCase() === 'high'
+                                ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                                : 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-500 border border-sky-500/30'
+                            }
+                          >
                             {finding.severity.charAt(0).toUpperCase() + finding.severity.slice(1)}
                           </span>
                         </td>

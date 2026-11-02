@@ -644,7 +644,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
         ) : (
           <div
             onClick={() => onSelectTab('data-sources')}
-            className="flex items-center gap-3 px-1.5 py-1.5 rounded-lg cursor-pointer hover:bg-zinc-100/90 dark:hover:bg-white/[0.03] transition-colors group"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-zinc-100/90 dark:hover:bg-white/[0.03] transition-colors group"
             title="Inspect Data Sources & Kernel Topology"
           >
             <div className="relative flex h-2 w-2 flex-shrink-0">
@@ -652,10 +652,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, onAskQ
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.7)] dark:shadow-[0_0_10px_rgba(52,211,153,0.85)]" />
             </div>
             <div className="flex flex-col min-w-0 flex-1">
-              <div className="text-[11.5px] font-semibold text-zinc-800 group-hover:text-zinc-950 dark:text-slate-200 dark:group-hover:text-white truncate tracking-tight transition-colors">
+              <div className="text-[12px] font-semibold text-zinc-800 group-hover:text-zinc-950 dark:text-slate-200 dark:group-hover:text-white truncate tracking-tight transition-colors">
                 PostgreSQL Read-Only
               </div>
-              <div className="text-[9.5px] font-mono tracking-wide text-zinc-500 dark:text-[#64748B] truncate mt-0.5">
+              <div className="text-xs font-mono tracking-wide text-zinc-500 dark:text-[#64748B] truncate mt-0.5">
                 Zero-Write Lock &bull; 1.4ms P95
               </div>
             </div>

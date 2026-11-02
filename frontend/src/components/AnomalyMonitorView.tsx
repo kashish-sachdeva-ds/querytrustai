@@ -493,12 +493,17 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
           <div
             style={{
               position: 'absolute',
-              bottom: '4px',
+              bottom: '16px',
               right: '8px',
               fontSize: '9.5px',
               fontFamily: 'var(--font-mono)',
               color: 'var(--accent-primary)',
               fontWeight: 600,
+              backgroundColor: 'var(--bg-surface-1)',
+              padding: '2px 8px',
+              borderRadius: '9999px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+              border: '1px solid var(--border-subtle)',
             }}
           >
             1.00 &bull; Extreme Outliers
@@ -648,14 +653,14 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
 
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary inline-flex items-center gap-2"
             onClick={handleScan}
             disabled={isScanning}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
-              padding: '5px 12px',
+              gap: '8px',
+              padding: '6px 14px',
               fontSize: '11px',
               fontWeight: 600,
               backgroundColor: 'var(--accent-primary)',
@@ -665,7 +670,7 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
               cursor: isScanning ? 'not-allowed' : 'pointer',
             }}
           >
-            <Search size={12} />
+            <Search size={12} className="shrink-0" />
             <span>{isScanning ? 'Scanning...' : 'Rescan Telemetry'}</span>
           </button>
         </div>

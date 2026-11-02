@@ -42,7 +42,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
       />
 
       {/* ─── Above-the-Fold Hero Section (12-Column Visual-First Split Layout) ─── */}
-      <section className="relative pt-4 sm:pt-8 pb-6 sm:pb-8 px-4 sm:px-8 overflow-hidden">
+      <section className="relative pt-28 lg:pt-36 pb-8 sm:pb-12 px-4 sm:px-8 overflow-hidden">
         
         {/* Cinematic Spatial Grid, Cursor Spotlight & Volumetric Light Beams */}
         <HeroCinematicBackground />
@@ -100,7 +100,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="flex items-center gap-3 flex-wrap pt-1"
+                className="flex flex-wrap items-center gap-4 pt-1"
               >
                 <MagneticBorderButton
                   variant="primary"
@@ -123,7 +123,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                 <button
                   type="button"
                   onClick={onGoToLogin}
-                  className="h-10 px-3 rounded-full text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white font-medium text-xs transition-colors cursor-pointer"
+                  className="inline-flex items-center text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white font-medium text-xs transition-colors cursor-pointer"
                 >
                   Workspace Login &rarr;
                 </button>
@@ -137,7 +137,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                 className="grid grid-cols-2 gap-2.5 pt-2 font-mono text-xs"
               >
                 {/* Metric 1 */}
-                <div className="p-3 rounded-xl bg-white/80 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-white/[0.08] backdrop-blur-md shadow-2xs">
+                <div className="p-4 pb-5 rounded-xl bg-white/80 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-white/[0.08] backdrop-blur-md shadow-2xs">
                   <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-0.5">
                     <span className="flex items-center gap-1">
                       <Activity size={10} className="text-sky-500" />
@@ -150,7 +150,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                 </div>
 
                 {/* Metric 2 */}
-                <div className="p-3 rounded-xl bg-white/80 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-white/[0.08] backdrop-blur-md shadow-2xs">
+                <div className="p-4 pb-5 rounded-xl bg-white/80 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-white/[0.08] backdrop-blur-md shadow-2xs">
                   <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-0.5">
                     <span className="flex items-center gap-1">
                       <ShieldCheck size={10} className="text-emerald-500" />
@@ -163,7 +163,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                 </div>
 
                 {/* Metric 3 */}
-                <div className="p-3 rounded-xl bg-white/80 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-white/[0.08] backdrop-blur-md shadow-2xs">
+                <div className="p-4 pb-5 rounded-xl bg-white/80 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-white/[0.08] backdrop-blur-md shadow-2xs">
                   <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-0.5">
                     <span className="flex items-center gap-1">
                       <Database size={10} className="text-sky-500" />
@@ -176,7 +176,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                 </div>
 
                 {/* Metric 4 */}
-                <div className="p-3 rounded-xl bg-white/80 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-white/[0.08] backdrop-blur-md shadow-2xs">
+                <div className="p-4 pb-5 rounded-xl bg-white/80 dark:bg-zinc-900/60 border border-zinc-200/90 dark:border-white/[0.08] backdrop-blur-md shadow-2xs">
                   <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-0.5">
                     <span className="flex items-center gap-1">
                       <Cpu size={10} className="text-sky-500" />
@@ -185,7 +185,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
                     <span className="text-[9px] text-sky-400 font-bold">AST</span>
                   </div>
                   <div className="text-lg font-bold text-sky-600 dark:text-sky-400">1.42ms</div>
-                  <div className="h-2 w-full mt-1">
+                  <div className="h-2 w-full mt-2 pr-1 pb-1">
                     <svg viewBox="0 0 60 8" className="w-full h-full">
                       <path d="M0 4 Q 15 1, 30 4 T 60 4" fill="none" stroke="#38BDF8" strokeWidth="1.5" />
                     </svg>

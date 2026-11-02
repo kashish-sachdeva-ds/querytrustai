@@ -759,9 +759,9 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
       </div>
 
       {/* 3. SEARCH & DROPDOWN TOOLBAR */}
-      <div className="devices-filter-toolbar">
+      <div className="devices-filter-toolbar flex flex-wrap sm:flex-nowrap items-center gap-3">
         {/* Search Input */}
-        <div className="devices-search-box">
+        <div className="devices-search-box min-w-[280px] flex-1">
           <Search size={14} className="devices-search-icon" />
           <input
             ref={searchInputRef}
@@ -865,7 +865,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
         </div>
 
         {/* Sort Select */}
-        <div className="select-control-wrapper">
+        <div className="select-control-wrapper whitespace-nowrap shrink-0">
           <label htmlFor="filter-sort" className="sr-only">Sort Devices</label>
           <select
             id="filter-sort"
@@ -902,7 +902,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
 
       {/* 4. ENTERPRISE DATA TABLE / RESPONSIVE CARDS */}
       <div className="devices-table-card layout-transition-target">
-        <div className="devices-table-container">
+        <div className="devices-table-container overflow-x-auto">
           <table className="devices-table">
             <thead>
               <tr className="devices-table-header">

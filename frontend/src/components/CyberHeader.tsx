@@ -3,7 +3,6 @@ import {
   Sun,
   Moon,
   ArrowUpRight,
-  Terminal,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { QueryTrustLogo } from './QueryTrustLogo'
@@ -80,12 +79,12 @@ export const CyberHeader: React.FC<CyberHeaderProps> = ({
         </nav>
 
         {/* Right: Actions, Theme Toggle & Evaluator Pills */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Theme Toggle Button */}
           <button
             type="button"
             onClick={toggleTheme}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white bg-zinc-100/80 hover:bg-zinc-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white bg-zinc-100/80 hover:bg-zinc-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 transition-all cursor-pointer"
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
           >
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
@@ -95,7 +94,7 @@ export const CyberHeader: React.FC<CyberHeaderProps> = ({
           <button
             type="button"
             onClick={onSignIn}
-            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
+            className="whitespace-nowrap shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-all cursor-pointer"
           >
             Sign In
           </button>
@@ -104,9 +103,9 @@ export const CyberHeader: React.FC<CyberHeaderProps> = ({
           <button
             type="button"
             onClick={onLaunchAnalyst}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-white hover:bg-zinc-50 dark:bg-zinc-800/90 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-2 leading-none whitespace-nowrap shrink-0 px-3.5 py-2 rounded-full text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-white hover:bg-zinc-50 dark:bg-zinc-800/90 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
           >
-            <Terminal size={12} className="text-sky-500" />
+            <span className="font-mono text-sky-500 text-xs font-bold flex items-center translate-y-[0.5px]">&gt;_</span>
             <span>Analyst Demo</span>
           </button>
 
@@ -114,7 +113,7 @@ export const CyberHeader: React.FC<CyberHeaderProps> = ({
           <button
             type="button"
             onClick={onLaunchAdmin}
-            className="inline-flex items-center gap-1.5 px-4.5 py-1.5 rounded-full text-xs font-semibold text-white bg-zinc-950 hover:bg-black dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 shadow-xs hover:shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+            className="whitespace-nowrap shrink-0 px-4 py-2 flex items-center gap-1.5 rounded-full text-xs font-semibold text-white bg-zinc-950 hover:bg-black dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 shadow-xs hover:shadow-sm transition-all active:scale-[0.98] cursor-pointer"
           >
             <span>Enter Studio</span>
             <ArrowUpRight size={13} />

@@ -393,40 +393,40 @@ export const AdminView: React.FC = () => {
         }}
       >
         {/* Admin */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-admin-text)', backgroundColor: 'var(--role-admin-bg)', padding: '2px 6px', borderRadius: '4px' }}>
               Admin (System Administrator)
             </span>
             <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>Full Access</span>
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
+          <div className="leading-relaxed text-sm text-zinc-600 dark:text-zinc-400">
             Natural Language-to-SQL + Monaco SQL Editor + 6-Layer AST Rule Config + Data Source Management + RBAC + Webhooks.
           </div>
         </div>
 
         {/* Analyst */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-analyst-text)', backgroundColor: 'var(--role-analyst-bg)', padding: '2px 6px', borderRadius: '4px' }}>
               Analyst (Data Practitioner)
             </span>
             <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>Read-Only SQL</span>
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
+          <div className="leading-relaxed text-sm text-zinc-600 dark:text-zinc-400">
             Natural Language-to-SQL + Read-Only SQL Inspection + 6-Gate AST Inspector + CSV/JSON Data Export.
           </div>
         </div>
 
         {/* Viewer */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '14px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-viewer-text)', backgroundColor: 'var(--role-viewer-bg)', padding: '2px 6px', borderRadius: '4px' }}>
               Viewer (Operations Viewer)
             </span>
             <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>SQL Masked</span>
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
+          <div className="leading-relaxed text-sm text-zinc-600 dark:text-zinc-400">
             Governed Natural Language Q&A + Verified Tables & Visual Charts Only. Raw SQL and schema internals are hidden.
           </div>
         </div>

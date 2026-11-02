@@ -406,64 +406,72 @@ export const ASTCompilerLab: React.FC = () => {
               </span>
             </div>
 
-            {/* Connected Node Tree Graphic */}
+            {/* Connected Node Tree Graphic with Wide Pill Nodes */}
             <div className="overflow-x-auto py-1">
-              <svg viewBox="0 0 540 70" className="w-full min-w-[500px] h-16">
+              <svg viewBox="0 0 720 70" className="w-full min-w-[650px] h-16">
                 {/* Connecting Lines */}
-                <line x1="60" y1="35" x2="140" y2="35" stroke={isAttack ? '#f43f5e' : '#38bdf8'} strokeWidth="1.5" strokeDasharray="3 2" />
-                <line x1="140" y1="35" x2="230" y2="35" stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
-                <line x1="230" y1="35" x2="330" y2="35" stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
-                <line x1="330" y1="35" x2="430" y2="35" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
-                <line x1="430" y1="35" x2="500" y2="35" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
+                <line x1="100" y1="35" x2="128" y2="35" stroke={isAttack ? '#f43f5e' : '#38bdf8'} strokeWidth="1.5" strokeDasharray="3 2" />
+                <line x1="222" y1="35" x2="245" y2="35" stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
+                <line x1="355" y1="35" x2="380" y2="35" stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
+                <line x1="490" y1="35" x2="518" y2="35" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
+                <line x1="612" y1="35" x2="635" y2="35" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
 
                 {/* Node 1: Input */}
                 <g transform="translate(60, 35)">
-                  <circle r="16" fill="#18181b" stroke="#71717a" strokeWidth="1.5" />
-                  <text textAnchor="middle" dy="4" fill="#a1a1aa" fontSize="8.5" fontFamily="monospace">Query</text>
+                  <rect x="-40" y="-17" width="80" height="34" rx="17" fill="#18181b" stroke="#71717a" strokeWidth="1.5" />
+                  <text textAnchor="middle" dy="4" fill="#a1a1aa" fontSize="9" fontFamily="monospace">Query</text>
                 </g>
 
                 {/* Node 2: SQLGlot Parser */}
-                <g transform="translate(140, 35)">
-                  <circle r="18" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.5" />
-                  <text textAnchor="middle" dy="4" fill="#38bdf8" fontSize="8.5" fontFamily="monospace" fontWeight="bold">Parser</text>
+                <g transform="translate(175, 35)">
+                  <rect x="-47" y="-17" width="94" height="34" rx="17" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.5" />
+                  <text textAnchor="middle" dy="4" fill="#38bdf8" fontSize="9" fontFamily="monospace" fontWeight="bold">Parser</text>
                 </g>
 
-                {/* Node 3: exp.Select */}
-                <g transform="translate(230, 35)">
-                  <circle
-                    r="20"
+                {/* Node 3: exp.Select / exp.Drop (Wide Pill Node) */}
+                <g transform="translate(300, 35)">
+                  <rect
+                    x="-55"
+                    y="-17"
+                    width="110"
+                    height="34"
+                    rx="17"
                     fill={isAttack && active.blockedAtGateIndex === 0 ? '#4c0519' : '#064e3b'}
                     stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'}
                     strokeWidth="2"
                   />
-                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 0 ? '#fda4af' : '#6ee7b7'} fontSize="8" fontFamily="monospace" fontWeight="bold">
+                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 0 ? '#fda4af' : '#6ee7b7'} fontSize="9" fontFamily="monospace" fontWeight="bold">
                     {isAttack && active.blockedAtGateIndex === 0 ? 'exp.Drop' : 'exp.Select'}
                   </text>
                 </g>
 
-                {/* Node 4: exp.Table [devices] */}
-                <g transform="translate(330, 35)">
-                  <circle
-                    r="20"
+                {/* Node 4: exp.Table [devices / pg_shadow] (Wide Pill Node) */}
+                <g transform="translate(435, 35)">
+                  <rect
+                    x="-55"
+                    y="-17"
+                    width="110"
+                    height="34"
+                    rx="17"
                     fill={isAttack && active.blockedAtGateIndex === 1 ? '#4c0519' : isAttack ? '#27272a' : '#064e3b'}
                     stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : isAttack ? '#52525b' : '#10b981'}
                     strokeWidth="1.5"
                   />
-                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 1 ? '#fda4af' : isAttack ? '#71717a' : '#6ee7b7'} fontSize="7.5" fontFamily="monospace">
+                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 1 ? '#fda4af' : isAttack ? '#71717a' : '#6ee7b7'} fontSize="8.5" fontFamily="monospace">
                     {isAttack && active.blockedAtGateIndex === 1 ? 'pg_shadow' : 'devices'}
                   </text>
                 </g>
 
                 {/* Node 5: exp.Limit [100] */}
-                <g transform="translate(430, 35)">
-                  <circle r="18" fill={isAttack ? '#27272a' : '#064e3b'} stroke={isAttack ? '#52525b' : '#10b981'} strokeWidth="1.5" />
-                  <text textAnchor="middle" dy="4" fill={isAttack ? '#71717a' : '#6ee7b7'} fontSize="7.5" fontFamily="monospace">LIMIT</text>
+                <g transform="translate(565, 35)">
+                  <rect x="-47" y="-17" width="94" height="34" rx="17" fill={isAttack ? '#27272a' : '#064e3b'} stroke={isAttack ? '#52525b' : '#10b981'} strokeWidth="1.5" />
+                  <text textAnchor="middle" dy="4" fill={isAttack ? '#71717a' : '#6ee7b7'} fontSize="8.5" fontFamily="monospace">LIMIT 100</text>
                 </g>
 
                 {/* Node 6: qt_ai_readonly Pool */}
-                <g transform="translate(500, 35)">
-                  <circle r="16" fill={isAttack ? '#27272a' : '#0369a1'} stroke={isAttack ? '#52525b' : '#38bdf8'} strokeWidth="1.5" />
-                  <text textAnchor="middle" dy="4" fill={isAttack ? '#71717a' : '#bae6fd'} fontSize="7.5" fontFamily="monospace" fontWeight="bold">Pool</text>
+                <g transform="translate(675, 35)">
+                  <rect x="-40" y="-17" width="80" height="34" rx="17" fill={isAttack ? '#27272a' : '#0369a1'} stroke={isAttack ? '#52525b' : '#38bdf8'} strokeWidth="1.5" />
+                  <text textAnchor="middle" dy="4" fill={isAttack ? '#71717a' : '#bae6fd'} fontSize="8.5" fontFamily="monospace" fontWeight="bold">Pool</text>
                 </g>
               </svg>
             </div>
@@ -471,8 +479,8 @@ export const ASTCompilerLab: React.FC = () => {
 
           {/* Compiled SQL Viewport with Terminal Chrome */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+            <div className="flex items-center justify-between px-4 py-2.5 mb-2 rounded-xl bg-zinc-100/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5 font-bold">
                 <Database size={12} className="text-sky-500" />
                 <span>
                   {active.category === 'ATTACK_VECTOR'
@@ -483,7 +491,7 @@ export const ASTCompilerLab: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCopy}
-                className="text-[11px] font-mono text-zinc-500 hover:text-zinc-950 dark:hover:text-white flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer shadow-2xs"
               >
                 {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
                 <span>{copied ? 'Copied' : 'Copy SQL'}</span>

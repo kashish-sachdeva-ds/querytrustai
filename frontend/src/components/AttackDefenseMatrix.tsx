@@ -121,7 +121,7 @@ export const AttackDefenseMatrix: React.FC = () => {
         </div>
 
         {/* ── Interactive Cyber-Defense Radar & Firewall Visualizer ── */}
-        <div className="mb-10 p-5 rounded-3xl bg-zinc-950 border border-zinc-800 relative overflow-hidden">
+        <div className="mb-10 p-6 sm:p-8 rounded-3xl bg-zinc-950 border border-zinc-800 relative overflow-hidden">
           <div className="flex items-center justify-between pb-4 border-b border-zinc-800/80 text-[11px] font-mono">
             <span className="text-zinc-400 flex items-center gap-2">
               <Radio size={13} className="text-rose-500 animate-pulse" />

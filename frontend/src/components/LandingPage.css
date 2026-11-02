@@ -25,11 +25,11 @@
 .shimmer-liquid-blue {
   background: linear-gradient(
     90deg,
-    #0284C7 0%,
-    #38BDF8 25%,
-    #E0F2FE 50%,
-    #38BDF8 75%,
-    #0284C7 100%
+    #2563EB 0%,
+    #0EA5E9 25%,
+    #4F46E5 50%,
+    #0284C7 75%,
+    #2563EB 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;

@@ -377,7 +377,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   }
 
   return (
-    <div className="overview-command-center">
+    <div className="overview-command-center pt-6 scroll-mt-24">
       {/* ─── 1. PAGE TITLE & HEADER (Unified Inter Typography) ─── */}
       <PageHeader
         title={

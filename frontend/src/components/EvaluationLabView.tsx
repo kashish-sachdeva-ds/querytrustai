@@ -417,7 +417,7 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
             <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Ticket Deflection
             </div>
-            <div style={{ fontSize: '24px', fontWeight: 700, fontFamily: 'var(--font-mono)', color: '#F8FAFC', fontVariantNumeric: 'tabular-nums' }}>
+            <div className="text-slate-900 dark:text-white font-bold" style={{ fontSize: '24px', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
               65.0%
             </div>
             <div style={{ fontSize: '11px', color: '#94A3B8', fontFamily: 'var(--font-mono)' }}>

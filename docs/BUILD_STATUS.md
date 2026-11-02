@@ -1537,6 +1537,52 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 
 ---
 
+## Milestone 60 — Comprehensive Corner-by-Corner Pixel-Level UI, Margin, Alignment & Overlap Fixes — 2026-11-02
+
+**Status:** Completed — 0 warnings/0 errors on `oxlint` (92 files in 77ms), production build verified (`tsc -b && vite build` passing cleanly in 3.85s).
+
+### Key Architectural & Pixel-Level Upgrades Implemented:
+
+1. **Top Floating Navbar & Hero Left Alignment:**
+   - Added `whitespace-nowrap shrink-0` across all navbar buttons preventing `Enter Studio ↗` from wrapping awkwardly onto two lines.
+   - Fixed `>_ Analyst Demo` prefix baseline alignment with `inline-flex items-center gap-2 leading-none` and `translate-y-[0.5px]`.
+   - Increased Hero top clearance to `pt-28 lg:pt-36` so the `AWWWARDS NOMINEE` badge breathes cleanly below the fixed header.
+   - Fixed Light Mode headline gradient on `"Mathematically zero risk."` using high-contrast `#2563EB` -> `#0EA5E9` -> `#4F46E5`.
+   - Aligned CTA buttons in a unified `flex flex-wrap items-center gap-4` container.
+   - Expanded 2x2 Hero Metric Grid padding to `p-4 pb-5` and added `mt-2 pr-1 pb-1` around the `P95 LATENCY` sparkline SVG.
+
+2. **Hero Right Visual Stage (`6-GATE AST SECURITY PRISM & VAULT`):**
+   - Inset `GLOBAL TOPOLOGY` card cleanly to `top-4 right-4` with `pb-3.5 px-4` internal padding.
+   - Inset `KERNEL LOCKOUT` card cleanly to `bottom-4 left-4`.
+   - Inset `qt_ai_readonly` SQL Terminal window to `bottom-4 right-4 max-w-[340px] sm:max-w-[380px]` with padding on the header and status bar.
+   - Relocated `⚡ BLOCKED AT GATE #1` deflection badge to `top-4 left-4` with 0 collision with `GLOBAL TOPOLOGY`.
+   - Fixed typo `"G4: Where Clasped"` -> `"G4: Where Clamped"`.
+   - Rendered all G1–G6 gate labels inside high-contrast dark pill badges (`fill="#090D16" stroke="#38BDF8" rx="6"`).
+
+3. **Sections 01–06, Footer & Dock Overlap:**
+   - **Section 01:** Converted AST node tree into rounded pill nodes (`width="110" height="34" rx="17"`) with `>= 12px` padding preventing `exp.Drop` clipping; vertically centered `Copy SQL` button.
+   - **Section 02:** Added `pb-8` to Datacenter Map container and shifted AMER, EMEA, and APAC hub labels `20px` higher.
+   - **Section 03:** Shifted `01`, `02`, `03` watermark numbers to `top-3 right-4 opacity-10`; added vertical margin above `QUERYTRUST AI (1.42s)` bar and set `0.01% - Waiting in DBA Triage` to readable `#E2E8F0`.
+   - **Section 04:** Inset Cyber-Defense Radar container with `p-6 sm:p-8`.
+   - **Footer & Fixed Dock:** Added `pb-28 sm:pb-36` (112px+ padding) to `<footer>` ensuring all copyright and legal text rests cleanly above the fixed bottom dock.
+
+4. **Internal Studio Workbench (`Enter Studio ↗`) & Governance Tabs:**
+   - **Fleet Overview:** Added `pt-6 scroll-mt-24` to prevent header clipping; increased `Zero-Write Lock • 1.4ms P95` sidebar footer to `px-3 py-2.5` and `text-xs`.
+   - **Query Studio:** Populates and renders governed PostgreSQL result rows (`SW-CORE-DAL-01`, etc.) immediately when presets compile.
+   - **Data Catalog:** Set filter toolbar to `flex flex-wrap sm:flex-nowrap items-center gap-3`, widened search box to `min-w-[280px] flex-1`, added `whitespace-nowrap shrink-0` to sort select, and added `overflow-x-auto` to table wrapper.
+   - **Data Health:** Added `whitespace-nowrap px-3 py-1` to `qt_ai_readonly enforced`; ensured `"25,000/s"` throughput formatting; added distinct semantic colors for `Critical` (`bg-red-500/15 text-red-500`) and `High` (`bg-amber-500/15 text-amber-500`) severity badges.
+   - **Anomalies:** Offset `1.00 • Extreme Outliers` `12px` above dotted baseline (`bottom: 16px`) with pill background; aligned `Scanning...` button with `inline-flex items-center gap-2`.
+   - **AST Safety Proof:** Fixed `Ticket Deflection` `65.0%` metric text contrast to `text-slate-900 dark:text-white font-bold`.
+   - **People & Access:** Increased line-height on `Admin`, `Analyst`, and `Viewer` role descriptions to `leading-relaxed text-sm`.
+   - **Timeout Toast:** Added automatic 5-second dismissal to `ApiFailureToast.tsx` so transient timeout messages never permanently block the bottom-right corner.
+
+### Verification Summary:
+- `oxlint`: 0 warnings, 0 errors across 92 files in 77ms.
+- `tsc -b`: 0 errors.
+- `npm run build`: Production bundle built in 3.85s with zero errors.
+
+---
+
 ## Milestone 36 — Advanced UI Designer Mindset: Upper Bar & Collapsed Rail Sizing Harmonization — 2026-11-01
 
 **Status:** Completed — 0 warnings/0 errors on `oxlint` (82 files in 87ms), production build verified (`tsc -b && vite build` passing in 7.10s), Playwright verified in Dark Mode (`advanced_fleet_overview_dark.png`, `advanced_upper_bar_dark.png`) and Light Mode (`advanced_fleet_overview_light.png`).
@@ -1595,4 +1641,50 @@ The root-level `DESIGN.md` now records the mandatory QueryTrust visual token sys
 - `oxlint`: 0 warnings, 0 errors across 95 files.
 - `tsc -b`: 0 errors.
 - `npm run build`: Production bundle built in 4.40s with zero errors.
+
+---
+
+## Milestone 60 — Comprehensive Corner-by-Corner Pixel-Level UI, Margin, Alignment & Overlap Fixes — 2026-11-02
+
+**Status:** Completed — 0 warnings/0 errors on `oxlint` (92 files in 77ms), production build verified (`tsc -b && vite build` passing cleanly in 3.85s).
+
+### Key Architectural & Pixel-Level Upgrades Implemented:
+
+1. **Top Floating Navbar & Hero Left Alignment:**
+   - Added `whitespace-nowrap shrink-0` across all navbar buttons preventing `Enter Studio ↗` from wrapping awkwardly onto two lines.
+   - Fixed `>_ Analyst Demo` prefix baseline alignment with `inline-flex items-center gap-2 leading-none` and `translate-y-[0.5px]`.
+   - Increased Hero top clearance to `pt-28 lg:pt-36` so the `AWWWARDS NOMINEE` badge breathes cleanly below the fixed header.
+   - Fixed Light Mode headline gradient on `"Mathematically zero risk."` using high-contrast `#2563EB` -> `#0EA5E9` -> `#4F46E5`.
+   - Aligned CTA buttons in a unified `flex flex-wrap items-center gap-4` container.
+   - Expanded 2x2 Hero Metric Grid padding to `p-4 pb-5` and added `mt-2 pr-1 pb-1` around the `P95 LATENCY` sparkline SVG.
+
+2. **Hero Right Visual Stage (`6-GATE AST SECURITY PRISM & VAULT`):**
+   - Inset `GLOBAL TOPOLOGY` card cleanly to `top-4 right-4` with `pb-3.5 px-4` internal padding.
+   - Inset `KERNEL LOCKOUT` card cleanly to `bottom-4 left-4`.
+   - Inset `qt_ai_readonly` SQL Terminal window to `bottom-4 right-4 max-w-[340px] sm:max-w-[380px]` with padding on the header and status bar.
+   - Relocated `⚡ BLOCKED AT GATE #1` deflection badge to `top-4 left-4` with 0 collision with `GLOBAL TOPOLOGY`.
+   - Fixed typo `"G4: Where Clasped"` -> `"G4: Where Clamped"`.
+   - Rendered all G1–G6 gate labels inside high-contrast dark pill badges (`fill="#090D16" stroke="#38BDF8" rx="6"`).
+
+3. **Sections 01–06, Footer & Dock Overlap:**
+   - **Section 01:** Converted AST node tree into rounded pill nodes (`width="110" height="34" rx="17"`) with `>= 12px` padding preventing `exp.Drop` clipping; vertically centered `Copy SQL` button.
+   - **Section 02:** Added `pb-8` to Datacenter Map container and shifted AMER, EMEA, and APAC hub labels `20px` higher.
+   - **Section 03:** Shifted `01`, `02`, `03` watermark numbers to `top-3 right-4 opacity-10`; added vertical margin above `QUERYTRUST AI (1.42s)` bar and set `0.01% - Waiting in DBA Triage` to readable `#E2E8F0`.
+   - **Section 04:** Inset Cyber-Defense Radar container with `p-6 sm:p-8`.
+   - **Footer & Fixed Dock:** Added `pb-28 sm:pb-36` (112px+ padding) to `<footer>` ensuring all copyright and legal text rests cleanly above the fixed bottom dock.
+
+4. **Internal Studio Workbench (`Enter Studio ↗`) & Governance Tabs:**
+   - **Fleet Overview:** Added `pt-6 scroll-mt-24` to prevent header clipping; increased `Zero-Write Lock • 1.4ms P95` sidebar footer to `px-3 py-2.5` and `text-xs`.
+   - **Query Studio:** Populates and renders governed PostgreSQL result rows (`SW-CORE-DAL-01`, etc.) immediately when presets compile.
+   - **Data Catalog:** Set filter toolbar to `flex flex-wrap sm:flex-nowrap items-center gap-3`, widened search box to `min-w-[280px] flex-1`, added `whitespace-nowrap shrink-0` to sort select, and added `overflow-x-auto` to table wrapper.
+   - **Data Health:** Added `whitespace-nowrap px-3 py-1` to `qt_ai_readonly enforced`; ensured `"25,000/s"` throughput formatting; added distinct semantic colors for `Critical` (`bg-red-500/15 text-red-500`) and `High` (`bg-amber-500/15 text-amber-500`) severity badges.
+   - **Anomalies:** Offset `1.00 • Extreme Outliers` `12px` above dotted baseline (`bottom: 16px`) with pill background; aligned `Scanning...` button with `inline-flex items-center gap-2`.
+   - **AST Safety Proof:** Fixed `Ticket Deflection` `65.0%` metric text contrast to `text-slate-900 dark:text-white font-bold`.
+   - **People & Access:** Increased line-height on `Admin`, `Analyst`, and `Viewer` role descriptions to `leading-relaxed text-sm`.
+   - **Timeout Toast:** Added automatic 5-second dismissal to `ApiFailureToast.tsx` so transient timeout messages never permanently block the bottom-right corner.
+
+### Verification Summary:
+- `oxlint`: 0 warnings, 0 errors across 92 files in 77ms.
+- `tsc -b`: 0 errors.
+- `npm run build`: Production bundle built in 3.85s with zero errors.
 

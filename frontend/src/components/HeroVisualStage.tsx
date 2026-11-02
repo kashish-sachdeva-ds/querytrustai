@@ -130,24 +130,43 @@ export const HeroVisualStage: React.FC = () => {
                   </text>
                 </g>
 
-                {/* 6 Tactical HUD Callouts aligned with the 3D Prism Gates */}
+                {/* 6 Tactical HUD Callouts inside High-Contrast Pill Badges */}
                 {[
-                  { x: 175, y: 155, name: 'G1', label: 'exp.Select' },
-                  { x: 245, y: 195, name: 'G2', label: 'Whitelist' },
-                  { x: 315, y: 235, name: 'G3', label: 'DML Lock' },
-                  { x: 385, y: 275, name: 'G4', label: 'Where Clamped' },
-                  { x: 455, y: 315, name: 'G5', label: 'Join Guard' },
-                  { x: 525, y: 355, name: 'G6', label: 'LIMIT 100' },
+                  { x: 175, y: 140, name: 'G1', label: 'exp.Select', w: 85 },
+                  { x: 245, y: 180, name: 'G2', label: 'Catalog Whitelist', w: 120 },
+                  { x: 315, y: 220, name: 'G3', label: 'DML Lockout', w: 95 },
+                  { x: 385, y: 260, name: 'G4', label: 'Where Clamped', w: 105 },
+                  { x: 455, y: 300, name: 'G5', label: 'Join Guard', w: 90 },
+                  { x: 515, y: 340, name: 'G6', label: 'LIMIT 100', w: 85 },
                 ].map((gate) => (
                   <g key={gate.name} transform={`translate(${gate.x}, ${gate.y})`}>
                     {/* Reticle Dot */}
                     <circle r="3" fill="#38BDF8" opacity="0.9" filter="url(#ast-glow-cyan)" />
                     <circle r="7" fill="none" stroke="#38BDF8" strokeWidth="1" opacity="0.5" strokeDasharray="2 2" />
                     {/* Annotation Line */}
-                    <line x1="0" y1="-8" x2="0" y2="-22" stroke="#38BDF8" strokeWidth="1" opacity="0.7" />
-                    <line x1="0" y1="-22" x2="16" y2="-22" stroke="#38BDF8" strokeWidth="1" opacity="0.7" />
+                    <line x1="0" y1="-8" x2="0" y2="-18" stroke="#38BDF8" strokeWidth="1" opacity="0.7" />
+                    {/* High-Contrast Pill Badge */}
+                    <rect
+                      x={-gate.w / 2}
+                      y="-34"
+                      width={gate.w}
+                      height="18"
+                      rx="6"
+                      fill="#090D16"
+                      fillOpacity="0.88"
+                      stroke="#38BDF8"
+                      strokeWidth="1"
+                    />
                     {/* Text Label */}
-                    <text x="20" y="-19" fill="#E0F2FE" fontSize="8.5" fontFamily="monospace" fontWeight="bold">
+                    <text
+                      x="0"
+                      y="-21.5"
+                      textAnchor="middle"
+                      fill="#E0F2FE"
+                      fontSize="8"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    >
                       {gate.name}: {gate.label}
                     </text>
                   </g>
@@ -303,7 +322,7 @@ export const HeroVisualStage: React.FC = () => {
           </svg>
         </div>
 
-        {/* Live Attack Interception Deflection Badge (HUD Overlay) */}
+        {/* Live Attack Interception Deflection Badge (HUD Overlay) - Inset at top-4 left-4 */}
         <AnimatePresence>
           {blockedBadge && (
             <motion.div
@@ -311,9 +330,9 @@ export const HeroVisualStage: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-              className="absolute top-14 left-1/2 -translate-x-1/2 z-30"
+              className="absolute top-4 left-4 z-30"
             >
-              <div className="px-4 py-2 rounded-full bg-rose-950/90 border border-rose-500/70 text-rose-300 font-mono text-[11px] font-bold shadow-[0_0_30px_rgba(244,63,94,0.5)] backdrop-blur-xl flex items-center gap-2">
+              <div className="px-3.5 py-1.5 rounded-full bg-rose-950/90 border border-rose-500/70 text-rose-300 font-mono text-[10.5px] font-bold shadow-[0_0_30px_rgba(244,63,94,0.5)] backdrop-blur-xl flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
                 <span>⚡ BLOCKED AT GATE #1 · 0.18ms · 0 BYTES MUTATED</span>
               </div>
@@ -324,42 +343,42 @@ export const HeroVisualStage: React.FC = () => {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          LAYER 3: FLOATING 3D PERSPECTIVE PRODUCT UI WINDOW (Bottom-Right Overlap)
+          LAYER 3: FLOATING 3D PERSPECTIVE PRODUCT UI WINDOW (Bottom-Right Inset)
           ══════════════════════════════════════════════════════════════════════ */}
       <div
-        className="absolute -bottom-5 sm:-bottom-6 -right-2 sm:-right-4 w-[92%] sm:w-[440px] z-20 transition-all duration-500 hover:rotate-0 hover:scale-105"
+        className="absolute bottom-4 right-4 max-w-[340px] sm:max-w-[380px] w-full z-20 transition-all duration-500 hover:rotate-0 hover:scale-105"
         style={{
           transform: prefersReducedMotion
             ? 'none'
-            : 'perspective(1200px) rotateX(8deg) rotateY(-12deg) rotateZ(2deg)',
+            : 'perspective(1200px) rotateX(6deg) rotateY(-8deg) rotateZ(1deg)',
           transformStyle: 'preserve-3d',
         }}
       >
-        <div className="rounded-2xl bg-zinc-950/95 border border-sky-400/30 p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(56,189,248,0.2)] backdrop-blur-xl font-mono text-xs text-left">
+        <div className="rounded-2xl bg-zinc-950/95 border border-sky-400/30 p-3 sm:p-3.5 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(56,189,248,0.2)] backdrop-blur-xl font-mono text-xs text-left">
           {/* Dark macOS Window Header */}
-          <div className="flex items-center justify-between border-b border-zinc-800/90 pb-2.5 mb-2.5">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2 border-b border-zinc-800/90 mb-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-              <span className="ml-2 text-[10px] text-zinc-400 font-mono">
-                qt_ai_readonly — PostgreSQL 16
+              <span className="ml-2 text-[10px] text-zinc-400 font-mono truncate">
+                qt_ai_readonly
               </span>
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[9.5px] font-bold">
+            <span className="whitespace-nowrap shrink-0 text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold">
               ✓ 6/6 GATES VERIFIED (1.42ms)
             </span>
           </div>
 
           {/* Compiled SQL Query Code Preview */}
-          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-sky-200 text-[11px] leading-relaxed overflow-hidden">
-            <span className="text-zinc-500 block text-[9.5px] uppercase mb-0.5">// Verified Read-Only Dialect</span>
+          <div className="p-2 sm:p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-sky-200 text-[10.5px] leading-relaxed overflow-hidden">
+            <span className="text-zinc-500 block text-[9px] uppercase mb-0.5">// Verified Read-Only Dialect</span>
             <code className="text-sky-300 font-bold">SELECT</code> device_name, site, warranty_expiry<br />
             <code className="text-sky-300 font-bold">FROM</code> devices <code className="text-emerald-400 font-bold">LIMIT 100;</code>
           </div>
 
           {/* Mini Telemetry Row with Bounded Clamps */}
-          <div className="mt-2.5 flex items-center justify-between text-[10px] text-zinc-400 pt-1 border-t border-zinc-800/60">
+          <div className="mt-2 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] text-zinc-400 border-t border-zinc-800/60">
             <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span>Rows Clamped: 100</span>
@@ -378,7 +397,7 @@ export const HeroVisualStage: React.FC = () => {
       <motion.div
         animate={prefersReducedMotion ? {} : { y: [-3, 3, -3] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -top-6 -right-2 sm:-right-4 z-30 w-52 sm:w-60 p-3 rounded-2xl bg-zinc-950/90 border border-sky-400/40 shadow-xl backdrop-blur-xl text-left font-mono text-xs hidden sm:block"
+        className="absolute top-4 right-4 z-30 w-52 sm:w-60 p-3 pb-3.5 px-4 rounded-2xl bg-zinc-950/90 border border-sky-400/40 shadow-xl backdrop-blur-xl text-left font-mono text-xs hidden sm:block"
       >
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] uppercase font-bold text-sky-400 flex items-center gap-1">
@@ -418,7 +437,7 @@ export const HeroVisualStage: React.FC = () => {
       <motion.div
         animate={prefersReducedMotion ? {} : { y: [3, -3, 3] }}
         transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -bottom-4 sm:-bottom-5 -left-2 sm:-left-6 z-30 p-3 sm:p-3.5 rounded-2xl bg-zinc-950/95 border border-emerald-500/40 shadow-xl backdrop-blur-xl text-left font-mono text-xs"
+        className="absolute bottom-4 left-4 z-30 p-3 sm:p-3.5 rounded-2xl bg-zinc-950/95 border border-emerald-500/40 shadow-xl backdrop-blur-xl text-left font-mono text-xs"
       >
         <div className="flex items-center gap-2 mb-1">
           <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">

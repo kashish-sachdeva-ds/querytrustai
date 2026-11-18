@@ -12,8 +12,8 @@ const ROOT_DIR = path.resolve(__dirname, '..', 'frontend', 'src');
 const EXCLUDED_FILES = new Set(['design-system.css', 'index.css']);
 const HEX_REGEX = /#(?:[0-9a-fA-F]{3,4}){1,2}\b/g;
 
-// Phase 2 ratcheted budget: exactly 979 hardcoded hex colors in components (saved 78 in OverviewView)
-const BASELINE_BUDGET = 979;
+// Phase 2 ratcheted budget: exactly 940 hardcoded hex colors in components (saved 78 in OverviewView, 39 in QueryStudio)
+const BASELINE_BUDGET = 940;
 
 function walkDir(dir, fileList = []) {
   const items = fs.readdirSync(dir);

@@ -387,9 +387,11 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   const [isLeftDrawerOpen, setIsLeftDrawerOpen] = useState(false)
   const [leftDrawerTab, setLeftDrawerTab] = useState<'sessions' | 'schema'>('sessions')
   const [isAstDrawerOpen, setIsAstDrawerOpen] = useState(false)
+  const [isAstExpanded, setIsAstExpanded] = useState(false)
   const [isSqlExpanded, setIsSqlExpanded] = useState(false)
   const [isPresetsOpen, setIsPresetsOpen] = useState(false)
   const [copiedSql, setCopiedSql] = useState(false)
+  const [emptyInputHint, setEmptyInputHint] = useState<string | null>(null)
 
   const [expandedTables, setExpandedTables] = useState<Record<string, boolean>>({
     devices: true,
@@ -570,8 +572,14 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   // 1-Click Seamless Governed Execution Flow
   const handleSendQuestion = async (overridePrompt?: string) => {
     const questionText = (overridePrompt || inputQuestion).trim()
-    if (!questionText || isLoading) return
+    if (!questionText) {
+      setEmptyInputHint('Please enter a question or select a preset query below.')
+      searchInputRef.current?.focus()
+      return
+    }
+    if (isLoading) return
 
+    setEmptyInputHint(null)
     setInputQuestion('')
     setErrorMessage(null)
     setIsPresetsOpen(false)
@@ -686,9 +694,20 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
 
   return (
     <div className="ask-studio-root">
-      {/* ─── 1. TOP STUDIO TOOLBAR (Clean, Minimalist Pill Controls) ─── */}
-      <header className="ask-studio-topbar" role="toolbar" aria-label="Query Studio Controls">
-        <div className="ask-studio-topbar-left">
+      {/* ─── 1. HEADER (Matching Fleet Overview & Design Tokens) ─── */}
+      <header className="studio-header-block">
+        <div className="studio-meta-line">
+          PostgreSQL 16 (read-only) · Demo engine · 4 tables connected
+        </div>
+        <h1 className="studio-page-title">Query Studio</h1>
+        <p className="studio-page-desc">
+          Ask questions about equipment, sites and telemetry in plain English. Every query runs read-only with mathematical AST validation.
+        </p>
+      </header>
+
+      {/* ─── 2. STUDIO ACTIONS TOOLBAR ─── */}
+      <div className="studio-toolbar" role="toolbar" aria-label="Query Studio Controls">
+        <div className="studio-toolbar-left">
           {/* History Drawer Toggle Pill */}
           <button
             type="button"
@@ -708,7 +727,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
             <span className="studio-badge">{sessions.length}</span>
           </button>
 
-          {/* New Chat Pill */}
+          {/* New Query Pill */}
           <button
             type="button"
             className="studio-pill-btn"
@@ -716,7 +735,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
             title="Start a new query conversation"
           >
             <Plus size={13} />
-            <span>New Chat</span>
+            <span>New query</span>
           </button>
 
           {/* Database Schema Reference Pill */}
@@ -734,13 +753,14 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
             title="Browse 4 PostgreSQL tables and columns"
           >
             <Database size={13} />
-            <span>Database Schemas</span>
+            <span>Database schemas</span>
+            <span className="studio-badge">4</span>
           </button>
         </div>
 
-        <div className="ask-studio-topbar-right">
+        <div className="studio-toolbar-right">
           {/* Presets & Red-Team Attack Dropdown */}
-          <div style={{ position: 'relative' }} ref={presetsRef}>
+          <div className="studio-presets-wrapper" ref={presetsRef}>
             <button
               type="button"
               className="studio-pill-btn"
@@ -748,30 +768,14 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
               aria-expanded={isPresetsOpen}
               title="Select a preset query or test adversarial security deflection"
             >
-              <Flame size={13} style={{ color: '#EF4444' }} />
-              <span>Query Presets</span>
-              <ChevronDown size={12} className={`transition-transform ${isPresetsOpen ? 'rotate-180' : ''}`} />
+              <Flame size={13} style={{ color: 'var(--color-warning)' }} />
+              <span>Query presets</span>
+              <ChevronDown size={12} className={`disclosure-chevron ${isPresetsOpen ? 'open' : ''}`} />
             </button>
 
             {isPresetsOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  right: 0,
-                  width: '320px',
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border-strong)',
-                  borderRadius: '12px',
-                  padding: '8px',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
-                  zIndex: 50,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                }}
-              >
-                <div style={{ padding: '4px 8px', fontSize: '10px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--text-subtle)', borderBottom: '1px solid var(--border-subtle)', marginBottom: '4px' }}>
+              <div className="studio-presets-menu">
+                <div className="studio-presets-header">
                   Select Query Preset or Red-Team Attack
                 </div>
                 {RED_TEAM_PRESETS.map((preset) => (
@@ -779,37 +783,13 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                     key={preset.label}
                     type="button"
                     onClick={() => handleSendQuestion(preset.prompt)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 10px',
-                      borderRadius: '8px',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      color: 'var(--text-main)',
-                      transition: 'background-color 100ms ease',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-subtle)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    className="studio-preset-item"
                   >
-                    <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span className="studio-preset-label">
                       {preset.label}
                     </span>
                     <span
-                      style={{
-                        fontSize: '10px',
-                        fontFamily: 'var(--font-mono)',
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        flexShrink: 0,
-                        backgroundColor: preset.isAttack ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-                        color: preset.isAttack ? '#DC2626' : '#047857',
-                        border: `1px solid ${preset.isAttack ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
-                      }}
+                      className={`studio-preset-badge ${preset.isAttack ? 'attack' : 'safe'}`}
                     >
                       {preset.badge}
                     </span>
@@ -827,311 +807,273 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
             title="Inspect 6-Gate Mathematical AST Compiler Proof and Read-Only Kernel Isolation"
           >
             <ShieldCheck size={14} />
-            <span>AST Proof: 6/6 Pass</span>
+            <span>AST proof (6/6 pass)</span>
           </button>
         </div>
-      </header>
+      </div>
 
-      {/* ─── 2. MAIN CONVERSATIONAL CANVAS (100% Full Width, Spacious & Clean) ─── */}
-      <main className="ask-studio-canvas" role="main">
-        {/* Expansive Hero Ask Prompt Box (becomes compact sticky omnibar once query results exist) */}
-        <section className={`studio-prompt-card ${activePreview ? 'compact' : ''}`} aria-label="Ask Governed Query">
-          <div className="studio-prompt-header">
-            <h2 className="studio-prompt-title">Query Studio</h2>
-            <div className="studio-prompt-meta">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Deterministic Semantic AST &bull; Read-Only</span>
+      {/* Operational Ambiguity Clarification Box (if needed) */}
+      {activePreview?.clarification_question && (() => {
+        const parsed = parseClarification(activePreview.clarification_question)
+        return (
+          <div className="studio-clarification-card">
+            <div className="studio-clarification-title">
+              <AlertTriangle size={15} />
+              <span>{parsed.question}</span>
+            </div>
+            <p className="studio-clarification-desc">
+              {parsed.subtext || 'Please choose an operational filter to continue:'}
+            </p>
+            <div className="studio-clarification-chips">
+              {parsed.options.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => handleSendQuestion(opt.prompt)}
+                  className="studio-clarification-chip"
+                >
+                  <span>{opt.label}</span> &rarr;
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Security Defense Intercept / Error Alert */}
+      {errorMessage && (
+        <div className="studio-error-card">
+          <div className="studio-error-content">
+            <AlertTriangle size={16} className="studio-check-icon" style={{ color: 'var(--color-error)' }} />
+            <div>
+              <div className="studio-error-title">
+                Security Boundary Enforcement
+              </div>
+              <div className="studio-error-desc">
+                {errorMessage}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="studio-pill-btn"
+            onClick={() => setIsAstDrawerOpen(true)}
+          >
+            <span>Inspect defense proof</span>
+            <ArrowRight size={12} />
+          </button>
+        </div>
+      )}
+
+      {/* ─── 3. QUESTION BOX (Prompt Container) ─── */}
+      <section className="studio-prompt-container" aria-label="Ask Governed Query">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleSendQuestion()
+          }}
+          className="studio-prompt-form"
+        >
+          <div className="studio-prompt-input-wrapper">
+            <Search size={16} className="studio-prompt-search-icon" aria-hidden="true" />
+            <input
+              ref={searchInputRef}
+              value={inputQuestion}
+              onChange={(e) => {
+                setInputQuestion(e.target.value)
+                if (emptyInputHint) setEmptyInputHint(null)
+              }}
+              placeholder="Ask anything about fleet equipment, sites, or telemetry in plain English..."
+              className="studio-prompt-input"
+              aria-label="Ask equipment intelligence question"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="studio-prompt-submit-btn"
+          >
+            {isLoading ? (
+              <span>Compiling AST…</span>
+            ) : (
+              <>
+                <span>Ask Fleet AI</span>
+                <ArrowRight size={13} />
+              </>
+            )}
+          </button>
+        </form>
+
+        {emptyInputHint && (
+          <div className="studio-input-hint" role="alert">
+            {emptyInputHint}
+          </div>
+        )}
+
+        {/* Suggested Queries */}
+        <div className="studio-chips-row">
+          <span className="studio-chips-label">Try:</span>
+          <button
+            type="button"
+            className="studio-starter-chip"
+            onClick={() => handleSendQuestion('Show all active devices with warranty expiring within 60 days')}
+          >
+            Warranties expiring &lt; 60 days
+          </button>
+          <button
+            type="button"
+            className="studio-starter-chip"
+            onClick={() => handleSendQuestion('Find core routers with temperature > 65°C and packet drop rate > 0.05%')}
+          >
+            High-temperature routers (&gt; 65°C)
+          </button>
+          <button
+            type="button"
+            className="studio-starter-chip"
+            onClick={() => handleSendQuestion('List open Critical service events with device model and site location')}
+          >
+            Critical open repair incidents
+          </button>
+        </div>
+
+        <div className="studio-trust-note">
+          <Check size={12} className="studio-check-icon" />
+          <span>Read-only PostgreSQL execution · 6-check AST safety verification · Sample query: 1.4 ms</span>
+        </div>
+      </section>
+
+      {/* ─── 4. RESULTS SECTION DIRECTLY UNDER QUESTION BOX ─── */}
+      {activePreview ? (
+        <section className="studio-results-container" aria-label="Query Response and Results">
+          {/* One-Line Summary & Disclosures Bar */}
+          <div className="studio-summary-bar">
+            <div className="studio-summary-left">
+              <span className="studio-interpreted-text">
+                {renderFormattedQuestion(activePreview.interpreted_question)}
+              </span>
+              <span className="studio-summary-meta">
+                {activeResult
+                  ? `Returned ${activeResult.rows?.length ?? 0} matching records in ${activeResult.execution_duration_ms ?? 1.42} ms`
+                  : 'AST validated and compiled successfully'}
+              </span>
+            </div>
+
+            <div className="studio-summary-actions">
+              {/* 1-Line AST Safety Disclosure Trigger */}
+              <button
+                type="button"
+                className={`studio-disclosure-trigger success ${isAstExpanded ? 'active' : ''}`}
+                onClick={() => setIsAstExpanded((v) => !v)}
+                aria-expanded={isAstExpanded}
+                title="View 6 AST safety checks"
+              >
+                <Check size={12} className="studio-check-icon" />
+                <span>6 of 6 safety checks passed · 0.18 ms</span>
+                <ChevronDown size={11} className={`disclosure-chevron ${isAstExpanded ? 'open' : ''}`} />
+              </button>
+
+              {/* View SQL Disclosure Trigger */}
+              {!isViewer && (
+                <button
+                  type="button"
+                  className={`studio-disclosure-trigger ${isSqlExpanded ? 'active' : ''}`}
+                  onClick={() => setIsSqlExpanded((prev) => !prev)}
+                  aria-expanded={isSqlExpanded}
+                  title="Toggle PostgreSQL SQL disclosure"
+                >
+                  <Code2 size={12} />
+                  <span>{isSqlExpanded ? 'Hide SQL' : 'View SQL'}</span>
+                  <ChevronDown size={11} className={`disclosure-chevron ${isSqlExpanded ? 'open' : ''}`} />
+                </button>
+              )}
+
+              {/* AST Proof Drawer Trigger */}
+              <button
+                type="button"
+                className="studio-details-btn"
+                onClick={() => setIsAstDrawerOpen(true)}
+                title="Open full AST mathematical proof drawer"
+              >
+                <ShieldCheck size={12} />
+                <span>AST details</span>
+              </button>
             </div>
           </div>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleSendQuestion()
-            }}
-          >
-            <div className="studio-prompt-input-row">
-              <Search size={18} style={{ color: 'var(--text-subtle)', flexShrink: 0 }} aria-hidden="true" />
-              <input
-                ref={searchInputRef}
-                value={inputQuestion}
-                onChange={(e) => setInputQuestion(e.target.value)}
-                placeholder="Ask anything about fleet equipment, sites, or telemetry in plain English..."
-                className="studio-prompt-input"
-                aria-label="Ask equipment intelligence question"
-                disabled={isLoading}
-              />
-              <button
-                type="submit"
-                disabled={!inputQuestion.trim() || isLoading}
-                className="studio-submit-btn"
-              >
-                {isLoading ? (
-                  <span>Compiling AST…</span>
-                ) : (
-                  <>
-                    <span>Ask Fleet AI</span>
-                    <ArrowRight size={13} />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-
-          {/* Plain-English Suggested Prompts (visible in expansive mode) */}
-          {!activePreview && (
-            <div className="studio-chips-row">
-              <span className="studio-chips-label">Suggested:</span>
-              <button
-                type="button"
-                className="studio-starter-chip"
-                onClick={() => handleSendQuestion('Show all active devices with warranty expiring within 60 days')}
-              >
-                Warranties expiring &lt; 60 days
-              </button>
-              <button
-                type="button"
-                className="studio-starter-chip"
-                onClick={() => handleSendQuestion('Find core routers with temperature > 65°C and packet drop rate > 0.05%')}
-              >
-                High-temperature routers (&gt; 65°C)
-              </button>
-              <button
-                type="button"
-                className="studio-starter-chip"
-                onClick={() => handleSendQuestion('List open Critical service events with device model and site location')}
-              >
-                Critical open repair incidents
-              </button>
-            </div>
-          )}
-        </section>
-
-        {/* Operational Ambiguity Clarification Box (if needed) */}
-        {activePreview?.clarification_question && (() => {
-          const parsed = parseClarification(activePreview.clarification_question)
-          return (
-            <div
-              style={{
-                background: 'var(--gov-warn-bg)',
-                border: '1px solid var(--gov-warn-border)',
-                borderRadius: '14px',
-                padding: '1rem 1.25rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.6rem',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gov-warn-text)', fontWeight: 600, fontSize: '13px' }}>
-                <AlertTriangle size={15} />
-                <span>{parsed.question}</span>
-              </div>
-              <p style={{ margin: 0, fontSize: '12px', color: 'var(--gov-warn-text)', opacity: 0.9 }}>
-                {parsed.subtext || 'Please choose an operational filter to continue:'}
-              </p>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
-                {parsed.options.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => handleSendQuestion(opt.prompt)}
-                    style={{
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--gov-warn-border)',
-                      borderRadius: '9999px',
-                      padding: '5px 14px',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: 'var(--gov-warn-text)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span>{opt.label}</span> &rarr;
-                  </button>
+          {/* Expandable 6 AST Safety Checks Breakdown */}
+          {isAstExpanded && (
+            <div className="studio-ast-breakdown" role="region" aria-label="AST Safety Checks Breakdown">
+              <div className="studio-ast-grid">
+                {[
+                  { gate: 'exp.Select', label: 'SELECT only', desc: 'Read-only root AST expression' },
+                  { gate: 'Allowlist', label: 'Catalog isolation', desc: 'Only devices, sites, telemetry permitted' },
+                  { gate: 'DML lockout', label: 'Zero mutators', desc: 'Zero INSERT, UPDATE, DELETE or DROP' },
+                  { gate: 'WHERE clamped', label: 'Predicate bound', desc: 'Explicitly scoped WHERE condition' },
+                  { gate: 'Join guard', label: 'Explicit ON', desc: 'Validated join conditions, no cartesian' },
+                  { gate: 'LIMIT ≤ 100', label: 'Row clamp', desc: 'Enforced maximum 100 rows per query' },
+                ].map((check, idx) => (
+                  <div key={idx} className="studio-ast-card">
+                    <div className="studio-ast-card-header">
+                      <span className="studio-ast-gate-code">{check.gate}</span>
+                      <Check size={11} className="studio-ast-check-icon" />
+                    </div>
+                    <div className="studio-ast-card-label">{check.label}</div>
+                    <div className="studio-ast-card-desc">{check.desc}</div>
+                  </div>
                 ))}
               </div>
             </div>
-          )
-        })()}
+          )}
 
-        {/* Security Defense Intercept / Error Alert */}
-        {errorMessage && (
-          <div
-            style={{
-              background: 'var(--gov-block-bg)',
-              border: '1px solid var(--gov-block-border)',
-              borderRadius: '14px',
-              padding: '1rem 1.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <AlertTriangle size={16} style={{ color: 'var(--gov-block-text)', flexShrink: 0 }} />
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gov-block-text)' }}>
-                  Security Boundary Enforcement
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--gov-block-text)', marginTop: '2px' }}>
-                  {errorMessage}
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="studio-pill-btn"
-              onClick={() => setIsAstDrawerOpen(true)}
-              style={{ flexShrink: 0 }}
-            >
-              <span>Inspect Defense Proof</span>
-              <ArrowRight size={12} />
-            </button>
-          </div>
-        )}
-
-        {/* ─── Active Query Answer & Full-Width Data Table ─── */}
-        {activePreview ? (
-          <>
-            {/* Executive Answer Card */}
-            <article className="studio-answer-card" aria-label="Query Response Summary">
-              <div className="studio-answer-header">
-                <div>
-                  <h3 className="studio-answer-question">{renderFormattedQuestion(activePreview.interpreted_question)}</h3>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    {activeResult
-                      ? `Returned ${activeResult.rows?.length ?? 0} matching records in ${activeResult.execution_duration_ms ?? 1.42}ms.`
-                      : 'AST validated and compiled successfully.'}
-                  </div>
-                </div>
-
-                <div className="studio-governance-strip">
-                  <span className="studio-safe-pill">
-                    <Check size={12} />
-                    <span>Verified SELECT-Only &bull; 0.18ms</span>
-                  </span>
-
-                  {/* Toggle SQL disclosure */}
-                  {!isViewer && (
-                    <button
-                      type="button"
-                      className="studio-action-pill"
-                      onClick={() => setIsSqlExpanded((prev) => !prev)}
-                      aria-expanded={isSqlExpanded}
-                    >
-                      <Code2 size={12} />
-                      <span>{isSqlExpanded ? 'Hide SQL' : 'View SQL'}</span>
-                      <ChevronDown size={11} className={`transition-transform ${isSqlExpanded ? 'rotate-180' : ''}`} />
-                    </button>
+          {/* Expandable Formatted SQL Disclosure Panel */}
+          {isSqlExpanded && activePreview.sql_preview && !isViewer && (
+            <div className="studio-sql-panel" role="region" aria-label="Compiled SQL Query">
+              <div className="studio-sql-panel-header">
+                <span className="studio-sql-engine-label">PostgreSQL 16 Read-Only AST</span>
+                <button
+                  type="button"
+                  onClick={handleCopySql}
+                  className="studio-copy-btn"
+                  aria-label="Copy SQL"
+                >
+                  {copiedSql ? (
+                    <>
+                      <Check size={11} className="studio-check-icon" />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={11} />
+                      <span>Copy SQL</span>
+                    </>
                   )}
-
-                  {/* Inspect 6 AST Gates Drawer Button */}
-                  <button
-                    type="button"
-                    className="studio-action-pill"
-                    onClick={() => setIsAstDrawerOpen(true)}
-                  >
-                    <ShieldCheck size={12} />
-                    <span>AST Proof</span>
-                  </button>
-                </div>
+                </button>
               </div>
-
-              {/* 6-Gate Live AST Laser Ribbon (Lights up gate-by-gate in 0.18ms) */}
-              <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-white/[0.08]">
-                <div className="flex items-center justify-between text-[10.5px] font-mono mb-2 text-zinc-500">
-                  <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>6-Gate Live AST Laser Ribbon &bull; 0.18ms Verification</span>
-                  </span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">ALL 6/6 GATES PASSED</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                  {[
-                    { gate: 'G1: exp.Select', desc: 'Read-Only Root' },
-                    { gate: 'G2: Whitelist', desc: 'Catalog Isolation' },
-                    { gate: 'G3: DML Lockout', desc: 'Zero Mutators' },
-                    { gate: 'G4: WHERE Clamped', desc: 'Predicate Bound' },
-                    { gate: 'G5: Join Guard', desc: 'Explicit ON' },
-                    { gate: 'G6: LIMIT 100', desc: 'Row Clamp ≤100' },
-                  ].map((g, idx) => (
-                    <div
-                      key={idx}
-                      className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] flex items-center justify-between shadow-2xs"
-                    >
-                      <div>
-                        <div className="font-bold">{g.gate}</div>
-                        <div className="text-[9px] opacity-75">{g.desc}</div>
-                      </div>
-                      <Check size={11} className="text-emerald-500 flex-shrink-0 ml-1" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Expandable Formatted SQL Disclosure (Collapsed by Default) */}
-              {isSqlExpanded && activePreview.sql_preview && !isViewer && (
-                <div className="studio-sql-disclosure">
-                  <div className="studio-sql-top">
-                    <span className="studio-sql-label">PostgreSQL 16 Read-Only AST</span>
-                    <button
-                      type="button"
-                      onClick={handleCopySql}
-                      className="studio-pill-btn"
-                      style={{ padding: '3px 10px', fontSize: '11px' }}
-                    >
-                      {copiedSql ? (
-                        <>
-                          <Check size={11} style={{ color: '#10B981' }} />
-                          <span>Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={11} />
-                          <span>Copy SQL</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <pre className="studio-sql-code">{activePreview.sql_preview}</pre>
-                </div>
-              )}
-            </article>
-
-            {/* Full-Width Interactive Results Grid */}
-            <section className="studio-results-card" aria-label="Relational Results Grid">
-              <div className="studio-results-top">
-                <div>
-                  <h3 className="studio-results-title">Relational Query Results</h3>
-                  <div className="studio-results-meta">
-                    Clamped to limit &le; 100 rows &bull; Click any cell to copy or column header to sort
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ flex: 1, minHeight: '320px', width: '100%', overflow: 'hidden' }}>
-                <VirtualizedResultsGrid
-                  result={activeResult}
-                  executionLatencyMs={activeResult?.execution_duration_ms || 1.42}
-                  queryRunId={activeRunId}
-                />
-              </div>
-            </section>
-          </>
-        ) : (
-          /* Empty Initial State (Clean, Calming, MECHA Style) */
-          <section className="studio-empty-state" aria-label="Empty Workspace State">
-            <div className="studio-empty-icon">
-              <Sparkles size={24} />
+              <pre className="studio-sql-code-block">{activePreview.sql_preview}</pre>
             </div>
-            <h3 className="studio-empty-title">Ready for Governed Analytics</h3>
-            <p className="studio-empty-desc">
-              Ask any question above in plain English, or pick a suggested query to preview safe SQL and relational fleet telemetry with mathematical AST verification.
-            </p>
-          </section>
-        )}
-      </main>
+          )}
+
+          {/* Full-Width Interactive Results Grid */}
+          <div className="studio-grid-wrapper">
+            <VirtualizedResultsGrid
+              result={activeResult}
+              executionLatencyMs={activeResult?.execution_duration_ms || 1.42}
+              queryRunId={activeRunId}
+            />
+          </div>
+        </section>
+      ) : (
+        /* Empty Initial State */
+        <section className="studio-empty-state" aria-label="Empty Workspace State">
+          <div className="studio-empty-icon">
+            <Sparkles size={22} />
+          </div>
+          <h3 className="studio-empty-title">Ready for Governed Analytics</h3>
+          <p className="studio-empty-desc">
+            Ask any question above in plain English, or pick a suggested query to preview safe SQL and relational fleet telemetry with mathematical AST verification.
+          </p>
+        </section>
+      )}
 
       {/* ─── 3. SLIDE-OVER DRAWER: HISTORY & SCHEMA REFERENCE (LEFT) ─── */}
       {isLeftDrawerOpen && (
@@ -1252,15 +1194,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                               type="button"
                               onClick={(e) => handleDeleteSession(e, s.id)}
                               title="Delete conversation"
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                padding: '6px 8px',
-                                color: 'var(--text-subtle)',
-                                cursor: 'pointer',
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.color = '#EF4444')}
-                              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-subtle)')}
+                              className="studio-session-delete"
                             >
                               <Trash2 size={13} />
                             </button>
@@ -1343,12 +1277,12 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                                 >
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                     {col.pk && (
-                                      <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', fontWeight: 700, padding: '1px 4px', borderRadius: '3px', background: 'rgba(245, 158, 11, 0.15)', color: '#D97706' }}>
+                                      <span className="studio-schema-pk">
                                         PK
                                       </span>
                                     )}
                                     {col.fk && (
-                                      <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', fontWeight: 700, padding: '1px 4px', borderRadius: '3px', background: 'rgba(14, 165, 233, 0.15)', color: '#0EA5E9' }}>
+                                      <span className="studio-schema-fk">
                                         FK
                                       </span>
                                     )}

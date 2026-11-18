@@ -1,297 +1,335 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
 
 @theme {
-  --color-qt-canvas: var(--qt-canvas);
-  --color-qt-surface: var(--qt-surface);
-  --color-qt-surface-muted: var(--qt-surface-muted);
-  --color-qt-ink: var(--qt-ink);
-  --color-qt-text: var(--qt-text);
-  --color-qt-muted: var(--qt-muted);
-  --color-qt-border: var(--qt-border);
-  --color-qt-border-strong: var(--qt-border-strong);
-  --color-qt-accent: var(--qt-accent);
-  --color-qt-accent-soft: var(--qt-accent-soft);
-  --color-qt-success: var(--qt-success);
-  --color-qt-warning: var(--qt-warning);
-  --color-qt-danger: var(--qt-danger);
-
   --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-grotesque: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-numeric: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-grotesque: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-numeric: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  --color-endcap-lime: #E4E4E7;
-  --color-endcap-cobalt: #27272A;
-  --color-endcap-stone: #F4F4F5;
-  --color-endcap-obsidian: #09090B;
-  --color-endcap-titanium: #121215;
+  --color-page: var(--color-page-bg);
+  --color-surface: var(--color-surface);
+  --color-raised: var(--color-raised);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-strong: var(--color-border-strong);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-link: var(--color-accent-link);
+  --color-status-success-dot: var(--color-status-success-dot);
+  --color-status-warning-dot: var(--color-status-warning-dot);
+  --color-status-error-dot: var(--color-status-error-dot);
+  --color-status-success-text: var(--color-status-success-text);
+  --color-status-warning-text: var(--color-status-warning-text);
+  --color-status-error-text: var(--color-status-error-text);
+
+  --color-qt-canvas: var(--color-page-bg);
+  --color-qt-surface: var(--color-surface);
+  --color-qt-surface-muted: var(--color-raised);
+  --color-qt-ink: var(--color-text-primary);
+  --color-qt-text: var(--color-text-secondary);
+  --color-qt-muted: var(--color-text-muted);
+  --color-qt-border: var(--color-border-subtle);
+  --color-qt-border-strong: var(--color-border-strong);
+  --color-qt-accent: var(--color-accent);
+  --color-qt-accent-soft: var(--color-accent-subtle);
+  --color-qt-success: var(--color-status-success-text);
+  --color-qt-warning: var(--color-status-warning-text);
+  --color-qt-danger: var(--color-status-error-text);
 }
 
-/* QueryTrust Dual-Mode System: Direction B — Monochromatic Engineering Precision (Linear / Vercel) */
+/* ==========================================================================
+   QueryTrust AI — Canonical Token Foundation (Phase 1)
+   Single source of truth for both Dark and Light themes.
+   ========================================================================== */
+
 :root,
 [data-theme="light"] {
-  /* === LIGHT MODE: LINEAR / VERCEL CRISP MONOCHROME === */
-  --bg-page: #FAFAFA;
-  /* Crisp monochromatic high-contrast canvas */
-  --bg-card: #FFFFFF;
-  /* Pure crisp white cards & workspace surfaces */
-  --bg-subtle: #F4F4F5;
-  /* Zinc-100 inset wells, code blocks, hover rows */
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  /* Whisper-thin hairline border */
-  --border-hover: rgba(0, 0, 0, 0.16);
-  --text-main: #09090B;
-  /* Deep ink black for high-contrast legibility */
-  --text-muted: #52525B;
-  /* Zinc-600 clean secondary copy */
-  --text-subtle: #71717A;
-  /* Zinc-500 metadata */
-  --brand: #09090B;
-  /* Monochromatic brand primary */
+  /* === LIGHT THEME === */
+  --color-page-bg: #F7F6F3;
+  --color-bg: #F7F6F3;
+  --color-surface: #FFFFFF;
+  --color-raised: #F0EEE9;
+  --color-overlay: #E8E6E0;
 
-  /* Architectural Bindings */
-  --bg-shell: var(--bg-page);
-  --bg-canvas: var(--bg-page);
-  --bg-surface-1: var(--bg-card);
-  --bg-surface-2: var(--bg-subtle);
-  --bg-surface-3: #E4E4E7;
-  --bg-glass: rgba(255, 255, 255, 0.90);
+  --color-border-subtle: #E6E4DF;
+  --color-border-strong: #70737C;
 
-  /* Clean Minimal Ambient (no saturated colored orbs) */
-  --aura-orange: radial-gradient(600px circle at 12% 8%, rgba(0, 0, 0, 0.02), transparent 70%);
-  --aura-sky: radial-gradient(600px circle at 12% 8%, rgba(0, 0, 0, 0.03), transparent 70%);
+  --color-text-primary: #16171A;
+  --color-text-secondary: #54575E;
+  --color-text-muted: #8C8E97;
 
-  /* Monochromatic Engineering Accents */
-  --accent-primary: #18181B;
-  --accent-primary-hover: #09090B;
-  --accent-primary-subtle: rgba(24, 24, 27, 0.06);
-  --accent-primary-border: rgba(24, 24, 27, 0.16);
-  --accent-orange: #18181B;
-  --accent-orange-hover: #09090B;
-  --accent-orange-SoftBg: rgba(24, 24, 27, 0.06);
-  --accent-orange-Border: rgba(24, 24, 27, 0.16);
-  --sky-light: #F4F4F5;
-  --sky-tint: rgba(0, 0, 0, 0.05);
-  --sky-tint: rgba(14, 165, 233, 0.12);
+  --color-accent: #5B5EE6;
+  --color-accent-hover: #4D50D9;
+  --color-accent-active: #3F42CC;
+  --color-accent-link: #4A4DD6;
+  --color-accent-subtle: rgba(91, 94, 230, 0.08);
+  --color-accent-border: rgba(91, 94, 230, 0.22);
+  --color-focus-ring: #5B5EE6;
 
-  /* Ink & Typography Hierarchy */
-  --ink-primary: var(--text-main);
-  --ink-secondary: var(--text-muted);
-  --ink-muted: var(--text-subtle);
-  --ink-faint: #D4D4D8;
-  --text-primary: var(--text-main);
-  --text-secondary: var(--text-muted);
-  --text-muted: var(--text-subtle);
-  --text-faint: #D4D4D8;
+  --color-status-success-dot: #15803D;
+  --color-status-warning-dot: #B45309;
+  --color-status-error-dot: #B91C1C;
 
-  /* Precision Hairline Borders */
-  --border-hairline: var(--border-subtle);
-  --border-strong: var(--border-hover);
-  --border-focus: var(--brand);
-  --surface-shadow: 0 1px 2px rgba(9, 9, 11, 0.04), 0 0 0 1px var(--border-subtle);
-  --surface-specular: none;
+  --color-status-success-text: #166534;
+  --color-status-warning-text: #92400E;
+  --color-status-error-text: #991B1B;
 
-  /* Semantic Governance & Kernel Status Tokens */
-  --gov-safe-bg: #ECFDF5;
-  --gov-safe-text: #047857;
-  /* Emerald 700: AST Verified / Kernel Read-Only Enforced */
-  --gov-safe-border: #A7F3D0;
-  --gov-safe-dot: #10B981;
-  --status-safe-bg: rgba(16, 185, 129, 0.09);
-  --status-safe-text: #047857;
-  --status-safe-border: rgba(16, 185, 129, 0.24);
+  --color-status-success-bg: rgba(22, 101, 52, 0.08);
+  --color-status-warning-bg: rgba(146, 64, 14, 0.08);
+  --color-status-error-bg: rgba(153, 27, 27, 0.08);
 
-  --gov-warn-bg: #FFFBEB;
-  --gov-warn-text: #B45309;
-  /* Amber 700: Schema Hygiene Advisory / Cost Warning */
-  --gov-warn-border: #FDE68A;
-  --status-warn-bg: rgba(245, 158, 11, 0.09);
-  --status-warn-text: #B45309;
-  --status-warn-border: rgba(245, 158, 11, 0.24);
+  /* Geometry & Radius */
+  --radius-control: 8px;
+  --radius-container: 12px;
+  --border-width: 1px;
 
-  --gov-block-bg: #FEF2F2;
-  --gov-block-text: #B91C1C;
-  /* Crimson 700: SQLGlot AST Mutation Intercepted / Blocked */
-  --gov-block-border: #FECACA;
-  --status-danger-bg: rgba(239, 68, 68, 0.09);
-  --status-danger-text: #B91C1C;
-  --status-danger-border: rgba(239, 68, 68, 0.24);
+  /* Backward Compatibility Aliases */
+  --bg-page: var(--color-page-bg);
+  --bg-canvas: var(--color-page-bg);
+  --bg-shell: var(--color-page-bg);
+  --bg-card: var(--color-surface);
+  --bg-surface-1: var(--color-surface);
+  --bg-surface-2: var(--color-raised);
+  --bg-surface-3: #ECEAE4;
+  --bg-subtle: var(--color-raised);
+  --bg-glass: rgba(255, 255, 255, 0.92);
 
-  /* Role Identity Tokens */
-  --role-admin-bg: #F3E8FF;
-  --role-admin-text: #6B21A8;
-  --role-admin-border: #D8B4FE;
+  --border-subtle: var(--color-border-subtle);
+  --border-hairline: var(--color-border-subtle);
+  --border-strong: var(--color-border-strong);
+  --border-hover: var(--color-border-strong);
+  --border-focus: var(--color-focus-ring);
 
-  --role-analyst-bg: #EFF6FF;
-  --role-analyst-text: #1D4ED8;
-  --role-analyst-border: #BFDBFE;
+  --text-main: var(--color-text-primary);
+  --text-primary: var(--color-text-primary);
+  --ink-primary: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
+  --text-secondary: var(--color-text-secondary);
+  --ink-secondary: var(--color-text-secondary);
+  --text-subtle: var(--color-text-muted);
+  --ink-muted: var(--color-text-muted);
+  --text-faint: #C8C9CE;
+  --ink-faint: #C8C9CE;
 
-  --role-viewer-bg: #F0FDFA;
-  --role-viewer-text: #0F766E;
-  --role-viewer-border: #99F6E4;
+  --brand: var(--color-accent);
+  --accent-primary: var(--color-accent);
+  --accent-primary-hover: var(--color-accent-hover);
+  --accent-primary-subtle: var(--color-accent-subtle);
+  --accent-primary-border: var(--color-accent-border);
+  --accent-orange: var(--color-accent);
+  --accent-orange-hover: var(--color-accent-hover);
+  --accent-orange-SoftBg: var(--color-accent-subtle);
+  --accent-orange-Border: var(--color-accent-border);
+  --sky-light: var(--color-raised);
+  --sky-tint: var(--color-accent-subtle);
 
-  /* Compatibility bindings for legacy --qt-* mappings */
-  --qt-canvas: var(--bg-canvas);
-  --qt-surface: var(--bg-surface-1);
-  --qt-surface-muted: var(--bg-surface-2);
-  --qt-ink: var(--ink-primary);
-  --qt-text: var(--ink-secondary);
-  --qt-muted: var(--ink-muted);
-  --qt-border: var(--border-subtle);
-  --qt-border-strong: var(--border-strong);
-  --qt-accent: var(--accent-primary);
-  --qt-accent-hover: var(--accent-primary-hover);
-  --qt-accent-soft: var(--accent-primary-subtle);
-  --qt-success: var(--gov-safe-text);
-  --qt-success-soft: var(--gov-safe-bg);
-  --qt-warning: var(--gov-warn-text);
-  --qt-warning-soft: var(--gov-warn-bg);
-  --qt-danger: var(--gov-block-text);
-  --qt-danger-soft: var(--gov-block-bg);
-  --qt-radius-outer: 8px;
-  --qt-radius-inner: 6px;
-  --qt-radius-control: 6px;
-  --font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Geist', 'Inter', var(--font-sans);
-  --font-grotesque: 'Geist', 'Inter', var(--font-sans);
-  --font-numeric: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-body: var(--font-sans);
-  --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --qt-canvas: var(--color-page-bg);
+  --qt-surface: var(--color-surface);
+  --qt-surface-muted: var(--color-raised);
+  --qt-ink: var(--color-text-primary);
+  --qt-text: var(--color-text-secondary);
+  --qt-muted: var(--color-text-muted);
+  --qt-border: var(--color-border-subtle);
+  --qt-border-strong: var(--color-border-strong);
+  --qt-accent: var(--color-accent);
+  --qt-accent-hover: var(--color-accent-hover);
+  --qt-accent-soft: var(--color-accent-subtle);
+  --qt-success: var(--color-status-success-text);
+  --qt-success-soft: var(--color-status-success-bg);
+  --qt-warning: var(--color-status-warning-text);
+  --qt-warning-soft: var(--color-status-warning-bg);
+  --qt-danger: var(--color-status-error-text);
+  --qt-danger-soft: var(--color-status-error-bg);
+  --qt-radius-control: var(--radius-control);
+  --qt-radius-inner: var(--radius-control);
+  --qt-radius-outer: var(--radius-container);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-container);
+
+  --gov-safe-bg: var(--color-status-success-bg);
+  --gov-safe-text: var(--color-status-success-text);
+  --gov-safe-border: rgba(46, 125, 50, 0.24);
+  --gov-safe-dot: var(--color-status-success-dot);
+  --status-safe-bg: var(--color-status-success-bg);
+  --status-safe-text: var(--color-status-success-text);
+  --status-safe-border: rgba(46, 125, 50, 0.24);
+
+  --gov-warn-bg: var(--color-status-warning-bg);
+  --gov-warn-text: var(--color-status-warning-text);
+  --gov-warn-border: rgba(217, 119, 6, 0.24);
+  --status-warn-bg: var(--color-status-warning-bg);
+  --status-warn-text: var(--color-status-warning-text);
+  --status-warn-border: rgba(217, 119, 6, 0.24);
+
+  --gov-block-bg: var(--color-status-error-bg);
+  --gov-block-text: var(--color-status-error-text);
+  --gov-block-border: rgba(220, 38, 38, 0.24);
+  --status-danger-bg: var(--color-status-error-bg);
+  --status-danger-text: var(--color-status-error-text);
+  --status-danger-border: rgba(220, 38, 38, 0.24);
+
+  --role-admin-bg: var(--color-accent-subtle);
+  --role-admin-text: var(--color-accent-link);
+  --role-admin-border: var(--color-accent-border);
+  --role-analyst-bg: var(--color-raised);
+  --role-analyst-text: var(--color-text-secondary);
+  --role-analyst-border: var(--color-border-subtle);
+  --role-viewer-bg: var(--color-raised);
+  --role-viewer-text: var(--color-text-secondary);
+  --role-viewer-border: var(--color-border-subtle);
+
   --bg-primary: var(--bg-canvas);
   --bg-secondary: var(--bg-surface-2);
   --bg-surface: var(--bg-surface-1);
   --bg-surface-hover: var(--bg-surface-3);
-  --bg-card: var(--bg-surface-1);
-  --radius-sm: var(--qt-radius-control);
-  --radius-md: var(--qt-radius-inner);
-  --radius-lg: var(--qt-radius-outer);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --font-body: var(--font-sans);
 }
 
 .dark,
 [data-theme="dark"] {
-  /* === DARK MODE: MONOCHROMATIC GRAPHITE & MACHINED TITANIUM === */
-  --bg-page: #09090B;
-  /* Pure deep neutral graphite */
-  --bg-card: #121215;
-  /* Elevated machined titanium card surface */
-  --bg-subtle: #18181B;
-  /* Clean inset wells & hover backgrounds */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  /* Whisper-thin translucent hairline */
-  --border-hover: rgba(255, 255, 255, 0.16);
-  --text-main: #FAFAFA;
-  /* Pure crisp high-contrast white */
-  --text-muted: #A1A1AA;
-  /* Slate-400 easy-reading secondary text */
-  --text-subtle: #71717A;
-  /* Subtle labels */
-  --brand: #FAFAFA;
-  /* Pure white brand focal */
+  /* === DARK THEME === */
+  --color-page-bg: #0E0F11;
+  --color-surface: #141518;
+  --color-raised: #1A1B1F;
 
-  /* Architectural Bindings */
-  --bg-shell: var(--bg-page);
-  --bg-canvas: var(--bg-page);
-  --bg-surface-1: var(--bg-card);
-  --bg-surface-2: var(--bg-subtle);
-  --bg-surface-3: #27272A;
-  --bg-glass: rgba(9, 9, 11, 0.90);
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-strong: #60646C;
 
-  --surface-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  --surface-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --color-text-primary: #ECECEE;
+  --color-text-secondary: #9A9CA3;
+  --color-text-muted: #71737B;
 
-  /* Clean Minimal Ambient (no saturated cyan spotlights) */
-  --aura-orange: radial-gradient(600px circle at 12% 8%, rgba(255, 255, 255, 0.03), transparent 70%);
-  --aura-sky: radial-gradient(600px circle at 12% 8%, rgba(255, 255, 255, 0.04), transparent 70%);
-  --accent-primary: #FAFAFA;
-  --accent-primary-hover: #E4E4E7;
-  --accent-primary-subtle: rgba(255, 255, 255, 0.08);
-  --accent-primary-border: rgba(255, 255, 255, 0.18);
-  --accent-orange: #FAFAFA;
-  --accent-orange-hover: #E4E4E7;
-  --accent-orange-SoftBg: rgba(255, 255, 255, 0.08);
-  --accent-orange-Border: rgba(255, 255, 255, 0.18);
+  --color-accent: #5B5EE6;
+  --color-accent-hover: #4D50D9;
+  --color-accent-active: #3F42CC;
+  --color-accent-link: #9B9EF5;
+  --color-accent-subtle: rgba(91, 94, 230, 0.14);
+  --color-accent-border: rgba(91, 94, 230, 0.28);
+  --color-focus-ring: #5B5EE6;
+
+  --color-status-success-dot: #4EBE59;
+  --color-status-warning-dot: #F5A742;
+  --color-status-error-dot: #F87171;
+
+  --color-status-success-text: #68D377;
+  --color-status-warning-text: #FBBF24;
+  --color-status-error-text: #FCA5A5;
+
+  --color-status-success-bg: rgba(78, 190, 89, 0.12);
+  --color-status-warning-bg: rgba(245, 167, 66, 0.12);
+  --color-status-error-bg: rgba(248, 113, 113, 0.12);
+
+  /* Geometry & Radius */
+  --radius-control: 8px;
+  --radius-container: 12px;
+  --border-width: 1px;
+
+  /* Backward Compatibility Aliases */
+  --bg-page: var(--color-page-bg);
+  --bg-canvas: var(--color-page-bg);
+  --bg-shell: var(--color-page-bg);
+  --bg-card: var(--color-surface);
+  --bg-surface-1: var(--color-surface);
+  --bg-surface-2: var(--color-raised);
+  --bg-surface-3: #222329;
+  --bg-subtle: var(--color-raised);
+  --bg-glass: rgba(20, 21, 24, 0.92);
+
+  --border-subtle: var(--color-border-subtle);
+  --border-hairline: var(--color-border-subtle);
+  --border-strong: var(--color-border-strong);
+  --border-hover: var(--color-border-strong);
+  --border-focus: var(--color-focus-ring);
+
+  --text-main: var(--color-text-primary);
+  --text-primary: var(--color-text-primary);
+  --ink-primary: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
+  --text-secondary: var(--color-text-secondary);
+  --ink-secondary: var(--color-text-secondary);
+  --text-subtle: var(--color-text-muted);
+  --ink-muted: var(--color-text-muted);
+  --text-faint: #44464F;
+  --ink-faint: #44464F;
+
+  --brand: var(--color-accent);
+  --accent-primary: var(--color-accent);
+  --accent-primary-hover: var(--color-accent-hover);
+  --accent-primary-subtle: var(--color-accent-subtle);
+  --accent-primary-border: var(--color-accent-border);
+  --accent-orange: var(--color-accent);
+  --accent-orange-hover: var(--color-accent-hover);
+  --accent-orange-SoftBg: var(--color-accent-subtle);
+  --accent-orange-Border: var(--color-accent-border);
   --sky-light: rgba(255, 255, 255, 0.06);
-  --sky-tint: rgba(255, 255, 255, 0.10);
+  --sky-tint: var(--color-accent-subtle);
 
-  /* Text Hierarchy */
-  --ink-primary: var(--text-main);
-  --ink-secondary: var(--text-muted);
-  --ink-muted: var(--text-subtle);
-  --ink-faint: #3F3F46;
-  --text-primary: var(--text-main);
-  --text-secondary: var(--text-muted);
-  --text-muted: var(--text-subtle);
-  --text-faint: #3F3F46;
+  --qt-canvas: var(--color-page-bg);
+  --qt-surface: var(--color-surface);
+  --qt-surface-muted: var(--color-raised);
+  --qt-ink: var(--color-text-primary);
+  --qt-text: var(--color-text-secondary);
+  --qt-muted: var(--color-text-muted);
+  --qt-border: var(--color-border-subtle);
+  --qt-border-strong: var(--color-border-strong);
+  --qt-accent: var(--color-accent);
+  --qt-accent-hover: var(--color-accent-hover);
+  --qt-accent-soft: var(--color-accent-subtle);
+  --qt-success: var(--color-status-success-text);
+  --qt-success-soft: var(--color-status-success-bg);
+  --qt-warning: var(--color-status-warning-text);
+  --qt-warning-soft: var(--color-status-warning-bg);
+  --qt-danger: var(--color-status-error-text);
+  --qt-danger-soft: var(--color-status-error-bg);
+  --qt-radius-control: var(--radius-control);
+  --qt-radius-inner: var(--radius-control);
+  --qt-radius-outer: var(--radius-container);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-container);
 
-  /* Precision Hairline Borders */
-  --border-hairline: var(--border-subtle);
-  --border-strong: var(--border-hover);
-  --border-focus: var(--brand);
+  --gov-safe-bg: var(--color-status-success-bg);
+  --gov-safe-text: var(--color-status-success-text);
+  --gov-safe-border: rgba(78, 190, 89, 0.28);
+  --gov-safe-dot: var(--color-status-success-dot);
+  --status-safe-bg: var(--color-status-success-bg);
+  --status-safe-text: var(--color-status-success-text);
+  --status-safe-border: rgba(78, 190, 89, 0.28);
 
-  /* Semantic Status Tokens */
-  --gov-safe-bg: rgba(16, 185, 129, 0.09);
-  --gov-safe-text: #34D399;
-  --gov-safe-border: rgba(16, 185, 129, 0.24);
-  --gov-safe-dot: #10B981;
-  --status-safe-bg: rgba(16, 185, 129, 0.09);
-  --status-safe-text: #34D399;
-  --status-safe-border: rgba(16, 185, 129, 0.24);
+  --gov-warn-bg: var(--color-status-warning-bg);
+  --gov-warn-text: var(--color-status-warning-text);
+  --gov-warn-border: rgba(245, 167, 66, 0.28);
+  --status-warn-bg: var(--color-status-warning-bg);
+  --status-warn-text: var(--color-status-warning-text);
+  --status-warn-border: rgba(245, 167, 66, 0.28);
 
-  --gov-warn-bg: rgba(245, 158, 11, 0.09);
-  --gov-warn-text: #FBBF24;
-  --gov-warn-border: rgba(245, 158, 11, 0.24);
-  --status-warn-bg: rgba(245, 158, 11, 0.09);
-  --status-warn-text: #FBBF24;
-  --status-warn-border: rgba(245, 158, 11, 0.24);
+  --gov-block-bg: var(--color-status-error-bg);
+  --gov-block-text: var(--color-status-error-text);
+  --gov-block-border: rgba(248, 113, 113, 0.28);
+  --status-danger-bg: var(--color-status-error-bg);
+  --status-danger-text: var(--color-status-error-text);
+  --status-danger-border: rgba(248, 113, 113, 0.28);
 
-  --gov-block-bg: rgba(239, 68, 68, 0.09);
-  --gov-block-text: #F87171;
-  --gov-block-border: rgba(239, 68, 68, 0.24);
-  --status-danger-bg: rgba(239, 68, 68, 0.09);
-  --status-danger-text: #F87171;
-  --status-danger-border: rgba(239, 68, 68, 0.24);
+  --role-admin-bg: var(--color-accent-subtle);
+  --role-admin-text: var(--color-accent-link);
+  --role-admin-border: var(--color-accent-border);
+  --role-analyst-bg: var(--color-raised);
+  --role-analyst-text: var(--color-text-secondary);
+  --role-analyst-border: var(--color-border-subtle);
+  --role-viewer-bg: var(--color-raised);
+  --role-viewer-text: var(--color-text-secondary);
+  --role-viewer-border: var(--color-border-subtle);
 
-  --role-admin-bg: rgba(168, 85, 247, 0.15);
-  --role-admin-text: #C084FC;
-  --role-admin-border: rgba(168, 85, 247, 0.3);
-
-  --role-analyst-bg: rgba(59, 130, 246, 0.15);
-  --role-analyst-text: #60A5FA;
-  --role-analyst-border: rgba(59, 130, 246, 0.3);
-
-  --role-viewer-bg: rgba(20, 184, 166, 0.15);
-  --role-viewer-text: #2DD4BF;
-  --role-viewer-border: rgba(20, 184, 166, 0.3);
-
-  --qt-canvas: var(--bg-canvas);
-  --qt-surface: var(--bg-surface-1);
-  --qt-surface-muted: var(--bg-surface-2);
-  --qt-ink: var(--ink-primary);
-  --qt-text: var(--ink-secondary);
-  --qt-muted: var(--ink-muted);
-  --qt-border: var(--border-subtle);
-  --qt-border-strong: var(--border-strong);
-  --qt-accent: var(--accent-primary);
-  --qt-accent-hover: var(--accent-primary-hover);
-  --qt-accent-soft: var(--accent-primary-subtle);
-  --qt-success: var(--gov-safe-text);
-  --qt-success-soft: var(--gov-safe-bg);
-  --qt-warning: var(--gov-warn-text);
-  --qt-warning-soft: var(--gov-warn-bg);
-  --qt-danger: var(--gov-block-text);
-  --qt-danger-soft: var(--gov-block-bg);
   --bg-primary: var(--bg-canvas);
   --bg-secondary: var(--bg-surface-2);
   --bg-surface: var(--bg-surface-1);
   --bg-surface-hover: var(--bg-surface-3);
-  --bg-card: var(--bg-surface-1);
-  --text-primary: var(--ink-primary);
-  --text-secondary: var(--ink-secondary);
+  --font-body: var(--font-sans);
 }
 
 html {
@@ -685,35 +723,380 @@ input:-webkit-autofill:focus {
   color: var(--qt-muted);
 }
 
+/* --- Base Buttons --------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+  padding: 8px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-focus-ring) !important;
+  outline-offset: 2px !important;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+  filter: brightness(0.96);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .refresh-btn,
 .btn-primary {
-  background: var(--qt-accent);
-  border-color: var(--qt-accent);
-  border-radius: var(--qt-radius-control);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2);
-  color: #111110;
-  font-weight: 700;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  border-radius: var(--radius-control);
+  color: #FFFFFF;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .refresh-btn:hover,
 .btn-primary:hover {
-  background: var(--qt-accent-hover);
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .btn-secondary {
-  background: var(--qt-surface);
-  border-color: var(--qt-border);
-  color: var(--qt-ink);
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-control);
 }
 
 .btn-secondary:hover {
-  background: var(--qt-surface-muted);
-  border-color: var(--qt-border-strong);
+  background: var(--color-raised);
+  border-color: var(--color-text-secondary);
 }
 
-.btn,
-.refresh-btn {
-  border-radius: var(--qt-radius-control);
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-control);
+}
+
+.btn-ghost:hover {
+  background: var(--color-raised);
+  color: var(--color-text-primary);
+}
+
+/* --- Base Inputs ---------------------------------------------------------- */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+select,
+textarea,
+.input-control {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  padding: 8px 12px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.input-control:focus-visible {
+  outline: 2px solid var(--color-focus-ring) !important;
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: var(--color-raised);
+}
+
+/* --- Base Chips & Pills --------------------------------------------------- */
+.quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.quick-chip:hover {
+  background: var(--color-raised);
+  color: var(--color-text-primary);
+  border-color: var(--color-text-secondary);
+}
+
+.quick-chip.active {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-link);
+  border-color: var(--color-accent-border);
+  box-shadow: none;
+}
+
+.quick-chip:focus-visible {
+  outline: 2px solid var(--color-focus-ring) !important;
+  outline-offset: 2px;
+}
+
+/* --- Base Badges ---------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.badge-neutral {
+  background: var(--color-raised);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.badge-success {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success-text);
+  border: 1px solid rgba(78, 190, 89, 0.25);
+}
+
+.badge-warning {
+  background: var(--color-status-warning-bg);
+  color: var(--color-status-warning-text);
+  border: 1px solid rgba(245, 167, 66, 0.25);
+}
+
+.badge-error {
+  background: var(--color-status-error-bg);
+  color: var(--color-status-error-text);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+/* --- Base Tables ---------------------------------------------------------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  text-align: left;
+}
+
+thead th {
+  background: var(--color-raised);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+tbody td {
+  padding: 12px 16px;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
+  height: 46px;
+}
+
+tbody tr:hover {
+  background: var(--color-raised);
+}
+
+/* Numerics in tables must use Geist Mono */
+td.mono,
+td.num,
+.table-numeric {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  text-align: right;
+}
+
+/* --- Base Containers & Sections ------------------------------------------- */
+.section,
+.section-container {
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.section-desc {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.card,
+.panel,
+.view-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-container);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* --- Base Tabs & Segmented Controls --------------------------------------- */
+.tabs-track,
+.tab-list,
+.mecha-segmented-control,
+.linear-segmented-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--color-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.tab-btn,
+.tab-item,
+.mecha-segment-btn,
+.linear-segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius-control) - 2px);
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 140ms ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.tab-btn:hover:not(:disabled),
+.tab-item:hover:not(:disabled),
+.mecha-segment-btn:hover:not(:disabled),
+.linear-segmented-btn:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.dark .tab-btn:hover:not(:disabled),
+.dark .tab-item:hover:not(:disabled),
+.dark .mecha-segment-btn:hover:not(:disabled),
+.dark .linear-segmented-btn:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tab-btn.active,
+.tab-btn[aria-selected="true"],
+.tab-item.active,
+.tab-item[aria-selected="true"],
+.mecha-segment-btn.active,
+.mecha-segment-btn[aria-selected="true"],
+.linear-segmented-btn.active,
+.linear-segmented-btn[aria-selected="true"] {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  border-color: var(--color-border-subtle);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.tab-btn:focus-visible,
+.tab-item:focus-visible,
+.mecha-segment-btn:focus-visible,
+.linear-segmented-btn:focus-visible {
+  outline: 2px solid var(--color-focus-ring) !important;
+  outline-offset: 1px;
+}
+
+.tab-btn:disabled,
+.tab-item:disabled,
+.mecha-segment-btn:disabled,
+.linear-segmented-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* --- Big KPI Numbers ------------------------------------------------------ */
+.kpi-value,
+.stat-number,
+.pulse-card-value {
+  font-family: var(--font-sans) !important;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+/* --- Page Titles (H1) ----------------------------------------------------- */
+h1,
+.page-title,
+.view-title {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 640px) {
+  h1,
+  .page-title,
+  .view-title {
+    font-size: 30px;
+  }
 }
 
 .command-trigger {

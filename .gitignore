@@ -48,6 +48,7 @@ frontend/dist-ssr/
 *.local
 
 # IDE & OS
+tmp_chrome*/
 tmp_chrome/
 .idea/
 .vscode/

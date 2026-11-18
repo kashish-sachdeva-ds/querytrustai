@@ -1,10 +1,10 @@
 /* ==========================================================================
    QueryTrust AI — World-Class Linear / Raycast / Supabase App Shell
-   Harmonized Dark Zinc/Slate Palette:
-   - Sidebar & Navbar background: #090D16 (recessed dark surface)
-   - Main Canvas background: #0D111C (elevated dark surface)
-   - Borders: 1px solid rgba(255, 255, 255, 0.07)
-   - Minimalist White & Grey surfaces with classy Sky Blue (#0EA5E9 / #0284C7) accents
+   Harmonized Neutral Palette with Single Accent:
+   - Sidebar & Navbar background: var(--color-surface)
+   - Main Canvas background: var(--color-bg)
+   - Borders: 1px solid var(--color-border-subtle)
+   - Minimalist surfaces with single violet accent
    ========================================================================== */
 
 /* ─── Layout Shell Overrides ─── */
@@ -49,8 +49,8 @@
   width: 248px !important;
   min-width: 248px !important;
   max-width: 248px !important;
-  background: linear-gradient(180deg, #0E1015 0%, #0B0C0E 100%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: var(--color-surface) !important;
+  border-right: 1px solid var(--color-border-subtle) !important;
   display: flex !important;
   flex-direction: column !important;
   padding: 0 !important;
@@ -67,8 +67,8 @@
 }
 
 [data-theme="light"] .sidebar {
-  background: #FFFFFF !important;
-  border-right: 1px solid #E2E8F0 !important;
+  background: var(--color-surface) !important;
+  border-right: 1px solid var(--color-border-subtle) !important;
 }
 
 .sidebar.sidebar--collapsed {
@@ -194,39 +194,39 @@
 .sidebar-ask-cta-linear {
   width: 100%;
   height: 36px;
-  background: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #000000;
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-control);
+  color: var(--color-accent-text);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 10px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.8125rem;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
   transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
 }
 
 [data-theme="light"] .sidebar-ask-cta-linear {
-  background: #09090B;
-  color: #FFFFFF;
-  border-color: #09090B;
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  border-color: var(--color-accent);
 }
 
 .sidebar-ask-cta-linear:hover {
-  background: #E4E4E7;
-  border-color: #FFFFFF;
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
   transform: translateY(-0.5px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(91, 94, 230, 0.25);
 }
 
 [data-theme="light"] .sidebar-ask-cta-linear:hover {
-  background: #27272A;
-  border-color: #27272A;
-  color: #FFFFFF;
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-accent-text);
 }
 
 .sidebar-ask-cta-linear:active {
@@ -234,29 +234,29 @@
 }
 
 .sidebar-ask-cta-linear.active {
-  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px #FFFFFF;
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
 }
 
 [data-theme="light"] .sidebar-ask-cta-linear.active {
-  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px #09090B;
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
 }
 
 .sidebar-ask-kbd-badge {
-  background: rgba(0, 0, 0, 0.1);
-  color: #000000;
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--color-accent-text);
   font-size: 11px;
   padding: 2px 5.5px;
   border-radius: 4px;
   font-family: var(--font-mono, monospace);
-  font-weight: 600;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   line-height: 1;
 }
 
 [data-theme="light"] .sidebar-ask-kbd-badge {
-  background: rgba(255, 255, 255, 0.15);
-  color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--color-accent-text);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .sidebar--collapsed .sidebar-ask-cta-linear {
@@ -353,10 +353,10 @@
   flex-shrink: 0;
 }
 
-.status-dot-6px.dot-answered { background-color: #10b981; }
-.status-dot-6px.dot-blocked { background-color: #ef4444; }
-.status-dot-6px.dot-clarification { background-color: #f59e0b; }
-.status-dot-6px.dot-out-of-scope { background-color: #64748b; }
+.status-dot-6px.dot-answered { background-color: var(--color-success); }
+.status-dot-6px.dot-blocked { background-color: var(--color-danger); }
+.status-dot-6px.dot-clarification { background-color: var(--color-warning); }
+.status-dot-6px.dot-out-of-scope { background-color: var(--color-text-muted); }
 
 /* Navigation Links */
 .sidebar-nav-section-title {
@@ -412,16 +412,16 @@
 
 /* Active Nav Link: Monochromatic Precision Left Accent Bar */
 .sidebar-nav-link.active {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #FFFFFF !important;
-  font-weight: 600;
+  background: var(--color-raised) !important;
+  color: var(--color-text-primary) !important;
+  font-weight: 500;
   border: none !important;
   box-shadow: none !important;
 }
 
 [data-theme="light"] .sidebar-nav-link.active {
-  background: #F4F4F5 !important;
-  color: #09090B !important;
+  background: var(--color-raised) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .sidebar-nav-link.active::before {
@@ -430,21 +430,21 @@
   left: 0;
   top: 7px;
   bottom: 7px;
-  width: 2.5px;
-  background: #FFFFFF;
+  width: 2px;
+  background: var(--color-accent);
   border-radius: 0 2px 2px 0;
 }
 
 [data-theme="light"] .sidebar-nav-link.active::before {
-  background: #09090B;
+  background: var(--color-accent);
 }
 
 .sidebar-nav-link.active .sidebar-nav-link-left svg {
-  color: #FFFFFF !important;
+  color: var(--color-accent) !important;
 }
 
 [data-theme="light"] .sidebar-nav-link.active .sidebar-nav-link-left svg {
-  color: #09090B !important;
+  color: var(--color-accent) !important;
 }
 
 /* Minimal Notification Badges */
@@ -461,9 +461,9 @@
 }
 
 .sidebar-badge-minimal.badge-amber {
-  background: rgba(245, 158, 11, 0.1);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-border-subtle);
 }
 
 /* Sidebar Footer: Unified System Telemetry */
@@ -516,7 +516,7 @@
   height: 100%;
   width: 100%;
   border-radius: 9999px;
-  background-color: #34d399;
+  background-color: var(--color-success);
   opacity: 0.6;
 }
 
@@ -526,7 +526,7 @@
   border-radius: 9999px;
   width: 7px;
   height: 7px;
-  background-color: #10b981;
+  background-color: var(--color-success);
 }
 
 @keyframes ping {
@@ -593,7 +593,7 @@
 }
 
 .telemetry-popover-row .value.green {
-  color: #10b981;
+  color: var(--color-success-text);
 }
 
 /* ─── 2. Top Navbar (h-12, 48px, laser-aligned with sidebar header) ─── */
@@ -670,7 +670,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #10b981;
+  background-color: var(--color-success);
   flex-shrink: 0;
 }
 
@@ -713,7 +713,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #f59e0b;
+  background-color: var(--color-accent);
   flex-shrink: 0;
 }
 
@@ -766,9 +766,9 @@
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  font-weight: 700;
-  color: #ffffff;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  font-weight: 600;
+  color: var(--color-accent-text);
+  background: var(--color-accent);
   flex-shrink: 0;
 }
 
@@ -781,7 +781,7 @@
   background: var(--bg-surface-1);
   border: 1px solid var(--border-hairline);
   box-shadow: var(--surface-shadow), 0 20px 40px -8px rgba(0, 0, 0, 0.4);
-  border-radius: 14px;
+  border-radius: var(--radius-container);
   padding: 16px;
   z-index: 100;
   animation: popoverFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -803,9 +803,9 @@
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  font-weight: 700;
-  color: #ffffff;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  font-weight: 600;
+  color: var(--color-accent-text);
+  background: var(--color-accent);
   flex-shrink: 0;
 }
 
@@ -831,12 +831,12 @@
 
 .profile-role-pill {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(99, 102, 241, 0.12);
-  color: #a5b4fc;
-  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .profile-hero-email {
@@ -949,6 +949,6 @@
 }
 
 .profile-logout-row:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  background: var(--color-danger-subtle);
+  color: var(--color-danger-text);
 }

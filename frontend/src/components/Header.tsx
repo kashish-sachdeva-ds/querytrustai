@@ -255,10 +255,10 @@ export const Header: React.FC<HeaderProps> = ({
             className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] text-[11px] font-mono text-zinc-600 dark:text-zinc-300 transition-all cursor-pointer shadow-2xs"
             title="Kernel Status: 6/6 AST Gates Enforced • Dedicated SELECT-Only Replica • Click for Metrics"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]" />
             <span className="font-medium text-zinc-700 dark:text-zinc-300">Read-Only</span>
             <span className="text-zinc-300 dark:text-zinc-700">•</span>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">1.4ms</span>
+            <span className="font-medium text-[var(--color-text-secondary)]">Sample query: 1.4 ms</span>
           </button>
 
           {/* Instant 1-Click Role Switcher Dropdown */}
@@ -272,7 +272,7 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label={`Current role: ${roleDisplay}. Click to switch role`}
               aria-expanded={roleSwitcherOpen}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${userRole === 'admin' ? 'bg-purple-500' : userRole === 'analyst' ? 'bg-sky-500' : 'bg-emerald-500'}`} />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-muted)]" />
               <span>{roleDisplay}</span>
               {switchingRole ? (
                 <Loader2 size={11} className="animate-spin text-sky-500" />
@@ -317,10 +317,10 @@ export const Header: React.FC<HeaderProps> = ({
                         <span
                           className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
                             rKey === 'admin'
-                              ? 'bg-purple-500'
+                              ? 'bg-[var(--color-accent)]'
                               : rKey === 'analyst'
-                              ? 'bg-sky-500'
-                              : 'bg-emerald-500'
+                              ? 'bg-[var(--color-text-secondary)]'
+                              : 'bg-[var(--color-text-muted)]'
                           }`}
                         />
                         <div className="flex-1 min-w-0">

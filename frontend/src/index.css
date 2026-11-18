@@ -983,19 +983,19 @@ button:hover .tactile-arrow-circle {
 }
 
 .btn-primary {
-  background-color: var(--qt-accent);
-  color: #111110;
-  font-weight: 700;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.2);
+  background-color: var(--color-accent);
+  color: #FFFFFF;
+  font-weight: 500;
+  border-radius: var(--radius-control);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--qt-accent-hover);
+  background-color: var(--color-accent-hover);
 }
 
 .btn-primary:disabled {
-  background-color: #bcb4ab;
-  opacity: .78;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 

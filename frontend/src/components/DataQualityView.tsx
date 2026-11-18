@@ -332,13 +332,10 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                backgroundColor: 'var(--accent-primary)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
+                borderRadius: 'var(--radius-control)',
                 padding: '6px 14px',
                 fontSize: '12px',
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: isRunningProfile ? 'not-allowed' : 'pointer',
               }}
               title={canRunProfile ? 'Run automated data health scan' : 'Admin or Analyst role required'}

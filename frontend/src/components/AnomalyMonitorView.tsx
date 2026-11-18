@@ -646,11 +646,8 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
               gap: '8px',
               padding: '6px 14px',
               fontSize: '11px',
-              fontWeight: 600,
-              backgroundColor: 'var(--accent-primary)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '4px',
+              fontWeight: 500,
+              borderRadius: 'var(--radius-control)',
               cursor: isScanning ? 'not-allowed' : 'pointer',
             }}
           >

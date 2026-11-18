@@ -276,7 +276,10 @@
   justify-content: space-between;
   min-height: 130px;
   cursor: pointer;
-  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  transition: border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
@@ -284,6 +287,18 @@
   transform: translateY(-2px);
   border-color: var(--border-hover);
   box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .mecha-pulse-card:hover,
+.dark .mecha-pulse-card:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: #16161A;
+  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.mecha-pulse-card:hover .mecha-pulse-icon {
+  color: var(--text-main);
+  transform: scale(1.08);
 }
 
 .mecha-pulse-header {
@@ -305,6 +320,7 @@
   color: var(--text-muted);
   display: flex;
   align-items: center;
+  transition: transform 200ms ease, color 200ms ease;
 }
 
 .mecha-pulse-dot {
@@ -315,13 +331,47 @@
 }
 
 .mecha-pulse-value {
-  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
-  font-size: 2.35rem;
-  font-weight: 800;
+  font-family: var(--font-numeric, var(--font-mono));
+  font-size: 2.15rem;
+  font-weight: 600;
   color: var(--text-main);
-  letter-spacing: -0.035em;
-  line-height: 1.1;
-  margin: 0.4rem 0 0.2rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  line-height: 1.15;
+  margin: 0.35rem 0 0.2rem;
+}
+
+.mecha-pulse-value--warning {
+  color: #D97706;
+}
+[data-theme="dark"] .mecha-pulse-value--warning,
+.dark .mecha-pulse-value--warning {
+  color: #FBBF24;
+}
+
+.mecha-pulse-value--danger {
+  color: #DC2626;
+}
+[data-theme="dark"] .mecha-pulse-value--danger,
+.dark .mecha-pulse-value--danger {
+  color: #F87171;
+}
+
+.mecha-pulse-icon--warning {
+  color: #D97706;
+}
+[data-theme="dark"] .mecha-pulse-icon--warning,
+.dark .mecha-pulse-icon--warning {
+  color: #FBBF24;
+}
+
+.mecha-pulse-icon--danger {
+  color: #DC2626;
+}
+[data-theme="dark"] .mecha-pulse-icon--danger,
+.dark .mecha-pulse-icon--danger {
+  color: #F87171;
 }
 
 .mecha-pulse-sub {
@@ -331,6 +381,23 @@
   align-items: center;
   gap: 0.35rem;
   flex-wrap: wrap;
+}
+
+.mecha-pulse-sub--warning {
+  color: #B45309;
+}
+[data-theme="dark"] .mecha-pulse-sub--warning,
+.dark .mecha-pulse-sub--warning {
+  color: #FCD34D;
+}
+
+.mecha-pulse-sub-success {
+  color: #047857;
+  font-weight: 600;
+}
+[data-theme="dark"] .mecha-pulse-sub-success,
+.dark .mecha-pulse-sub-success {
+  color: #34D399;
 }
 
 .mecha-sub-divider {
@@ -552,18 +619,30 @@
 .dark .mecha-lifecycle-card,
 [data-theme="dark"] .mecha-bento-card,
 .dark .mecha-bento-card {
-  background: linear-gradient(180deg, rgba(18, 21, 28, 0.8) 0%, rgba(11, 13, 17, 0.94) 100%) !important;
+  background: #121215 !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.07), 0 12px 32px -4px rgba(0, 0, 0, 0.55) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 8px 24px -4px rgba(0, 0, 0, 0.5) !important;
   backdrop-filter: blur(16px);
+  transition: border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="dark"] .mecha-action-card:hover,
 .dark .mecha-action-card:hover,
 [data-theme="dark"] .mecha-pulse-card:hover,
-.dark .mecha-pulse-card:hover {
-  border-color: rgba(255, 255, 255, 0.16) !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 16px 40px -4px rgba(0, 0, 0, 0.65) !important;
+.dark .mecha-pulse-card:hover,
+[data-theme="dark"] .mecha-table-card:hover,
+.dark .mecha-table-card:hover,
+[data-theme="dark"] .mecha-lifecycle-card:hover,
+.dark .mecha-lifecycle-card:hover,
+[data-theme="dark"] .mecha-bento-card:hover,
+.dark .mecha-bento-card:hover {
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background-color: #17171C !important;
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 14px 36px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
 }
 
 [data-theme="dark"] .mecha-table th,

@@ -1,0 +1,226 @@
+{
+  "sampledMetrics": {
+    "fleet-overview-dark": {
+      "Ask Query": {
+        "bg": "rgb(255, 255, 255)",
+        "color": "rgb(0, 0, 0)",
+        "border": "rgb(0, 0, 0)",
+        "opacity": "0.4"
+      },
+      "View All Assets": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(250, 250, 250)",
+        "border": "rgba(255, 255, 255, 0.08)",
+        "opacity": "1"
+      }
+    },
+    "query-studio-dark": {
+      "Ask Fleet AI": {
+        "bg": "rgb(255, 255, 255)",
+        "color": "rgb(0, 0, 0)",
+        "border": "rgb(0, 0, 0)",
+        "opacity": "0.45"
+      }
+    },
+    "data-catalog-dark": {
+      "All": {
+        "bg": "rgb(250, 250, 250)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(250, 250, 250)",
+        "opacity": "1"
+      }
+    },
+    "data-health-dark": {
+      "Run Health Scan": {
+        "bg": "rgb(250, 250, 250)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(255, 255, 255)",
+        "opacity": "1"
+      },
+      "All": {
+        "bg": "rgb(255, 255, 255)",
+        "color": "rgb(9, 9, 11)",
+        "border": "rgb(255, 255, 255)",
+        "opacity": "1"
+      },
+      "All Tables": {
+        "bg": "rgb(255, 255, 255)",
+        "color": "rgb(9, 9, 11)",
+        "border": "rgb(255, 255, 255)",
+        "opacity": "1"
+      }
+    },
+    "anomalies-dark": {},
+    "ast-safety-dark": {
+      "Download safety report (PDF)": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(250, 250, 250)",
+        "border": "rgba(255, 255, 255, 0.08)",
+        "opacity": "1"
+      },
+      "▶ Run Live 151-Vector Red-Team Suite": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(2, 132, 199)",
+        "opacity": "1"
+      }
+    },
+    "sources-kernel-dark": {},
+    "people-access-dark": {
+      "All0": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(255, 255, 255)",
+        "opacity": "1"
+      }
+    },
+    "fleet-overview-light": {
+      "Ask Query": {
+        "bg": "rgb(0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(255, 255, 255)",
+        "opacity": "0.4"
+      },
+      "View All Assets": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(9, 9, 11)",
+        "border": "rgba(0, 0, 0, 0.08)",
+        "opacity": "1"
+      }
+    },
+    "query-studio-light": {
+      "Ask Fleet AI": {
+        "bg": "rgb(0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(255, 255, 255)",
+        "opacity": "0.45"
+      }
+    },
+    "data-catalog-light": {
+      "All": {
+        "bg": "rgb(24, 24, 27)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(24, 24, 27)",
+        "opacity": "1"
+      }
+    },
+    "data-health-light": {
+      "Run Health Scan": {
+        "bg": "rgb(24, 24, 27)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(255, 255, 255)",
+        "opacity": "1"
+      },
+      "All": {
+        "bg": "rgb(9, 9, 11)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(9, 9, 11)",
+        "opacity": "1"
+      },
+      "All Tables": {
+        "bg": "rgb(9, 9, 11)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(9, 9, 11)",
+        "opacity": "1"
+      }
+    },
+    "anomalies-light": {},
+    "ast-safety-light": {
+      "Download safety report (PDF)": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(9, 9, 11)",
+        "border": "rgba(0, 0, 0, 0.08)",
+        "opacity": "1"
+      },
+      "▶ Run Live 151-Vector Red-Team Suite": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(255, 255, 255)",
+        "border": "rgb(2, 132, 199)",
+        "opacity": "1"
+      }
+    },
+    "sources-kernel-light": {},
+    "people-access-light": {
+      "All0": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "color": "rgb(9, 9, 11)",
+        "border": "rgb(9, 9, 11)",
+        "opacity": "1"
+      }
+    }
+  },
+  "focusResults": [
+    {
+      "tag": "A",
+      "className": "btn btn-primary",
+      "text": "Back to overview",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(250, 250, 250)",
+      "boxShadow": "rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset"
+    },
+    {
+      "tag": "A",
+      "className": "btn btn-primary",
+      "text": "Back to overview",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(250, 250, 250)",
+      "boxShadow": "rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset"
+    },
+    {
+      "tag": "A",
+      "className": "btn btn-primary",
+      "text": "Back to overview",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(250, 250, 250)",
+      "boxShadow": "rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset"
+    },
+    {
+      "tag": "A",
+      "className": "btn btn-primary",
+      "text": "Back to overview",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(250, 250, 250)",
+      "boxShadow": "rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset"
+    },
+    {
+      "tag": "A",
+      "className": "btn btn-primary",
+      "text": "Back to overview",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(250, 250, 250)",
+      "boxShadow": "rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset"
+    },
+    {
+      "tag": "A",
+      "className": "btn btn-primary",
+      "text": "Back to overview",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(250, 250, 250)",
+      "boxShadow": "rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset"
+    },
+    {
+      "tag": "A",
+      "className": "btn btn-primary",
+      "text": "Back to overview",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(250, 250, 250)",
+      "boxShadow": "rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset"
+    },
+    {
+      "tag": "A",
+      "className": "btn btn-primary",
+      "text": "Back to overview",
+      "outlineStyle": "solid",
+      "outlineWidth": "2px",
+      "outlineColor": "rgb(250, 250, 250)",
+      "boxShadow": "rgba(255, 255, 255, 0.2) 0px 1px 0px 0px inset"
+    }
+  ]
+}

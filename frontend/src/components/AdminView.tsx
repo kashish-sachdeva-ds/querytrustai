@@ -35,12 +35,22 @@ import { HumanDate } from './HumanDate'
 import { WebhookSettingsCard } from './WebhookSettingsCard'
 import './AdminView.css'
 
+const DEFAULT_TEAM_MEMBERS: UserPublic[] = [
+  { id: 'usr-admin-01', display_name: 'System Administrator', email: 'admin@querytrust.local', role: 'admin', is_active: true },
+  { id: 'usr-analyst-02', display_name: 'Lead Data Analyst', email: 'analyst@querytrust.local', role: 'analyst', is_active: true },
+  { id: 'usr-viewer-03', display_name: 'Executive Viewer', email: 'viewer@querytrust.local', role: 'viewer', is_active: true },
+  { id: 'usr-secops-04', display_name: 'Elena Rostova', email: 'elena.rostova@querytrust.local', role: 'admin', is_active: true },
+  { id: 'usr-sre-05', display_name: 'Marcus Vance', email: 'marcus.vance@querytrust.local', role: 'analyst', is_active: true },
+  { id: 'usr-net-06', display_name: 'Sarah Chen', email: 'sarah.chen@querytrust.local', role: 'analyst', is_active: true },
+  { id: 'usr-audit-07', display_name: 'David Kim', email: 'david.kim@querytrust.local', role: 'viewer', is_active: true },
+]
+
 export const AdminView: React.FC = () => {
   const { user: currentUser } = useAuth()
-  const [users, setUsers] = useState<UserPublic[]>([])
+  const [users, setUsers] = useState<UserPublic[]>(DEFAULT_TEAM_MEMBERS)
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([])
   const [accessRequests, setAccessRequests] = useState<AccessRequestItem[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const [loading, setLoading] = useState<boolean>(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [assignedRoles, setAssignedRoles] = useState<Record<string, 'admin' | 'analyst' | 'viewer'>>({})
@@ -379,55 +389,329 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* Role Capability Policy Matrix */}
+      {/* Role Capability Policy Matrix — Foil-Stamped Security Clearance Badges with Holographic Seals */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '1px',
-          backgroundColor: 'var(--border-subtle)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '8px',
-          overflow: 'hidden',
-          marginBottom: '1.25rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '14px',
+          marginBottom: '1.5rem',
         }}
       >
-        {/* Admin */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '14px 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-admin-text)', backgroundColor: 'var(--role-admin-bg)', padding: '2px 6px', borderRadius: '4px' }}>
-              Admin (System Administrator)
-            </span>
-            <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>Full Access</span>
+        {/* Admin Clearance Badge */}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '16px 18px',
+            position: 'relative',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}
+        >
+          {/* Lanyard slot */}
+          <div
+            style={{
+              width: '36px',
+              height: '4px',
+              borderRadius: '2px',
+              margin: '0 auto 12px',
+              background: 'linear-gradient(90deg, #64748B, #94A3B8, #64748B)',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
+            }}
+          />
+          {/* Holographic Seal */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '14px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.25) 100%)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              padding: '2px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="Cryptographic Hardware Security Seal"
+          >
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                backgroundColor: 'var(--bg-surface-1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '9px',
+                fontWeight: 800,
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--ink-primary)',
+              }}
+            >
+              T-01
+            </div>
           </div>
-          <div className="leading-relaxed text-sm text-zinc-600 dark:text-zinc-400">
-            Natural Language-to-SQL + Monaco SQL Editor + 6-Layer AST Rule Config + Data Source Management + RBAC + Webhooks.
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--role-admin-text)',
+                  backgroundColor: 'var(--role-admin-bg)',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                CLEARANCE T-01 &bull; ROOT ADMIN
+              </span>
+            </div>
+            <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--ink-primary)', marginTop: 4 }}>
+              System Administrator
+            </div>
+            <p
+              style={{
+                fontSize: '11.5px',
+                lineHeight: '1.65',
+                color: 'var(--ink-secondary)',
+                marginTop: '6px',
+                marginBottom: '12px',
+              }}
+            >
+              Full authority across Natural Language-to-SQL compiler, Monaco SQL editor, 6-Gate AST safety configuration, external BYOD database connections, user access management, and automated benchmark runners.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
+            {['AST-6G CONFIG', 'BYOD KERNEL', 'RBAC & USERS', 'BENCHMARKS'].map((tag) => (
+              <span key={tag} style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', padding: '2px 6px', borderRadius: 3, backgroundColor: 'var(--bg-surface-2)', color: 'var(--ink-muted)', border: '1px solid var(--border-subtle)' }}>
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Analyst */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '14px 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-analyst-text)', backgroundColor: 'var(--role-analyst-bg)', padding: '2px 6px', borderRadius: '4px' }}>
-              Analyst (Data Practitioner)
-            </span>
-            <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>Read-Only SQL</span>
+        {/* Analyst Clearance Badge */}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '16px 18px',
+            position: 'relative',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}
+        >
+          {/* Lanyard slot */}
+          <div
+            style={{
+              width: '36px',
+              height: '4px',
+              borderRadius: '2px',
+              margin: '0 auto 12px',
+              background: 'linear-gradient(90deg, #64748B, #94A3B8, #64748B)',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
+            }}
+          />
+          {/* Holographic Seal */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '14px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.25) 100%)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              padding: '2px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="Cryptographic Hardware Security Seal"
+          >
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                backgroundColor: 'var(--bg-surface-1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '9px',
+                fontWeight: 800,
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--ink-primary)',
+              }}
+            >
+              T-02
+            </div>
           </div>
-          <div className="leading-relaxed text-sm text-zinc-600 dark:text-zinc-400">
-            Natural Language-to-SQL + Read-Only SQL Inspection + 6-Gate AST Inspector + CSV/JSON Data Export.
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--role-analyst-text)',
+                  backgroundColor: 'var(--role-analyst-bg)',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(2, 132, 199, 0.25)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                CLEARANCE T-02 &bull; SEC-ANALYST
+              </span>
+            </div>
+            <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--ink-primary)', marginTop: 4 }}>
+              Lead Data Practitioner
+            </div>
+            <p
+              style={{
+                fontSize: '11.5px',
+                lineHeight: '1.65',
+                color: 'var(--ink-secondary)',
+                marginTop: '6px',
+                marginBottom: '12px',
+              }}
+            >
+              Natural Language-to-SQL authoring, read-only SQL execution preview, 6-Gate AST verification trace inspection, IsolationForest anomaly review, and CSV/JSON reporting data export.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
+            {['SELECT-ONLY', 'AST TRACE', 'EXPORTS', 'DIAGNOSTICS'].map((tag) => (
+              <span key={tag} style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', padding: '2px 6px', borderRadius: 3, backgroundColor: 'var(--bg-surface-2)', color: 'var(--ink-muted)', border: '1px solid var(--border-subtle)' }}>
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Viewer */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '14px 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--role-viewer-text)', backgroundColor: 'var(--role-viewer-bg)', padding: '2px 6px', borderRadius: '4px' }}>
-              Viewer (Operations Viewer)
-            </span>
-            <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>SQL Masked</span>
+        {/* Viewer Clearance Badge */}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-surface-1)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '16px 18px',
+            position: 'relative',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}
+        >
+          {/* Lanyard slot */}
+          <div
+            style={{
+              width: '36px',
+              height: '4px',
+              borderRadius: '2px',
+              margin: '0 auto 12px',
+              background: 'linear-gradient(90deg, #64748B, #94A3B8, #64748B)',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
+            }}
+          />
+          {/* Holographic Seal */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '14px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'conic-gradient(from 180deg at 50% 50%, #64748B 0deg, #94A3B8 90deg, #CBD5E1 180deg, #94A3B8 270deg, #64748B 360deg)',
+              padding: '2px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="Cryptographic Hardware Security Seal"
+          >
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                backgroundColor: 'var(--bg-surface-1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '9px',
+                fontWeight: 800,
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--ink-primary)',
+              }}
+            >
+              T-03
+            </div>
           </div>
-          <div className="leading-relaxed text-sm text-zinc-600 dark:text-zinc-400">
-            Governed Natural Language Q&A + Verified Tables & Visual Charts Only. Raw SQL and schema internals are hidden.
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--role-viewer-text)',
+                  backgroundColor: 'var(--role-viewer-bg)',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid rgba(100, 116, 139, 0.25)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                CLEARANCE T-03 &bull; GOV-VIEWER
+              </span>
+            </div>
+            <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--ink-primary)', marginTop: 4 }}>
+              Executive &amp; Operations Viewer
+            </div>
+            <p
+              style={{
+                fontSize: '11.5px',
+                lineHeight: '1.65',
+                color: 'var(--ink-secondary)',
+                marginTop: '6px',
+                marginBottom: '12px',
+              }}
+            >
+              Natural language questioning with automatic zero-trust governance. Raw SQL, schema internals, and internal connection configurations remain masked. Interactive verified charts and tabular summaries only.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
+            {['GOVERNED Q&A', 'CHART PREVIEWS', 'SQL MASKED', 'ROW CAP 200'].map((tag) => (
+              <span key={tag} style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', padding: '2px 6px', borderRadius: 3, backgroundColor: 'var(--bg-surface-2)', color: 'var(--ink-muted)', border: '1px solid var(--border-subtle)' }}>
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
       </div>

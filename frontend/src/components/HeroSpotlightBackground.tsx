@@ -9,10 +9,10 @@ export function HeroSpotlightBackground() {
           WebkitMaskImage: 'radial-gradient(ellipse 65% 55% at 50% 0%, #000 70%, transparent 100%)',
         }}
       />
-      {/* Soft Ethereal Sky Spotlight */}
-      <div className="absolute -top-36 left-1/2 -translate-x-1/2 h-[440px] w-[820px] rounded-full bg-sky-400/[0.08] dark:bg-sky-500/[0.12] blur-[130px] pointer-events-none" />
-      {/* Secondary Soft Slate/Sky Depth Aura */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[300px] w-[600px] rounded-full bg-sky-200/[0.05] dark:bg-sky-400/[0.05] blur-[100px] pointer-events-none" />
+      {/* Soft Monochromatic Engineering Spotlight (Direction B) */}
+      <div className="absolute -top-36 left-1/2 -translate-x-1/2 h-[440px] w-[820px] rounded-full bg-zinc-400/[0.04] dark:bg-white/[0.03] blur-[140px] pointer-events-none" />
+      {/* Secondary Soft Titanium Depth Highlight */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-[300px] w-[600px] rounded-full bg-zinc-300/[0.03] dark:bg-white/[0.02] blur-[110px] pointer-events-none" />
     </div>
   )
 }

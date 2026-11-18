@@ -2,86 +2,93 @@ import React from 'react'
 
 export const MetricsStrip: React.FC = () => {
   return (
-    <section id="metrics" className="border-y border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0B0F17] py-16 sm:py-20 relative text-left transition-colors overflow-hidden">
-      
-      {/* Background SVG Oscilloscope Wave */}
-      <div className="absolute inset-x-0 bottom-0 top-1/2 pointer-events-none opacity-20 dark:opacity-15 overflow-hidden" aria-hidden="true">
+    <section id="metrics" className="border-y border-zinc-200/90 dark:border-zinc-800 bg-zinc-950 text-white py-20 relative text-left transition-colors overflow-hidden select-none">
+      {/* Background SVG Oscilloscope Wave — Monochromatic Graphite */}
+      <div className="absolute inset-x-0 bottom-0 top-1/2 pointer-events-none opacity-25 overflow-hidden" aria-hidden="true">
         <svg viewBox="0 0 1200 120" className="w-full h-full preserve-3d">
           <path
             d="M0,60 C150,110 350,10 500,60 C650,110 850,10 1000,60 C1100,85 1150,70 1200,60"
             fill="none"
-            stroke="#38BDF8"
-            strokeWidth="2"
-            strokeDasharray="4 2"
+            stroke="#27272A"
+            strokeWidth="2.5"
+            strokeDasharray="5 3"
           />
           <path
             d="M0,60 C200,30 400,90 600,60 C800,30 1000,90 1200,60"
             fill="none"
-            stroke="#10B981"
-            strokeWidth="1.5"
+            stroke="#3F3F46"
+            strokeWidth="2"
             strokeDasharray="6 3"
           />
         </svg>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
-        
-        <div className="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-8 flex items-center justify-between">
-          <span>05 // PERFORMANCE &amp; GOVERNANCE BENCHMARKS</span>
-          <span className="text-sky-600 dark:text-sky-400 font-bold">100% Deterministic Verification</span>
+
+        {/* Monospace Index Stamp */}
+        <div className="text-xs font-mono text-zinc-400 uppercase tracking-widest mb-3 flex items-center justify-between font-bold">
+          <span>05 // PERFORMANCE &amp; SCALE BENCHMARKS</span>
+          <span className="bg-zinc-800/90 border border-zinc-700/80 text-zinc-300 px-3 py-1 rounded-full text-[10.5px]">
+            Deterministic AST Pipeline
+          </span>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
-          
+        {/* Executive Headline */}
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight text-white mb-12 leading-[1.15]">
+          Sub-millisecond verification with zero production overhead.
+        </h2>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+
           {/* Metric 01: 1.42ms */}
-          <div className="space-y-2 p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-white/[0.06] backdrop-blur-sm relative group hover:border-sky-400/50 transition-all">
-            <div className="font-mono text-4xl sm:text-6xl font-black text-zinc-950 dark:text-white tracking-tighter">
-              1.42<span className="text-sky-500 text-2xl sm:text-3xl font-sans ml-0.5">ms</span>
+          <div className="space-y-2 p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800/90 hover:border-white/25 hover:bg-zinc-900/90 hover:-translate-y-1 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.12)] transition-all duration-200 backdrop-blur-md relative shadow-sm group cursor-default">
+            <div className="font-mono text-3xl sm:text-5xl font-bold text-white tracking-tight tabular-nums">
+              1.42<span className="text-zinc-400 text-xl sm:text-2xl font-mono ml-0.5">ms</span>
             </div>
-            <div className="font-mono text-xs uppercase tracking-wider text-zinc-800 dark:text-zinc-200 font-bold">
+            <div className="font-mono text-xs uppercase tracking-wider text-zinc-300 font-bold">
               P95 AST Compiler Latency
             </div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400 font-sans leading-relaxed">
+            <div className="text-xs text-zinc-400 font-sans leading-relaxed">
               Deterministic AST parsing &amp; table whitelisting in microseconds
             </div>
           </div>
 
           {/* Metric 02: 151/151 */}
-          <div className="space-y-2 p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-white/[0.06] backdrop-blur-sm relative group hover:border-emerald-400/50 transition-all">
-            <div className="font-mono text-4xl sm:text-6xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter">
-              151<span className="text-zinc-400 dark:text-zinc-600 text-2xl sm:text-3xl">/</span>151
+          <div className="space-y-2 p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800/90 hover:border-white/25 hover:bg-zinc-900/90 hover:-translate-y-1 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.12)] transition-all duration-200 backdrop-blur-md relative shadow-sm group cursor-default">
+            <div className="font-mono text-3xl sm:text-5xl font-bold text-white tracking-tight tabular-nums">
+              151<span className="text-zinc-500 text-xl sm:text-2xl">/</span>151
             </div>
-            <div className="font-mono text-xs uppercase tracking-wider text-zinc-800 dark:text-zinc-200 font-bold">
-              Automated Security Tests
+            <div className="font-mono text-xs uppercase tracking-wider text-zinc-300 font-bold">
+              Automated Safety Tests
             </div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400 font-sans leading-relaxed">
-              Zero mutation or SQL injection regressions across all test suites
+            <div className="text-xs text-zinc-400 font-sans leading-relaxed">
+              Zero mutation or SQL injection regressions across all evaluated test suites
             </div>
           </div>
 
           {/* Metric 03: 0 Writes */}
-          <div className="space-y-2 p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-white/[0.06] backdrop-blur-sm relative group hover:border-sky-400/50 transition-all">
-            <div className="font-mono text-4xl sm:text-6xl font-black text-sky-600 dark:text-sky-400 tracking-tighter">
-              0 <span className="text-lg sm:text-xl uppercase font-bold text-zinc-500 tracking-normal font-sans">Writes</span>
+          <div className="space-y-2 p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800/90 hover:border-white/25 hover:bg-zinc-900/90 hover:-translate-y-1 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.12)] transition-all duration-200 backdrop-blur-md relative shadow-sm group cursor-default">
+            <div className="font-mono text-3xl sm:text-5xl font-bold text-white tracking-tight tabular-nums">
+              0 <span className="text-base sm:text-lg uppercase font-bold text-zinc-400 tracking-normal font-sans">Writes</span>
             </div>
-            <div className="font-mono text-xs uppercase tracking-wider text-zinc-800 dark:text-zinc-200 font-bold">
+            <div className="font-mono text-xs uppercase tracking-wider text-zinc-300 font-bold">
               Physical Kernel Guarantee
             </div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400 font-sans leading-relaxed">
-              PostgreSQL <code className="text-sky-600 dark:text-sky-400 font-semibold font-mono">qt_ai_readonly</code> role isolation
+            <div className="text-xs text-zinc-400 font-sans leading-relaxed">
+              PostgreSQL <code className="text-zinc-200 bg-zinc-800/80 px-1 py-0.5 rounded font-semibold font-mono">qt_ai_readonly</code> role isolation
             </div>
           </div>
 
           {/* Metric 04: 30,000+ */}
-          <div className="space-y-2 p-5 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-white/[0.06] backdrop-blur-sm relative group hover:border-sky-400/50 transition-all">
-            <div className="font-mono text-4xl sm:text-6xl font-black text-zinc-950 dark:text-white tracking-tighter">
-              30,000<span className="text-sky-500 text-2xl sm:text-3xl">+</span>
+          <div className="space-y-2 p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800/90 hover:border-white/25 hover:bg-zinc-900/90 hover:-translate-y-1 hover:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.12)] transition-all duration-200 backdrop-blur-md relative shadow-sm group cursor-default">
+            <div className="font-mono text-3xl sm:text-5xl font-bold text-white tracking-tight tabular-nums">
+              30,000<span className="text-zinc-400 text-xl sm:text-2xl">+</span>
             </div>
-            <div className="font-mono text-xs uppercase tracking-wider text-zinc-800 dark:text-zinc-200 font-bold">
-              Synthetically Governed Rows
+            <div className="font-mono text-xs uppercase tracking-wider text-zinc-300 font-bold">
+              Synthetically Governed Records
             </div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400 font-sans leading-relaxed">
-              Enterprise network telemetry benchmark across 50 global sites
+            <div className="text-xs text-zinc-400 font-sans leading-relaxed">
+              Enterprise network telemetry benchmark across 50 global facilities
             </div>
           </div>
 

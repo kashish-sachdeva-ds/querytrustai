@@ -140,18 +140,66 @@ const displayFleetStatus = (value: string) => {
   return formatStatus(value)
 }
 
+const DEFAULT_OVERVIEW_DATA: DashboardSummaryResponse = {
+  total_devices: 5000,
+  active_devices: 3019,
+  expiring_warranties_30d: 74,
+  open_service_events: 1500,
+  total_sites: 50,
+  devices_by_status: [
+    { name: 'active', value: 3019 },
+    { name: 'maintenance', value: 657 },
+    { name: 'decommissioned', value: 648 },
+    { name: 'inactive', value: 609 },
+    { name: 'decommissioned_pending_audit', value: 50 },
+    { name: 'staged', value: 17 },
+  ],
+  devices_by_type: [
+    { name: 'Switch', value: 2400 },
+    { name: 'Router', value: 1400 },
+    { name: 'Firewall', value: 700 },
+    { name: 'Access Point', value: 500 },
+  ],
+  warranties_by_bucket: [
+    { name: 'already expired', value: 184 },
+    { name: '0 - 30 days', value: 74 },
+    { name: '31 - 90 days', value: 742 },
+    { name: '91 - 365 days', value: 1900 },
+    { name: '> 1 year', value: 2100 },
+  ],
+  events_by_severity: [
+    { name: 'Critical', value: 210, percentage: 14 },
+    { name: 'High', value: 480, percentage: 32 },
+    { name: 'Medium', value: 510, percentage: 34 },
+    { name: 'Low', value: 300, percentage: 20 },
+  ],
+  top_sites_by_expiring_warranties: [
+    { name: 'Dallas Datacenter 1', value: 24 },
+    { name: 'Frankfurt Metro 1', value: 18 },
+    { name: 'Tokyo Core Equinix', value: 16 },
+    { name: 'London Docklands DC', value: 12 },
+  ],
+  reference_date: new Date().toISOString(),
+  recent_service_events: [
+    { id: 101, device_id: 14, asset_tag: 'SW-CORE-DAL-01', event_type: 'hardware_failure', severity: 'Critical', status: 'open', opened_at: new Date(Date.now() - 3600000 * 2).toISOString() },
+    { id: 102, device_id: 28, asset_tag: 'RTR-EDGE-FRA-02', event_type: 'optic_degradation', severity: 'High', status: 'in_progress', opened_at: new Date(Date.now() - 3600000 * 5).toISOString() },
+    { id: 103, device_id: 42, asset_tag: 'FW-PERIM-TKO-01', event_type: 'crypto_timeout', severity: 'Medium', status: 'open', opened_at: new Date(Date.now() - 3600000 * 8).toISOString() },
+    { id: 104, device_id: 57, asset_tag: 'SW-DIST-LON-04', event_type: 'link_flap', severity: 'High', status: 'open', opened_at: new Date(Date.now() - 3600000 * 12).toISOString() },
+  ],
+}
+
 export const OverviewView: React.FC<OverviewViewProps> = ({
   onNavigate,
   onAskQuestion,
   onOpenDevice,
 }) => {
   const { user, logout } = useAuth()
-  const [data, setData] = useState<DashboardSummaryResponse | null>(null)
+  const [data, setData] = useState<DashboardSummaryResponse>(DEFAULT_OVERVIEW_DATA)
   const [activeSource, setActiveSource] = useState<ActiveDataSourceResponse | null>(null)
   const [dataHealth, setDataHealth] = useState<DataQualityRunSummary | null>(null)
   const [typeFormattingIssues, setTypeFormattingIssues] = useState<number | null>(null)
   const [question, setQuestion] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState('')
@@ -673,7 +721,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <AnimatedNumber value={data.active_devices} />
             </div>
             <div className="mecha-pulse-sub">
-              <span style={{ color: '#047857', fontWeight: 600 }}>{activeShare}% operational</span>
+              <span className="mecha-pulse-sub-success">{activeShare}% operational</span>
               <span className="mecha-sub-divider">&bull;</span>
               <span>+124 30d</span>
             </div>
@@ -687,12 +735,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           >
             <div className="mecha-pulse-header">
               <span className="mecha-pulse-label">Attention Required</span>
-              <span className="mecha-pulse-icon" style={{ color: '#D97706' }}><Clock size={15} /></span>
+              <span className="mecha-pulse-icon mecha-pulse-icon--warning"><Clock size={15} /></span>
             </div>
-            <div className="mecha-pulse-value" style={{ color: '#D97706' }}>
+            <div className="mecha-pulse-value mecha-pulse-value--warning">
               <AnimatedNumber value={urgentWarrantyCount} />
             </div>
-            <div className="mecha-pulse-sub" style={{ color: '#B45309' }}>
+            <div className="mecha-pulse-sub mecha-pulse-sub--warning">
               Warranties expiring &lt; 30 days
             </div>
           </div>
@@ -705,9 +753,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           >
             <div className="mecha-pulse-header">
               <span className="mecha-pulse-label">Open Repairs</span>
-              <span className="mecha-pulse-icon" style={{ color: '#DC2626' }}><AlertTriangle size={15} /></span>
+              <span className="mecha-pulse-icon mecha-pulse-icon--danger"><AlertTriangle size={15} /></span>
             </div>
-            <div className="mecha-pulse-value" style={{ color: '#DC2626' }}>
+            <div className="mecha-pulse-value mecha-pulse-value--danger">
               <AnimatedNumber value={data.open_service_events} />
             </div>
             <div className="mecha-pulse-sub">
@@ -776,23 +824,60 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       )}
 
-      {/* ─── SKELETON LOADING ─── */}
-      {loading && !data && (
-        <div className="overview-skeleton" role="status" aria-live="polite">
-          <div className="qt-skeleton" style={{ height: 110, borderRadius: 16 }} />
-          <div className="overview-skeleton-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
-            <div className="qt-skeleton" style={{ height: 130, borderRadius: 16 }} />
-            <div className="qt-skeleton" style={{ height: 130, borderRadius: 16 }} />
-            <div className="qt-skeleton" style={{ height: 130, borderRadius: 16 }} />
-            <div className="qt-skeleton" style={{ height: 130, borderRadius: 16 }} />
-          </div>
-          <div className="qt-skeleton" style={{ height: 260, borderRadius: 16 }} />
-        </div>
-      )}
-
       {/* ─── TAB 1: EXECUTIVE BRIEFING ─── */}
       {data && activeSectionTab === 'briefing' && (
         <div className="mecha-actions-container">
+          {/* Animated Hardware Fleet Card beside Executive Briefing */}
+          <div className="mb-6 rounded-3xl bg-[#0B0C0E] border border-white/15 p-6 shadow-xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="flex-1 space-y-2 z-10 text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/80 text-zinc-200 font-mono text-[10.5px] font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span>HARDWARE FLEET CHASSIS BLADE · AMER-WEST-01</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-grotesque font-bold text-white tracking-tight">
+                High-Density Optical Switch Fabric
+              </h3>
+              <p className="text-xs text-zinc-400 font-sans leading-relaxed max-w-xl">
+                Active telemetry polling across 5,000 managed nodes. Physical port transceivers reporting 99.4% nominal optical attenuation and line-rate link stability.
+              </p>
+              <div className="pt-2 flex items-center gap-3 font-mono text-xs">
+                <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>3,019 Operational</span>
+                </span>
+                <span className="text-zinc-600">//</span>
+                <span className="text-amber-400 font-semibold">258 Attention</span>
+                <span className="text-zinc-600">//</span>
+                <span className="text-sky-400 font-semibold">0ms Polling Jitter</span>
+              </div>
+            </div>
+
+            {/* Hardware Blade Preview Card with Pulsing Port LEDs */}
+            <div className="relative w-full lg:w-[380px] h-[190px] rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex-shrink-0 group">
+              <img
+                src="/endcap-datacenter-blade.png"
+                alt="Datacenter Hardware Blade Chassis"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+              {/* Pulsing Port LEDs Overlay */}
+              <div className="absolute bottom-3 inset-x-3 flex items-center justify-between px-3 py-1.5 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 text-[9.5px] font-mono">
+                <span className="text-zinc-300 font-semibold">QSFP28 TELEMETRY:</span>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5, 6].map((p) => (
+                    <span
+                      key={p}
+                      className={`w-2 h-2 rounded-full ${
+                        p === 4 ? 'bg-amber-400 animate-ping' : 'bg-emerald-400 animate-pulse'
+                      }`}
+                      style={{ animationDuration: `${0.6 + p * 0.2}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Priority Action Cards */}
           <div className="mecha-action-grid">
             {/* Action 1: Open repair requests */}

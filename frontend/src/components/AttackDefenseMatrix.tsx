@@ -100,23 +100,23 @@ export const AttackDefenseMatrix: React.FC = () => {
   }
 
   return (
-    <section id="attack-matrix" className="py-20 sm:py-28 relative text-left bg-white dark:bg-[#0B0F17] transition-colors border-t border-zinc-200 dark:border-zinc-800">
+    <section id="attack-matrix" className="py-20 sm:py-28 relative text-left bg-white dark:bg-[#09090B] transition-colors border-t border-zinc-200 dark:border-zinc-800">
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
         
         {/* Section Header */}
         <div className="max-w-3xl mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs font-semibold text-rose-600 dark:text-rose-400 mb-4 font-mono">
             <Shield size={13} />
-            <span>04 // LIVE ATTACK &amp; DEFENSE PROOF MATRIX</span>
+            <span>04 // ADVERSARIAL DEFENSE MATRIX</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold tracking-tight text-zinc-950 dark:text-white leading-[1.05]">
-            Tested against 151 real-world{' '}
-            <span className="text-rose-500 dark:text-rose-400">
-              adversarial injection vectors.
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight text-zinc-950 dark:text-white leading-[1.15]">
+            Validated against 151 adversarial{' '}
+            <span className="text-rose-600 dark:text-rose-400">
+              SQL injection and exfiltration vectors.
             </span>
           </h2>
           <p className="mt-4 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-            Explore how the 6-layer compiler intercepts malicious statements, system catalog scraping, and unbounded resource exhaustion attacks in sub-milliseconds.
+            The 6-layer compiler deterministically neutralizes destructive DDL, privilege escalation mutations, system catalog reconnaissance, and Cartesian exhaustion in sub-milliseconds before queries touch the database connection pool.
           </p>
         </div>
 
@@ -190,7 +190,7 @@ export const AttackDefenseMatrix: React.FC = () => {
                   className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                     isSelected
                       ? 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800/80 shadow-xs'
-                      : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                      : 'bg-white dark:bg-[#121215] border-zinc-200 dark:border-white/[0.08] text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:border-zinc-400 dark:hover:border-white/20 hover:bg-zinc-50 dark:hover:bg-[#16161A] hover:translate-x-0.5 transition-all duration-200'
                   }`}
                 >
                   <div className="space-y-1">
@@ -214,7 +214,7 @@ export const AttackDefenseMatrix: React.FC = () => {
           </div>
 
           {/* Inspection Viewport (7 cols) */}
-          <div className="lg:col-span-7 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 sm:p-8 space-y-5 shadow-xs">
+          <div className="lg:col-span-7 rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 dark:hover:border-white/15 transition-colors duration-300 p-6 sm:p-8 space-y-5 shadow-xs">
             
             {/* Threat Header */}
             <div className="flex items-start justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">

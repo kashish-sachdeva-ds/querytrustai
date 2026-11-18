@@ -28,33 +28,33 @@ export const ArchitecturalMonoliths: React.FC = () => {
   }
 
   return (
-    <section id="three-invariants" className="py-20 sm:py-28 relative text-left bg-[#F4F5F7] dark:bg-[#090D15] transition-colors border-t border-zinc-200 dark:border-zinc-800">
+    <section id="three-invariants" className="py-20 sm:py-28 relative text-left bg-[#FAFAFA] dark:bg-[#09090B] transition-colors border-t border-zinc-200 dark:border-zinc-800">
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
-        
+
         {/* Section Header */}
         <div className="max-w-3xl mb-14">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-xs font-semibold text-sky-600 dark:text-sky-400 mb-4 font-mono">
             <Layers size={13} />
-            <span>03 // CORE ARCHITECTURAL INVARIANTS</span>
+            <span>03 // CORE SECURITY INVARIANTS</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold tracking-tight text-zinc-950 dark:text-white leading-[1.05]">
-            Architected so failure is{' '}
-            <span className="text-sky-500 dark:text-sky-400">
-              mathematically impossible.
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight text-zinc-950 dark:text-white leading-[1.15]">
+            Engineered with provable{' '}
+            <span className="text-sky-600 dark:text-sky-400">
+              architectural safeguards.
             </span>
           </h2>
           <p className="mt-4 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-            We reject the idea that prompt instructions are a security boundary. QueryTrust AI guarantees data safety at two immutable software barriers: an AST compiler that inspects SQL tokens and a physical database role with zero write grants.
+            LLM prompts are never a security boundary. QueryTrust AI guarantees data safety through two immutable software barriers: an AST compiler that validates syntax trees before execution, and a physical PostgreSQL role with zero write grants.
           </p>
         </div>
 
         {/* 3 Interactive Bento Visual Cards with 200px-Tall Custom SVG Illustrations */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+
           {/* ── CARD 01: 200px Custom SVG Animated 6-Layer Laser Sieve ── */}
-          <div className="group relative rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-6 flex flex-col justify-between hover:border-sky-300 dark:hover:border-sky-700/60 transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden">
+          <div className="group relative rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200/90 dark:border-white/[0.08] hover:border-zinc-400 dark:hover:border-white/25 hover:bg-white dark:hover:bg-[#151518] hover:shadow-lg dark:hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col justify-between overflow-hidden">
             {/* Watermark Numeral */}
-            <span className="absolute top-3 right-4 font-display font-black text-6xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none">
+            <span className="absolute top-3 right-4 font-mono font-bold text-5xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none tracking-tight">
               01
             </span>
 
@@ -149,9 +149,9 @@ export const ArchitecturalMonoliths: React.FC = () => {
           </div>
 
           {/* ── CARD 02: 200px Custom SVG Physical Switchboard Illustration ── */}
-          <div className="group relative rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-6 flex flex-col justify-between hover:border-sky-300 dark:hover:border-sky-700/60 transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden">
+          <div className="group relative rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200/90 dark:border-white/[0.08] hover:border-zinc-400 dark:hover:border-white/25 hover:bg-white dark:hover:bg-[#151518] hover:shadow-lg dark:hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col justify-between overflow-hidden">
             {/* Watermark Numeral */}
-            <span className="absolute top-3 right-4 font-display font-black text-6xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none">
+            <span className="absolute top-3 right-4 font-mono font-bold text-5xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none tracking-tight">
               02
             </span>
 
@@ -238,9 +238,9 @@ export const ArchitecturalMonoliths: React.FC = () => {
           </div>
 
           {/* ── CARD 03: 200px Custom SVG Speed Race Illustration ── */}
-          <div className="group relative rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 p-6 flex flex-col justify-between hover:border-sky-300 dark:hover:border-sky-700/60 transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden">
+          <div className="group relative rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200/90 dark:border-white/[0.08] hover:border-zinc-400 dark:hover:border-white/25 hover:bg-white dark:hover:bg-[#151518] hover:shadow-lg dark:hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col justify-between overflow-hidden">
             {/* Watermark Numeral */}
-            <span className="absolute top-3 right-4 font-display font-black text-6xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none">
+            <span className="absolute top-3 right-4 font-mono font-bold text-5xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none tracking-tight">
               03
             </span>
 

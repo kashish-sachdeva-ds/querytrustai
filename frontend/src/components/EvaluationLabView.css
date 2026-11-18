@@ -485,11 +485,70 @@
 }
 
 .eval-lab__metric-value {
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--font-numeric, var(--font-mono));
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-main);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   line-height: 1.1;
+}
+
+.eval-lab__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.eval-lab__stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.eval-lab__stat-card:hover {
+  transform: translateY(-1.5px);
+  border-color: var(--border-hover);
+  box-shadow: 0 6px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .eval-lab__stat-card:hover,
+.dark .eval-lab__stat-card:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  background-color: #17171C;
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.eval-lab__stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.eval-lab__stat-value {
+  font-family: var(--font-numeric, var(--font-mono));
+  font-size: 2.15rem;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  margin: 0.35rem 0 0.2rem;
+}
+
+.eval-lab__stat-sub {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .eval-lab__metric-label {

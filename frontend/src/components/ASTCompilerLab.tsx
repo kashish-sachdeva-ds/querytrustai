@@ -189,7 +189,7 @@ export const ASTCompilerLab: React.FC = () => {
   const isAttack = active.category === 'ATTACK_VECTOR'
 
   return (
-    <div className={`relative w-full rounded-3xl bg-white dark:bg-[#0E131F] border border-zinc-200 dark:border-zinc-800 shadow-[0_12px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden transition-all text-left ${
+    <div className={`relative w-full rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200 dark:border-zinc-800 shadow-[0_12px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden transition-all text-left ${
       isAttack && !prefersReducedMotion ? 'animate-[shake_0.4s_ease-in-out]' : ''
     }`}>
       
@@ -387,12 +387,24 @@ export const ASTCompilerLab: React.FC = () => {
                   ? 'Query verified as single read-only SELECT statement with row limits clamped before execution.'
                   : active.blockedReason}
               </p>
+              {/* Tactile Physical COMPILER STAMP */}
+              <div className="pt-2">
+                {active.verdict === 'VERIFIED_SAFE' ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded border-2 border-emerald-500 dark:border-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 font-mono text-[11px] font-bold tracking-widest uppercase shadow-xs">
+                    APPROVED — READ ONLY
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded border-2 border-rose-500 bg-rose-500/15 text-rose-500 font-mono text-[11px] font-bold tracking-widest uppercase shadow-xs">
+                    DEFLECTED AT GATE #1
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Right Pane (7 cols): Verified SQL Output & Governed Result Matrix */}
-        <div className="lg:col-span-7 p-6 space-y-5 bg-white dark:bg-[#0E131F]">
+        <div className="lg:col-span-7 p-6 space-y-5 bg-white dark:bg-[#121215]">
           
           {/* ── MANDATORY VISUAL: Connected SVG AST Tree Diagram ── */}
           <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-xs font-mono">
@@ -406,71 +418,83 @@ export const ASTCompilerLab: React.FC = () => {
               </span>
             </div>
 
-            {/* Connected Node Tree Graphic with Wide Pill Nodes */}
-            <div className="overflow-x-auto py-1">
-              <svg viewBox="0 0 720 70" className="w-full min-w-[650px] h-16">
-                {/* Connecting Lines */}
-                <line x1="100" y1="35" x2="128" y2="35" stroke={isAttack ? '#f43f5e' : '#38bdf8'} strokeWidth="1.5" strokeDasharray="3 2" />
-                <line x1="222" y1="35" x2="245" y2="35" stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
-                <line x1="355" y1="35" x2="380" y2="35" stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
-                <line x1="490" y1="35" x2="518" y2="35" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
-                <line x1="612" y1="35" x2="635" y2="35" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
+            {/* Connected Node Tree Graphic with Wide Pill Nodes & Numbered CAD Blueprint Pins 01-06 */}
+            <div className="overflow-x-auto py-2">
+              <svg viewBox="0 0 760 90" className="w-full min-w-[700px] h-20">
+                {/* Connecting Lines with High-Voltage Light Pulse */}
+                <line x1="95" y1="45" x2="125" y2="45" stroke={isAttack ? '#f43f5e' : '#38bdf8'} strokeWidth="1.5" strokeDasharray="3 2" />
+                <line x1="235" y1="45" x2="260" y2="45" stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
+                <line x1="380" y1="45" x2="405" y2="45" stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
+                <line x1="525" y1="45" x2="550" y2="45" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
+                <line x1="645" y1="45" x2="670" y2="45" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
 
-                {/* Node 1: Input */}
-                <g transform="translate(60, 35)">
-                  <rect x="-40" y="-17" width="80" height="34" rx="17" fill="#18181b" stroke="#71717a" strokeWidth="1.5" />
+                {/* Node 1: Input (Pin 01) */}
+                <g transform="translate(50, 45)">
+                  <circle cx="0" cy="-28" r="7" fill="#18181b" stroke="#38BDF8" strokeWidth="1" />
+                  <text textAnchor="middle" y="-25" fill="#38BDF8" fontSize="7" fontFamily="monospace" fontWeight="bold">01</text>
+                  <rect x="-42" y="-18" width="85" height="36" rx="18" fill="#18181b" stroke="#71717a" strokeWidth="1.5" />
                   <text textAnchor="middle" dy="4" fill="#a1a1aa" fontSize="9" fontFamily="monospace">Query</text>
                 </g>
 
-                {/* Node 2: SQLGlot Parser */}
-                <g transform="translate(175, 35)">
-                  <rect x="-47" y="-17" width="94" height="34" rx="17" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.5" />
+                {/* Node 2: SQLGlot Parser (Pin 02) */}
+                <g transform="translate(180, 45)">
+                  <circle cx="0" cy="-28" r="7" fill="#0f172a" stroke="#38BDF8" strokeWidth="1" />
+                  <text textAnchor="middle" y="-25" fill="#38BDF8" fontSize="7" fontFamily="monospace" fontWeight="bold">02</text>
+                  <rect x="-50" y="-18" width="100" height="36" rx="18" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.5" />
                   <text textAnchor="middle" dy="4" fill="#38bdf8" fontSize="9" fontFamily="monospace" fontWeight="bold">Parser</text>
                 </g>
 
-                {/* Node 3: exp.Select / exp.Drop (Wide Pill Node) */}
-                <g transform="translate(300, 35)">
+                {/* Node 3: exp.Select / exp.Drop (Pin 03 - Wide Pill Node width=115 rx=18) */}
+                <g transform="translate(320, 45)">
+                  <circle cx="0" cy="-28" r="7" fill={isAttack && active.blockedAtGateIndex === 0 ? '#4c0519' : '#064e3b'} stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'} strokeWidth="1" />
+                  <text textAnchor="middle" y="-25" fill={isAttack && active.blockedAtGateIndex === 0 ? '#fda4af' : '#6ee7b7'} fontSize="7" fontFamily="monospace" fontWeight="bold">03</text>
                   <rect
-                    x="-55"
-                    y="-17"
-                    width="110"
-                    height="34"
-                    rx="17"
+                    x="-57"
+                    y="-18"
+                    width="115"
+                    height="36"
+                    rx="18"
                     fill={isAttack && active.blockedAtGateIndex === 0 ? '#4c0519' : '#064e3b'}
                     stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'}
                     strokeWidth="2"
                   />
-                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 0 ? '#fda4af' : '#6ee7b7'} fontSize="9" fontFamily="monospace" fontWeight="bold">
+                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 0 ? '#fda4af' : '#6ee7b7'} fontSize="9.5" fontFamily="monospace" fontWeight="bold">
                     {isAttack && active.blockedAtGateIndex === 0 ? 'exp.Drop' : 'exp.Select'}
                   </text>
                 </g>
 
-                {/* Node 4: exp.Table [devices / pg_shadow] (Wide Pill Node) */}
-                <g transform="translate(435, 35)">
+                {/* Node 4: exp.Table [devices / pg_shadow] (Pin 04 - Wide Pill Node width=115 rx=18) */}
+                <g transform="translate(465, 45)">
+                  <circle cx="0" cy="-28" r="7" fill={isAttack && active.blockedAtGateIndex === 1 ? '#4c0519' : '#064e3b'} stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : '#10b981'} strokeWidth="1" />
+                  <text textAnchor="middle" y="-25" fill={isAttack && active.blockedAtGateIndex === 1 ? '#fda4af' : '#6ee7b7'} fontSize="7" fontFamily="monospace" fontWeight="bold">04</text>
                   <rect
-                    x="-55"
-                    y="-17"
-                    width="110"
-                    height="34"
-                    rx="17"
+                    x="-57"
+                    y="-18"
+                    width="115"
+                    height="36"
+                    rx="18"
                     fill={isAttack && active.blockedAtGateIndex === 1 ? '#4c0519' : isAttack ? '#27272a' : '#064e3b'}
                     stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : isAttack ? '#52525b' : '#10b981'}
                     strokeWidth="1.5"
                   />
-                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 1 ? '#fda4af' : isAttack ? '#71717a' : '#6ee7b7'} fontSize="8.5" fontFamily="monospace">
+                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 1 ? '#fda4af' : isAttack ? '#71717a' : '#6ee7b7'} fontSize="9" fontFamily="monospace">
                     {isAttack && active.blockedAtGateIndex === 1 ? 'pg_shadow' : 'devices'}
                   </text>
                 </g>
 
-                {/* Node 5: exp.Limit [100] */}
-                <g transform="translate(565, 35)">
-                  <rect x="-47" y="-17" width="94" height="34" rx="17" fill={isAttack ? '#27272a' : '#064e3b'} stroke={isAttack ? '#52525b' : '#10b981'} strokeWidth="1.5" />
+                {/* Node 5: exp.Limit [100] (Pin 05) */}
+                <g transform="translate(600, 45)">
+                  <circle cx="0" cy="-28" r="7" fill="#18181b" stroke="#10b981" strokeWidth="1" />
+                  <text textAnchor="middle" y="-25" fill="#10b981" fontSize="7" fontFamily="monospace" fontWeight="bold">05</text>
+                  <rect x="-47" y="-18" width="94" height="36" rx="18" fill={isAttack ? '#27272a' : '#064e3b'} stroke={isAttack ? '#52525b' : '#10b981'} strokeWidth="1.5" />
                   <text textAnchor="middle" dy="4" fill={isAttack ? '#71717a' : '#6ee7b7'} fontSize="8.5" fontFamily="monospace">LIMIT 100</text>
                 </g>
 
-                {/* Node 6: qt_ai_readonly Pool */}
-                <g transform="translate(675, 35)">
-                  <rect x="-40" y="-17" width="80" height="34" rx="17" fill={isAttack ? '#27272a' : '#0369a1'} stroke={isAttack ? '#52525b' : '#38bdf8'} strokeWidth="1.5" />
+                {/* Node 6: qt_ai_readonly Pool (Pin 06) */}
+                <g transform="translate(710, 45)">
+                  <circle cx="0" cy="-28" r="7" fill="#0369a1" stroke="#38bdf8" strokeWidth="1" />
+                  <text textAnchor="middle" y="-25" fill="#38bdf8" fontSize="7" fontFamily="monospace" fontWeight="bold">06</text>
+                  <rect x="-40" y="-18" width="80" height="36" rx="18" fill={isAttack ? '#27272a' : '#0369a1'} stroke={isAttack ? '#52525b' : '#38bdf8'} strokeWidth="1.5" />
                   <text textAnchor="middle" dy="4" fill={isAttack ? '#71717a' : '#bae6fd'} fontSize="8.5" fontFamily="monospace" fontWeight="bold">Pool</text>
                 </g>
               </svg>

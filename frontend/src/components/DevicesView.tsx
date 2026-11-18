@@ -480,7 +480,8 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
         </button>
       </div>
 
-      {catalogTab === 'schema' ? (
+      {/* ── SUB-TAB 1: SCHEMA MODEL VIEW (Cached in memory for instant 0ms switching) ── */}
+      <div style={{ display: catalogTab === 'schema' ? 'block' : 'none' }}>
         <div className="schema-model-view">
           {/* Active Data Source Summary Banner */}
           <div className="schema-source-card">
@@ -691,8 +692,11 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
             </div>
           )}
         </div>
-      ) : (
-        <>
+      </div>
+
+      {/* ── SUB-TAB 2: HARDWARE & ASSET INVENTORY (Cached in memory for instant 0ms switching) ── */}
+      <div style={{ display: catalogTab === 'inventory' ? 'block' : 'none' }}>
+        <div className="inventory-model-view">
           {/* Notice banner if operating against external DB without devices table */}
           {activeSource?.mode === 'connected' && !activeSource.tables.includes('devices') && (
             <div className="connected-notice-banner">
@@ -912,7 +916,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
                 <th style={{ width: '180px' }}>Site &amp; region</th>
                 <th style={{ width: '130px' }}>Status</th>
                 <th style={{ width: '130px' }}>Installed</th>
-                <th style={{ width: '170px' }}>Warranty</th>
+                <th style={{ width: '195px', minWidth: '195px' }}>Warranty</th>
               </tr>
             </thead>
             <tbody>
@@ -1121,8 +1125,8 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
           </div>
         </div>
       </div>
-        </>
-      )}
+      </div>
+    </div>
 
       {/* 6. ASSET INSPECT SLIDE-OVER DRAWER */}
       <DeviceDetailDrawer

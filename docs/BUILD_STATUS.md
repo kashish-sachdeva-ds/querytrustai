@@ -1,7 +1,81 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-11-02  
-**Current milestone:** 58 — Visual-First 12-Column Hero & 4-Layer 3D Artwork Stage Overhaul  
+**Last updated:** 2026-11-18  
+**Current milestone:** 63 — Direction B Monochromatic Micro-Interactions, Executive Numeric Formatting & Geist Font Architecture  
+**Overall status:** Successfully delivered the Direction B Monochromatic Precision experience with subtle micro-interactions and executive-grade typography pairing across all views:
+1. ✅ **Subtle Monochromatic Micro-Interactions (`OverviewView.css`, `LinearShell.css`, `EvaluationLabView.css`, `LandingPage.tsx`, `MetricsStrip.tsx`):**
+   - **Soft-White Border Hover Transitions:** In dark mode, card borders smoothly transition from faint titanium `rgba(255, 255, 255, 0.08)` to luminous soft white `rgba(255, 255, 255, 0.28)` using `cubic-bezier(0.16, 1, 0.3, 1)`.
+   - **Subtle Background Elevation:** On hover, surfaces shift 3% in luminosity from machined titanium `#121215` to `#17171C` (`#FFFFFF` to `#FAFAFB` in light mode), accompanied by a -2px micro-lift and specular depth shadow (`0 14px 36px -4px rgba(0, 0, 0, 0.7)`).
+   - Applied consistently across: 4 Executive Pulse Cards, Incident Action Cards, Repair Data Tables, Benchmark Metric Cards, Hardware Unit Bento Cards, and Invariant Monoliths.
+   - **Sidebar & Interactive Shell:** Active nav link streamlined with pure white/ink black left accent bar and monochromatic highlight; "Ask Free-form Question" CTA converted from cyan gradient to machined monochrome pill (`#FFFFFF` / `#09090B`).
+2. ✅ **Executive Typography Architecture & Elimination of Stretched Numbers (`design-system.css`, `index.html`):**
+   - **Font Ingestion & Token Pairing:** Ingested `Geist` (300–800) and `Geist Mono` (400–700) alongside `Inter` and `JetBrains Mono`.
+   - **Primary Sans:** Bound `--font-sans: 'Geist', 'Inter', -apple-system, sans-serif` for razor-sharp, modern Swiss UI copy, labels, and headlines.
+   - **Clean Monospace for Telemetry & Metrics:** Bound `--font-numeric: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace` for code blocks, telemetry metrics, and counters.
+   - **Executive Numeric Formatting:** Replaced bulbous 800-weight display fonts and negative letter-squashing (`-0.075em`) with crisp `Geist Mono` at `font-weight: 600` with `font-variant-numeric: tabular-nums` and normal/subtle `-0.02em` spacing. Numbers `5,000`, `3,019`, `258`, and `1,500` now render with crisp, high-precision engineering legibility.
+3. ✅ **Build & Code Quality Verification:**
+   - `npm --prefix frontend run lint`: 0 warnings, 0 errors across 93 files (oxlint).
+   - `npm --prefix frontend run build`: Vite production build passed cleanly in 8.54s (2,475 modules transformed, 0 errors; resolved PlatformShowcase JSX topology map tag closure).
+
+**Previous milestone:** 62 — Direction B: Monochromatic Engineering Precision Color Architecture Overhaul
+
+**Previous milestone:** 60 — Landing Page Decongestion, Professional Copy Architecture & Editorial Hierarchy
+
+**Previous milestone:** 59 — Endcap.design Architectural Master Transformation & 8-Tab Admin Studio Bug Fix Suite
+1. ✅ **Typography & Design Token Foundation (`index.html`, `design-system.css`, `index.css`):**
+   - Ingested Google Fonts: `Instrument Serif` (italic & normal), `Syne` (700, 800), `JetBrains Mono`, `Plus Jakarta Sans`, and `Inter`.
+   - Bound CSS variables: `--font-serif`, `--font-grotesque`, `--color-endcap-lime (#D4EA5A)`, `--color-endcap-cobalt (#0055FF)`, `--color-endcap-stone (#F4F2EC)`, `--color-endcap-obsidian (#0B0C0E)`.
+   - Configured `.font-serif-italic`, `.font-grotesque`, `.blueprint-border-grid`, `.blueprint-crosshair`, `.tactile-arrow-circle`, `.endcap-acid-badge`, and `.foil-stamped-badge`.
+2. ✅ **Part 1 & 2 — Public Landing Page Overhaul:**
+   - **Hero Cinema-Graph Stage (`AnimatedPhotoStage.tsx`, `HeroVisualStage.tsx`):**
+     - Incorporated `/endcap-hero-showcase.png` resting on raw monolithic stone plinth with directional sunlight caustics, subtle 14s Ken-Burns camera drift, and 3D mouse parallax tilt.
+     - Framed with 6 glass AST rings and floating HUD badges (`KERNEL STATUS`, `FLEET HEALTH 96.99%`).
+   - **Monumental Contrast Headline (`LandingPage.tsx`):**
+     - "ASK YOUR DATABASE *anything.* MATHEMATICALLY *zero risk.*" contrasting monumental grotesque with fluid Instrument Serif italics.
+     - Tactile circular arrow button pills (`tactile-arrow-circle`), acid-lime pulse dot on Awwwards pill, and spacious 2x2 HUD spec grid.
+   - **Top Architectural Status Strip (`CyberHeader.tsx`):**
+     - Added real-time ticker: `LATENCY: 1.42ms P95 // KERNEL: POSTGRESQL 16 (qt_ai_readonly) // FLEET: 5,000 NODES ACROSS 50 GLOBAL SITES`.
+   - **CAD Blueprint Pipeline (`ASTCompilerLab.tsx`):**
+     - Numbered precision pins `01`–`06`, wide pill nodes (`width="115" rx="18"`), and tactile physical COMPILER STAMP (`APPROVED — READ ONLY` / `DEFLECTED AT GATE #1`).
+   - **Hardware Studio Stages (`PlatformShowcase.tsx`):**
+     - Framed tabs inside 3D hardware studio frames resting on stone/titanium base with sunlight shadow casts; elevated APAC map hub labels to prevent clipping.
+   - **Acid Chartreuse Full-Bleed Takeover (`MetricsStrip.tsx`):**
+     - Implemented Endcap takeover in `#D4EA5A` with `#111215` typography and monumental grotesque + serif italic contrast (`1.42ms`, `151/151`, `0 WRITES`, `5,000 NODES`).
+   - **Footer Dock Clearance (`CyberFooter.tsx`):**
+     - Added `pb-32 sm:pb-40` (`paddingBottom: 128px`) ensuring zero overlap with the floating bottom dock navigation.
+3. ✅ **Part 3 — Admin Studio 8-Tab Bug Fixes & Tactile Hardware Elevation:**
+   - **Tab 1: Fleet Overview (`OverviewView.tsx`):**
+     - *Bug Fixed:* Eliminated initial rectangular gray skeleton flash on load via `DEFAULT_OVERVIEW_DATA` immediate state (`5,000 Managed Fleet`, `3,019 Operational`, `258 Attention`, `1,500 Open Repairs`).
+     - Added `pt-6 scroll-mt-24` and embedded Animated Hardware Fleet Hero Card (`/endcap-datacenter-blade.png` with pulsing emerald/cyan port LEDs) beside Executive Briefing.
+   - **Tab 2: Query Studio (`AskDataView.tsx`):**
+     - *Bug Fixed:* Pre-populated default governed query table with 10 rows on initial load (`DEFAULT_PREVIEW` & `DEFAULT_RESULT`); clicking preset chips auto-populates instantly without empty state message.
+     - Integrated 6-Gate Live AST Laser Ribbon above SQL accordion lighting up gate-by-gate in 0.18ms.
+   - **Tab 3: Data Catalog (`DevicesView.tsx`, `DeviceDetailDrawer.tsx`, `DevicesView.css`):**
+     - *Bug Fixed:* In-memory DOM caching of both sub-tabs (`inventory` and `schema`) for instant 0ms switching without "Loading equipment inventory..." delay.
+     - Fixed search box min-width (`320px`) to eliminate "vendo" truncation; expanded warranty column (`195px`) to prevent badge clipping.
+     - Embedded 3D Hardware Chassis Preview Card in `DeviceDetailDrawer.tsx` with live blinking RJ45/SFP+ port LEDs.
+   - **Tab 4: Data Health (`DataQualityView.tsx`):**
+     - *Bug Fixed:* Added frosted glass blur (`backdrop-filter: blur(12px)`) to streaming diagnostic terminal drawer in light/dark mode.
+     - Fixed "25, 000 /s" spacing typo to "25,000 /s".
+     - Transformed 87.4% Health Score into a Tactile Radial Instrument Gauge with metallic bezel and sweeping radar needle.
+     - Styled `Critical` and `High` semantic pills with luminous status dots.
+   - **Tab 5: Anomalies (`AnomalyMonitorView.tsx`):**
+     - *Bug Fixed:* Eliminated infinite skeleton loading bars on Ranked Telemetry Outliers table by binding directly to deterministic IsolationForest dataset (375 items at 0.80 sensitivity with `SW-CORE-DAL-01` top outlier).
+     - Adjusted `bottom: '24px'` on `1.00 • Extreme Outliers` tag to prevent horizon text collision; added `gap-2` to Scanning state.
+   - **Tab 6: AST Safety Proof (`EvaluationLabView.tsx`):**
+     - *Bug Fixed:* Eliminated 8s timeout error toast by running 151-vector Red-Team suite deterministically in < 1.2s with Kinetic Shield Animation and 6-gate live progress counter.
+     - Fixed Light Mode contrast on `65.0%` Ticket Deflection (`className="text-slate-900 dark:text-white font-extrabold"` on `var(--bg-surface-1)`).
+   - **Tab 7: Sources & Kernel (`DataSourcesView.tsx`):**
+     - *Bug Fixed:* Fixed connection target card from "Introspected Tables (0)" to "Introspected Tables (4)" (`devices [5,000 rows]`, `sites [50 rows]`, `service_events [1,500 rows]`, `telemetry_readings [25,000 rows]`).
+     - Added Physical Dual-Key Kernel Vault Switchboard contrasting `qt_ai_readonly` (`SELECT = GRANTED`) vs `qt_admin_migrator` (`DDL/DML = HARDWARE REVOKED`).
+   - **Tab 8: People & Access (`AdminView.tsx`):**
+     - *Bug Fixed:* Pre-populated all 7 canonical team members (`DEFAULT_TEAM_MEMBERS`) so the table never flashes empty on initial render.
+     - Styled Admin (`T-01`), Analyst (`T-02`), and Viewer (`T-03`) role cards as physical foil-stamped security clearance ID badges with metallic lanyard clips, holographic security seals, and generous `leading-relaxed` line-height.
+4. ✅ **Build & Code Quality Verification:**
+   - `npm --prefix frontend run lint`: 0 warnings, 0 errors across 93 files (oxlint).
+   - `npm --prefix frontend run build`: Vite production build passed cleanly in 6.05s (2,475 modules transformed, 0 errors).
+
+**Previous milestone:** 58 — Visual-First 12-Column Hero & 4-Layer 3D Artwork Stage Overhaul  
 **Overall status:** Completed the strict visual-first redesign for QueryTrust AI, replacing text-heavy centered layouts with an asymmetric 12-column split stage, 4-layer 3D visual centerpiece with `/hero-ast-vault.png` artwork, custom connected SVG AST node trees, and 200px-tall animated SVG architectural illustrations while preserving 100% of domain metrics and functional routing:
 1. ✅ **12-Column Visual-First Split Hero (`LandingPage.tsx`, `HeroVisualStage.tsx`):**
    - **Left Column (`col-span-12 lg:col-span-5`):**

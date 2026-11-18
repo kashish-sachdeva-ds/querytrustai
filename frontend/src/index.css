@@ -54,6 +54,92 @@
   }
 }
 
+/* ==========================================================================
+   Endcap.design Architectural & Visual Primitives
+   ========================================================================== */
+.font-serif-italic {
+  font-family: 'Instrument Serif', Georgia, serif !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+}
+
+.font-grotesque {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
+  letter-spacing: -0.02em !important;
+  font-weight: 700 !important;
+}
+
+.blueprint-border-grid {
+  border-collapse: collapse;
+  position: relative;
+}
+
+.blueprint-crosshair {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+  z-index: 20;
+}
+.blueprint-crosshair::before,
+.blueprint-crosshair::after {
+  content: '';
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.35);
+}
+.blueprint-crosshair::before {
+  top: 4px;
+  left: 0;
+  width: 9px;
+  height: 1px;
+}
+.blueprint-crosshair::after {
+  top: 0;
+  left: 4px;
+  width: 1px;
+  height: 9px;
+}
+
+/* Tactile Monochromatic Arrow Circle */
+.tactile-arrow-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+.group:hover .tactile-arrow-circle,
+button:hover .tactile-arrow-circle {
+  transform: rotate(45deg);
+  background: #FFFFFF;
+  color: #09090B;
+  border-color: #FFFFFF;
+}
+
+/* Monochromatic Engineering Badge */
+.endcap-acid-badge {
+  background: #27272A;
+  color: #FAFAFA;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Foil-stamped ID clearance card */
+.foil-stamped-badge {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.22);
+}
+
+
 /* --- App Shell ------------------------------------------------------------ */
 .app-container {
   display: flex;
@@ -856,7 +942,7 @@
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.025em;
   line-height: 1.05;
   color: var(--qt-ink);
 }
@@ -1111,12 +1197,12 @@
 }
 
 .kpi-value {
-  font-family: var(--font-display);
+  font-family: var(--font-numeric, var(--font-display));
   font-size: 2rem;
   font-weight: 700;
   color: var(--qt-ink);
   line-height: 1.2;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.015em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2092,8 +2178,8 @@ select.form-input {
 .login-title {
   font-family: var(--font-display);
   font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--qt-ink);
 }
 
@@ -2568,7 +2654,7 @@ select.form-input {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--qt-ink);
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
   margin-bottom: 0.5rem;
 }
 
@@ -3168,12 +3254,13 @@ select.form-input {
 }
 
 .metric-chart-value {
-  font-family: var(--font-display);
-  font-size: 3rem;
-  font-weight: 800;
+  font-family: var(--font-numeric, var(--font-display));
+  font-size: 2.75rem;
+  font-weight: 700;
   color: var(--qt-accent);
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
 }
 
 .svg-chart-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; }

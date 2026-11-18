@@ -16,14 +16,14 @@ export const CyberFooter: React.FC<CyberFooterProps> = ({
   const [isHoveringPortal, setIsHoveringPortal] = useState(false)
 
   return (
-    <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-[#F4F5F7] dark:bg-[#080C14] text-zinc-900 dark:text-white pt-16 pb-28 sm:pb-36 relative text-left transition-colors overflow-hidden">
+    <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-[#F4F2EC] dark:bg-[#080C14] text-zinc-900 dark:text-white pt-16 pb-32 sm:pb-40 relative text-left transition-colors overflow-hidden" style={{ paddingBottom: '128px' }}>
       
       {/* 3D Portal Vortex Warp Grid Background */}
       <div
         className="pointer-events-none absolute inset-0 transition-transform duration-700 ease-out"
         style={{
           backgroundImage:
-            'radial-gradient(circle at center, rgba(56,189,248,0.15) 0%, transparent 65%), linear-gradient(to right, rgba(56,189,248,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(56,189,248,0.03) 1px, transparent 1px)',
+            'radial-gradient(circle at center, rgba(255,255,255,0.06) 0%, transparent 65%), linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
           backgroundSize: '100% 100%, 36px 36px, 36px 36px',
           transform: isHoveringPortal ? 'scale(1.08) perspective(600px) rotateX(10deg)' : 'scale(1)',
           opacity: isHoveringPortal ? 0.8 : 0.35,
@@ -38,9 +38,12 @@ export const CyberFooter: React.FC<CyberFooterProps> = ({
           <div className="text-xs font-mono font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-3">
             06 // ZERO-TRUST DATABASE GOVERNANCE
           </div>
-          <div className="text-3xl sm:text-5xl lg:text-6xl font-display font-extrabold tracking-tight leading-[1.05] text-zinc-950 dark:text-white max-w-4xl">
-            Ready to experience compiler-grade analytics?
-          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight leading-[1.15] text-zinc-950 dark:text-white max-w-3xl">
+            Ready to deploy zero-trust natural language analytics?
+          </h2>
+          <p className="mt-4 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-2xl font-normal">
+            Explore the full 8-tab governance workbench or evaluate conversational natural-language SQL generation in a live, isolated sandbox.
+          </p>
           
           <div className="mt-8 flex items-center gap-3.5 flex-wrap">
             <button
@@ -48,10 +51,10 @@ export const CyberFooter: React.FC<CyberFooterProps> = ({
               onMouseEnter={() => setIsHoveringPortal(true)}
               onMouseLeave={() => setIsHoveringPortal(false)}
               onClick={onLaunchAdmin}
-              className="px-7 py-3.5 rounded-full bg-zinc-950 hover:bg-black text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-semibold text-xs shadow-lg shadow-sky-500/10 dark:shadow-sky-400/10 transition-all flex items-center gap-2 cursor-pointer active:scale-[0.98] relative group"
+              className="px-7 py-3.5 rounded-full bg-zinc-950 hover:bg-black text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-semibold text-xs shadow-lg shadow-sky-500/10 dark:shadow-sky-400/10 transition-all flex items-center gap-2.5 cursor-pointer active:scale-[0.98] relative group"
             >
-              <span>Enter Admin Studio</span>
-              <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              <span>Launch Admin Studio</span>
+              <span className="tactile-arrow-circle"><ArrowUpRight size={13} /></span>
             </button>
             <button
               type="button"
@@ -59,14 +62,14 @@ export const CyberFooter: React.FC<CyberFooterProps> = ({
               className="px-5 py-3.5 rounded-full bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-medium text-xs transition-all flex items-center gap-2 shadow-2xs cursor-pointer active:scale-[0.98]"
             >
               <Terminal size={14} className="text-sky-500" />
-              <span>Instant Analyst Demo</span>
+              <span>Explore Analyst Sandbox</span>
             </button>
             <button
               type="button"
               onClick={onGoToLogin}
               className="px-4 py-3.5 rounded-full text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white text-xs font-medium transition-colors cursor-pointer"
             >
-              Sign In to Workspace &rarr;
+              Sign in to workspace &rarr;
             </button>
           </div>
         </div>

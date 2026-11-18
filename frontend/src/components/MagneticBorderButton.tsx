@@ -82,7 +82,7 @@ export const MagneticBorderButton: React.FC<MagneticBorderButtonProps> = ({
             className="absolute inset-0 rounded-full pointer-events-none p-[1.5px]"
             style={{
               background:
-                'linear-gradient(90deg, transparent, rgba(56,189,248,0.7), transparent)',
+                'linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent)',
               mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               maskComposite: 'exclude',
               WebkitMaskComposite: 'xor',

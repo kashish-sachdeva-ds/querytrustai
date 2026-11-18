@@ -3,12 +3,13 @@
 
 /* A single divided surface makes the audit summary read as one operational unit. */
 .telemetry-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) repeat(3, minmax(0, 1fr)); overflow: hidden; background: var(--qt-surface); border: 1px solid var(--qt-border); border-radius: var(--qt-radius-outer); box-shadow: inset 0 1px 0 rgb(255 255 255 / 90%); }
-.telemetry-card { min-width: 0; padding: 1.35rem 1.45rem; border-right: 1px solid var(--qt-border); }
+.telemetry-card { min-width: 0; padding: 1.35rem 1.45rem; border-right: 1px solid var(--qt-border); transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+.telemetry-card:hover { background-color: var(--bg-subtle); }
 .telemetry-card:last-child { border-right: 0; }
 .telemetry-card-header, .command-toolbar, .toolbar-right, .search-input-wrapper, .pagination-bar, .pagination-controls, .page-buttons, .slideover-header-top, .slideover-header-badges, .governance-params-strip, .feedback-buttons-row { display: flex; align-items: center; }
 .telemetry-card-header { justify-content: space-between; gap: .75rem; }
 .telemetry-card-title, .drawer-section-label { color: var(--qt-muted); font-family: var(--font-mono); font-size: .68rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
-.telemetry-card-value { display: flex; align-items: baseline; margin-top: .75rem; color: var(--qt-ink); font-family: var(--font-display); font-size: clamp(1.7rem, 2.2vw, 2.25rem); font-variant-numeric: tabular-nums; font-weight: 700; letter-spacing: -.065em; line-height: 1; }
+.telemetry-card-value { display: flex; align-items: baseline; margin-top: .75rem; color: var(--qt-ink); font-family: var(--font-numeric, var(--font-mono)); font-size: clamp(1.6rem, 2vw, 2.15rem); font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
 .telemetry-card-unit, .telemetry-card-subtitle { color: var(--qt-muted); font-size: .73rem; }
 .telemetry-card-unit { margin-left: .32rem; font-family: var(--font-mono); letter-spacing: 0; }
 .telemetry-card-subtitle { margin-top: .62rem; line-height: 1.45; }

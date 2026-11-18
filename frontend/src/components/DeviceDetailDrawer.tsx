@@ -287,28 +287,51 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
             </div>
           )}
 
-          {/* Compact Enterprise Hardware Capsule Card (Space-saving 68px header vs 190px billboard) */}
+          {/* Tactile 3D Hardware Chassis Preview Card with Live Blinking RJ45/SFP+ Port LEDs */}
           {deviceDetail && (
-            <div className="flex items-center gap-3 p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 mt-1">
-              <div className="relative w-20 h-13 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-950 flex-shrink-0">
-                <img
-                  src={getDeviceImage(deviceDetail.device_type)}
-                  alt={`${deviceDetail.model} ${deviceDetail.device_type}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+            <div className="rounded-2xl bg-[#0B0C0E] border border-white/15 p-3.5 shadow-xl mt-2 relative overflow-hidden text-left">
+              <div className="flex items-center justify-between mb-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/80 text-zinc-200 font-mono text-[9.5px] font-bold uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span>3D HARDWARE CHASSIS · {deviceDetail.model}</span>
+                </span>
+                <span className="text-[10px] font-mono text-zinc-400">
+                  SN: <span className="text-zinc-200 font-semibold">{deviceDetail.serial_number || 'SN-UNASSIGNED'}</span>
+                </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-bold text-xs text-zinc-950 dark:text-white truncate">
-                    {deviceDetail.model}
-                  </span>
-                  <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex-shrink-0">
-                    {deviceDetail.device_type}
-                  </span>
-                </div>
-                <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
-                  {deviceDetail.vendor} &bull; <span className="font-mono">{deviceDetail.serial_number || 'SN-UNASSIGNED'}</span>
+
+              {/* Hardware Blade Preview Graphic with Blinking RJ45/SFP+ LEDs */}
+              <div className="relative w-full h-[130px] rounded-xl overflow-hidden border border-white/10 shadow-inner group">
+                <img
+                  src="/endcap-datacenter-blade.png"
+                  alt={`${deviceDetail.model} Hardware Chassis`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+
+                {/* Live Blinking Port LEDs Bar */}
+                <div className="absolute bottom-2 inset-x-2 flex items-center justify-between px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-white/10 text-[9px] font-mono">
+                  <span className="text-zinc-300 font-semibold">100G QSFP28 / RJ45:</span>
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((port) => {
+                      const isFlapping = port === 5 && (telemetryPoints[telemetryPoints.length - 1]?.packet_loss_pct || 0) > 0.02
+                      const isHighTemp = port === 7 && (telemetryPoints[telemetryPoints.length - 1]?.temperature_celsius || 0) > 65
+                      return (
+                        <div key={port} className="flex items-center gap-0.5" title={`Port ${port} status`}>
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isFlapping
+                                ? 'bg-amber-400 animate-ping'
+                                : isHighTemp
+                                ? 'bg-rose-500 animate-pulse'
+                                : 'bg-emerald-400 animate-pulse'
+                            }`}
+                            style={{ animationDuration: `${0.5 + (port % 3) * 0.3}s` }}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

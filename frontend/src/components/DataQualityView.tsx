@@ -359,18 +359,20 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
         }
       />
 
-      {/* Streaming Diagnostic Monospace Terminal */}
+      {/* Streaming Diagnostic Monospace Terminal with Frosted Glass Backdrop */}
       {showTerminal && (
         <div
           style={{
-            backgroundColor: '#0F172A',
+            backgroundColor: 'rgba(15, 23, 42, 0.88)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             color: '#F8FAFC',
-            borderRadius: '6px',
-            border: '1px solid #1E293B',
-            padding: '12px 16px',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            padding: '14px 18px',
             fontFamily: 'var(--font-mono)',
             fontSize: '11px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            boxShadow: '0 12px 36px -4px rgba(0, 0, 0, 0.3)',
           }}
         >
           {/* Terminal Header */}
@@ -379,7 +381,7 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              borderBottom: '1px solid #334155',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
               paddingBottom: '8px',
               marginBottom: '10px',
             }}
@@ -526,24 +528,58 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
           border: '1px solid var(--border-subtle)',
         }}
       >
-        {/* Cell 1: Overall Health */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>
-            Overall Health Score
+        {/* Cell 1: Overall Health — Tactile Radial Instrument Gauge with Sweeping Radar Needle */}
+        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ position: 'relative', width: '54px', height: '54px', flexShrink: 0 }}>
+            <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+              {/* Outer Metallic Bezel */}
+              <circle cx="50" cy="50" r="44" fill="none" stroke="var(--border-subtle)" strokeWidth="6" />
+              {/* Track Arc (87.4%) */}
+              <circle
+                cx="50"
+                cy="50"
+                r="44"
+                fill="none"
+                stroke="var(--gov-safe-dot, #10B981)"
+                strokeWidth="6"
+                strokeDasharray={`${(87.4 / 100) * 276.4} 276.4`}
+                strokeLinecap="round"
+                transform="rotate(-90 50 50)"
+              />
+              {/* Center Pivot */}
+              <circle cx="50" cy="50" r="5" fill="var(--ink-primary)" />
+              {/* Sweeping Radar Needle */}
+              <line
+                x1="50"
+                y1="50"
+                x2="50"
+                y2="14"
+                stroke="var(--ink-primary)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                transform="rotate(67 50 50)"
+              />
+            </svg>
           </div>
-          <div
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--gov-safe-text)',
-              marginTop: '4px',
-            }}
-          >
-            {summary?.overall_health_score ?? '96.99'}%
-          </div>
-          <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-            30,000 records &bull; 6 rules
+          <div>
+            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Overall Health Score
+            </div>
+            <div
+              style={{
+                fontSize: '24px',
+                fontWeight: 800,
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--gov-safe-text)',
+                marginTop: '2px',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {summary?.overall_health_score ?? 87.4}%
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
+              30,000 records &bull; 6 rules
+            </div>
           </div>
         </div>
 
@@ -728,12 +764,19 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
                           <span
                             className={
                               finding.severity.toLowerCase() === 'critical'
-                                ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-500 border border-red-500/30'
+                                ? 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/40 shadow-2xs'
                                 : finding.severity.toLowerCase() === 'high'
-                                ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30'
-                                : 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-500 border border-sky-500/30'
+                                ? 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/40 shadow-2xs'
+                                : 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/15 text-sky-700 dark:text-sky-400 border border-sky-500/40 shadow-2xs'
                             }
                           >
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              finding.severity.toLowerCase() === 'critical'
+                                ? 'bg-rose-500 animate-pulse'
+                                : finding.severity.toLowerCase() === 'high'
+                                ? 'bg-amber-500'
+                                : 'bg-sky-500'
+                            }`} />
                             {finding.severity.charAt(0).toUpperCase() + finding.severity.slice(1)}
                           </span>
                         </td>

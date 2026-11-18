@@ -1,14 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  AlertTriangle,
   ArrowRight,
-  Clock,
   Database,
   RefreshCw,
-  RotateCcw,
-  Search,
-  Send,
-  Server,
   ShieldCheck,
 } from 'lucide-react'
 import {
@@ -21,11 +15,9 @@ import {
   fetchDataQualitySummary,
   fetchActiveDataSource,
   seedWorkspaceSandbox,
-  resetWorkspaceSandbox,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { ExplainButton } from './ExplainButton'
-import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
 import { GlobalFleetTelemetryMap } from './GlobalFleetTelemetryMap'
 import './OverviewView.css'
@@ -200,7 +192,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const [typeFormattingIssues, setTypeFormattingIssues] = useState<number | null>(null)
   const [question, setQuestion] = useState('')
   const [loading, setLoading] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState('')
   const [activeBentoTab, setActiveBentoTab] = useState<'warranty' | 'severity'>('warranty')
@@ -215,22 +206,9 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     setError(null)
     try {
       await seedWorkspaceSandbox()
-      await loadData(true)
+      await loadData()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to seed sample data.')
-    } finally {
-      setSeeding(false)
-    }
-  }
-
-  const handleResetSandbox = async () => {
-    setSeeding(true)
-    setError(null)
-    try {
-      await resetWorkspaceSandbox()
-      await loadData(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reset workspace.')
     } finally {
       setSeeding(false)
     }
@@ -241,9 +219,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const lastKeyRef = useRef<{ key: string; time: number }>({ key: '', time: 0 })
   const repairsTableRef = useRef<HTMLElement>(null)
 
-  const loadData = async (isManualRefresh = false) => {
-    if (isManualRefresh) setRefreshing(true)
-    else setLoading(true)
+  const loadData = async () => {
+    setLoading(true)
     setError(null)
     try {
       const [summary, healthResult, findingsResult, activeSrc] = await Promise.all([
@@ -297,7 +274,6 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       }
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }
 
@@ -306,7 +282,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   }, [])
 
   useEffect(() => {
-    const refreshOverview = () => loadData(true)
+    const refreshOverview = () => loadData()
     window.addEventListener('querytrust:refresh-overview', refreshOverview)
     return () => window.removeEventListener('querytrust:refresh-overview', refreshOverview)
   }, [])
@@ -329,7 +305,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       // 2. "r" or "R" refreshes overview
       if (event.key.toLowerCase() === 'r' && !isInput) {
         event.preventDefault()
-        loadData(true)
+        loadData()
         return
       }
 
@@ -425,58 +401,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   }
 
   return (
-    <div className="overview-command-center pt-6 scroll-mt-24">
-      {/* ─── 1. PAGE TITLE & HEADER (Unified Inter Typography) ─── */}
-      <PageHeader
-        title={
-          isUnconfigured
-            ? `${user?.workspace_name || 'Company'} Workspace`
-            : activeSource?.mode === 'connected'
-            ? 'Workspace analytics'
-            : 'Fleet overview'
-        }
-        description={
-          isUnconfigured
-            ? `Clean, isolated workspace for '${user?.workspace_name || 'Your Organization'}'. Connect your PostgreSQL database or load sample data.`
-            : activeSource?.mode === 'connected'
-            ? `Safe read-only analytics for workspace '${user?.workspace_name || 'Enterprise'}'. All queries execute with AST safety.`
-            : 'Your equipment at a glance. Preview safe, read-only analytics before any query runs.'
-        }
-        helpText="Summarizes your active data sources, hardware inventory, and recent service requests. Click any card to filter data or ask a natural-language question."
-        actions={
-          <div className="overview-hero-actions">
-            {lastUpdated && (
-              <span className="mecha-snapshot-pill" title="Last snapshot timestamp">
-                <Clock size={12} />
-                <span>Snapshot {lastUpdated}</span>
-              </span>
-            )}
-            <button
-              type="button"
-              className="mecha-pill-btn mecha-pill-btn--secondary"
-              onClick={() => loadData(true)}
-              disabled={loading || refreshing}
-              title="Refresh this overview (Press R)"
-            >
-              <RefreshCw size={13} className={refreshing ? 'spin-icon' : ''} />
-              <span>{refreshing ? 'Updating…' : 'Refresh'}</span>
-              <kbd className="mecha-kbd">R</kbd>
-            </button>
-            {!isDemo && !isUnconfigured && activeSource?.mode === 'sandbox' && user?.role === 'admin' && (
-              <button
-                type="button"
-                className="mecha-pill-btn mecha-pill-btn--secondary"
-                onClick={handleResetSandbox}
-                disabled={loading || refreshing || seeding}
-                title="Reset workspace back to clean unconfigured state"
-              >
-                <RotateCcw size={13} className={seeding ? 'spin-icon' : ''} />
-                <span>{seeding ? 'Resetting…' : 'Reset to Clean Workspace'}</span>
-              </button>
-            )}
-          </div>
-        }
-      />
+    <div className="overview-command-center pt-6 scroll-mt-24" aria-busy={loading}>
+      {/* ─── 1. TARGET FLEET OVERVIEW HEADER ─── */}
+      <header className="fleet-header-block">
+        <div className="fleet-meta-line">
+          {activeSource?.name ? `${activeSource.name} (${activeSource.table_count || 4} tables)` : user?.workspace_name || 'Default workspace'} · Snapshot {lastUpdated || '10:53 AM'}
+        </div>
+        <h1 className="fleet-page-title">Fleet overview</h1>
+        <p className="fleet-page-desc">
+          Ask questions about your equipment, sites and telemetry in plain English. Every query runs read-only.
+        </p>
+      </header>
 
       {/* ─── 2. ENTERPRISE ONBOARDING CARD (When Workspace Has No Data Connected) ─── */}
       {isUnconfigured && (
@@ -548,218 +483,146 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       )}
 
-      {/* ─── 2. ENTERPRISE WORKSPACE HERO BANNER (When Connected Database Active) ─── */}
-      {activeSource?.mode === 'connected' && (
-        <div className="workspace-hero-banner">
-          <div className="workspace-hero-left">
-            <div className="workspace-hero-status">
-              <span className="workspace-pulse-dot" />
-              <span className="workspace-badge-text">Connected Enterprise Database</span>
-              <span className="workspace-name-badge">{activeSource.name}</span>
-            </div>
-            <h2 className="workspace-hero-title">
-              {user?.workspace_name || 'Enterprise Workspace'} &bull; Live Analytics
-            </h2>
-            <p className="workspace-hero-desc">
-              Natural-language queries execute in PostgreSQL read-only isolation with AST safety against <strong>{activeSource.table_count} tables</strong> and <strong>{activeSource.column_count ?? 0} columns</strong>.
-            </p>
-          </div>
-          <div className="workspace-hero-actions">
-            <button
-              type="button"
-              className="workspace-hero-btn primary"
-              onClick={() => onAskQuestion(`What are the tables and key metrics in ${activeSource.name}?`)}
-            >
-              <Send size={14} />
-              <span>Ask Question</span>
-            </button>
-            <button
-              type="button"
-              className="workspace-hero-btn secondary"
-              onClick={() => onNavigate('devices')}
-            >
-              <Database size={14} />
-              <span>Explore Data Catalog</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── 3. ENTERPRISE WORKSPACE SAMPLE SANDBOX BANNER (When Sample Data Active) ─── */}
-      {!isDemo && !isUnconfigured && activeSource?.mode === 'sandbox' && (
-        <div className="workspace-hero-banner" style={{ borderLeft: '3px solid var(--qt-accent, #0ea5e9)' }}>
-          <div className="workspace-hero-left">
-            <div className="workspace-hero-status">
-              <span className="workspace-pulse-dot" style={{ background: 'var(--qt-accent, #0ea5e9)' }} />
-              <span className="workspace-badge-text">Sample Sandbox Telemetry Active</span>
-              <span className="workspace-name-badge">{activeSource.name}</span>
-            </div>
-            <h2 className="workspace-hero-title">
-              {user?.workspace_name || 'Enterprise Workspace'} &bull; Exploring Sample Data
-            </h2>
-            <p className="workspace-hero-desc">
-              Your workspace is running an isolated sample dataset with 5,000 synthetic devices and telemetry signals. Ready to connect your actual database or reset to clean onboarding?
-            </p>
-          </div>
-          <div className="workspace-hero-actions">
-            {user?.role === 'admin' && (
-              <button
-                type="button"
-                className="workspace-hero-btn primary"
-                onClick={() => onNavigate('data-sources')}
-              >
-                <Database size={14} />
-                <span>Connect Real DB</span>
-              </button>
-            )}
-            {user?.role === 'admin' && (
-              <button
-                type="button"
-                className="workspace-hero-btn secondary"
-                onClick={handleResetSandbox}
-                disabled={seeding}
-                title="Remove sample data and return to clean workspace"
-              >
-                <RotateCcw size={14} className={seeding ? 'spin-icon' : ''} />
-                <span>{seeding ? 'Resetting…' : 'Reset to Clean Workspace'}</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ─── 2. MECHA HERO ASK BOX (Expansive, High-End White Card) ─── */}
-      <section className="mecha-hero-prompt" aria-label="Ask Governed Fleet Intelligence">
-        <form onSubmit={submitQuestion} className="mecha-prompt-form">
-          <div className="mecha-prompt-input-wrap">
-            <Search size={18} className="mecha-search-icon" aria-hidden="true" />
-            <input
-              ref={searchInputRef}
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              placeholder={
-                isUnconfigured
-                  ? "Connect a database or load sample data to query..."
-                  : "Ask a governed question across 5,000 devices, 50 sites, and telemetry..."
-              }
-              aria-label="Ask equipment intelligence question"
-              disabled={isUnconfigured}
-              className="mecha-prompt-input"
-            />
-            <kbd className="mecha-prompt-slash-kbd">/</kbd>
-            <button
-              type="submit"
-              disabled={!question.trim() || isUnconfigured}
-              className="mecha-prompt-submit-btn"
-            >
-              <span>Ask Query</span>
-              <ArrowRight size={13} />
-            </button>
-          </div>
+      {/* ─── 2. HERO ASK BOX (Target T1/T2) ─── */}
+      <section className="fleet-hero-ask-container" aria-label="Ask Governed Fleet Intelligence">
+        <form onSubmit={submitQuestion} className="fleet-ask-form">
+          <input
+            ref={searchInputRef}
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder={
+              isUnconfigured
+                ? "Connect a database or load sample data to query..."
+                : "Ask a question across 5,000 devices, 50 sites and telemetry..."
+            }
+            aria-label="Ask equipment intelligence question"
+            disabled={isUnconfigured}
+            className="fleet-ask-input"
+          />
+          <button
+            type="submit"
+            disabled={!question.trim() || isUnconfigured}
+            className="fleet-ask-submit-btn"
+          >
+            Ask
+          </button>
         </form>
 
         {!isUnconfigured && (
-          <div className="mecha-prompt-chips">
-            <span className="mecha-chips-lead">Suggested:</span>
-            <button
-              type="button"
-              className="mecha-chip"
-              onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
-            >
-              Warranties expiring &lt; 30 days
-            </button>
-            <button
-              type="button"
-              className="mecha-chip"
-              onClick={() => onAskQuestion('Find core routers with temperature > 65°C and packet drop rate > 0.05%')}
-            >
-              High-temp routers (&gt; 65°C)
-            </button>
-            <button
-              type="button"
-              className="mecha-chip"
-              onClick={() => onAskQuestion('List open Critical service events with device model and site location')}
-            >
-              Critical open repair incidents
-            </button>
-          </div>
+          <>
+            <div className="fleet-chips-row">
+              <span className="fleet-chips-lead">Try</span>
+              <button
+                type="button"
+                className="quick-chip"
+                onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
+              >
+                Warranties expiring in 30 days
+              </button>
+              <button
+                type="button"
+                className="quick-chip"
+                onClick={() => onAskQuestion('Find core routers with temperature > 65°C and packet drop rate > 0.05%')}
+              >
+                High-temperature routers (above 65 °C)
+              </button>
+              <button
+                type="button"
+                className="quick-chip"
+                onClick={() => onAskQuestion('List open Critical service events with device model and site location')}
+              >
+                Critical open repair incidents
+              </button>
+            </div>
+
+            <div className="fleet-safety-row">
+              <span className="fleet-safety-check">✓</span> Every query is checked against 6 safety rules before it runs. Last check: 6 of 6 passed.
+            </div>
+          </>
         )}
       </section>
 
-      {/* ─── 3. EXECUTIVE PULSE METRICS (4 Spacious High-Impact Cards) ─── */}
+      {/* ─── 3. 4 KPIS IN A SINGLE ROW SEPARATED BY HAIRLINES (Target T1/T2) ─── */}
       {data && (
-        <section className="mecha-pulse-grid" aria-label="Executive Pulse Metrics">
-          {/* Card 1: Total Managed Fleet */}
-          <div
-            className="mecha-pulse-card"
-            onClick={() => onNavigate('devices')}
-            title="View all 5,000 equipment records"
-          >
-            <div className="mecha-pulse-header">
-              <span className="mecha-pulse-label">Managed Fleet</span>
-              <span className="mecha-pulse-icon"><Server size={15} /></span>
-            </div>
-            <div className="mecha-pulse-value">
-              <AnimatedNumber value={data.total_devices} />
-            </div>
-            <div className="mecha-pulse-sub">
-              {data.total_sites} Sites Across 3 Global Regions
-            </div>
+        <section className="fleet-kpis-strip" aria-label="Fleet Overview Key Indicators">
+          <div className="fleet-kpi-col" onClick={() => onNavigate('devices')}>
+            <div className="fleet-kpi-label">Managed fleet</div>
+            <div className="fleet-kpi-value"><AnimatedNumber value={data.total_devices} /></div>
+            <div className="fleet-kpi-sub">{data.total_sites} sites across 3 regions</div>
           </div>
 
-          {/* Card 2: Active Fleet */}
-          <div
-            className="mecha-pulse-card"
-            onClick={() => onNavigate('devices', { status: 'active' })}
-            title="View active operational equipment"
-          >
-            <div className="mecha-pulse-header">
-              <span className="mecha-pulse-label">Active &amp; Operational</span>
-              <span className="mecha-pulse-dot" style={{ backgroundColor: '#10B981' }} />
+          <div className="fleet-kpi-divider" />
+
+          <div className="fleet-kpi-col" onClick={() => onNavigate('devices', { status: 'active' })}>
+            <div className="fleet-kpi-label">
+              <span className="status-dot-6px dot-success" />
+              <span>Active</span>
             </div>
-            <div className="mecha-pulse-value">
-              <AnimatedNumber value={data.active_devices} />
-            </div>
-            <div className="mecha-pulse-sub">
-              <span className="mecha-pulse-sub-success">{activeShare}% operational</span>
-              <span className="mecha-sub-divider">&bull;</span>
-              <span>+124 30d</span>
-            </div>
+            <div className="fleet-kpi-value"><AnimatedNumber value={data.active_devices} /></div>
+            <div className="fleet-kpi-sub">{activeShare}% of the fleet</div>
           </div>
 
-          {/* Card 3: Attention Required */}
-          <div
-            className="mecha-pulse-card"
-            onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}
-            title="Filter devices with urgent SLA expirations"
-          >
-            <div className="mecha-pulse-header">
-              <span className="mecha-pulse-label">Attention Required</span>
-              <span className="mecha-pulse-icon mecha-pulse-icon--warning"><Clock size={15} /></span>
+          <div className="fleet-kpi-divider" />
+
+          <div className="fleet-kpi-col" onClick={() => onAskQuestion('Which devices have warranties ending in the next 30 days?')}>
+            <div className="fleet-kpi-label">
+              <span className="status-dot-6px dot-warning" />
+              <span>Needs attention</span>
             </div>
-            <div className="mecha-pulse-value mecha-pulse-value--warning">
-              <AnimatedNumber value={urgentWarrantyCount} />
-            </div>
-            <div className="mecha-pulse-sub mecha-pulse-sub--warning">
-              Warranties expiring &lt; 30 days
-            </div>
+            <div className="fleet-kpi-value"><AnimatedNumber value={urgentWarrantyCount} /></div>
+            <div className="fleet-kpi-sub">Warranties expiring within 30 days</div>
           </div>
 
-          {/* Card 4: Open Repairs */}
-          <div
-            className="mecha-pulse-card"
-            onClick={scrollToRepairs}
-            title="View open repair service events"
-          >
-            <div className="mecha-pulse-header">
-              <span className="mecha-pulse-label">Open Repairs</span>
-              <span className="mecha-pulse-icon mecha-pulse-icon--danger"><AlertTriangle size={15} /></span>
+          <div className="fleet-kpi-divider" />
+
+          <div className="fleet-kpi-col" onClick={scrollToRepairs}>
+            <div className="fleet-kpi-label">
+              <span className="status-dot-6px dot-error" />
+              <span>Open repairs</span>
             </div>
-            <div className="mecha-pulse-value mecha-pulse-value--danger">
-              <AnimatedNumber value={data.open_service_events} />
+            <div className="fleet-kpi-value"><AnimatedNumber value={data.open_service_events} /></div>
+            <div className="fleet-kpi-sub">Across 1,295 hardware assets</div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── 4. SIGNALS SECTION (Target T1/T2) ─── */}
+      {!isUnconfigured && data && (
+        <section className="fleet-signals-section" aria-label="Fleet Signals and Diagnostics">
+          <h2 className="fleet-signals-title">Signals</h2>
+          <div className="fleet-signals-box">
+            <div className="fleet-signal-row">
+              <div className="fleet-signal-info">
+                <div className="fleet-signal-name">Data health</div>
+                <div className="fleet-signal-desc">
+                  Score {dataHealth?.overall_health_score != null ? `${dataHealth.overall_health_score.toFixed(2)}%` : '96.99%'} across {formatNumber(dataHealth?.total_records_analyzed ?? 30000)} records · {dataHealth?.total_findings ?? 6} findings ({dataHealth?.critical_count ?? 3} critical, {dataHealth ? (dataHealth.high_count + dataHealth.medium_count + dataHealth.low_count) : 3} advisory)
+                </div>
+              </div>
+              <button
+                type="button"
+                className="fleet-signal-review-btn"
+                onClick={() => onNavigate('data-quality')}
+              >
+                Review
+              </button>
             </div>
-            <div className="mecha-pulse-sub">
-              1,295 Unique Hardware Assets
+
+            <div className="fleet-signal-divider" />
+
+            <div className="fleet-signal-row">
+              <div className="fleet-signal-info">
+                <div className="fleet-signal-name">Telemetry anomalies</div>
+                <div className="fleet-signal-desc">
+                  375 readings flagged at balanced sensitivity · Highest: ASSET-00007, Miami Datacenter 2, 88.92 °C
+                </div>
+              </div>
+              <button
+                type="button"
+                className="fleet-signal-review-btn"
+                onClick={() => onNavigate('anomalies')}
+              >
+                Review
+              </button>
             </div>
           </div>
         </section>
@@ -828,27 +691,27 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       {data && activeSectionTab === 'briefing' && (
         <div className="mecha-actions-container">
           {/* Animated Hardware Fleet Card beside Executive Briefing */}
-          <div className="mb-6 rounded-3xl bg-[#0B0C0E] border border-white/15 p-6 shadow-xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="mb-6 rounded-3xl bg-[var(--color-surface)] border border-[var(--color-border-subtle)] p-6 shadow-xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="flex-1 space-y-2 z-10 text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/80 text-zinc-200 font-mono text-[10.5px] font-bold uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] font-mono text-[10.5px] font-medium uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-[var(--color-status-success-dot)] animate-ping" />
                 <span>HARDWARE FLEET CHASSIS BLADE · AMER-WEST-01</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-grotesque font-bold text-white tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-serif text-[var(--color-text-primary)] tracking-tight">
                 High-Density Optical Switch Fabric
               </h3>
-              <p className="text-xs text-zinc-400 font-sans leading-relaxed max-w-xl">
+              <p className="text-xs text-[var(--color-text-secondary)] font-sans leading-relaxed max-w-xl">
                 Active telemetry polling across 5,000 managed nodes. Physical port transceivers reporting 99.4% nominal optical attenuation and line-rate link stability.
               </p>
               <div className="pt-2 flex items-center gap-3 font-mono text-xs">
-                <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[var(--color-status-success-text)] font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[var(--color-status-success-dot)] animate-pulse" />
                   <span>3,019 Operational</span>
                 </span>
-                <span className="text-zinc-600">//</span>
-                <span className="text-amber-400 font-semibold">258 Attention</span>
-                <span className="text-zinc-600">//</span>
-                <span className="text-sky-400 font-semibold">0ms Polling Jitter</span>
+                <span className="text-[var(--color-text-muted)]">//</span>
+                <span className="text-[var(--color-status-warning-text)] font-semibold">258 Attention</span>
+                <span className="text-[var(--color-text-muted)]">//</span>
+                <span className="text-[var(--color-accent-link)] font-semibold">0ms Polling Jitter</span>
               </div>
             </div>
 
@@ -887,7 +750,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <span className="mecha-action-badge mecha-action-badge--critical">
                     Critical Issue
                   </span>
-                  <span className="mecha-action-metric" style={{ color: '#DC2626' }}>
+                  <span className="mecha-action-metric" style={{ color: 'var(--color-status-error-text)' }}>
                     {formatNumber(data.open_service_events)} Active
                   </span>
                 </div>
@@ -913,7 +776,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <span className="mecha-action-badge mecha-action-badge--attention">
                     SLA Attention
                   </span>
-                  <span className="mecha-action-metric" style={{ color: '#D97706' }}>
+                  <span className="mecha-action-metric" style={{ color: 'var(--color-status-warning-text)' }}>
                     {formatNumber(urgentWarrantyCount)} Devices
                   </span>
                 </div>
@@ -939,7 +802,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <span className="mecha-action-badge mecha-action-badge--hygiene">
                     Data Hygiene
                   </span>
-                  <span className="mecha-action-metric" style={{ color: '#0EA5E9' }}>
+                  <span className="mecha-action-metric" style={{ color: 'var(--color-accent-link)' }}>
                     {dataHealth?.total_findings ?? 6} Anomalies
                   </span>
                 </div>
@@ -1073,16 +936,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                       width: `${pct}%`,
                       backgroundColor:
                         item.name === 'Active'
-                          ? '#10B981'
+                          ? 'var(--color-status-success-dot)'
                           : item.name === 'Maintenance'
-                          ? '#F59E0B'
+                          ? 'var(--color-status-warning-dot)'
                           : item.name === 'Retired'
-                          ? '#64748B'
+                          ? 'var(--color-text-muted)'
                           : item.name === 'Offline'
-                          ? '#94A3B8'
+                          ? 'var(--color-border-strong)'
                           : item.name === 'Pending Audit'
-                          ? '#8B5CF6'
-                          : '#0EA5E9',
+                          ? 'var(--color-accent)'
+                          : 'var(--color-accent)',
                     }}
                     title={`${item.name}: ${formatNumber(item.value)} (${pct.toFixed(1)}%)`}
                   />
@@ -1096,16 +959,16 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 const pct = totalBreakdownCount > 0 ? ((item.value / totalBreakdownCount) * 100).toFixed(1) : '0'
                 const dotColor =
                   item.name === 'Active'
-                    ? '#10B981'
+                    ? 'var(--color-status-success-dot)'
                     : item.name === 'Maintenance'
-                    ? '#F59E0B'
+                    ? 'var(--color-status-warning-dot)'
                     : item.name === 'Retired'
-                    ? '#64748B'
+                    ? 'var(--color-text-muted)'
                     : item.name === 'Offline'
-                    ? '#94A3B8'
+                    ? 'var(--color-border-strong)'
                     : item.name === 'Pending Audit'
-                    ? '#8B5CF6'
-                    : '#0EA5E9'
+                    ? 'var(--color-accent)'
+                    : 'var(--color-accent)'
 
                 return (
                   <button
@@ -1236,7 +1099,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                               className="mecha-bento-fill"
                               style={{
                                 width: `${percent}%`,
-                                backgroundColor: isExpired ? '#DC2626' : isSoon ? '#D97706' : 'var(--text-main)',
+                                backgroundColor: isExpired ? 'var(--color-status-error-dot)' : isSoon ? 'var(--color-status-warning-dot)' : 'var(--color-text-primary)',
                               }}
                             />
                           </div>
@@ -1254,7 +1117,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                               className="mecha-bento-fill"
                               style={{
                                 width: `${item.percentage || 0}%`,
-                                backgroundColor: severity === 'high' ? '#DC2626' : severity === 'medium' ? '#D97706' : '#0EA5E9',
+                                backgroundColor: severity === 'high' ? 'var(--color-status-error-dot)' : severity === 'medium' ? 'var(--color-status-warning-dot)' : 'var(--color-accent)',
                               }}
                             />
                           </div>

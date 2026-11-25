@@ -263,7 +263,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
   }
 
   return (
-    <div className="login-page-root min-h-screen bg-[var(--bg-page)] text-[var(--text-main)] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="login-page-root min-h-screen bg-[var(--color-page-bg)] text-[var(--color-text-primary)] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <HeroSpotlightBackground />
 
       {/* Floating Back Link */}
@@ -271,26 +271,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         <button
           type="button"
           onClick={onBackToLanding}
-          className="absolute top-6 left-6 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors flex items-center gap-1.5 z-20"
+          className="absolute top-6 left-6 text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center gap-1.5 z-20 cursor-pointer"
         >
           <span>&larr; Back to overview</span>
         </button>
       )}
 
       {/* Centered Auth Card */}
-      <div className="w-full max-w-[420px] rounded-3xl border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#09090C] p-8 shadow-[0_24px_70px_rgba(0,0,0,0.4)] relative z-10 backdrop-blur-xl transition-all">
+      <div className="w-full max-w-[420px] rounded-[var(--radius-container)] border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-8 shadow-xl relative z-10 transition-all">
         {/* Emblem & Title */}
         <div className="flex flex-col items-center text-center">
           <QueryTrustLogo size={36} />
-          <h1 className="text-xl font-bold tracking-tight text-[var(--text-main)] mt-3.5">
+          <h1 className="font-display text-[32px] font-normal leading-tight tracking-tight text-[var(--color-text-primary)] mt-3.5">
             {authMode === 'signin'
               ? 'Sign in to QueryTrust'
               : authMode === 'join'
-              ? 'Join Team Workspace'
-              : 'Create Company Workspace'}
+              ? 'Join team workspace'
+              : 'Create workspace'}
           </h1>
-          <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">
-            Governed natural-language SQL analytics workbench
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+            Read-only natural-language PostgreSQL analytics
           </p>
         </div>
 
@@ -309,17 +309,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         )}
 
         {/* Segmented Mode Switcher */}
-        <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-subtle)] mt-6 text-xs font-medium">
+        <div className="grid grid-cols-3 gap-1 p-1 rounded-[var(--radius-control)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] mt-6 text-xs font-medium">
           <button
             type="button"
             onClick={() => {
               setAuthMode('signin')
               setGlobalError(null)
             }}
-            className={`py-1.5 rounded-lg transition-all ${
+            className={`py-1.5 rounded-[6px] transition-all cursor-pointer ${
               authMode === 'signin'
-                ? 'bg-[var(--bg-card)] text-[var(--text-main)] font-semibold shadow-xs'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                ? 'bg-[var(--color-surface)] text-[var(--color-text-primary)] font-semibold shadow-xs'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
             }`}
           >
             Sign In
@@ -330,10 +330,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               setAuthMode('join')
               setGlobalError(null)
             }}
-            className={`py-1.5 rounded-lg transition-all ${
+            className={`py-1.5 rounded-[6px] transition-all cursor-pointer ${
               authMode === 'join'
-                ? 'bg-[var(--bg-card)] text-[var(--text-main)] font-semibold shadow-xs'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                ? 'bg-[var(--color-surface)] text-[var(--color-text-primary)] font-semibold shadow-xs'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
             }`}
           >
             Join Team
@@ -344,10 +344,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
               setAuthMode('register')
               setGlobalError(null)
             }}
-            className={`py-1.5 rounded-lg transition-all ${
+            className={`py-1.5 rounded-[6px] transition-all cursor-pointer ${
               authMode === 'register'
-                ? 'bg-[var(--bg-card)] text-[var(--text-main)] font-semibold shadow-xs'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                ? 'bg-[var(--color-surface)] text-[var(--color-text-primary)] font-semibold shadow-xs'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
             }`}
           >
             Create
@@ -358,10 +358,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         {authMode === 'signin' && (
           <form onSubmit={handleSignInSubmit} className="mt-6 space-y-4">
             <div>
-              <label htmlFor={emailInputId} className="block text-xs font-medium text-[var(--text-muted)] mb-1">
+              <label htmlFor={emailInputId} className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
                 Work Email
               </label>
-              <div className="relative">
+              <div className="relative flex items-center">
+                <Mail size={14} className="absolute left-3.5 text-[var(--color-text-muted)] pointer-events-none" />
                 <input
                   id={emailInputId}
                   type="email"
@@ -369,18 +370,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                   onChange={handleEmailChange}
                   placeholder="analyst@company.com"
                   autoComplete="email"
-                  className="w-full h-10 pl-10 pr-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-sky-500 focus:outline-none transition-colors"
+                  className="login-input-with-icon w-full h-10 pr-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
                 />
-                <Mail size={14} className="absolute left-3 top-3 text-[var(--text-muted)] pointer-events-none" />
               </div>
-              {errors.email && <p className="text-[11px] text-rose-500 mt-1">{errors.email}</p>}
+              {errors.email && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{errors.email}</p>}
             </div>
 
             <div>
-              <label htmlFor={passwordInputId} className="block text-xs font-medium text-[var(--text-muted)] mb-1">
+              <label htmlFor={passwordInputId} className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
                 Password
               </label>
-              <div className="relative">
+              <div className="relative flex items-center">
+                <Lock size={14} className="absolute left-3.5 text-[var(--color-text-muted)] pointer-events-none" />
                 <input
                   id={passwordInputId}
                   type={showPassword ? 'text' : 'password'}
@@ -388,27 +389,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
                   onChange={handlePasswordChange}
                   placeholder="••••••••••••"
                   autoComplete="current-password"
-                  className="w-full h-10 pl-10 pr-10 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-subtle)] focus:border-sky-500 focus:outline-none transition-colors"
+                  className="login-input-with-icon login-input-with-trailing w-full h-10 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none transition-colors"
                 />
-                <Lock size={14} className="absolute left-3 top-3 text-[var(--text-muted)] pointer-events-none" />
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-3 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                  className="absolute right-3 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
-              {errors.password && <p className="text-[11px] text-rose-500 mt-1">{errors.password}</p>}
+              {errors.password && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{errors.password}</p>}
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
+              className="w-full h-10 rounded-[var(--radius-control)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-accent-contrast)] font-medium text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
             >
-              <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
+              <span>{loading ? 'Signing in...' : 'Sign In'}</span>
               <ArrowRight size={13} />
             </button>
           </form>
@@ -417,57 +417,57 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         {authMode === 'join' && (
           <form onSubmit={handleJoinSubmit} className="mt-6 space-y-3.5">
             <div>
-              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Workspace Name</label>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Workspace Name</label>
               <input
                 type="text"
                 value={joinValues.workspaceName}
                 onChange={(e) => setJoinValues((prev) => ({ ...prev, workspaceName: e.target.value }))}
                 placeholder="Acme Corp"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
               />
-              {joinErrors.workspaceName && <p className="text-[11px] text-rose-500 mt-1">{joinErrors.workspaceName}</p>}
+              {joinErrors.workspaceName && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{joinErrors.workspaceName}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Full Name</label>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Full Name</label>
               <input
                 type="text"
                 value={joinValues.fullName}
                 onChange={(e) => setJoinValues((prev) => ({ ...prev, fullName: e.target.value }))}
                 placeholder="Jane Doe"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
               />
-              {joinErrors.fullName && <p className="text-[11px] text-rose-500 mt-1">{joinErrors.fullName}</p>}
+              {joinErrors.fullName && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{joinErrors.fullName}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Work Email</label>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Work Email</label>
               <input
                 type="email"
                 value={joinValues.email}
                 onChange={(e) => setJoinValues((prev) => ({ ...prev, email: e.target.value }))}
                 placeholder="jane@acme.com"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
               />
-              {joinErrors.email && <p className="text-[11px] text-rose-500 mt-1">{joinErrors.email}</p>}
+              {joinErrors.email && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{joinErrors.email}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Password</label>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Password</label>
               <input
                 type="password"
                 value={joinValues.password}
                 onChange={(e) => setJoinValues((prev) => ({ ...prev, password: e.target.value }))}
                 placeholder="••••••••••••"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
               />
-              {joinErrors.password && <p className="text-[11px] text-rose-500 mt-1">{joinErrors.password}</p>}
+              {joinErrors.password && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{joinErrors.password}</p>}
             </div>
 
             <button
               type="submit"
               disabled={joinLoading}
-              className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2 cursor-pointer"
+              className="w-full h-10 rounded-[var(--radius-control)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-accent-contrast)] font-medium text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2 cursor-pointer"
             >
               <span>{joinLoading ? 'Joining...' : 'Join Team Workspace'}</span>
               <ArrowRight size={13} />
@@ -478,49 +478,49 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         {authMode === 'register' && (
           <form onSubmit={handleRegisterSubmit} className="mt-6 space-y-3.5">
             <div>
-              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Company / Workspace Name</label>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Company / Workspace Name</label>
               <input
                 type="text"
                 value={registerValues.workspaceName}
                 onChange={(e) => setRegisterValues((prev) => ({ ...prev, workspaceName: e.target.value }))}
                 placeholder="Enterprise Tech"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
               />
-              {registerErrors.workspaceName && <p className="text-[11px] text-rose-500 mt-1">{registerErrors.workspaceName}</p>}
+              {registerErrors.workspaceName && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{registerErrors.workspaceName}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Your Full Name</label>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Your Full Name</label>
               <input
                 type="text"
                 value={registerValues.fullName}
                 onChange={(e) => setRegisterValues((prev) => ({ ...prev, fullName: e.target.value }))}
                 placeholder="Alex Morgan"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
               />
-              {registerErrors.fullName && <p className="text-[11px] text-rose-500 mt-1">{registerErrors.fullName}</p>}
+              {registerErrors.fullName && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{registerErrors.fullName}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Work Email</label>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Work Email</label>
               <input
                 type="email"
                 value={registerValues.email}
                 onChange={(e) => setRegisterValues((prev) => ({ ...prev, email: e.target.value }))}
                 placeholder="alex@enterprisetech.com"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
               />
-              {registerErrors.email && <p className="text-[11px] text-rose-500 mt-1">{registerErrors.email}</p>}
+              {registerErrors.email && <p className="text-[11px] text-[var(--color-status-error-text)] mt-1">{registerErrors.email}</p>}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Create Master Password</label>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">Create Password</label>
               <input
                 type="password"
                 value={registerValues.password}
                 onChange={(e) => setRegisterValues((prev) => ({ ...prev, password: e.target.value }))}
                 placeholder="••••••••••••"
-                className="w-full h-9 px-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-subtle)] text-xs text-[var(--text-main)] focus:border-sky-500 focus:outline-none"
+                className="w-full h-9 px-3 rounded-[var(--radius-control)] border border-[var(--color-border-subtle)] bg-[var(--color-raised)] text-xs text-[var(--color-text-primary)] focus:border-[var(--color-accent)] focus:outline-none"
               />
               <PasswordStrengthMeter strength={registerPasswordStrength} passwordLength={registerValues.password.length} />
             </div>
@@ -528,7 +528,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
             <button
               type="submit"
               disabled={registerLoading}
-              className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-sky-500 dark:hover:bg-sky-400 dark:text-slate-950 font-semibold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2 cursor-pointer"
+              className="w-full h-10 rounded-[var(--radius-control)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-accent-contrast)] font-medium text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 mt-2 cursor-pointer"
             >
               <span>{registerLoading ? 'Creating...' : 'Create Workspace'}</span>
               <ArrowRight size={13} />
@@ -539,10 +539,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
         {/* ─── Instant 1-Click Evaluator Demo Access ─── */}
         <div className="relative my-6 text-center">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[var(--border-subtle)]" />
+            <div className="w-full border-t border-[var(--color-border-subtle)]" />
           </div>
-          <span className="relative bg-[var(--bg-card)] px-3 text-[10px] font-mono uppercase tracking-wider text-[var(--text-subtle)]">
-            or evaluate instantly as
+          <span className="relative bg-[var(--color-surface)] px-3 text-[10.5px] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">
+            or evaluate as
           </span>
         </div>
 
@@ -550,38 +550,38 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBackToLanding }) => {
           <button
             type="button"
             onClick={() => loginAsDemo('admin@querytrust.local', 'AdminPass123!')}
-            className="p-3 rounded-2xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-purple-500/50 text-left transition-all cursor-pointer group flex flex-col justify-between"
+            className="p-3 rounded-[var(--radius-control)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent)] text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate full admin governance & AST configuration"
           >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
-              <span className="text-[11px] font-bold text-[var(--text-main)] font-mono">Admin</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-[var(--color-text-primary)]">Admin</span>
             </div>
-            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] font-mono">Full AST &amp; RBAC</span>
+            <span className="text-[10px] text-[var(--color-text-secondary)] font-mono">Full AST &amp; RBAC</span>
           </button>
           <button
             type="button"
             onClick={() => loginAsDemo('analyst@querytrust.local', 'AnalystPass123!')}
-            className="p-3 rounded-2xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-sky-500/50 text-left transition-all cursor-pointer group flex flex-col justify-between"
+            className="p-3 rounded-[var(--radius-control)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent)] text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate analyst NL-to-SQL & diagnostics"
           >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-500 flex-shrink-0" />
-              <span className="text-[11px] font-bold text-[var(--text-main)] font-mono">Analyst</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-secondary)] flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-[var(--color-text-primary)]">Analyst</span>
             </div>
-            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] font-mono">Studio &amp; SQL</span>
+            <span className="text-[10px] text-[var(--color-text-secondary)] font-mono">Studio &amp; SQL</span>
           </button>
           <button
             type="button"
             onClick={() => loginAsDemo('viewer@querytrust.local', 'ViewerPass123!')}
-            className="p-3 rounded-2xl bg-[var(--bg-subtle)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] hover:border-emerald-500/50 text-left transition-all cursor-pointer group flex flex-col justify-between"
+            className="p-3 rounded-[var(--radius-control)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-accent)] text-left transition-all cursor-pointer group flex flex-col justify-between"
             title="Evaluate read-only consumer charts & answers"
           >
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-              <span className="text-[11px] font-bold text-[var(--text-main)] font-mono">Viewer</span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-muted)] flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-[var(--color-text-primary)]">Viewer</span>
             </div>
-            <span className="text-[9.5px] text-[var(--text-subtle)] group-hover:text-[var(--text-muted)] font-mono">Plain English</span>
+            <span className="text-[10px] text-[var(--color-text-secondary)] font-mono">Plain English</span>
           </button>
         </div>
       </div>

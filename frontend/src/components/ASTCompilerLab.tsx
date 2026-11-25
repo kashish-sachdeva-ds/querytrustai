@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import React, { useState } from 'react'
 import {
-  Sparkles,
   ShieldAlert,
   Terminal,
   CheckCircle2,
@@ -10,10 +8,8 @@ import {
   Check,
   Lock,
   Database,
-  Cpu,
   Layers,
   Code2,
-  Zap,
 } from 'lucide-react'
 
 export type LabPresetKey = 'warranty' | 'telemetry' | 'injection' | 'exfiltration'
@@ -23,9 +19,8 @@ interface LabPreset {
   title: string
   category: 'READ_QUERY' | 'ATTACK_VECTOR'
   prompt: string
-  latencyMs: string
   verdict: 'VERIFIED_SAFE' | 'BLOCKED_AT_GATE_1' | 'BLOCKED_AT_GATE_2'
-  blockedAtGateIndex?: number // 0-based: 0 = Gate #1, 1 = Gate #2
+  blockedAtGateIndex?: number
   astTokens: Array<{ token: string; type: string; status: 'safe' | 'danger' | 'clamped' }>
   sql: string
   blockedReason?: string
@@ -38,7 +33,6 @@ const PRESETS: Record<LabPresetKey, LabPreset> = {
     title: 'Hardware Warranty Horizon',
     category: 'READ_QUERY',
     prompt: 'Which switches in Dallas have warranties expiring in the next 60 days?',
-    latencyMs: '1.42ms',
     verdict: 'VERIFIED_SAFE',
     astTokens: [
       { token: 'SELECT', type: 'exp.Select', status: 'safe' },
@@ -55,9 +49,9 @@ WHERE device_type = 'Switch'
 ORDER BY warranty_expiry ASC
 LIMIT 100;`,
     rows: [
-      { name: 'SW-CORE-DAL-01', model: 'OmniSwitch 9300', site: 'Dallas Datacenter', metric: '2026-11-15 (29d)', status: 'Active' },
-      { name: 'SW-DIST-DAL-04', model: 'OmniSwitch 9300', site: 'Dallas Datacenter', metric: '2026-11-28 (42d)', status: 'Active' },
-      { name: 'SW-EDGE-DAL-02', model: 'ApexEdge 7050', site: 'Dallas Datacenter', metric: '2026-12-05 (49d)', status: 'Active' },
+      { name: 'SW-CORE-DAL-01', model: 'OmniSwitch 9300', site: 'Dallas DC', metric: '2026-11-15 (29d)', status: 'Active' },
+      { name: 'SW-DIST-DAL-04', model: 'OmniSwitch 9300', site: 'Dallas DC', metric: '2026-11-28 (42d)', status: 'Active' },
+      { name: 'SW-EDGE-DAL-02', model: 'ApexEdge 7050', site: 'Dallas DC', metric: '2026-12-05 (49d)', status: 'Active' },
     ],
   },
   telemetry: {
@@ -65,7 +59,6 @@ LIMIT 100;`,
     title: 'Thermal Anomaly Join',
     category: 'READ_QUERY',
     prompt: 'Show core routers with temperature > 65°C and packet loss > 0.05%',
-    latencyMs: '1.84ms',
     verdict: 'VERIFIED_SAFE',
     astTokens: [
       { token: 'SELECT', type: 'exp.Select', status: 'safe' },
@@ -83,62 +76,61 @@ WHERE d.device_type = 'Router'
 ORDER BY t.temperature_c DESC
 LIMIT 50;`,
     rows: [
-      { name: 'RTR-CORE-MIA-01', model: 'SkyBridge Core-9000', site: 'Miami DC 2', metric: 'Temp: 88.92°C', status: 'Loss: 34.5%' },
-      { name: 'RTR-CORE-BOS-03', model: 'NetMatrix 480', site: 'Boston DC 1', metric: 'Temp: 78.40°C', status: 'Loss: 12.1%' },
-      { name: 'RTR-EDGE-DEN-02', model: 'OmniRoute 8500', site: 'Denver DC 3', metric: 'Temp: 69.15°C', status: 'Loss: 5.4%' },
+      { name: 'RTR-CORE-MIA-01', model: 'SkyBridge Core-9000', site: 'Miami DC 2', metric: '88.9°C', status: 'Loss: 34.5%' },
+      { name: 'RTR-CORE-BOS-03', model: 'NetMatrix 480', site: 'Boston DC 1', metric: '78.4°C', status: 'Loss: 12.1%' },
+      { name: 'RTR-EDGE-DEN-02', model: 'OmniRoute 8500', site: 'Denver DC 3', metric: '69.2°C', status: 'Loss: 5.4%' },
     ],
   },
   injection: {
     id: 'injection',
-    title: 'Malicious DROP TABLE Injection',
+    title: 'DROP TABLE Injection',
     category: 'ATTACK_VECTOR',
     prompt: 'Show devices; DROP TABLE devices CASCADE; -- bypass security',
-    latencyMs: '0.18ms',
     verdict: 'BLOCKED_AT_GATE_1',
     blockedAtGateIndex: 0,
     astTokens: [
-      { token: 'exp.Select', type: 'Valid Query', status: 'safe' },
-      { token: 'DROP TABLE', type: 'exp.Drop', status: 'danger' },
-      { token: 'CASCADE', type: 'exp.Cascade', status: 'danger' },
+      { token: 'exp.Select', type: 'Query Statement', status: 'safe' },
+      { token: 'DROP TABLE', type: 'exp.Drop (Forbidden)', status: 'danger' },
+      { token: 'CASCADE', type: 'exp.Cascade (Forbidden)', status: 'danger' },
     ],
-    sql: `DROP TABLE devices CASCADE; -- Attempted destruction intercepted`,
-    blockedReason: 'Statement parsed as AST type "exp.Drop". QueryTrust Rule: AST must contain strictly 1 top-level exp.Select statement. Physical execution halted in 0.18ms.',
+    sql: `DROP TABLE devices CASCADE; -- Blocked prior to execution`,
+    blockedReason:
+      'Statement parsed with multiple roots including "exp.Drop". SQLGlot policy permits only a single top-level exp.Select statement.',
   },
   exfiltration: {
     id: 'exfiltration',
-    title: 'Catalog Harvester Attack',
+    title: 'Catalog Reconnaissance',
     category: 'ATTACK_VECTOR',
     prompt: 'SELECT usename, passwd FROM pg_shadow UNION SELECT 1, 2;',
-    latencyMs: '0.22ms',
     verdict: 'BLOCKED_AT_GATE_2',
     blockedAtGateIndex: 1,
     astTokens: [
       { token: 'SELECT', type: 'exp.Select', status: 'safe' },
-      { token: 'pg_shadow', type: 'exp.Table (FORBIDDEN)', status: 'danger' },
-      { token: 'UNION', type: 'exp.Union', status: 'danger' },
+      { token: 'pg_shadow', type: 'exp.Table (Forbidden)', status: 'danger' },
+      { token: 'UNION', type: 'exp.Union (Rejected)', status: 'danger' },
     ],
-    sql: `SELECT usename, passwd FROM pg_shadow UNION SELECT 1, 2;`,
-    blockedReason: 'Table "pg_shadow" is not on the whitelisted catalog allowed for natural-language queries. PostgreSQL system catalogs are physically isolated from qt_ai_readonly.',
+    sql: `SELECT usename, passwd FROM pg_shadow UNION SELECT 1, 2; -- Blocked prior to execution`,
+    blockedReason:
+      'Table "pg_shadow" is excluded from the synthetic catalog allowlist and unreachable by the qt_ai_readonly role.',
   },
 }
 
 const SIX_GATES = [
-  { num: 1, name: 'Statement Classifier', token: 'exp.Select', desc: 'Single SELECT strictly enforced' },
-  { num: 2, name: 'Catalog Whitelist', token: 'exp.Table', desc: 'Forbidden tables/catalogs rejected' },
-  { num: 3, name: 'Projection Guard', token: 'exp.Column', desc: 'Whitelisted entity columns only' },
-  { num: 4, name: 'Predicate Inspector', token: 'exp.Where', desc: 'Safe predicate boundaries verified' },
-  { num: 5, name: 'Join Guard', token: 'exp.Join', desc: 'Unbounded cross products blocked' },
-  { num: 6, name: 'Output Clamping', token: 'LIMIT 100', desc: 'Deterministic 100-row maximum clamp' },
+  { num: 1, name: 'Statement', token: 'exp.Select' },
+  { num: 2, name: 'Allowlist', token: 'exp.Table' },
+  { num: 3, name: 'Projections', token: 'exp.Column' },
+  { num: 4, name: 'Predicates', token: 'exp.Where' },
+  { num: 5, name: 'Joins', token: 'exp.Join' },
+  { num: 6, name: 'Row Clamp', token: 'LIMIT 100' },
 ]
 
 export const ASTCompilerLab: React.FC = () => {
-  const prefersReducedMotion = useReducedMotion()
   const [activePresetKey, setActivePresetKey] = useState<LabPresetKey>('warranty')
   const [copied, setCopied] = useState(false)
-  const [activeGateStep, setActiveGateStep] = useState<number>(6)
-  const [isSimulating, setIsSimulating] = useState(false)
 
   const active = PRESETS[activePresetKey]
+  const isAttack = active.category === 'ATTACK_VECTOR'
+  const passedCount = isAttack ? (active.blockedAtGateIndex ?? 0) : SIX_GATES.length
 
   const handleCopy = () => {
     navigator.clipboard.writeText(active.sql)
@@ -146,74 +138,32 @@ export const ASTCompilerLab: React.FC = () => {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Trigger real-time 6-gate traversal animation on scenario change
-  const handleSelectScenario = (key: LabPresetKey) => {
-    setActivePresetKey(key)
-    if (prefersReducedMotion) return
-
-    setIsSimulating(true)
-    const targetPreset = PRESETS[key]
-
-    if (targetPreset.category === 'ATTACK_VECTOR') {
-      const stopAt = targetPreset.blockedAtGateIndex ?? 0
-      setActiveGateStep(0)
-      let current = 0
-      const timer = setInterval(() => {
-        current++
-        if (current > stopAt) {
-          clearInterval(timer)
-          setActiveGateStep(stopAt)
-          setIsSimulating(false)
-        } else {
-          setActiveGateStep(current)
-        }
-      }, 150)
-    } else {
-      setActiveGateStep(0)
-      let current = 0
-      const timer = setInterval(() => {
-        current++
-        setActiveGateStep(current)
-        if (current >= 6) {
-          clearInterval(timer)
-          setIsSimulating(false)
-        }
-      }, 120)
-    }
-  }
-
-  useEffect(() => {
-    handleSelectScenario('warranty')
-  }, [])
-
-  const isAttack = active.category === 'ATTACK_VECTOR'
-
   return (
-    <div className={`relative w-full rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200 dark:border-zinc-800 shadow-[0_12px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.5)] overflow-hidden transition-all text-left ${
-      isAttack && !prefersReducedMotion ? 'animate-[shake_0.4s_ease-in-out]' : ''
-    }`}>
-      
-      {/* Screen-Edge Deflection Pulse for Attacks */}
-      <AnimatePresence>
-        {isAttack && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 rounded-3xl pointer-events-none z-30 ring-2 ring-rose-500/60 shadow-[inset_0_0_30px_rgba(244,63,94,0.15)]"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* ─── Top Controller Bar ─── */}
-      <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 flex flex-wrap items-center justify-between gap-3">
-        
-        {/* Preset Selector Chips (Pill Style) */}
+    <div
+      className="w-full overflow-hidden text-left"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border-subtle)',
+        borderRadius: 'var(--radius-container)',
+      }}
+    >
+      {/* Top Scenario Selector Bar */}
+      <div
+        className="px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3"
+        style={{
+          backgroundColor: 'var(--color-raised)',
+          borderBottom: '1px solid var(--color-border-subtle)',
+        }}
+      >
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 mr-1 flex items-center gap-1.5">
-            <Layers size={12} className="text-sky-500" />
-            <span>SCENARIOS:</span>
+          <span
+            className="text-[11px] font-medium uppercase tracking-wider mr-1 flex items-center gap-1.5"
+            style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}
+          >
+            <Layers size={12} style={{ color: 'var(--color-accent-link)' }} />
+            <span>Scenarios:</span>
           </span>
+
           {(Object.keys(PRESETS) as LabPresetKey[]).map((key) => {
             const preset = PRESETS[key]
             const isSelected = activePresetKey === key
@@ -223,19 +173,42 @@ export const ASTCompilerLab: React.FC = () => {
               <button
                 key={key}
                 type="button"
-                onClick={() => handleSelectScenario(key)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  isSelected
+                onClick={() => setActivePresetKey(key)}
+                className="px-3 py-1.5 rounded-[8px] text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                style={{
+                  backgroundColor: isSelected
                     ? isPresetAttack
-                      ? 'bg-rose-600 text-white shadow-xs'
-                      : 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
-                    : 'bg-white dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white border border-zinc-200/90 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                }`}
+                      ? 'var(--color-status-error-bg)'
+                      : 'var(--color-accent)'
+                    : 'var(--color-surface)',
+                  color: isSelected
+                    ? isPresetAttack
+                      ? 'var(--color-status-error-text)'
+                      : 'var(--color-accent-contrast)'
+                    : 'var(--color-text-secondary)',
+                  border: `1px solid ${
+                    isSelected
+                      ? isPresetAttack
+                        ? 'var(--color-status-error-dot)'
+                        : 'var(--color-accent)'
+                      : 'var(--color-border-subtle)'
+                  }`,
+                }}
               >
                 {isPresetAttack ? (
-                  <ShieldAlert size={12} className={isSelected ? 'text-white' : 'text-rose-500'} />
+                  <ShieldAlert
+                    size={12}
+                    style={{
+                      color: isSelected ? 'var(--color-status-error-text)' : 'var(--color-status-error-dot)',
+                    }}
+                  />
                 ) : (
-                  <Sparkles size={12} className={isSelected ? 'text-sky-300 dark:text-sky-600' : 'text-zinc-400'} />
+                  <CheckCircle2
+                    size={12}
+                    style={{
+                      color: isSelected ? 'var(--color-accent-contrast)' : 'var(--color-status-success-dot)',
+                    }}
+                  />
                 )}
                 <span>{preset.title}</span>
               </button>
@@ -243,68 +216,105 @@ export const ASTCompilerLab: React.FC = () => {
           })}
         </div>
 
-        {/* Real-Time Compiler Bench Badge */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs font-mono text-zinc-600 dark:text-zinc-300">
-            <Cpu size={12} className="text-sky-500" />
-            <span>AST Latency:</span>
-            <strong className="text-zinc-950 dark:text-white font-semibold">{active.latencyMs}</strong>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>PostgreSQL 16</span>
-          </div>
+        <div
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-[11px] font-medium"
+          style={{
+            backgroundColor: 'var(--color-status-success-bg)',
+            color: 'var(--color-status-success-text)',
+            fontFamily: 'var(--font-mono)',
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: 'var(--color-status-success-dot)' }}
+          />
+          <span>PostgreSQL 16 Dialect</span>
         </div>
       </div>
 
-      {/* ─── LIVE 6-GATE AST PIPELINE VISUALIZER (Horizontal Stage) ─── */}
-      <div className="px-6 py-4 bg-zinc-100/70 dark:bg-[#070A10] border-b border-zinc-200 dark:border-zinc-800/80">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-            <Zap size={11} className={isAttack ? 'text-rose-500' : 'text-sky-500'} />
-            <span>REAL-TIME 6-GATE AST TRAVERSAL PIPELINE</span>
+      {/* 6-Check Pipeline Bar */}
+      <div
+        className="px-4 sm:px-6 py-4"
+        style={{
+          backgroundColor: 'var(--color-page-bg)',
+          borderBottom: '1px solid var(--color-border-subtle)',
+        }}
+      >
+        <div
+          className="flex flex-wrap items-center justify-between gap-2 mb-3 text-[11px]"
+          style={{ fontFamily: 'var(--font-mono)' }}
+        >
+          <span className="uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+            6-Check AST Verification Sequence
           </span>
-          <span className="text-[10px] font-mono text-zinc-400">
-            {isSimulating ? 'Traversing Gates...' : isAttack ? 'DEFLECTED AT INVARIANT' : 'ALL GATES CLEARED'}
+          <span
+            className="font-medium"
+            style={{
+              color: isAttack ? 'var(--color-status-error-text)' : 'var(--color-status-success-text)',
+            }}
+          >
+            {isAttack
+              ? `Blocked at Check #${(active.blockedAtGateIndex ?? 0) + 1}`
+              : 'All 6 Checks Passed'}
           </span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           {SIX_GATES.map((gate, idx) => {
-            const isBlockedHere = isAttack && (active.blockedAtGateIndex === idx)
-            const isPassed = !isAttack ? (activeGateStep > idx) : (activeGateStep > idx && !isBlockedHere)
-            const isCurrent = activeGateStep === idx
-
-            let stateClasses = 'bg-white/60 dark:bg-zinc-900/40 border-zinc-200/80 dark:border-zinc-800 text-zinc-400'
-            if (isBlockedHere) {
-              stateClasses = 'bg-rose-500/20 dark:bg-rose-950/40 border-rose-500 text-rose-600 dark:text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.3)] animate-pulse'
-            } else if (isPassed) {
-              stateClasses = 'bg-emerald-500/10 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
-            } else if (isCurrent) {
-              stateClasses = 'bg-sky-500/15 dark:bg-sky-950/40 border-sky-400 text-sky-700 dark:text-sky-300'
-            }
+            const isBlockedHere = isAttack && active.blockedAtGateIndex === idx
+            const isPassed = !isAttack || idx < (active.blockedAtGateIndex ?? 0)
 
             return (
               <div
                 key={gate.num}
-                className={`p-2.5 rounded-xl border transition-all text-left relative ${stateClasses}`}
+                className="p-2.5 rounded-[8px] text-left transition-colors"
+                style={{
+                  backgroundColor: isBlockedHere
+                    ? 'var(--color-status-error-bg)'
+                    : isPassed
+                    ? 'var(--color-status-success-bg)'
+                    : 'var(--color-surface)',
+                  border: `1px solid ${
+                    isBlockedHere
+                      ? 'var(--color-status-error-dot)'
+                      : isPassed
+                      ? 'var(--color-status-success-dot)'
+                      : 'var(--color-border-subtle)'
+                  }`,
+                }}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-mono text-[9px] font-bold">GATE #{gate.num}</span>
-                  {isBlockedHere ? (
-                    <span className="px-1.5 py-0.5 rounded bg-rose-500 text-white font-mono text-[8px] font-bold">
-                      BLOCKED
-                    </span>
-                  ) : isPassed ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                  )}
+                  <span
+                    className="text-[10px] font-semibold uppercase"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      color: isBlockedHere
+                        ? 'var(--color-status-error-text)'
+                        : isPassed
+                        ? 'var(--color-status-success-text)'
+                        : 'var(--color-text-muted)',
+                    }}
+                  >
+                    Check #{gate.num}
+                  </span>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      backgroundColor: isBlockedHere
+                        ? 'var(--color-status-error-dot)'
+                        : isPassed
+                        ? 'var(--color-status-success-dot)'
+                        : 'var(--color-border-strong)',
+                    }}
+                  />
                 </div>
-                <div className="text-[11px] font-mono font-bold truncate">
+                <div
+                  className="text-xs font-semibold truncate"
+                  style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
+                >
                   {gate.token}
                 </div>
-                <div className="text-[9.5px] font-sans opacity-75 truncate mt-0.5">
+                <div className="text-[11px] truncate mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
                   {gate.name}
                 </div>
               </div>
@@ -313,53 +323,78 @@ export const ASTCompilerLab: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── Main Split-Pane Exhibit Body ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-zinc-200 dark:divide-zinc-800">
-        
-        {/* Left Pane (5 cols): Input Prompt & AST Token Breakdown */}
-        <div className="lg:col-span-5 p-6 space-y-5 bg-zinc-50/40 dark:bg-zinc-900/30">
-          
-          {/* Prompt Section */}
+      {/* Split Inspector Body */}
+      <div className="grid grid-cols-1 lg:grid-cols-12">
+        {/* Left Pane */}
+        <div
+          className="lg:col-span-5 p-5 sm:p-6 space-y-5 min-w-0"
+          style={{
+            backgroundColor: 'var(--color-raised)',
+            borderBottom: '1px solid var(--color-border-subtle)',
+          }}
+        >
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                <Terminal size={12} className="text-sky-500" />
-                <span>NATURAL LANGUAGE QUERY INTENT</span>
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-200/60 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
-                CLIENT INPUT
+              <span
+                className="text-[11px] uppercase tracking-wider flex items-center gap-1.5"
+                style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}
+              >
+                <Terminal size={12} style={{ color: 'var(--color-accent-link)' }} />
+                <span>Natural-language input</span>
               </span>
             </div>
-            <div className="p-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-100 font-sans leading-relaxed shadow-xs">
+            <div
+              className="p-3.5 rounded-[8px] text-sm leading-relaxed"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                border: '1px solid var(--color-border-subtle)',
+                color: 'var(--color-text-primary)',
+              }}
+            >
               &ldquo;{active.prompt}&rdquo;
             </div>
           </div>
 
-          {/* AST Syntax Token Pipeline Visualization */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                <Code2 size={12} className="text-sky-500" />
-                <span>6-GATE AST TOKEN INSPECTION</span>
-              </span>
-              <span className="text-[10px] font-mono text-zinc-400">
-                Deterministic
+              <span
+                className="text-[11px] uppercase tracking-wider flex items-center gap-1.5"
+                style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}
+              >
+                <Code2 size={12} style={{ color: 'var(--color-accent-link)' }} />
+                <span>Parsed AST nodes</span>
               </span>
             </div>
             <div className="space-y-1.5">
               {active.astTokens.map((item, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center justify-between px-3.5 py-2 rounded-xl border text-xs font-mono transition-all ${
-                    item.status === 'danger'
-                      ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300'
-                      : item.status === 'clamped'
-                      ? 'bg-sky-50 dark:bg-sky-950/30 border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300'
-                      : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 shadow-2xs'
-                  }`}
+                  className="flex items-center justify-between px-3 py-2 rounded-[8px] text-xs"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    backgroundColor:
+                      item.status === 'danger'
+                        ? 'var(--color-status-error-bg)'
+                        : item.status === 'clamped'
+                        ? 'var(--color-accent-subtle)'
+                        : 'var(--color-surface)',
+                    border: `1px solid ${
+                      item.status === 'danger'
+                        ? 'var(--color-status-error-dot)'
+                        : item.status === 'clamped'
+                        ? 'var(--color-accent-border)'
+                        : 'var(--color-border-subtle)'
+                    }`,
+                    color:
+                      item.status === 'danger'
+                        ? 'var(--color-status-error-text)'
+                        : item.status === 'clamped'
+                        ? 'var(--color-accent-link)'
+                        : 'var(--color-text-primary)',
+                  }}
                 >
                   <span className="font-semibold">{item.token}</span>
-                  <span className="text-[10.5px] opacity-75">{item.type}</span>
+                  <span className="text-[11px] opacity-85">{item.type}</span>
                 </div>
               ))}
             </div>
@@ -367,200 +402,127 @@ export const ASTCompilerLab: React.FC = () => {
 
           {/* Verdict Banner */}
           <div
-            className={`p-4 rounded-2xl border flex items-start gap-3 ${
-              active.verdict === 'VERIFIED_SAFE'
-                ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300'
-                : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300'
-            }`}
+            className="p-4 rounded-[8px] flex items-start gap-3"
+            style={{
+              backgroundColor:
+                active.verdict === 'VERIFIED_SAFE'
+                  ? 'var(--color-status-success-bg)'
+                  : 'var(--color-status-error-bg)',
+              border: `1px solid ${
+                active.verdict === 'VERIFIED_SAFE'
+                  ? 'var(--color-status-success-dot)'
+                  : 'var(--color-status-error-dot)'
+              }`,
+              color:
+                active.verdict === 'VERIFIED_SAFE'
+                  ? 'var(--color-status-success-text)'
+                  : 'var(--color-status-error-text)',
+            }}
           >
             {active.verdict === 'VERIFIED_SAFE' ? (
-              <CheckCircle2 size={17} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
             ) : (
-              <XCircle size={17} className="text-rose-500 flex-shrink-0 mt-0.5" />
+              <XCircle size={16} className="shrink-0 mt-0.5" />
             )}
-            <div className="text-xs">
+            <div className="text-xs space-y-1">
               <div className="font-semibold">
-                {active.verdict === 'VERIFIED_SAFE' ? 'AST Verification Passed' : 'Interception Shield Triggered'}
+                {active.verdict === 'VERIFIED_SAFE' ? 'AST Verification Passed' : 'Statement Rejected'}
               </div>
-              <p className="mt-0.5 text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11.5px]">
+              <p className="leading-relaxed opacity-90 m-0">
                 {active.verdict === 'VERIFIED_SAFE'
-                  ? 'Query verified as single read-only SELECT statement with row limits clamped before execution.'
+                  ? 'Validated as a single read-only SELECT statement with row limits bounded prior to execution.'
                   : active.blockedReason}
               </p>
-              {/* Tactile Physical COMPILER STAMP */}
-              <div className="pt-2">
-                {active.verdict === 'VERIFIED_SAFE' ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded border-2 border-emerald-500 dark:border-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 font-mono text-[11px] font-bold tracking-widest uppercase shadow-xs">
-                    APPROVED — READ ONLY
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded border-2 border-rose-500 bg-rose-500/15 text-rose-500 font-mono text-[11px] font-bold tracking-widest uppercase shadow-xs">
-                    DEFLECTED AT GATE #1
-                  </span>
-                )}
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Pane (7 cols): Verified SQL Output & Governed Result Matrix */}
-        <div className="lg:col-span-7 p-6 space-y-5 bg-white dark:bg-[#121215]">
-          
-          {/* ── MANDATORY VISUAL: Connected SVG AST Tree Diagram ── */}
-          <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-xs font-mono">
-            <div className="flex items-center justify-between text-[10px] text-zinc-400 uppercase tracking-wider mb-2">
-              <span className="flex items-center gap-1.5">
-                <Layers size={11} className={isAttack ? 'text-rose-400' : 'text-sky-400'} />
-                <span>INTERACTIVE AST NODE TREE GRAPH</span>
-              </span>
-              <span className={isAttack ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
-                {isAttack ? '⚡ BARRIER ACTIVATED' : '✓ PARSED CLEAN'}
-              </span>
-            </div>
-
-            {/* Connected Node Tree Graphic with Wide Pill Nodes & Numbered CAD Blueprint Pins 01-06 */}
-            <div className="overflow-x-auto py-2">
-              <svg viewBox="0 0 760 90" className="w-full min-w-[700px] h-20">
-                {/* Connecting Lines with High-Voltage Light Pulse */}
-                <line x1="95" y1="45" x2="125" y2="45" stroke={isAttack ? '#f43f5e' : '#38bdf8'} strokeWidth="1.5" strokeDasharray="3 2" />
-                <line x1="235" y1="45" x2="260" y2="45" stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
-                <line x1="380" y1="45" x2="405" y2="45" stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : '#10b981'} strokeWidth="1.5" />
-                <line x1="525" y1="45" x2="550" y2="45" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
-                <line x1="645" y1="45" x2="670" y2="45" stroke={isAttack ? '#71717a' : '#10b981'} strokeWidth="1.5" />
-
-                {/* Node 1: Input (Pin 01) */}
-                <g transform="translate(50, 45)">
-                  <circle cx="0" cy="-28" r="7" fill="#18181b" stroke="#38BDF8" strokeWidth="1" />
-                  <text textAnchor="middle" y="-25" fill="#38BDF8" fontSize="7" fontFamily="monospace" fontWeight="bold">01</text>
-                  <rect x="-42" y="-18" width="85" height="36" rx="18" fill="#18181b" stroke="#71717a" strokeWidth="1.5" />
-                  <text textAnchor="middle" dy="4" fill="#a1a1aa" fontSize="9" fontFamily="monospace">Query</text>
-                </g>
-
-                {/* Node 2: SQLGlot Parser (Pin 02) */}
-                <g transform="translate(180, 45)">
-                  <circle cx="0" cy="-28" r="7" fill="#0f172a" stroke="#38BDF8" strokeWidth="1" />
-                  <text textAnchor="middle" y="-25" fill="#38BDF8" fontSize="7" fontFamily="monospace" fontWeight="bold">02</text>
-                  <rect x="-50" y="-18" width="100" height="36" rx="18" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.5" />
-                  <text textAnchor="middle" dy="4" fill="#38bdf8" fontSize="9" fontFamily="monospace" fontWeight="bold">Parser</text>
-                </g>
-
-                {/* Node 3: exp.Select / exp.Drop (Pin 03 - Wide Pill Node width=115 rx=18) */}
-                <g transform="translate(320, 45)">
-                  <circle cx="0" cy="-28" r="7" fill={isAttack && active.blockedAtGateIndex === 0 ? '#4c0519' : '#064e3b'} stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'} strokeWidth="1" />
-                  <text textAnchor="middle" y="-25" fill={isAttack && active.blockedAtGateIndex === 0 ? '#fda4af' : '#6ee7b7'} fontSize="7" fontFamily="monospace" fontWeight="bold">03</text>
-                  <rect
-                    x="-57"
-                    y="-18"
-                    width="115"
-                    height="36"
-                    rx="18"
-                    fill={isAttack && active.blockedAtGateIndex === 0 ? '#4c0519' : '#064e3b'}
-                    stroke={isAttack && active.blockedAtGateIndex === 0 ? '#f43f5e' : '#10b981'}
-                    strokeWidth="2"
-                  />
-                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 0 ? '#fda4af' : '#6ee7b7'} fontSize="9.5" fontFamily="monospace" fontWeight="bold">
-                    {isAttack && active.blockedAtGateIndex === 0 ? 'exp.Drop' : 'exp.Select'}
-                  </text>
-                </g>
-
-                {/* Node 4: exp.Table [devices / pg_shadow] (Pin 04 - Wide Pill Node width=115 rx=18) */}
-                <g transform="translate(465, 45)">
-                  <circle cx="0" cy="-28" r="7" fill={isAttack && active.blockedAtGateIndex === 1 ? '#4c0519' : '#064e3b'} stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : '#10b981'} strokeWidth="1" />
-                  <text textAnchor="middle" y="-25" fill={isAttack && active.blockedAtGateIndex === 1 ? '#fda4af' : '#6ee7b7'} fontSize="7" fontFamily="monospace" fontWeight="bold">04</text>
-                  <rect
-                    x="-57"
-                    y="-18"
-                    width="115"
-                    height="36"
-                    rx="18"
-                    fill={isAttack && active.blockedAtGateIndex === 1 ? '#4c0519' : isAttack ? '#27272a' : '#064e3b'}
-                    stroke={isAttack && active.blockedAtGateIndex === 1 ? '#f43f5e' : isAttack ? '#52525b' : '#10b981'}
-                    strokeWidth="1.5"
-                  />
-                  <text textAnchor="middle" dy="4" fill={isAttack && active.blockedAtGateIndex === 1 ? '#fda4af' : isAttack ? '#71717a' : '#6ee7b7'} fontSize="9" fontFamily="monospace">
-                    {isAttack && active.blockedAtGateIndex === 1 ? 'pg_shadow' : 'devices'}
-                  </text>
-                </g>
-
-                {/* Node 5: exp.Limit [100] (Pin 05) */}
-                <g transform="translate(600, 45)">
-                  <circle cx="0" cy="-28" r="7" fill="#18181b" stroke="#10b981" strokeWidth="1" />
-                  <text textAnchor="middle" y="-25" fill="#10b981" fontSize="7" fontFamily="monospace" fontWeight="bold">05</text>
-                  <rect x="-47" y="-18" width="94" height="36" rx="18" fill={isAttack ? '#27272a' : '#064e3b'} stroke={isAttack ? '#52525b' : '#10b981'} strokeWidth="1.5" />
-                  <text textAnchor="middle" dy="4" fill={isAttack ? '#71717a' : '#6ee7b7'} fontSize="8.5" fontFamily="monospace">LIMIT 100</text>
-                </g>
-
-                {/* Node 6: qt_ai_readonly Pool (Pin 06) */}
-                <g transform="translate(710, 45)">
-                  <circle cx="0" cy="-28" r="7" fill="#0369a1" stroke="#38bdf8" strokeWidth="1" />
-                  <text textAnchor="middle" y="-25" fill="#38bdf8" fontSize="7" fontFamily="monospace" fontWeight="bold">06</text>
-                  <rect x="-40" y="-18" width="80" height="36" rx="18" fill={isAttack ? '#27272a' : '#0369a1'} stroke={isAttack ? '#52525b' : '#38bdf8'} strokeWidth="1.5" />
-                  <text textAnchor="middle" dy="4" fill={isAttack ? '#71717a' : '#bae6fd'} fontSize="8.5" fontFamily="monospace" fontWeight="bold">Pool</text>
-                </g>
-              </svg>
-            </div>
-          </div>
-
-          {/* Compiled SQL Viewport with Terminal Chrome */}
+        {/* Right Pane */}
+        <div
+          className="lg:col-span-7 p-5 sm:p-6 space-y-5 min-w-0"
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            borderLeft: '1px solid var(--color-border-subtle)',
+          }}
+        >
+          {/* Candidate SQL Block */}
           <div>
-            <div className="flex items-center justify-between px-4 py-2.5 mb-2 rounded-xl bg-zinc-100/70 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5 font-bold">
-                <Database size={12} className="text-sky-500" />
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span
+                className="text-[11px] uppercase tracking-wider flex items-center gap-1.5"
+                style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}
+              >
+                <Database size={12} style={{ color: 'var(--color-accent-link)' }} />
                 <span>
-                  {active.category === 'ATTACK_VECTOR'
-                    ? 'REJECTED COMPILER STATE'
-                    : 'COMPILED POSTGRESQL (READ-ONLY READY)'}
+                  {active.category === 'ATTACK_VECTOR' ? 'Rejected Statement' : 'Validated PostgreSQL Query'}
                 </span>
               </span>
               <button
                 type="button"
                 onClick={handleCopy}
-                className="text-[11px] font-mono text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white flex items-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer shadow-2xs"
+                className="text-[11px] flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] cursor-pointer landing-control-secondary"
+                style={{ fontFamily: 'var(--font-mono)' }}
               >
-                {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                {copied ? <Check size={11} style={{ color: 'var(--color-status-success-dot)' }} /> : <Copy size={11} />}
                 <span>{copied ? 'Copied' : 'Copy SQL'}</span>
               </button>
             </div>
 
-            <div className="rounded-2xl bg-zinc-950 border border-zinc-800 p-4 relative font-mono text-xs text-sky-100 overflow-x-auto shadow-inner">
-              {/* Terminal Title Bar */}
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-2.5 mb-3 text-[10px] text-zinc-500">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
-                  <span className="ml-2 font-mono text-zinc-400">pg_ast_compiler.sql</span>
-                </div>
-                <span className="text-emerald-400 font-mono">DIALECT: POSTGRESQL</span>
-              </div>
-              <pre className="leading-relaxed selection:bg-sky-500/30">
-                {active.sql}
-              </pre>
-            </div>
+            <pre
+              className="p-4 rounded-[8px] text-xs leading-relaxed overflow-x-auto m-0"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                backgroundColor: 'var(--color-raised)',
+                border: '1px solid var(--color-border-subtle)',
+                color: isAttack ? 'var(--color-status-error-text)' : 'var(--color-text-primary)',
+              }}
+            >
+              <code>{active.sql}</code>
+            </pre>
           </div>
 
-          {/* Results Preview */}
+          {/* Outcome Preview */}
           {active.category === 'READ_QUERY' && active.rows && (
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
-                  DATABASE ENGINE RESPONSE (&le; 100 ROWS)
+              <div
+                className="flex items-center justify-between mb-2 text-[11px]"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              >
+                <span className="uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                  Sample Output (&le; 100 rows)
                 </span>
-                <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
-                  Role: qt_ai_readonly
+                <span style={{ color: 'var(--color-status-success-text)', fontWeight: 600 }}>
+                  Checks cleared: {passedCount} / 6
                 </span>
               </div>
-              
-              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900/60 shadow-2xs">
-                <table className="w-full text-xs text-left">
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 font-mono text-[11px]">
+
+              <div
+                className="rounded-[8px] overflow-x-auto"
+                style={{ border: '1px solid var(--color-border-subtle)' }}
+              >
+                <table className="w-full min-w-[460px] text-xs text-left border-collapse">
+                  <tbody style={{ fontFamily: 'var(--font-mono)' }}>
                     {active.rows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-zinc-50/70 dark:hover:bg-zinc-800/40 transition-colors">
-                        <td className="px-3.5 py-2.5 font-bold text-zinc-950 dark:text-white">{row.name}</td>
-                        <td className="px-3.5 py-2.5 text-zinc-600 dark:text-zinc-400">{row.model}</td>
-                        <td className="px-3.5 py-2.5 text-zinc-600 dark:text-zinc-400">{row.site}</td>
-                        <td className="px-3.5 py-2.5 text-sky-600 dark:text-sky-400 font-semibold">{row.metric}</td>
-                        <td className="px-3.5 py-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">{row.status}</td>
+                      <tr
+                        key={idx}
+                        style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
+                        className="last:border-b-0"
+                      >
+                        <td className="px-3.5 py-2.5 font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                          {row.name}
+                        </td>
+                        <td className="px-3.5 py-2.5" style={{ color: 'var(--color-text-secondary)' }}>
+                          {row.model}
+                        </td>
+                        <td className="px-3.5 py-2.5" style={{ color: 'var(--color-text-secondary)' }}>
+                          {row.site}
+                        </td>
+                        <td className="px-3.5 py-2.5 font-medium" style={{ color: 'var(--color-accent-link)' }}>
+                          {row.metric}
+                        </td>
+                        <td className="px-3.5 py-2.5 font-medium" style={{ color: 'var(--color-status-success-text)' }}>
+                          {row.status}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -570,54 +532,55 @@ export const ASTCompilerLab: React.FC = () => {
           )}
 
           {active.category === 'ATTACK_VECTOR' && (
-            <div className="rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/20 p-5 space-y-3.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-mono text-xs font-semibold">
-                  <Lock size={14} />
-                  <span>Physical Execution Boundary Enforced</span>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 font-mono text-[10.5px] font-bold">
-                  0 BYTES MUTATED
+            <div
+              className="rounded-[8px] p-4 space-y-2.5"
+              style={{
+                backgroundColor: 'var(--color-status-error-bg)',
+                border: '1px solid var(--color-status-error-dot)',
+              }}
+            >
+              <div
+                className="flex items-center justify-between text-xs font-semibold"
+                style={{ color: 'var(--color-status-error-text)', fontFamily: 'var(--font-mono)' }}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Lock size={13} />
+                  <span>Execution Prevented Prior to Connection Pool</span>
                 </span>
               </div>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-                The database kernel process received zero socket payloads. The AST compiler rejected the query in user space before connection pooling or table locks were initiated.
+              <p className="text-xs leading-relaxed m-0" style={{ color: 'var(--color-text-secondary)' }}>
+                The AST validator rejected the query in application memory before requesting a cursor from the PostgreSQL reader role.
               </p>
-              <div className="grid grid-cols-3 gap-3 pt-2 border-t border-rose-200 dark:border-rose-900/40 text-center font-mono">
-                <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                  <div className="text-[10px] text-zinc-500">Latency</div>
-                  <div className="text-xs font-bold text-zinc-950 dark:text-white mt-0.5">{active.latencyMs}</div>
-                </div>
-                <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                  <div className="text-[10px] text-zinc-500">Writes Attempted</div>
-                  <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-0.5">0 Writes</div>
-                </div>
-                <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                  <div className="text-[10px] text-zinc-500">Integrity</div>
-                  <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">100% Intact</div>
-                </div>
-              </div>
             </div>
           )}
-
         </div>
       </div>
 
-      {/* ─── Bottom Status Ticker ─── */}
-      <div className="px-5 py-3 bg-zinc-50 dark:bg-zinc-900/60 border-t border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 font-mono text-[11px] text-zinc-500">
+      {/* Bottom Policy Strip */}
+      <div
+        className="px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-[11px]"
+        style={{
+          backgroundColor: 'var(--color-raised)',
+          borderTop: '1px solid var(--color-border-subtle)',
+          color: 'var(--color-text-muted)',
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          <span>PostgreSQL Dedicated Reader: SELECT-Only Privileges Strictly Granted</span>
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: 'var(--color-status-success-dot)' }}
+          />
+          <span>Dedicated Reader: SELECT-only privileges via qt_ai_readonly</span>
         </div>
-        <div className="flex items-center gap-2 text-zinc-400">
-          <span>Row Clamp: Max 100</span>
-          <span>&bull;</span>
-          <span>Statement Timeout: 5,000ms</span>
-          <span>&bull;</span>
-          <span>Dialect: PostgreSQL</span>
+        <div className="flex items-center gap-2">
+          <span>Max 500 rows</span>
+          <span>&middot;</span>
+          <span>5,000 ms timeout</span>
+          <span>&middot;</span>
+          <span>PostgreSQL 16</span>
         </div>
       </div>
-
     </div>
   )
 }

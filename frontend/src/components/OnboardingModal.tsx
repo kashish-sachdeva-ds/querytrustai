@@ -70,7 +70,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             <span className="quickstart-section-heading">How QueryTrust Works</span>
             <div className="quickstart-principles-list">
               <div className="quickstart-principle-item">
-                <Search size={14} className="principle-icon text-orange" aria-hidden="true" />
+                <Search size={14} className="principle-icon tone-accent" aria-hidden="true" />
                 <div className="principle-text">
                   <strong>Ask in plain English</strong>
                   <span>Type natural-language questions about equipment, telemetry, and health.</span>
@@ -78,18 +78,18 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               </div>
 
               <div className="quickstart-principle-item">
-                <Database size={14} className="principle-icon text-emerald" aria-hidden="true" />
+                <Database size={14} className="principle-icon tone-success" aria-hidden="true" />
                 <div className="principle-text">
                   <strong>Read-only by design</strong>
-                  <span>Database connections are strictly SELECT-only. Mutation or deletion is physically impossible.</span>
+                  <span>Database connections are strictly SELECT-only. Mutation or deletion is blocked by role privileges.</span>
                 </div>
               </div>
 
               <div className="quickstart-principle-item">
-                <ShieldCheck size={14} className="principle-icon text-sky" aria-hidden="true" />
+                <ShieldCheck size={14} className="principle-icon tone-accent" aria-hidden="true" />
                 <div className="principle-text">
-                  <strong>Automated AST safety gates</strong>
-                  <span>Every query is verified through 6 strict safety checks before touching the database.</span>
+                  <strong>Automated AST safety checks</strong>
+                  <span>Every query is verified through 6 deterministic rules before touching the database.</span>
                 </div>
               </div>
             </div>

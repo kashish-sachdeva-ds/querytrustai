@@ -404,8 +404,8 @@ export const InteractiveErdCanvas: React.FC<InteractiveErdCanvasProps> = ({ onAs
                                 style={{
                                   fontSize: '9px',
                                   fontFamily: 'var(--font-mono)',
-                                  backgroundColor: '#FEF3C7',
-                                  color: '#B45309',
+                                  backgroundColor: 'var(--color-status-warning-bg)',
+                                  color: 'var(--color-status-warning-text)',
                                   padding: '1px 4px',
                                   borderRadius: '2px',
                                   fontWeight: 700,
@@ -420,8 +420,8 @@ export const InteractiveErdCanvas: React.FC<InteractiveErdCanvasProps> = ({ onAs
                                 style={{
                                   fontSize: '9px',
                                   fontFamily: 'var(--font-mono)',
-                                  backgroundColor: '#EFF6FF',
-                                  color: '#1D4ED8',
+                                  backgroundColor: 'var(--color-accent-subtle)',
+                                  color: 'var(--color-accent-link)',
                                   padding: '1px 4px',
                                   borderRadius: '2px',
                                   fontWeight: 700,

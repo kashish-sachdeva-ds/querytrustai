@@ -1,4 +1,4 @@
-/* DataQualityView.css - QueryTrust AI Data Health & Hygiene */
+/* DataQualityView.css - Token-Based Data Health & Diagnostics */
 
 .dq-container {
   display: flex;
@@ -8,62 +8,45 @@
 
 .dq-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1px;
+  background: var(--color-border-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-container);
+  overflow: hidden;
 }
 
-.dq-kpi-card {
-  background: var(--qt-surface);
-  border: 1px solid var(--qt-border);
-  border-radius: var(--qt-radius-inner, 8px);
-  padding: 1.25rem;
+.dq-kpi-cell {
+  background: var(--color-surface);
+  padding: 1.15rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.dq-kpi-card:hover {
-  border-color: var(--qt-border-strong);
+  gap: 0.45rem;
 }
 
 .dq-kpi-label {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--qt-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
 }
 
 .dq-kpi-value {
-  font-size: 2rem;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  color: var(--qt-ink);
-  line-height: 1.1;
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1.05;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .dq-kpi-sub {
-  font-size: 0.78rem;
-  color: var(--qt-text);
+  font-size: 12px;
+  color: var(--color-text-secondary);
   line-height: 1.4;
-  margin-top: auto;
-}
-
-/* Diagnostic Rule Notice Banner */
-.dq-rule-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 0.85rem 1.1rem;
-  background: var(--qt-surface-muted);
-  border: 1px solid var(--qt-border);
-  border-radius: var(--qt-radius-control, 6px);
-  font-size: 0.8rem;
-  color: var(--qt-text);
-  line-height: 1.45;
-}
-
-.dq-rule-note strong {
-  color: var(--qt-ink);
 }
 
 /* Filter Controls Strip */
@@ -73,9 +56,9 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
-  background: var(--qt-surface);
-  border: 1px solid var(--qt-border);
-  border-radius: var(--qt-radius-inner, 8px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-container);
   padding: 0.75rem 1.25rem;
 }
 
@@ -87,41 +70,42 @@
 }
 
 .dq-filter-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--qt-muted);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
   margin-right: 0.25rem;
 }
 
 .dq-filter-chip {
-  background: var(--qt-surface-muted);
-  border: 1px solid var(--qt-border);
-  border-radius: var(--qt-radius-control, 6px);
+  background: var(--color-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
   padding: 0.35rem 0.75rem;
-  font-size: 0.75rem;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--qt-text);
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .dq-filter-chip:hover {
-  background: var(--qt-surface);
-  border-color: var(--qt-border-strong);
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
 }
 
 .dq-filter-chip.active {
-  background: #09090B;
-  border-color: #09090B;
-  color: #FFFFFF;
-  font-weight: 600;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 500;
 }
 
 /* Findings Table */
 .dq-table-card {
-  background: var(--qt-surface);
-  border: 1px solid var(--qt-border);
-  border-radius: var(--qt-radius-inner, 8px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-container);
   overflow: hidden;
 }
 
@@ -130,7 +114,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--qt-border);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .dq-rule-id-cell {
@@ -144,54 +128,56 @@
   align-items: center;
   padding: 2px 7px;
   border-radius: 4px;
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  background: rgba(244, 63, 94, 0.10);
-  color: #F43F5E;
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  background: var(--color-status-error-bg);
+  color: var(--color-status-error-text);
+  border: 1px solid var(--color-border-subtle);
   letter-spacing: 0.02em;
   width: fit-content;
 }
 
-.dq-rule-subtag {
-  font-size: 0.68rem;
-  color: var(--qt-muted);
+.dq-rule-id.passed {
+  background: var(--color-status-success-bg);
+  color: var(--color-status-success-text);
 }
 
-/* Expandable Remediation Text */
+.dq-severity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.dq-severity-pill.critical {
+  background: var(--color-status-error-bg);
+  color: var(--color-status-error-text);
+}
+
+.dq-severity-pill.high {
+  background: var(--color-status-warning-bg);
+  color: var(--color-status-warning-text);
+}
+
+.dq-severity-pill.medium {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-link);
+}
+
 .dq-remediation-cell {
-  font-size: 0.82rem;
-  color: var(--qt-text);
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
   line-height: 1.45;
   max-width: 380px;
 }
 
-.dq-expand-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  margin-left: 6px;
-  color: #0284C7;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.dq-expand-btn:hover {
-  color: #0369A1;
-}
-
-/* Dark Theme Overrides */
-[data-theme="dark"] .dq-filter-chip.active {
-  background: #FFFFFF;
-  border-color: #FFFFFF;
-  color: #09090B;
-}
-
-[data-theme="dark"] .dq-rule-note {
-  background: rgba(14, 165, 233, 0.08);
-  border-color: rgba(14, 165, 233, 0.25);
+@media (max-width: 768px) {
+  .dq-kpi-value {
+    font-size: 26px;
+  }
 }

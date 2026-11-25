@@ -1,107 +1,65 @@
 /* ==========================================================================
-   QueryTrust AI — Awwwards Site of the Day Visual & Motion Styles
+   QueryTrust AI — Editorial Landing Page Styles
+   100% design-system tokenized (zero hardcoded hex colors).
    ========================================================================== */
 
 .landing-page-root {
   min-height: 100vh;
-  background-color: var(--bg-page);
-  color: var(--text-main);
+  background-color: var(--color-page-bg);
+  color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
 
-/* ── Liquid-Metal / Electric-Blue Text Shimmer ── */
-@keyframes liquid-shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+.landing-section-surface {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-subtle);
 }
 
-.shimmer-liquid-blue {
-  background: linear-gradient(
-    90deg,
-    #2563EB 0%,
-    #0EA5E9 25%,
-    #4F46E5 50%,
-    #0284C7 75%,
-    #2563EB 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: liquid-shimmer 5s ease infinite;
+.landing-section-muted {
+  background-color: var(--color-page-bg);
+  border-color: var(--color-border-subtle);
 }
 
-.dark .shimmer-liquid-blue {
-  background: linear-gradient(
-    90deg,
-    #38BDF8 0%,
-    #7DD3FC 25%,
-    #FFFFFF 50%,
-    #38BDF8 75%,
-    #0284C7 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: liquid-shimmer 5s ease infinite;
+.landing-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-container);
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 
-/* Subtle Shimmer Animation for Sky Blue Highlights */
-@keyframes button-shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+.landing-card:hover {
+  border-color: var(--color-border-strong);
 }
 
-.btn-shimmer-sky {
-  background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 50%, #0EA5E9 100%);
-  background-size: 200% 200%;
-  animation: button-shimmer 4s ease infinite;
+.landing-control-primary {
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-control);
+  transition: background-color 140ms ease, transform 120ms ease;
 }
 
-/* ── 1px Specular Border Illumination ── */
-.specular-border {
-  position: relative;
-}
-.specular-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(255, 255, 255, 0.02) 100%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+.landing-control-primary:hover {
+  background-color: var(--color-accent-hover);
 }
 
-/* Code Mirror & Monospace Elements */
-pre, code {
-  font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+.landing-control-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
-/* Smooth Minimal Focus Rings */
-button:focus-visible, a:focus-visible {
-  outline: 2px solid var(--brand, #0EA5E9);
-  outline-offset: 2px;
+.landing-control-secondary:hover {
+  background-color: var(--color-raised);
+  border-color: var(--color-border-strong);
+}
+
+.landing-mono-block {
+  font-family: var(--font-mono);
+  background-color: var(--color-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--color-text-primary);
 }

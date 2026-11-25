@@ -387,10 +387,18 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       ? 'medium'
       : 'low'
 
+  const [emptyQuestionHint, setEmptyQuestionHint] = useState<string | null>(null)
+
   const submitQuestion = (event: React.FormEvent) => {
     event.preventDefault()
     const nextQuestion = question.trim()
-    if (nextQuestion) onAskQuestion(nextQuestion)
+    if (!nextQuestion) {
+      setEmptyQuestionHint('Type a plain-English question or click a prompt below.')
+      searchInputRef.current?.focus()
+      return
+    }
+    setEmptyQuestionHint(null)
+    onAskQuestion(nextQuestion)
   }
 
   const scrollToRepairs = () => {
@@ -489,7 +497,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <input
             ref={searchInputRef}
             value={question}
-            onChange={(event) => setQuestion(event.target.value)}
+            onChange={(event) => {
+              setQuestion(event.target.value)
+              if (emptyQuestionHint) setEmptyQuestionHint(null)
+            }}
             placeholder={
               isUnconfigured
                 ? "Connect a database or load sample data to query..."
@@ -501,12 +512,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           />
           <button
             type="submit"
-            disabled={!question.trim() || isUnconfigured}
+            disabled={isUnconfigured}
             className="fleet-ask-submit-btn"
           >
             Ask
           </button>
         </form>
+        {emptyQuestionHint && (
+          <div className="fleet-ask-hint" role="alert">
+            {emptyQuestionHint}
+          </div>
+        )}
 
         {!isUnconfigured && (
           <>

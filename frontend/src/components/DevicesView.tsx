@@ -13,6 +13,10 @@ import {
   Columns,
   Key,
   ArrowRight,
+  Router,
+  Shield,
+  Wifi,
+  Network,
 } from 'lucide-react'
 import {
   type DeviceSummary,
@@ -31,9 +35,18 @@ import { readUrlParam, replaceUrlParams } from '../urlState'
 import { ExplainButton } from './ExplainButton'
 import { PageHeader } from './PageHeader'
 import { HumanDate } from './HumanDate'
-import { DeviceDetailDrawer, getDeviceImage } from './DeviceDetailDrawer'
+import { DeviceDetailDrawer } from './DeviceDetailDrawer'
 import { InteractiveErdCanvas } from './InteractiveErdCanvas'
 import './DevicesView.css'
+
+function renderDeviceTypeIcon(deviceType?: string) {
+  const t = (deviceType || '').toLowerCase()
+  if (t.includes('router')) return <Router size={13} aria-hidden="true" />
+  if (t.includes('firewall')) return <Shield size={13} aria-hidden="true" />
+  if (t.includes('access point') || t.includes('wireless')) return <Wifi size={13} aria-hidden="true" />
+  if (t.includes('gateway')) return <Network size={13} aria-hidden="true" />
+  return <Server size={13} aria-hidden="true" />
+}
 
 interface DevicesViewProps {
   onAskQuestion?: (question: string) => void
@@ -385,7 +398,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
         { name: 'started_at', data_type: 'timestamp with time zone', is_nullable: false },
         { name: 'resolved_at', data_type: 'timestamp with time zone', is_nullable: true },
       ],
-      row_count_estimate: 320,
+      row_count_estimate: 1500,
     },
     {
       table_name: 'telemetry_readings',
@@ -526,13 +539,13 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
                     type="button"
                     onClick={() => setSchemaViewMode('erd')}
                     style={{
-                      padding: '4px 12px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      borderRadius: '4px',
+                      padding: '5px 12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      borderRadius: '6px',
                       border: 'none',
-                      backgroundColor: schemaViewMode === 'erd' ? 'var(--bg-surface-1)' : 'transparent',
-                      color: schemaViewMode === 'erd' ? 'var(--accent-primary)' : 'var(--ink-muted)',
+                      backgroundColor: schemaViewMode === 'erd' ? 'var(--color-surface)' : 'transparent',
+                      color: schemaViewMode === 'erd' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                       cursor: 'pointer',
                     }}
                   >
@@ -542,13 +555,13 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
                     type="button"
                     onClick={() => setSchemaViewMode('inspector')}
                     style={{
-                      padding: '4px 12px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      borderRadius: '4px',
+                      padding: '5px 12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      borderRadius: '6px',
                       border: 'none',
-                      backgroundColor: schemaViewMode === 'inspector' ? 'var(--bg-surface-1)' : 'transparent',
-                      color: schemaViewMode === 'inspector' ? 'var(--accent-primary)' : 'var(--ink-muted)',
+                      backgroundColor: schemaViewMode === 'inspector' ? 'var(--color-surface)' : 'transparent',
+                      color: schemaViewMode === 'inspector' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                       cursor: 'pointer',
                     }}
                   >
@@ -703,7 +716,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
               <Database size={16} className="text-accent" />
               <div>
                 <strong>Operating against external database '{activeSource.name}'</strong>
-                <p>This database contains {activeSource.table_count} business tables ({activeSource.tables.slice(0, 5).join(', ')}...). To inspect their columns, switch to the <strong>Schema & Data Model</strong> tab above or ask natural-language questions in 'Ask data'. To view synthetic Cisco hardware inventory, switch back to the Demo Sandbox in 'Data sources'.</p>
+                <p>This database contains {activeSource.table_count} business tables ({activeSource.tables.slice(0, 5).join(', ')}...). To inspect their columns, switch to the <strong>Schema &amp; Data Model</strong> tab above or ask natural-language questions in &apos;Query Studio&apos;. To view synthetic fleet hardware inventory, switch back to the Demo Sandbox in &apos;Sources &amp; Kernel&apos;.</p>
               </div>
               <button type="button" className="schema-switch-btn" onClick={() => setCatalogTab('schema')}>
                 Switch to Schema View &rarr;
@@ -765,7 +778,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
       {/* 3. SEARCH & DROPDOWN TOOLBAR */}
       <div className="devices-filter-toolbar flex flex-wrap sm:flex-nowrap items-center gap-3">
         {/* Search Input */}
-        <div className="devices-search-box min-w-[280px] flex-1">
+        <div className="devices-search-box min-w-0 w-full sm:min-w-[260px] flex-1">
           <Search size={14} className="devices-search-icon" />
           <input
             ref={searchInputRef}
@@ -924,7 +937,7 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
                 <tr>
                   <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
                     <div className="table-loading-spinner" style={{ margin: '0 auto 0.75rem auto' }} />
-                    <span style={{ fontSize: '12.5px', color: 'var(--qt-muted)' }}>
+                    <span style={{ fontSize: '12.5px', color: 'var(--color-text-secondary)' }}>
                       Loading equipment inventory...
                     </span>
                   </td>
@@ -932,15 +945,15 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
               ) : devices.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
-                    <Server size={30} style={{ color: 'var(--qt-muted)', margin: '0 auto 0.5rem auto' }} />
-                    <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--qt-ink)' }}>
+                    <Server size={30} style={{ color: 'var(--color-text-muted)', margin: '0 auto 0.5rem auto' }} />
+                    <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                       {activeSource?.mode === 'unconfigured' || (total === 0 && !search && !deviceType && !status)
                         ? 'No equipment records in this workspace'
                         : 'No devices match filters'}
                     </div>
-                    <div style={{ fontSize: '12px', color: 'var(--qt-muted)', marginTop: '0.25rem' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
                       {activeSource?.mode === 'unconfigured' || (total === 0 && !search && !deviceType && !status)
-                        ? 'Connect an external PostgreSQL database in Data Sources or load sample educational sandbox data.'
+                        ? 'Connect an external PostgreSQL database in Sources & Kernel or load sample educational sandbox data.'
                         : 'Try clearing filters or broadening search parameters.'}
                     </div>
                   </td>
@@ -988,13 +1001,9 @@ export const DevicesView: React.FC<DevicesViewProps> = ({ onAskQuestion }) => {
                       {/* Device Type */}
                       <td data-label="Type">
                         <div className="device-type-thumb-badge">
-                          <img
-                            src={getDeviceImage(dev.device_type)}
-                            alt=""
-                            aria-hidden="true"
-                            className="device-type-thumbnail"
-                            loading="lazy"
-                          />
+                          <span className="device-type-icon-box">
+                            {renderDeviceTypeIcon(dev.device_type)}
+                          </span>
                           <span className="device-type-token">{dev.device_type}</span>
                         </div>
                       </td>

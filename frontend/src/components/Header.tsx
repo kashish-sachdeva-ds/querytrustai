@@ -8,6 +8,7 @@ import {
   Moon,
   Check,
   Loader2,
+  Menu,
   Search,
   Sparkles,
 } from 'lucide-react'
@@ -190,12 +191,21 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header
-        className="app-top-navbar h-12 min-h-[48px] max-h-[48px] border-b border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-[#0B0C0E] px-3.5 flex items-center justify-between gap-3 z-30 flex-shrink-0 transition-colors"
+        className="app-top-navbar h-12 min-h-[48px] max-h-[48px] border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-3.5 flex items-center justify-between gap-3 z-30 flex-shrink-0 transition-colors"
         role="banner"
         aria-label="Top Navigation Bar"
       >
-        {/* ─── Left Side: Architectural Breadcrumbs ─── */}
+        {/* ─── Left Side: Mobile Menu + Architectural Breadcrumbs ─── */}
         <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('querytrust:toggle-mobile-sidebar'))}
+            className="flex md:hidden w-8 h-8 rounded-lg items-center justify-center bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer flex-shrink-0"
+            aria-label="Open navigation menu"
+            title="Navigation menu"
+          >
+            <Menu size={15} />
+          </button>
           <nav
             className="flex items-center gap-1.5 sm:gap-2 text-xs min-w-0"
             aria-label="Breadcrumb navigation"
@@ -203,13 +213,13 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={() => onNavigate?.('overview')}
-              className="text-xs font-semibold text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0"
+              className="text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0"
               title="QueryTrust AI"
             >
               <span>QueryTrust</span>
             </button>
-            <span className="text-zinc-400 dark:text-zinc-600 font-normal select-none">/</span>
-            <span className="font-semibold text-xs text-zinc-950 dark:text-white tracking-tight truncate">
+            <span className="text-[var(--color-text-muted)] font-normal select-none">/</span>
+            <span className="font-medium text-xs text-[var(--color-text-primary)] tracking-tight truncate">
               {activeTab ? TAB_LABELS[activeTab] || activeTab : 'Fleet Overview'}
             </span>
           </nav>
@@ -220,16 +230,16 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={onOpenCommandPalette}
-            className="group flex items-center justify-between w-full h-7.5 px-3 rounded-lg bg-zinc-100/80 hover:bg-zinc-100 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 border border-zinc-200/80 dark:border-white/[0.08] hover:border-zinc-300 dark:hover:border-white/[0.16] text-xs text-zinc-500 transition-all cursor-pointer shadow-2xs min-w-0"
+            className="group flex items-center justify-between w-full h-7.5 px-3 rounded-lg bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] text-xs text-[var(--color-text-secondary)] transition-all cursor-pointer min-w-0"
             title="Press ⌘K or Ctrl+K to open global command palette"
           >
             <span className="flex items-center gap-2 min-w-0 truncate">
-              <Search size={13} className="text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors flex-shrink-0" />
-              <span className="text-[11px] truncate whitespace-nowrap text-zinc-500 group-hover:text-zinc-800 dark:group-hover:text-zinc-200">
+              <Search size={13} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)] transition-colors flex-shrink-0" />
+              <span className="text-[11px] truncate whitespace-nowrap text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">
                 Search or ask query...
               </span>
             </span>
-            <kbd className="font-mono text-[9.5px] font-semibold px-1.5 py-0.5 rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/[0.08] text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors flex-shrink-0 ml-1.5">
+            <kbd className="font-mono text-[9.5px] font-medium px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] transition-colors flex-shrink-0 ml-1.5">
               ⌘K
             </kbd>
           </button>
@@ -241,7 +251,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={onOpenCommandPalette}
-            className="flex md:hidden w-7.5 h-7.5 rounded-lg items-center justify-center bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-white/[0.08] text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-all cursor-pointer shadow-2xs"
+            className="flex md:hidden w-8 h-8 rounded-lg items-center justify-center bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
             title="Open search (⌘K)"
             aria-label="Open search command palette"
           >
@@ -252,12 +262,12 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={() => setRoiModalOpen(true)}
-            className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] text-[11px] font-mono text-zinc-600 dark:text-zinc-300 transition-all cursor-pointer shadow-2xs"
-            title="Kernel Status: 6/6 AST Gates Enforced • Dedicated SELECT-Only Replica • Click for Metrics"
+            className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] text-[11px] font-mono text-[var(--color-text-secondary)] transition-all cursor-pointer"
+            title="Kernel Status: 6/6 AST Gates Enforced · Dedicated SELECT-Only Replica · Click for details"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]" />
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">Read-Only</span>
-            <span className="text-zinc-300 dark:text-zinc-700">•</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-status-success-dot)]" />
+            <span className="font-medium text-[var(--color-text-primary)]">Read-Only</span>
+            <span className="text-[var(--color-text-muted)]">·</span>
             <span className="font-medium text-[var(--color-text-secondary)]">Sample query: 1.4 ms</span>
           </button>
 
@@ -267,24 +277,24 @@ export const Header: React.FC<HeaderProps> = ({
               ref={roleTriggerRef}
               type="button"
               onClick={() => setRoleSwitcherOpen((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white shadow-2xs"
+              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] text-[var(--color-text-primary)]"
               title="Click to switch evaluation persona (Admin, Analyst, Viewer)"
               aria-label={`Current role: ${roleDisplay}. Click to switch role`}
               aria-expanded={roleSwitcherOpen}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-text-muted)]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
               <span>{roleDisplay}</span>
               {switchingRole ? (
-                <Loader2 size={11} className="animate-spin text-sky-500" />
+                <Loader2 size={11} className="animate-spin text-[var(--color-accent-link)]" />
               ) : (
                 <ChevronDown
                   size={11}
-                  className={`transition-transform duration-150 text-zinc-400 ${roleSwitcherOpen ? 'rotate-180' : ''}`}
+                  className={`transition-transform duration-150 text-[var(--color-text-muted)] ${roleSwitcherOpen ? 'rotate-180' : ''}`}
                 />
               )}
             </button>
 
-            {/* Role Switcher Menu (Solid 100% Opaque Surface) */}
+            {/* Role Switcher Menu */}
             <AnimatePresence>
               {roleSwitcherOpen && (
                 <motion.div
@@ -293,9 +303,9 @@ export const Header: React.FC<HeaderProps> = ({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="absolute top-[calc(100%+8px)] right-0 w-68 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#121216] p-2.5 text-zinc-900 dark:text-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.7)] z-[100] flex flex-col gap-1"
+                  className="absolute top-[calc(100%+8px)] right-0 w-72 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-2 text-[var(--color-text-primary)] shadow-xl z-[100] flex flex-col gap-1"
                 >
-                  <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500 border-b border-zinc-100 dark:border-zinc-800/80 pb-1.5 mb-1">
+                  <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-muted)] border-b border-[var(--color-border-subtle)] pb-1.5 mb-1">
                     Switch Evaluator Persona
                   </div>
 
@@ -308,10 +318,10 @@ export const Header: React.FC<HeaderProps> = ({
                         type="button"
                         onClick={() => handleSwitchDemoRole(rKey)}
                         disabled={switchingRole !== null}
-                        className={`flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer w-full ${
+                        className={`flex items-start gap-2.5 px-3 py-2 rounded-lg text-left transition-colors cursor-pointer w-full ${
                           isActive
-                            ? 'bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700'
-                            : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 border border-transparent'
+                            ? 'bg-[var(--color-accent-subtle)] border border-[var(--color-accent-border)]'
+                            : 'hover:bg-[var(--color-raised)] border border-transparent'
                         }`}
                       >
                         <span
@@ -325,12 +335,12 @@ export const Header: React.FC<HeaderProps> = ({
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-zinc-950 dark:text-white">
+                            <span className="text-xs font-semibold text-[var(--color-text-primary)]">
                               {target.label}
                             </span>
-                            {isActive && <Check size={12} className="text-sky-500 dark:text-sky-400" />}
+                            {isActive && <Check size={12} className="text-[var(--color-accent-link)]" />}
                           </div>
-                          <div className="text-[11px] text-zinc-500 leading-tight mt-0.5 truncate">
+                          <div className="text-[11px] text-[var(--color-text-secondary)] leading-tight mt-0.5 truncate">
                             {target.desc}
                           </div>
                         </div>
@@ -346,7 +356,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={toggleTheme}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:hover:text-white bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] transition-all cursor-pointer shadow-2xs"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] transition-all cursor-pointer"
             title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} mode`}
             aria-label="Toggle visual theme"
           >
@@ -359,20 +369,20 @@ export const Header: React.FC<HeaderProps> = ({
               ref={profileTriggerRef}
               type="button"
               onClick={() => setProfileOpen((prev) => !prev)}
-              className="flex items-center gap-1.5 h-8 pl-1 pr-2 rounded-lg bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.08] transition-all cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 h-8 pl-1 pr-2 rounded-lg bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] transition-all cursor-pointer"
               aria-label="User account menu"
               aria-expanded={profileOpen}
             >
-              <div className="w-5.5 h-5.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-mono text-[9.5px] font-bold flex items-center justify-center shadow-xs">
+              <div className="w-5.5 h-5.5 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-contrast)] font-mono text-[9.5px] font-semibold flex items-center justify-center">
                 {initials}
               </div>
               <ChevronDown
                 size={10}
-                className={`text-zinc-400 transition-transform duration-150 ${profileOpen ? 'rotate-180' : ''}`}
+                className={`text-[var(--color-text-muted)] transition-transform duration-150 ${profileOpen ? 'rotate-180' : ''}`}
               />
             </button>
 
-            {/* Profile Popover Card (Solid 100% Opaque Luxury Surface) */}
+            {/* Profile Popover Card */}
             <AnimatePresence>
               {profileOpen && (
                 <motion.div
@@ -381,52 +391,52 @@ export const Header: React.FC<HeaderProps> = ({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="absolute top-[calc(100%+8px)] right-0 w-80 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#121216] p-4 text-zinc-900 dark:text-zinc-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.7)] z-[100] flex flex-col gap-3"
+                  className="absolute top-[calc(100%+8px)] right-0 w-80 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-4 text-[var(--color-text-primary)] shadow-xl z-[100] flex flex-col gap-3"
                 >
                   {/* Executive Identity Header */}
                   <div className="flex items-center gap-3 pb-1">
-                    <div className="w-11 h-11 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 font-mono text-sm font-bold flex items-center justify-center border border-zinc-200 dark:border-zinc-700 flex-shrink-0 shadow-xs">
+                    <div className="w-10 h-10 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-contrast)] font-mono text-sm font-semibold flex items-center justify-center flex-shrink-0">
                       {initials}
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm text-zinc-950 dark:text-white truncate">
+                        <span className="font-semibold text-sm text-[var(--color-text-primary)] truncate">
                           {user?.display_name || 'System Administrator'}
                         </span>
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-[var(--color-accent-subtle)] text-[var(--color-accent-link)] border border-[var(--color-accent-border)]">
                           {roleDisplay.toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
+                      <span className="text-xs font-mono text-[var(--color-text-secondary)] truncate mt-0.5">
                         {user?.email || 'admin@querytrust.local'}
                       </span>
                     </div>
                   </div>
 
                   {/* Zero-Trust Telemetry Credentials & Environment Strip */}
-                  <div className="rounded-xl bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/90 dark:border-white/[0.08] p-3 flex flex-col gap-2 text-[11px] font-mono">
+                  <div className="rounded-lg bg-[var(--color-raised)] border border-[var(--color-border-subtle)] p-3 flex flex-col gap-2 text-[11px] font-mono">
                     <div className="flex items-center justify-between">
-                      <span className="text-zinc-500 dark:text-zinc-400">Environment</span>
-                      <span className="font-semibold text-zinc-900 dark:text-zinc-200 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span className="text-[var(--color-text-secondary)]">Environment</span>
+                      <span className="font-medium text-[var(--color-text-primary)] flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-status-success-dot)]" />
                         Default Workspace
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-zinc-500 dark:text-zinc-400">Database Role</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">qt_ai_readonly</span>
+                      <span className="text-[var(--color-text-secondary)]">Database Role</span>
+                      <span className="text-[var(--color-status-success-text)] font-medium">qt_ai_readonly</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-zinc-500 dark:text-zinc-400">AST Safety Proof</span>
-                      <span className="text-sky-600 dark:text-sky-400 font-semibold">6/6 Gates Active</span>
+                      <span className="text-[var(--color-text-secondary)]">AST Safety Proof</span>
+                      <span className="text-[var(--color-accent-link)] font-medium">6/6 Gates Active</span>
                     </div>
                   </div>
 
-                  <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                  <div className="border-t border-[var(--color-border-subtle)]" />
 
                   {/* Keyboard Shortcuts Quick Reference */}
                   <div className="space-y-1 px-0.5">
-                    <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 px-2 mb-1">
+                    <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--color-text-muted)] px-2 mb-1">
                       Quick Shortcuts
                     </div>
                     <div className="space-y-1">
@@ -436,10 +446,10 @@ export const Header: React.FC<HeaderProps> = ({
                           setProfileOpen(false)
                           onOpenCommandPalette?.()
                         }}
-                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer text-left"
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-raised)] transition-colors cursor-pointer text-left"
                       >
                         <span className="font-medium">Command Palette</span>
-                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 flex-shrink-0">⌘K</kbd>
+                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] flex-shrink-0">⌘K</kbd>
                       </button>
                       <button
                         type="button"
@@ -447,10 +457,10 @@ export const Header: React.FC<HeaderProps> = ({
                           setProfileOpen(false)
                           window.dispatchEvent(new CustomEvent('querytrust:toggle-sidebar'))
                         }}
-                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer text-left"
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-raised)] transition-colors cursor-pointer text-left"
                       >
                         <span className="font-medium">Toggle Sidebar</span>
-                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 flex-shrink-0">⌘B</kbd>
+                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] flex-shrink-0">⌘B</kbd>
                       </button>
                       <button
                         type="button"
@@ -461,36 +471,36 @@ export const Header: React.FC<HeaderProps> = ({
                             window.dispatchEvent(new CustomEvent('querytrust:new-session'))
                           }, 50)
                         }}
-                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer text-left"
+                        className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-raised)] transition-colors cursor-pointer text-left"
                       >
                         <span className="font-medium">New Governed Query</span>
-                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 flex-shrink-0">⌘N</kbd>
+                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] flex-shrink-0">⌘N</kbd>
                       </button>
                     </div>
                   </div>
 
-                  <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                  <div className="border-t border-[var(--color-border-subtle)]" />
 
                   {/* Role Capabilities Accordion */}
                   <div>
                     <button
                       type="button"
                       onClick={() => setShowPermissions((prev) => !prev)}
-                      className="group flex items-center justify-between w-full px-3 py-2 rounded-xl text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-all cursor-pointer"
+                      className="group flex items-center justify-between w-full px-3 py-2 rounded-lg text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
-                        <Shield size={13} className="text-emerald-500" />
-                        <span className="text-xs font-semibold">What can an {roleDisplay} do?</span>
+                        <Shield size={13} className="text-[var(--color-status-success-dot)]" />
+                        <span className="text-xs font-medium">What can an {roleDisplay} do?</span>
                       </div>
                       <ChevronDown
                         size={12}
-                        className={`text-zinc-400 transition-transform duration-150 ${showPermissions ? 'rotate-180' : ''}`}
+                        className={`text-[var(--color-text-muted)] transition-transform duration-150 ${showPermissions ? 'rotate-180' : ''}`}
                       />
                     </button>
 
                     {showPermissions && (
-                      <div className="mt-2 p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 space-y-1.5 font-sans">
-                        <div className="font-semibold text-zinc-900 dark:text-white text-[11.5px]">
+                      <div className="mt-2 p-2.5 rounded-lg bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-xs leading-relaxed text-[var(--color-text-secondary)] space-y-1.5 font-sans">
+                        <div className="font-medium text-[var(--color-text-primary)] text-[11.5px]">
                           {permissionsData.title}
                         </div>
                         <ul className="list-disc list-inside space-y-1 text-[11px]">
@@ -502,7 +512,7 @@ export const Header: React.FC<HeaderProps> = ({
                     )}
                   </div>
 
-                  <div className="border-t border-zinc-100 dark:border-zinc-800" />
+                  <div className="border-t border-[var(--color-border-subtle)]" />
 
                   {/* Bottom Actions */}
                   <div className="flex items-center justify-between pt-0.5">
@@ -513,9 +523,9 @@ export const Header: React.FC<HeaderProps> = ({
                           setProfileOpen(false)
                           onOpenOnboarding()
                         }}
-                        className="text-xs text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                        className="text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer flex items-center gap-1.5"
                       >
-                        <Sparkles size={12} className="text-sky-500" />
+                        <Sparkles size={12} className="text-[var(--color-accent-link)]" />
                         <span>Welcome Tour</span>
                       </button>
                     )}
@@ -525,7 +535,7 @@ export const Header: React.FC<HeaderProps> = ({
                         setProfileOpen(false)
                         await logout()
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer ml-auto"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--color-status-error-text)] hover:bg-[var(--color-status-error-bg)] transition-colors cursor-pointer ml-auto"
                     >
                       <LogOut size={13} />
                       <span>Sign Out</span>

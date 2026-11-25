@@ -254,7 +254,7 @@ export const GlobalFleetTelemetryMap: React.FC<{
           {filteredSites.map((site) => {
             const isHovered = hoveredSite?.id === site.id
             const isMaintenance = site.status === 'maintenance'
-            const nodeColor = isMaintenance ? '#d97706' : 'var(--accent-primary)'
+            const nodeColor = isMaintenance ? 'var(--color-status-warning-dot)' : 'var(--accent-primary)'
 
             return (
               <g
@@ -276,7 +276,7 @@ export const GlobalFleetTelemetryMap: React.FC<{
                 <circle
                   r={isHovered ? 4.5 : 3}
                   fill={nodeColor}
-                  stroke="#ffffff"
+                  stroke="var(--color-surface)"
                   strokeWidth={1}
                 />
               </g>
@@ -313,7 +313,7 @@ export const GlobalFleetTelemetryMap: React.FC<{
                   height: '6px',
                   borderRadius: '50%',
                   backgroundColor:
-                    hoveredSite.status === 'maintenance' ? '#d97706' : 'var(--gov-safe-dot)',
+                    hoveredSite.status === 'maintenance' ? 'var(--color-status-warning-dot)' : 'var(--gov-safe-dot)',
                 }}
               />
               <span style={{ fontWeight: 700 }}>
@@ -331,7 +331,7 @@ export const GlobalFleetTelemetryMap: React.FC<{
               &bull;{' '}
               <span
                 style={{
-                  color: hoveredSite.openTickets > 0 ? '#dc2626' : 'var(--ink-muted)',
+                  color: hoveredSite.openTickets > 0 ? 'var(--color-status-error-text)' : 'var(--ink-muted)',
                   fontWeight: hoveredSite.openTickets > 0 ? 600 : 400,
                 }}
               >

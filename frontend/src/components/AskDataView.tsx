@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import {
   AlertTriangle,
   ArrowRight,
@@ -466,11 +467,28 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     try {
       const data = await fetchChatSessions()
       setSessions(data)
-      if (data.length > 0 && !activeSessionId) {
-        selectSession(data[0].id)
+      // Preserve initial preview + verified sample table until user picks a saved session or submits a query.
+      if (data.length > 0 && activeSessionId) {
+        return
       }
     } catch (err: unknown) {
       console.warn('Failed to load chat sessions:', err)
+    }
+  }
+
+  const handleRunPreviewById = async (runId?: string | null) => {
+    if (!runId || executingId) return
+    setExecutingId(runId)
+    setErrorMessage(null)
+    try {
+      const execResult = await executeSavedQuery(runId)
+      if (execResult && execResult.rows) {
+        setResultsMap((prev) => ({ ...prev, [runId]: execResult }))
+      }
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Unable to execute previewed query.')
+    } finally {
+      setExecutingId(null)
     }
   }
 
@@ -518,6 +536,16 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
       }))
       if (mapped.length > 0) {
         setMessages(mapped)
+        const latestExecutable = [...mapped]
+          .reverse()
+          .find((msg) => msg.role === 'assistant' && msg.previewData?.can_execute && msg.previewData?.validation.passed)
+        const targetRunId = latestExecutable?.previewData?.query_run_id
+        if (targetRunId) {
+          setFocusedRunId(targetRunId)
+          if (!resultsMap[targetRunId]) {
+            handleRunPreviewById(targetRunId)
+          }
+        }
       }
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : 'Failed to load session messages.')
@@ -701,7 +729,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
         </div>
         <h1 className="studio-page-title">Query Studio</h1>
         <p className="studio-page-desc">
-          Ask questions about equipment, sites and telemetry in plain English. Every query runs read-only with mathematical AST validation.
+          Ask questions about equipment, sites and telemetry in plain English. Every query runs read-only with AST validation.
         </p>
       </header>
 
@@ -992,7 +1020,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                 type="button"
                 className="studio-details-btn"
                 onClick={() => setIsAstDrawerOpen(true)}
-                title="Open full AST mathematical proof drawer"
+                title="Open full AST safety verification drawer"
               >
                 <ShieldCheck size={12} />
                 <span>AST details</span>
@@ -1059,6 +1087,12 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
               result={activeResult}
               executionLatencyMs={activeResult?.execution_duration_ms || 1.42}
               queryRunId={activeRunId}
+              isExecuting={Boolean(executingId && executingId === activeRunId)}
+              onRunPreviewedQuery={
+                activePreview?.can_execute && activePreview.validation.passed && activeRunId
+                  ? () => handleRunPreviewById(activeRunId)
+                  : undefined
+              }
             />
           </div>
         </section>
@@ -1070,20 +1104,21 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
           </div>
           <h3 className="studio-empty-title">Ready for Governed Analytics</h3>
           <p className="studio-empty-desc">
-            Ask any question above in plain English, or pick a suggested query to preview safe SQL and relational fleet telemetry with mathematical AST verification.
+            Ask any question above in plain English, or pick a suggested query to preview safe SQL and relational fleet telemetry with AST verification.
           </p>
         </section>
       )}
 
       {/* ─── 3. SLIDE-OVER DRAWER: HISTORY & SCHEMA REFERENCE (LEFT) ─── */}
-      {isLeftDrawerOpen && (
-        <>
-          <div
-            className="studio-drawer-backdrop"
-            onClick={() => setIsLeftDrawerOpen(false)}
-            aria-hidden="true"
-          />
-          <aside className="studio-drawer left" role="dialog" aria-label="History and Schema Drawer">
+      {isLeftDrawerOpen &&
+        createPortal(
+          <>
+            <div
+              className="studio-drawer-backdrop"
+              onClick={() => setIsLeftDrawerOpen(false)}
+              aria-hidden="true"
+            />
+            <aside className="studio-drawer left" role="dialog" aria-modal="true" aria-label="History and Schema Drawer">
             <div className="studio-drawer-header">
               <div style={{ display: 'flex', gap: '4px' }}>
                 <button
@@ -1305,18 +1340,20 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
               )}
             </div>
           </aside>
-        </>
+        </>,
+        document.body
       )}
 
       {/* ─── 4. SLIDE-OVER DRAWER: 6-GATE AST INSPECTOR (RIGHT) ─── */}
-      {isAstDrawerOpen && (
-        <>
-          <div
-            className="studio-drawer-backdrop"
-            onClick={() => setIsAstDrawerOpen(false)}
-            aria-hidden="true"
-          />
-          <aside className="studio-drawer right" role="dialog" aria-label="AST Safety Proof Inspector">
+      {isAstDrawerOpen &&
+        createPortal(
+          <>
+            <div
+              className="studio-drawer-backdrop"
+              onClick={() => setIsAstDrawerOpen(false)}
+              aria-hidden="true"
+            />
+            <aside className="studio-drawer right" role="dialog" aria-modal="true" aria-label="AST Safety Proof Inspector">
             <div className="studio-drawer-header">
               <h3 className="studio-drawer-title">AST Compiler Proof &amp; Invariants</h3>
               <button
@@ -1347,7 +1384,8 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
               />
             </div>
           </aside>
-        </>
+        </>,
+        document.body
       )}
     </div>
   )

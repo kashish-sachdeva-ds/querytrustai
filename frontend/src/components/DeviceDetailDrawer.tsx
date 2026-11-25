@@ -177,7 +177,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
     <div className="asset-drawer-backdrop" onClick={onClose}>
       <div
         ref={drawerPanelRef}
-        className="asset-drawer-panel bg-white dark:bg-[#121214] text-zinc-950 dark:text-zinc-100"
+        className="asset-drawer-panel bg-[var(--color-surface)] text-[var(--color-text-primary)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="asset-drawer-title"
@@ -185,7 +185,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
         onKeyDown={handleDrawerKeyDown}
       >
         {/* Header */}
-        <div className="asset-drawer-header bg-white dark:bg-[#121214] border-b border-zinc-200 dark:border-zinc-800/80">
+        <div className="asset-drawer-header">
           <div className="asset-drawer-header-top">
             <div className="asset-drawer-badges">
               <button
@@ -197,7 +197,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
                 disabled={!deviceDetail?.asset_tag}
               >
                 <span>{deviceDetail?.asset_tag || `Asset #${deviceId}`}</span>
-                {copiedAssetId ? <Check size={12} color="#10B981" /> : <Copy size={12} />}
+                {copiedAssetId ? <Check size={12} style={{ color: 'var(--color-status-success-dot)' }} /> : <Copy size={12} />}
               </button>
 
               {deviceDetail && (
@@ -216,7 +216,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
 
             <button
               type="button"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="asset-close-btn"
               onClick={onClose}
               title="Close inspector (Esc)"
               aria-label="Close device inspection drawer"
@@ -226,7 +226,7 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
           </div>
 
           <div className="flex items-center justify-between gap-2 mt-1">
-            <h3 id="asset-drawer-title" className="text-base font-bold text-zinc-950 dark:text-white truncate m-0">
+            <h3 id="asset-drawer-title" className="text-base font-semibold text-[var(--color-text-primary)] truncate m-0">
               {deviceDetail ? `${deviceDetail.asset_tag} — ${deviceDetail.model}` : `Device #${deviceId}`}
             </h3>
             <ExplainButton
@@ -235,12 +235,12 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
             />
           </div>
 
-          {/* Drawer Quick Action Buttons (Laser-Aligned h-8 Grid) */}
+          {/* Drawer Quick Action Buttons */}
           {deviceDetail && (
             <div className="flex items-center gap-2 flex-wrap mt-1">
               <button
                 type="button"
-                className="h-8 px-3 rounded-full text-xs font-semibold bg-sky-500 hover:bg-sky-600 text-white shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                className="h-8 px-3 rounded-[var(--radius-control)] text-xs font-medium bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-accent-contrast)] transition-all flex items-center gap-1.5 cursor-pointer"
                 onClick={() => {
                   onClose()
                   onAskQuestion?.(`Show all telemetry and open events for device ${deviceDetail.asset_tag}`)
@@ -253,13 +253,13 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
 
               <button
                 type="button"
-                className="h-8 px-3 rounded-full text-xs font-semibold bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                className="h-8 px-3 rounded-[var(--radius-control)] text-xs font-medium bg-[var(--color-raised)] hover:bg-[var(--color-surface)] text-[var(--color-text-primary)] border border-[var(--color-border-subtle)] transition-all flex items-center gap-1.5 cursor-pointer"
                 onClick={() => handleCopyAssetId(deviceDetail.asset_tag)}
                 title="Copy asset tag to clipboard"
               >
                 {copiedAssetId ? (
                   <>
-                    <Check size={12} className="text-emerald-500" />
+                    <Check size={12} style={{ color: 'var(--color-status-success-dot)' }} />
                     <span>Copied</span>
                   </>
                 ) : (
@@ -273,12 +273,12 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
               {onNavigateToEquipment && (
                 <button
                   type="button"
-                  className="h-8 px-3 rounded-full text-xs font-semibold bg-zinc-100 hover:bg-zinc-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                  className="h-8 px-3 rounded-[var(--radius-control)] text-xs font-medium bg-[var(--color-raised)] hover:bg-[var(--color-surface)] text-[var(--color-text-primary)] border border-[var(--color-border-subtle)] transition-all flex items-center gap-1.5 cursor-pointer"
                   onClick={() => {
                     onClose()
                     onNavigateToEquipment(deviceDetail.id)
                   }}
-                  title="View this asset in Equipment Explorer"
+                  title="View this asset in Data Catalog"
                 >
                   <ExternalLink size={12} />
                   <span>Explorer</span>
@@ -287,53 +287,16 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
             </div>
           )}
 
-          {/* Tactile 3D Hardware Chassis Preview Card with Live Blinking RJ45/SFP+ Port LEDs */}
+          {/* Calm Hardware Metadata Bar */}
           {deviceDetail && (
-            <div className="rounded-2xl bg-[#0B0C0E] border border-white/15 p-3.5 shadow-xl mt-2 relative overflow-hidden text-left">
-              <div className="flex items-center justify-between mb-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/80 text-zinc-200 font-mono text-[9.5px] font-bold uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span>3D HARDWARE CHASSIS · {deviceDetail.model}</span>
-                </span>
-                <span className="text-[10px] font-mono text-zinc-400">
-                  SN: <span className="text-zinc-200 font-semibold">{deviceDetail.serial_number || 'SN-UNASSIGNED'}</span>
-                </span>
-              </div>
-
-              {/* Hardware Blade Preview Graphic with Blinking RJ45/SFP+ LEDs */}
-              <div className="relative w-full h-[130px] rounded-xl overflow-hidden border border-white/10 shadow-inner group">
-                <img
-                  src="/endcap-datacenter-blade.png"
-                  alt={`${deviceDetail.model} Hardware Chassis`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
-
-                {/* Live Blinking Port LEDs Bar */}
-                <div className="absolute bottom-2 inset-x-2 flex items-center justify-between px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-md border border-white/10 text-[9px] font-mono">
-                  <span className="text-zinc-300 font-semibold">100G QSFP28 / RJ45:</span>
-                  <div className="flex items-center gap-1.5">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((port) => {
-                      const isFlapping = port === 5 && (telemetryPoints[telemetryPoints.length - 1]?.packet_loss_pct || 0) > 0.02
-                      const isHighTemp = port === 7 && (telemetryPoints[telemetryPoints.length - 1]?.temperature_celsius || 0) > 65
-                      return (
-                        <div key={port} className="flex items-center gap-0.5" title={`Port ${port} status`}>
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              isFlapping
-                                ? 'bg-amber-400 animate-ping'
-                                : isHighTemp
-                                ? 'bg-rose-500 animate-pulse'
-                                : 'bg-emerald-400 animate-pulse'
-                            }`}
-                            style={{ animationDuration: `${0.5 + (port % 3) * 0.3}s` }}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
+            <div className="rounded-[var(--radius-control)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] px-3 py-2.5 mt-2 flex items-center justify-between text-left text-[11px] font-mono">
+              <span className="inline-flex items-center gap-2 text-[var(--color-text-primary)] font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-status-success-dot)]" />
+                <span>{deviceDetail.model}</span>
+              </span>
+              <span className="text-[var(--color-text-secondary)]">
+                SN: <span className="text-[var(--color-text-primary)]">{deviceDetail.serial_number || 'Unassigned'}</span>
+              </span>
             </div>
           )}
         </div>
@@ -483,58 +446,58 @@ export const DeviceDetailDrawer: React.FC<DeviceDetailDrawerProps> = ({
 
             {/* Section 5: Telemetry Health & Sparklines */}
             <div className="mt-1">
-              <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">
-                <span>Operational Telemetry (5 Dimensions)</span>
-                <span className="text-[11px] font-mono text-emerald-500 font-semibold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Live Ingested
+              <div className="flex items-center justify-between text-[11px] font-mono font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1.5">
+                <span>Telemetry Summary (5 Dimensions)</span>
+                <span className="text-[11px] font-mono text-[var(--color-status-success-text)] font-medium flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-status-success-dot)]" />
+                  Sample telemetry
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
-                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
-                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                <div className="p-2.5 rounded-[var(--radius-control)] bg-[var(--color-surface)] border border-[var(--color-border-subtle)]">
+                  <div className="text-[10px] font-mono text-[var(--color-text-muted)] flex items-center justify-between mb-1">
                     <span>CPU</span>
-                    <strong className="text-orange-500">{telemetryPoints[telemetryPoints.length - 1]?.cpu_utilization_pct}%</strong>
+                    <strong className="text-[var(--color-text-primary)]">{telemetryPoints[telemetryPoints.length - 1]?.cpu_utilization_pct}%</strong>
                   </div>
-                  <Sparkline data={telemetryPoints.map((p) => p.cpu_utilization_pct || 0)} color="#F97316" fill />
+                  <Sparkline data={telemetryPoints.map((p) => p.cpu_utilization_pct || 0)} color="var(--color-accent)" fill />
                 </div>
-                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
-                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                <div className="p-2.5 rounded-[var(--radius-control)] bg-[var(--color-surface)] border border-[var(--color-border-subtle)]">
+                  <div className="text-[10px] font-mono text-[var(--color-text-muted)] flex items-center justify-between mb-1">
                     <span>RAM</span>
-                    <strong className="text-blue-500">{telemetryPoints[telemetryPoints.length - 1]?.memory_utilization_pct}%</strong>
+                    <strong className="text-[var(--color-text-primary)]">{telemetryPoints[telemetryPoints.length - 1]?.memory_utilization_pct}%</strong>
                   </div>
-                  <Sparkline data={telemetryPoints.map((p) => p.memory_utilization_pct || 0)} color="#3B82F6" fill />
+                  <Sparkline data={telemetryPoints.map((p) => p.memory_utilization_pct || 0)} color="var(--color-accent-link)" fill />
                 </div>
-                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
-                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                <div className="p-2.5 rounded-[var(--radius-control)] bg-[var(--color-surface)] border border-[var(--color-border-subtle)]">
+                  <div className="text-[10px] font-mono text-[var(--color-text-muted)] flex items-center justify-between mb-1">
                     <span>TEMP</span>
-                    <strong className="text-amber-500">{telemetryPoints[telemetryPoints.length - 1]?.temperature_celsius}°C</strong>
+                    <strong className="text-[var(--color-status-warning-text)]">{telemetryPoints[telemetryPoints.length - 1]?.temperature_celsius}°C</strong>
                   </div>
-                  <Sparkline data={telemetryPoints.map((p) => p.temperature_celsius || 0)} color="#F59E0B" fill />
+                  <Sparkline data={telemetryPoints.map((p) => p.temperature_celsius || 0)} color="var(--color-status-warning-dot)" fill />
                 </div>
-                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
-                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                <div className="p-2.5 rounded-[var(--radius-control)] bg-[var(--color-surface)] border border-[var(--color-border-subtle)]">
+                  <div className="text-[10px] font-mono text-[var(--color-text-muted)] flex items-center justify-between mb-1">
                     <span>LOSS</span>
-                    <strong className="text-rose-500">{telemetryPoints[telemetryPoints.length - 1]?.packet_loss_pct}%</strong>
+                    <strong className="text-[var(--color-status-error-text)]">{telemetryPoints[telemetryPoints.length - 1]?.packet_loss_pct}%</strong>
                   </div>
-                  <Sparkline data={telemetryPoints.map((p) => p.packet_loss_pct || 0)} color="#F43F5E" fill />
+                  <Sparkline data={telemetryPoints.map((p) => p.packet_loss_pct || 0)} color="var(--color-status-error-dot)" fill />
                 </div>
-                <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">
-                  <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 flex items-center justify-between mb-1">
+                <div className="p-2.5 rounded-[var(--radius-control)] bg-[var(--color-surface)] border border-[var(--color-border-subtle)]">
+                  <div className="text-[10px] font-mono text-[var(--color-text-muted)] flex items-center justify-between mb-1">
                     <span>PING</span>
-                    <strong className="text-emerald-500">{telemetryPoints[telemetryPoints.length - 1]?.latency_ms}ms</strong>
+                    <strong className="text-[var(--color-status-success-text)]">{telemetryPoints[telemetryPoints.length - 1]?.latency_ms}ms</strong>
                   </div>
-                  <Sparkline data={telemetryPoints.map((p) => p.latency_ms || 0)} color="#10B981" fill />
+                  <Sparkline data={telemetryPoints.map((p) => p.latency_ms || 0)} color="var(--color-status-success-dot)" fill />
                 </div>
               </div>
 
-              <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+              <div className="rounded-[var(--radius-control)] overflow-hidden border border-[var(--color-border-subtle)]">
                 <TelemetryTimeSeriesChart data={telemetryPoints} title={`Telemetry Stream (Device #${deviceDetail.id})`} height={200} />
               </div>
             </div>
           </div>
         ) : (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#9CA3AF' }}>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
             Unable to load specifications for device #{deviceId}
           </div>
         )}

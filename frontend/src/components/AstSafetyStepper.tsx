@@ -72,8 +72,8 @@ export const AstSafetyStepper: React.FC<AstSafetyStepperProps> = ({
   return (
     <div
       style={{
-        background: 'var(--qt-surface, #ffffff)',
-        border: '1px solid var(--qt-border, #E6E4E0)',
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border-subtle)',
         borderRadius: 8,
         padding: '16px',
         marginBottom: '16px',
@@ -86,16 +86,16 @@ export const AstSafetyStepper: React.FC<AstSafetyStepperProps> = ({
           alignItems: 'center',
           marginBottom: '14px',
           paddingBottom: '10px',
-          borderBottom: '1px solid var(--qt-border, #E6E4E0)',
+          borderBottom: '1px solid var(--color-border-subtle)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ShieldCheck size={18} style={{ color: isValid ? '#1F7A4C' : '#A7382C' }} />
+          <ShieldCheck size={18} style={{ color: isValid ? 'var(--color-status-success-dot)' : 'var(--color-status-error-dot)' }} />
           <div>
-            <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--qt-ink, #191817)' }}>
+            <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
               Two-Layer SQLGlot AST Safety Pipeline
             </h4>
-            <span style={{ fontSize: '0.72rem', color: 'var(--qt-muted, #766F68)' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
               Non-negotiable server-side lexical &amp; syntax security guard
             </span>
           </div>
@@ -109,9 +109,9 @@ export const AstSafetyStepper: React.FC<AstSafetyStepperProps> = ({
             fontWeight: 700,
             letterSpacing: '0.03em',
             textTransform: 'uppercase',
-            background: isValid ? 'rgba(31, 122, 76, 0.12)' : 'rgba(167, 56, 44, 0.12)',
-            color: isValid ? '#1F7A4C' : '#A7382C',
-            border: `1px solid ${isValid ? 'rgba(31, 122, 76, 0.3)' : 'rgba(167, 56, 44, 0.3)'}`,
+            background: isValid ? 'var(--color-status-success-bg)' : 'var(--color-status-error-bg)',
+            color: isValid ? 'var(--color-status-success-text)' : 'var(--color-status-error-text)',
+            border: `1px solid ${isValid ? 'var(--color-status-success-dot)' : 'var(--color-status-error-dot)'}`,
           }}
         >
           {isValid ? 'SAFE SELECT' : 'BLOCKED NODE'}
@@ -121,13 +121,13 @@ export const AstSafetyStepper: React.FC<AstSafetyStepperProps> = ({
       {violations.length > 0 && (
         <div
           style={{
-            background: 'rgba(167, 56, 44, 0.08)',
-            border: '1px solid rgba(167, 56, 44, 0.25)',
+            background: 'var(--color-status-error-bg)',
+            border: '1px solid var(--color-status-error-dot)',
             borderRadius: 6,
             padding: '10px 12px',
             marginBottom: '12px',
             fontSize: '0.78rem',
-            color: '#A7382C',
+            color: 'var(--color-status-error-text)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, marginBottom: 4 }}>
@@ -167,19 +167,23 @@ export const AstSafetyStepper: React.FC<AstSafetyStepperProps> = ({
             isFailed = true
           }
 
-          const statusColor = isFailed ? '#A7382C' : isPassed ? '#1F7A4C' : 'var(--qt-muted, #766F68)'
-          const statusBg = isFailed
-            ? 'rgba(167, 56, 44, 0.08)'
+          const statusBorder = isFailed
+            ? 'var(--color-status-error-dot)'
             : isPassed
-            ? 'rgba(31, 122, 76, 0.06)'
-            : 'var(--qt-surface-muted, #F5F2ED)'
+            ? 'var(--color-status-success-dot)'
+            : 'var(--color-border-subtle)'
+          const statusBg = isFailed
+            ? 'var(--color-status-error-bg)'
+            : isPassed
+            ? 'var(--color-status-success-bg)'
+            : 'var(--color-raised)'
 
           return (
             <div
               key={step.key}
               style={{
                 background: statusBg,
-                border: `1px solid ${statusColor}33`,
+                border: `1px solid color-mix(in srgb, ${statusBorder} 35%, transparent)`,
                 borderRadius: 6,
                 padding: '10px',
                 display: 'flex',
@@ -189,28 +193,28 @@ export const AstSafetyStepper: React.FC<AstSafetyStepperProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--qt-ink, #191817)' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
                   {step.title}
                 </span>
                 {isFailed ? (
-                  <XCircle size={14} style={{ color: '#A7382C', flexShrink: 0 }} />
+                  <XCircle size={14} style={{ color: 'var(--color-status-error-dot)', flexShrink: 0 }} />
                 ) : isPassed ? (
-                  <CheckCircle2 size={14} style={{ color: '#1F7A4C', flexShrink: 0 }} />
+                  <CheckCircle2 size={14} style={{ color: 'var(--color-status-success-dot)', flexShrink: 0 }} />
                 ) : (
                   <span
                     style={{
                       width: 8,
                       height: 8,
                       borderRadius: '50%',
-                      background: 'var(--qt-muted, #766F68)',
+                      background: 'var(--color-text-muted)',
                     }}
                   />
                 )}
               </div>
-              <span style={{ fontSize: '0.72rem', color: 'var(--qt-text, #4F4A45)' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)' }}>
                 {step.description}
               </span>
-              <span style={{ fontSize: '0.67rem', color: 'var(--qt-muted, #766F68)', fontStyle: 'italic' }}>
+              <span style={{ fontSize: '0.67rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                 {step.subtext}
               </span>
             </div>

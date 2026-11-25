@@ -686,8 +686,8 @@ export const QueryHistoryView: React.FC<QueryHistoryViewProps> = ({ onAskQuestio
 
         {/* Pagination Controls */}
         {data && data.total_pages > 1 && (
-          <div className="pagination-bar" style={{ borderTop: '1px solid #EFECE6' }}>
-            <span style={{ fontSize: '12px', color: '#71706B' }}>
+          <div className="pagination-bar" style={{ borderTop: '1px solid var(--color-border-subtle)' }}>
+            <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
               Showing {filteredItems.length} of {data.total} recorded queries
             </span>
             <div className="pagination-controls">
@@ -739,7 +739,7 @@ export const QueryHistoryView: React.FC<QueryHistoryViewProps> = ({ onAskQuestio
                     >
                       <span>run_id:</span>
                       <span>{selectedItem.id.slice(0, 8)}...</span>
-                      {copiedRunId ? <Check size={12} color="#10B981" /> : <Copy size={12} />}
+                      {copiedRunId ? <Check size={12} style={{ color: 'var(--color-status-success-dot)' }} /> : <Copy size={12} />}
                     </button>
 
                     {renderStatusBadge(selectedItem.status)}
@@ -782,7 +782,7 @@ export const QueryHistoryView: React.FC<QueryHistoryViewProps> = ({ onAskQuestio
                   <div className="drawer-section-label">Natural Language Question & Scope</div>
                   <div className="drawer-prompt-box">
                     <div className="prompt-target-db-row">
-                      <span style={{ fontSize: '11px', color: '#8A8884', fontWeight: 600 }}>
+                      <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: 600 }}>
                         TARGET DATABASE
                       </span>
                       <span className="target-db-badge">
@@ -833,7 +833,7 @@ export const QueryHistoryView: React.FC<QueryHistoryViewProps> = ({ onAskQuestio
                         >
                           {copiedSql ? (
                             <>
-                              <Check size={12} color="#10B981" /> Copied!
+                              <Check size={12} style={{ color: 'var(--color-status-success-dot)' }} /> Copied!
                             </>
                           ) : (
                             <>
@@ -926,7 +926,7 @@ export const QueryHistoryView: React.FC<QueryHistoryViewProps> = ({ onAskQuestio
                 <div>
                   <div className="drawer-section-label">Operator Helpfulness Feedback</div>
                   <div className="drawer-feedback-card">
-                    <div style={{ fontSize: '12px', color: '#8A8884', lineHeight: 1.4 }}>
+                    <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>
                       Was this query translation accurate and useful for operational analysis?
                     </div>
 

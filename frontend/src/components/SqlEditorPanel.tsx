@@ -126,9 +126,9 @@ export const SqlEditorPanel: React.FC<SqlEditorPanelProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
-                backgroundColor: 'var(--accent-primary)',
+                backgroundColor: 'var(--color-accent)',
                 border: 'none',
-                color: '#ffffff',
+                color: 'var(--color-accent-contrast)',
                 fontSize: '10px',
                 fontWeight: 600,
                 fontFamily: 'var(--font-mono)',
@@ -238,7 +238,7 @@ function highlightSqlKeywords(text: string): React.ReactNode[] {
     // Highlight table/column identifiers or strings
     if (/^'.*'$/.test(part.trim())) {
       return (
-        <span key={i} style={{ color: '#059669' }}>
+        <span key={i} style={{ color: 'var(--color-status-success-text)' }}>
           {part}
         </span>
       )

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Users,
   CheckCircle2,
@@ -136,18 +137,15 @@ export const AdminView: React.FC = () => {
     setNotification(null)
     try {
       const [usersData, logsData, reqsData] = await Promise.all([
-        fetchAdminUsers(),
-        fetchAdminAuditLogs(),
-        fetchAdminAccessRequests(),
+        fetchAdminUsers().catch(() => null),
+        fetchAdminAuditLogs().catch(() => null),
+        fetchAdminAccessRequests().catch(() => null),
       ])
-      setUsers(usersData)
-      setAuditLogs(logsData)
-      setAccessRequests(reqsData)
+      if (usersData) setUsers(usersData)
+      if (logsData) setAuditLogs(logsData)
+      if (reqsData) setAccessRequests(reqsData)
     } catch (err) {
-      setNotification({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Failed to load administration records.',
-      })
+      console.warn('Admin data sync skipped:', err)
     } finally {
       setLoading(false)
     }
@@ -389,326 +387,180 @@ export const AdminView: React.FC = () => {
         </div>
       )}
 
-      {/* Role Capability Policy Matrix — Foil-Stamped Security Clearance Badges with Holographic Seals */}
+      {/* Role Permission Matrix */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))',
           gap: '14px',
           marginBottom: '1.5rem',
         }}
       >
-        {/* Admin Clearance Badge */}
+        {/* Admin Role */}
         <div
           style={{
-            backgroundColor: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            padding: '16px 18px',
-            position: 'relative',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-container)',
+            padding: '18px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
-          {/* Lanyard slot */}
-          <div
-            style={{
-              width: '36px',
-              height: '4px',
-              borderRadius: '2px',
-              margin: '0 auto 12px',
-              background: 'linear-gradient(90deg, #64748B, #94A3B8, #64748B)',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
-            }}
-          />
-          {/* Holographic Seal */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '12px',
-              right: '14px',
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.25) 100%)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              padding: '2px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Cryptographic Hardware Security Seal"
-          >
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                backgroundColor: 'var(--bg-surface-1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '9px',
-                fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--ink-primary)',
-              }}
-            >
-              T-01
-            </div>
-          </div>
-
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <span
                 style={{
-                  fontSize: '10px',
-                  fontWeight: 800,
+                  fontSize: '11px',
+                  fontWeight: 600,
                   fontFamily: 'var(--font-mono)',
-                  color: 'var(--role-admin-text)',
-                  backgroundColor: 'var(--role-admin-bg)',
-                  padding: '3px 8px',
+                  color: 'var(--color-accent-link)',
+                  backgroundColor: 'var(--color-accent-subtle)',
+                  padding: '2px 8px',
                   borderRadius: '4px',
-                  border: '1px solid rgba(239, 68, 68, 0.25)',
-                  letterSpacing: '0.04em',
+                  border: '1px solid var(--color-accent-border)',
                 }}
               >
-                CLEARANCE T-01 &bull; ROOT ADMIN
+                Admin
+              </span>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)' }}>
+                Full workspace governance
               </span>
             </div>
-            <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--ink-primary)', marginTop: 4 }}>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', marginTop: 6 }}>
               System Administrator
             </div>
             <p
               style={{
-                fontSize: '11.5px',
-                lineHeight: '1.65',
-                color: 'var(--ink-secondary)',
+                fontSize: '12.5px',
+                lineHeight: 1.55,
+                color: 'var(--color-text-secondary)',
                 marginTop: '6px',
-                marginBottom: '12px',
+                marginBottom: '14px',
               }}
             >
-              Full authority across Natural Language-to-SQL compiler, Monaco SQL editor, 6-Gate AST safety configuration, external BYOD database connections, user access management, and automated benchmark runners.
+              Manages natural-language SQL governance, safety benchmarks, PostgreSQL sources, webhooks, user roles, and activity logs.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
-            {['AST-6G CONFIG', 'BYOD KERNEL', 'RBAC & USERS', 'BENCHMARKS'].map((tag) => (
-              <span key={tag} style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', padding: '2px 6px', borderRadius: 3, backgroundColor: 'var(--bg-surface-2)', color: 'var(--ink-muted)', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingTop: 10, borderTop: '1px solid var(--color-border-subtle)' }}>
+            {['Safety checks', 'Data sources', 'Users & RBAC', 'Benchmarks'].map((tag) => (
+              <span key={tag} style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', padding: '2px 7px', borderRadius: 4, backgroundColor: 'var(--color-raised)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border-subtle)' }}>
                 {tag}
               </span>
             ))}
           </div>
         </div>
 
-        {/* Analyst Clearance Badge */}
+        {/* Analyst Role */}
         <div
           style={{
-            backgroundColor: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            padding: '16px 18px',
-            position: 'relative',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-container)',
+            padding: '18px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
-          {/* Lanyard slot */}
-          <div
-            style={{
-              width: '36px',
-              height: '4px',
-              borderRadius: '2px',
-              margin: '0 auto 12px',
-              background: 'linear-gradient(90deg, #64748B, #94A3B8, #64748B)',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
-            }}
-          />
-          {/* Holographic Seal */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '12px',
-              right: '14px',
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.25) 100%)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              padding: '2px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Cryptographic Hardware Security Seal"
-          >
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                backgroundColor: 'var(--bg-surface-1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '9px',
-                fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--ink-primary)',
-              }}
-            >
-              T-02
-            </div>
-          </div>
-
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <span
                 style={{
-                  fontSize: '10px',
-                  fontWeight: 800,
+                  fontSize: '11px',
+                  fontWeight: 600,
                   fontFamily: 'var(--font-mono)',
-                  color: 'var(--role-analyst-text)',
-                  backgroundColor: 'var(--role-analyst-bg)',
-                  padding: '3px 8px',
+                  color: 'var(--color-text-primary)',
+                  backgroundColor: 'var(--color-raised)',
+                  padding: '2px 8px',
                   borderRadius: '4px',
-                  border: '1px solid rgba(2, 132, 199, 0.25)',
-                  letterSpacing: '0.04em',
+                  border: '1px solid var(--color-border-subtle)',
                 }}
               >
-                CLEARANCE T-02 &bull; SEC-ANALYST
+                Analyst
+              </span>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)' }}>
+                NL-to-SQL &amp; diagnostics
               </span>
             </div>
-            <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--ink-primary)', marginTop: 4 }}>
-              Lead Data Practitioner
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', marginTop: 6 }}>
+              Data Practitioner
             </div>
             <p
               style={{
-                fontSize: '11.5px',
-                lineHeight: '1.65',
-                color: 'var(--ink-secondary)',
+                fontSize: '12.5px',
+                lineHeight: 1.55,
+                color: 'var(--color-text-secondary)',
                 marginTop: '6px',
-                marginBottom: '12px',
+                marginBottom: '14px',
               }}
             >
-              Natural Language-to-SQL authoring, read-only SQL execution preview, 6-Gate AST verification trace inspection, IsolationForest anomaly review, and CSV/JSON reporting data export.
+              Authors natural-language queries, reviews generated SELECT statements, runs read-only diagnostics, and exports CSV/JSON results.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
-            {['SELECT-ONLY', 'AST TRACE', 'EXPORTS', 'DIAGNOSTICS'].map((tag) => (
-              <span key={tag} style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', padding: '2px 6px', borderRadius: 3, backgroundColor: 'var(--bg-surface-2)', color: 'var(--ink-muted)', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingTop: 10, borderTop: '1px solid var(--color-border-subtle)' }}>
+            {['SELECT-only', 'AST trace', 'Exports', 'Diagnostics'].map((tag) => (
+              <span key={tag} style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', padding: '2px 7px', borderRadius: 4, backgroundColor: 'var(--color-raised)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border-subtle)' }}>
                 {tag}
               </span>
             ))}
           </div>
         </div>
 
-        {/* Viewer Clearance Badge */}
+        {/* Viewer Role */}
         <div
           style={{
-            backgroundColor: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            padding: '16px 18px',
-            position: 'relative',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-container)',
+            padding: '18px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
-          {/* Lanyard slot */}
-          <div
-            style={{
-              width: '36px',
-              height: '4px',
-              borderRadius: '2px',
-              margin: '0 auto 12px',
-              background: 'linear-gradient(90deg, #64748B, #94A3B8, #64748B)',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
-            }}
-          />
-          {/* Holographic Seal */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '12px',
-              right: '14px',
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: 'conic-gradient(from 180deg at 50% 50%, #64748B 0deg, #94A3B8 90deg, #CBD5E1 180deg, #94A3B8 270deg, #64748B 360deg)',
-              padding: '2px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Cryptographic Hardware Security Seal"
-          >
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                backgroundColor: 'var(--bg-surface-1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '9px',
-                fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--ink-primary)',
-              }}
-            >
-              T-03
-            </div>
-          </div>
-
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <span
                 style={{
-                  fontSize: '10px',
-                  fontWeight: 800,
+                  fontSize: '11px',
+                  fontWeight: 600,
                   fontFamily: 'var(--font-mono)',
-                  color: 'var(--role-viewer-text)',
-                  backgroundColor: 'var(--role-viewer-bg)',
-                  padding: '3px 8px',
+                  color: 'var(--color-text-secondary)',
+                  backgroundColor: 'var(--color-raised)',
+                  padding: '2px 8px',
                   borderRadius: '4px',
-                  border: '1px solid rgba(100, 116, 139, 0.25)',
-                  letterSpacing: '0.04em',
+                  border: '1px solid var(--color-border-subtle)',
                 }}
               >
-                CLEARANCE T-03 &bull; GOV-VIEWER
+                Viewer
+              </span>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-muted)' }}>
+                SQL hidden
               </span>
             </div>
-            <div style={{ fontSize: '12.5px', fontWeight: 700, color: 'var(--ink-primary)', marginTop: 4 }}>
-              Executive &amp; Operations Viewer
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', marginTop: 6 }}>
+              Operations Viewer
             </div>
             <p
               style={{
-                fontSize: '11.5px',
-                lineHeight: '1.65',
-                color: 'var(--ink-secondary)',
+                fontSize: '12.5px',
+                lineHeight: 1.55,
+                color: 'var(--color-text-secondary)',
                 marginTop: '6px',
-                marginBottom: '12px',
+                marginBottom: '14px',
               }}
             >
-              Natural language questioning with automatic zero-trust governance. Raw SQL, schema internals, and internal connection configurations remain masked. Interactive verified charts and tabular summaries only.
+              Asks plain-English questions with automatic safety enforcement. Raw SQL and backend infrastructure details stay hidden.
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
-            {['GOVERNED Q&A', 'CHART PREVIEWS', 'SQL MASKED', 'ROW CAP 200'].map((tag) => (
-              <span key={tag} style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', padding: '2px 6px', borderRadius: 3, backgroundColor: 'var(--bg-surface-2)', color: 'var(--ink-muted)', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingTop: 10, borderTop: '1px solid var(--color-border-subtle)' }}>
+            {['Plain-English Q&A', 'Tabular results', 'SQL masked', 'Read-only'].map((tag) => (
+              <span key={tag} style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', padding: '2px 7px', borderRadius: 4, backgroundColor: 'var(--color-raised)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border-subtle)' }}>
                 {tag}
               </span>
             ))}
@@ -718,17 +570,17 @@ export const AdminView: React.FC = () => {
 
       {/* 1. Users Management Card */}
       <div className="content-card full-width-card" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem' }}>
-        <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--qt-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <div className="card-header" style={{ padding: '1rem 1.4rem', borderBottom: '1px solid var(--color-border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <div className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Users size={18} style={{ color: 'var(--qt-accent)' }} />
+            <Users size={18} style={{ color: 'var(--color-accent-link)' }} />
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>
                 {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace'
                   ? `${currentUser.workspace_name} — Team Members (${users.length})`
-                  : `Who can do what (${users.length})`}
+                  : `Team Members (${users.length})`}
               </h3>
               {currentUser?.workspace_name && currentUser.workspace_name !== 'Default Workspace' && (
-                <p style={{ fontSize: '0.74rem', color: 'var(--qt-muted)', margin: 0 }}>
+                <p style={{ fontSize: '0.74rem', color: 'var(--color-text-secondary)', margin: 0 }}>
                   Workspace isolated: Only teammates provisioned under {currentUser.workspace_name} appear here.
                 </p>
               )}
@@ -739,10 +591,17 @@ export const AdminView: React.FC = () => {
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => setShowInviteModal(true)}
-              style={{ fontSize: '0.78rem', padding: '6px 12px' }}
+              style={{
+                fontSize: '0.78rem',
+                padding: '6px 12px',
+                backgroundColor: 'var(--color-accent)',
+                color: 'var(--color-accent-contrast)',
+                border: '1px solid var(--color-accent)',
+                borderRadius: 'var(--radius-control)',
+              }}
             >
               <UserPlus size={13} style={{ marginRight: 6 }} />
-              <span>+ Invite Team Member</span>
+              <span>Invite Team Member</span>
             </button>
             <ExplainButton
               title="User Roles"
@@ -1519,8 +1378,9 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Invite Team Member Modal */}
-      {showInviteModal && (
-        <div className="modal-backdrop-centered" onClick={() => setShowInviteModal(false)}>
+      {showInviteModal &&
+        createPortal(
+          <div className="modal-backdrop-centered" onClick={() => setShowInviteModal(false)}>
           <div
             className="modal-card"
             style={{ maxWidth: 560, width: '100%' }}
@@ -1532,12 +1392,12 @@ export const AdminView: React.FC = () => {
                   style={{
                     width: 38,
                     height: 38,
-                    borderRadius: 8,
-                    background: 'rgba(255, 92, 0, 0.12)',
+                    borderRadius: 'var(--radius-control)',
+                    background: 'var(--color-accent-subtle)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--qt-accent)',
+                    color: 'var(--color-accent-link)',
                   }}
                 >
                   <UserPlus size={20} />
@@ -1566,9 +1426,9 @@ export const AdminView: React.FC = () => {
               {/* Shareable Invite Link Box */}
               <div
                 style={{
-                  background: 'var(--qt-canvas, #151821)',
-                  border: '1px solid var(--qt-border)',
-                  borderRadius: 8,
+                  background: 'var(--color-raised)',
+                  border: '1px solid var(--color-border-subtle)',
+                  borderRadius: 'var(--radius-control)',
                   padding: '12px 14px',
                 }}
               >
@@ -1637,9 +1497,9 @@ export const AdminView: React.FC = () => {
                         alignItems: 'center',
                         gap: 8,
                         padding: '8px 12px',
-                        borderRadius: 8,
-                        border: `1px solid ${inviteValues.role === 'analyst' ? 'var(--qt-accent)' : 'var(--qt-border)'}`,
-                        background: inviteValues.role === 'analyst' ? 'rgba(255, 92, 0, 0.08)' : 'var(--qt-canvas)',
+                        borderRadius: 'var(--radius-control)',
+                        border: `1px solid ${inviteValues.role === 'analyst' ? 'var(--color-accent)' : 'var(--color-border-subtle)'}`,
+                        background: inviteValues.role === 'analyst' ? 'var(--color-accent-subtle)' : 'var(--color-raised)',
                         cursor: 'pointer',
                         fontSize: '0.82rem',
                       }}
@@ -1658,9 +1518,9 @@ export const AdminView: React.FC = () => {
                         alignItems: 'center',
                         gap: 8,
                         padding: '8px 12px',
-                        borderRadius: 8,
-                        border: `1px solid ${inviteValues.role === 'viewer' ? 'var(--qt-accent)' : 'var(--qt-border)'}`,
-                        background: inviteValues.role === 'viewer' ? 'rgba(255, 92, 0, 0.08)' : 'var(--qt-canvas)',
+                        borderRadius: 'var(--radius-control)',
+                        border: `1px solid ${inviteValues.role === 'viewer' ? 'var(--color-accent)' : 'var(--color-border-subtle)'}`,
+                        background: inviteValues.role === 'viewer' ? 'var(--color-accent-subtle)' : 'var(--color-raised)',
                         cursor: 'pointer',
                         fontSize: '0.82rem',
                       }}
@@ -1695,12 +1555,14 @@ export const AdminView: React.FC = () => {
               </form>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Cryptographic Audit Confirmation Modal */}
-      {pendingRoleChange && (
-        <div className="modal-backdrop-centered" onClick={() => setPendingRoleChange(null)}>
+      {pendingRoleChange &&
+        createPortal(
+          <div className="modal-backdrop-centered" onClick={() => setPendingRoleChange(null)}>
           <div
             className="modal-card"
             style={{
@@ -1772,7 +1634,8 @@ export const AdminView: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

@@ -1,329 +1,276 @@
 import React, { useState } from 'react'
-import {
-  Lock,
-  Layers,
-  Shield,
-  Zap,
-  Play,
-  RotateCcw,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react'
+import { Shield, Lock, FileCheck, XCircle, CheckCircle2 } from 'lucide-react'
 
 export const ArchitecturalMonoliths: React.FC = () => {
-  // Card 2 State: Switchboard simulated write attempt
-  const [switchboardTest, setSwitchboardTest] = useState<'idle' | 'rejected'>('idle')
-
-  // Card 3 State: Velocity Race simulation
-  const [raceRunning, setRaceRunning] = useState(false)
-  const [raceFinished, setRaceFinished] = useState(false)
-
-  const handleStartRace = () => {
-    setRaceRunning(true)
-    setRaceFinished(false)
-    setTimeout(() => {
-      setRaceFinished(true)
-      setRaceRunning(false)
-    }, 1420)
-  }
+  const [writeTestState, setWriteTestState] = useState<'idle' | 'denied'>('idle')
 
   return (
-    <section id="three-invariants" className="py-20 sm:py-28 relative text-left bg-[#FAFAFA] dark:bg-[#09090B] transition-colors border-t border-zinc-200 dark:border-zinc-800">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8">
-
-        {/* Section Header */}
-        <div className="max-w-3xl mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-xs font-semibold text-sky-600 dark:text-sky-400 mb-4 font-mono">
-            <Layers size={13} />
-            <span>03 // CORE SECURITY INVARIANTS</span>
+    <section
+      id="three-invariants"
+      className="py-16 sm:py-24 text-left transition-colors"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderTop: '1px solid var(--color-border-subtle)',
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        <div className="max-w-2xl mb-10">
+          <div
+            className="text-xs font-medium uppercase tracking-wider mb-2"
+            style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
+          >
+            Core Safeguards
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight text-zinc-950 dark:text-white leading-[1.15]">
-            Engineered with provable{' '}
-            <span className="text-sky-600 dark:text-sky-400">
-              architectural safeguards.
-            </span>
+          <h2
+            className="text-2xl sm:text-4xl font-normal tracking-tight leading-[1.15]"
+            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}
+          >
+            Two independent enforcement layers
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-            LLM prompts are never a security boundary. QueryTrust AI guarantees data safety through two immutable software barriers: an AST compiler that validates syntax trees before execution, and a physical PostgreSQL role with zero write grants.
+          <p className="mt-3 text-sm sm:text-base leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+            Natural-language queries pass strict AST verification before reaching the database, and the database role itself refuses mutations.
           </p>
         </div>
 
-        {/* 3 Interactive Bento Visual Cards with 200px-Tall Custom SVG Illustrations */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* ── CARD 01: 200px Custom SVG Animated 6-Layer Laser Sieve ── */}
-          <div className="group relative rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200/90 dark:border-white/[0.08] hover:border-zinc-400 dark:hover:border-white/25 hover:bg-white dark:hover:bg-[#151518] hover:shadow-lg dark:hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col justify-between overflow-hidden">
-            {/* Watermark Numeral */}
-            <span className="absolute top-3 right-4 font-mono font-bold text-5xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none tracking-tight">
-              01
-            </span>
-
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold text-sky-600 dark:text-sky-400 tracking-wider uppercase font-mono flex items-center gap-1.5">
+          {/* Card 1: AST Parser */}
+          <div className="landing-card p-6 flex flex-col justify-between gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold"
+                  style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
+                >
                   <Shield size={14} />
-                  <span>INVARIANT 01</span>
+                  <span>SQLGlot AST</span>
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10.5px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
-                  SQLGlot Sieve
+                <span
+                  className="px-2 py-0.5 rounded-[6px] text-[11px] font-medium"
+                  style={{
+                    backgroundColor: 'var(--color-status-success-bg)',
+                    color: 'var(--color-status-success-text)',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  PostgreSQL Dialect
                 </span>
               </div>
 
-              {/* 200px-Tall Custom Animated 6-Layer Laser Sieve SVG */}
-              <div className="h-[200px] rounded-2xl bg-zinc-950 border border-zinc-800 p-3 mb-6 flex flex-col justify-center font-mono text-xs relative overflow-hidden">
-                <div className="absolute top-2 left-3 text-[9.5px] text-zinc-500 font-mono">
-                  // 6-LAYER LASER AST SIEVE
-                </div>
-
-                <svg viewBox="0 0 320 180" className="w-full h-full">
-                  <defs>
-                    <linearGradient id="sieve-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="#0EA5E9" stopOpacity="0.9" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Incoming Unfiltered Stream (Red Triangles + Cyan Circles) */}
-                  <g transform="translate(10, 40)">
-                    {/* Blocked Red Threat Triangles */}
-                    <polygon points="15,20 25,35 5,35" fill="#EF4444" opacity="0.9" />
-                    <polygon points="35,65 45,80 25,80" fill="#EF4444" opacity="0.9" />
-                    <text x="35" y="100" fill="#F87171" fontSize="7" fontFamily="monospace">DROP / DDL</text>
-
-                    {/* Safe Cyan Query Circles */}
-                    <circle cx="20" cy="55" r="5" fill="#38BDF8" />
-                    <circle cx="45" cy="30" r="5" fill="#38BDF8" />
-                    <circle cx="30" cy="115" r="5" fill="#38BDF8" />
-                  </g>
-
-                  {/* 6 Vertical Laser Sieve Grids */}
-                  {[
-                    { x: 90, name: 'G1', label: 'exp.Select' },
-                    { x: 120, name: 'G2', label: 'Catalog' },
-                    { x: 150, name: 'G3', label: 'Column' },
-                    { x: 180, name: 'G4', label: 'Where' },
-                    { x: 210, name: 'G5', label: 'Join' },
-                    { x: 240, name: 'G6', label: 'Limit' },
-                  ].map((sieve) => (
-                    <g key={sieve.name} transform={`translate(${sieve.x}, 25)`}>
-                      {/* Laser Line */}
-                      <line x1="0" y1="15" x2="0" y2="135" stroke="#38bdf8" strokeWidth="2" strokeDasharray="4 2" opacity="0.85" />
-                      <circle cx="0" cy="15" r="2.5" fill="#38bdf8" />
-                      <circle cx="0" cy="135" r="2.5" fill="#38bdf8" />
-                      <text x="0" y="148" textAnchor="middle" fill="#38BDF8" fontSize="7.5" fontFamily="monospace">{sieve.name}</text>
-                    </g>
-                  ))}
-
-                  {/* Deflected Red Sparks stopped at Laser Gate 1 */}
-                  <g transform="translate(90, 70)">
-                    <circle r="8" fill="#EF4444" opacity="0.5" />
-                    <line x1="0" y1="0" x2="-12" y2="-10" stroke="#EF4444" strokeWidth="1.5" />
-                    <line x1="0" y1="0" x2="-14" y2="8" stroke="#EF4444" strokeWidth="1.5" />
-                  </g>
-
-                  {/* Purified Outgoing Stream: Safe Blue Particles Only */}
-                  <g transform="translate(260, 40)">
-                    <circle cx="15" cy="40" r="5" fill="#10B981" />
-                    <circle cx="35" cy="70" r="5" fill="#10B981" />
-                    <circle cx="20" cy="95" r="5" fill="#10B981" />
-                    <path d="M 5 70 L 45 70" stroke="#10b981" strokeWidth="2" strokeDasharray="3 2" />
-                    <text x="25" y="125" textAnchor="middle" fill="#10B981" fontSize="7.5" fontFamily="monospace" fontWeight="bold">
-                      VERIFIED SELECT
-                    </text>
-                  </g>
-                </svg>
+              <div
+                className="p-4 rounded-[8px] space-y-2 text-xs"
+                style={{
+                  backgroundColor: 'var(--color-raised)',
+                  border: '1px solid var(--color-border-subtle)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                {[
+                  ['01', 'Single SELECT root', 'Allowed'],
+                  ['02', 'Catalog allowlist', '4 tables'],
+                  ['03', 'DDL / DML nodes', 'Blocked'],
+                  ['04', 'Join & row limits', 'Clamped'],
+                ].map(([num, label, status]) => (
+                  <div key={num} className="flex items-center justify-between">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
+                      <strong style={{ color: 'var(--color-text-primary)' }}>{num}</strong> {label}
+                    </span>
+                    <span
+                      style={{
+                        color:
+                          status === 'Blocked'
+                            ? 'var(--color-status-error-text)'
+                            : 'var(--color-status-success-text)',
+                      }}
+                    >
+                      {status}
+                    </span>
+                  </div>
+                ))}
               </div>
 
-              <h3 className="text-xl font-bold text-zinc-950 dark:text-white tracking-tight">
-                6-Gate Deterministic AST Compiler
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-                Every query is parsed into a PostgreSQL dialect abstract syntax tree before execution. Destructive DDL, unconstrained cartesian explosions, and system catalog probes are rejected in microseconds.
-              </p>
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+                  Deterministic Syntax Validation
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  Every candidate statement is parsed and revalidated via SQLGlot on execution. Multi-statement batches, DDL, DML, and system tables are rejected before connecting.
+                </p>
+              </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between font-mono text-xs text-zinc-500 relative z-10">
-              <span>Compiler P95</span>
-              <strong className="text-zinc-950 dark:text-white font-mono font-semibold">1.42ms Latency</strong>
+            <div
+              className="pt-4 flex items-center justify-between text-xs"
+              style={{
+                borderTop: '1px solid var(--color-border-subtle)',
+                color: 'var(--color-text-muted)',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <span>Parser Mode</span>
+              <strong style={{ color: 'var(--color-text-primary)' }}>6 AST Checks</strong>
             </div>
           </div>
 
-          {/* ── CARD 02: 200px Custom SVG Physical Switchboard Illustration ── */}
-          <div className="group relative rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200/90 dark:border-white/[0.08] hover:border-zinc-400 dark:hover:border-white/25 hover:bg-white dark:hover:bg-[#151518] hover:shadow-lg dark:hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col justify-between overflow-hidden">
-            {/* Watermark Numeral */}
-            <span className="absolute top-3 right-4 font-mono font-bold text-5xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none tracking-tight">
-              02
-            </span>
-
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold text-sky-600 dark:text-sky-400 tracking-wider uppercase font-mono flex items-center gap-1.5">
+          {/* Card 2: Read-Only DB Role */}
+          <div className="landing-card p-6 flex flex-col justify-between gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold"
+                  style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
+                >
                   <Lock size={14} />
-                  <span>INVARIANT 02</span>
+                  <span>Reader Role</span>
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-[10.5px] font-mono text-sky-600 dark:text-sky-400 font-semibold">
-                  Kernel Boundary
+                <span
+                  className="px-2 py-0.5 rounded-[6px] text-[11px] font-medium"
+                  style={{
+                    backgroundColor: 'var(--color-accent-subtle)',
+                    color: 'var(--color-accent-link)',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  qt_ai_readonly
                 </span>
               </div>
 
-              {/* 200px Custom SVG Physical Switchboard Illustration */}
-              <div className="h-[200px] rounded-2xl bg-zinc-950 border border-zinc-800 p-3 mb-6 flex flex-col justify-between font-mono text-xs relative">
-                <div className="flex items-center justify-between text-[9.5px] text-zinc-500">
-                  <span>// PHYSICAL KERNEL SWITCHBOARD</span>
-                  <span className="text-emerald-400 font-bold">qt_ai_readonly</span>
+              <div
+                className="p-4 rounded-[8px] space-y-3 text-xs"
+                style={{
+                  backgroundColor: 'var(--color-raised)',
+                  border: '1px solid var(--color-border-subtle)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--color-text-primary)' }}>SELECT</span>
+                  <span className="inline-flex items-center gap-1" style={{ color: 'var(--color-status-success-text)' }}>
+                    <CheckCircle2 size={12} />
+                    <span>Granted</span>
+                  </span>
                 </div>
-
-                {/* SVG Switchboard Graphics */}
-                <svg viewBox="0 0 320 120" className="w-full h-auto">
-                  {/* SELECT SWITCH (ON - GREEN) */}
-                  <g transform="translate(20, 10)">
-                    <rect width="130" height="95" rx="8" fill="#064E3B" stroke="#10B981" strokeWidth="1.5" />
-                    <circle cx="20" cy="20" r="5" fill="#34D399" />
-                    <text x="32" y="24" fill="#34D399" fontSize="9" fontFamily="monospace" fontWeight="bold">SELECT</text>
-                    <rect x="20" y="38" width="90" height="24" rx="12" fill="#022C22" />
-                    <circle cx="85" cy="50" r="10" fill="#10B981" />
-                    <text x="65" y="85" textAnchor="middle" fill="#6EE7B7" fontSize="8" fontFamily="monospace">STATUS: GRANTED</text>
-                  </g>
-
-                  {/* INSERT/DROP SWITCH (LOCKED - RED BEHIND BOLTED GLASS) */}
-                  <g transform="translate(170, 10)">
-                    <rect width="130" height="95" rx="8" fill="#4C0519" stroke="#EF4444" strokeWidth="1.5" />
-                    {/* Bolted Glass Rivets */}
-                    <circle cx="8" cy="8" r="2.5" fill="#71717A" />
-                    <circle cx="122" cy="8" r="2.5" fill="#71717A" />
-                    <circle cx="8" cy="87" r="2.5" fill="#71717A" />
-                    <circle cx="122" cy="87" r="2.5" fill="#71717A" />
-
-                    <circle cx="20" cy="20" r="5" fill="#EF4444" />
-                    <text x="32" y="24" fill="#F87171" fontSize="9" fontFamily="monospace" fontWeight="bold">WRITE / DDL</text>
-                    <rect x="20" y="38" width="90" height="24" rx="12" fill="#2A020B" />
-                    <circle cx="45" cy="50" r="10" fill="#7F1D1D" stroke="#EF4444" strokeWidth="1.5" />
-                    <text x="65" y="85" textAnchor="middle" fill="#FCA5A5" fontSize="8" fontFamily="monospace">STATUS: REVOKED</text>
-                  </g>
-                </svg>
-
-                {/* Interactive Test Action */}
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--color-text-primary)' }}>INSERT / UPDATE / DROP</span>
+                  <span className="inline-flex items-center gap-1" style={{ color: 'var(--color-status-error-text)' }}>
+                    <XCircle size={12} />
+                    <span>Revoked</span>
+                  </span>
+                </div>
+                <div className="pt-1 flex items-center justify-between gap-2 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => {
-                      setSwitchboardTest('rejected')
-                      setTimeout(() => setSwitchboardTest('idle'), 2500)
-                    }}
-                    className="text-[9.5px] text-zinc-400 hover:text-white px-2.5 py-1 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 transition-colors cursor-pointer flex items-center gap-1"
+                    onClick={() => setWriteTestState('denied')}
+                    className="px-2.5 py-1 rounded-[6px] text-[11px] font-medium cursor-pointer landing-control-secondary"
                   >
-                    <span>Simulate Write Attempt</span>
+                    Simulate write call
                   </button>
-                  {switchboardTest === 'rejected' && (
-                    <span className="text-[9.5px] text-rose-400 font-bold animate-pulse flex items-center gap-1">
-                      <XCircle size={10} />
-                      <span>Permission Denied (0 Writes)</span>
+                  {writeTestState === 'denied' && (
+                    <span className="text-[11px] font-medium" style={{ color: 'var(--color-status-error-text)' }}>
+                      ERROR: permission denied for table devices
                     </span>
                   )}
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold text-zinc-950 dark:text-white tracking-tight">
-                Dedicated Read-Only Execution Role
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-                Natural-language queries execute exclusively through <code className="text-sky-600 dark:text-sky-400 font-mono font-semibold">qt_ai_readonly</code>. Even in the theoretical event of a full compiler bypass, PostgreSQL kernel rules enforce zero write permissions.
-              </p>
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+                  Least-Privilege Database Role
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  Analytics queries run over a dedicated read-only PostgreSQL credential with{' '}
+                  <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
+                    default_transaction_read_only
+                  </code>{' '}
+                  and zero mutation privileges.
+                </p>
+              </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between font-mono text-xs text-zinc-500 relative z-10">
+            <div
+              className="pt-4 flex items-center justify-between text-xs"
+              style={{
+                borderTop: '1px solid var(--color-border-subtle)',
+                color: 'var(--color-text-muted)',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
               <span>Write Privileges</span>
-              <strong className="text-emerald-600 dark:text-emerald-400 font-mono font-semibold">0 Permissions</strong>
+              <strong style={{ color: 'var(--color-status-success-text)' }}>None</strong>
             </div>
           </div>
 
-          {/* ── CARD 03: 200px Custom SVG Speed Race Illustration ── */}
-          <div className="group relative rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200/90 dark:border-white/[0.08] hover:border-zinc-400 dark:hover:border-white/25 hover:bg-white dark:hover:bg-[#151518] hover:shadow-lg dark:hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.1)] hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col justify-between overflow-hidden">
-            {/* Watermark Numeral */}
-            <span className="absolute top-3 right-4 font-mono font-bold text-5xl text-zinc-950 dark:text-white opacity-10 pointer-events-none select-none tracking-tight">
-              03
-            </span>
-
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-bold text-sky-600 dark:text-sky-400 tracking-wider uppercase font-mono flex items-center gap-1.5">
-                  <Zap size={14} />
-                  <span>INVARIANT 03</span>
+          {/* Card 3: Preview IDs & Bounds */}
+          <div className="landing-card p-6 flex flex-col justify-between gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold"
+                  style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
+                >
+                  <FileCheck size={14} />
+                  <span>Execution Bounds</span>
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10.5px] font-mono text-blue-600 dark:text-blue-400 font-semibold">
-                  Team Velocity
+                <span
+                  className="px-2 py-0.5 rounded-[6px] text-[11px] font-medium"
+                  style={{
+                    backgroundColor: 'var(--color-raised)',
+                    color: 'var(--color-text-secondary)',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  Audited Runs
                 </span>
               </div>
 
-              {/* 200px Custom SVG Speed Race Illustration */}
-              <div className="h-[200px] rounded-2xl bg-zinc-950 border border-zinc-800 p-3 mb-6 flex flex-col justify-between font-mono text-xs relative">
-                <div className="flex items-center justify-between text-[9.5px] text-zinc-500">
-                  <span>// VELOCITY RACE COMPARATOR</span>
-                  <span className="text-sky-400 font-bold">10,140x FASTER</span>
+              <div
+                className="p-4 rounded-[8px] space-y-2 text-xs"
+                style={{
+                  backgroundColor: 'var(--color-raised)',
+                  border: '1px solid var(--color-border-subtle)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Execution target</span>
+                  <span style={{ color: 'var(--color-text-primary)' }}>Server Preview ID</span>
                 </div>
-
-                {/* SVG Laser Beam vs Slow Bar */}
-                <svg viewBox="0 0 320 120" className="w-full h-auto">
-                  {/* Track 1: QueryTrust AI Laser Pulse (1.42s) */}
-                  <g transform="translate(10, 15)">
-                    <text x="0" y="8" fill="#38BDF8" fontSize="8.5" fontFamily="monospace" fontWeight="bold">QUERYTRUST AI (1.42s)</text>
-                    <rect x="0" y="16" width="300" height="18" rx="9" fill="#0c4a6e" />
-                    <rect
-                      x="0"
-                      y="16"
-                      width={raceRunning || raceFinished ? 300 : 280}
-                      height="18"
-                      rx="9"
-                      fill="#38BDF8"
-                    />
-                    <circle cx="280" cy="25" r="5" fill="#FFFFFF" />
-                  </g>
-
-                  {/* Track 2: 4-Hour Jira DBA Queue */}
-                  <g transform="translate(10, 65)">
-                    <text x="0" y="8" fill="#94A3B8" fontSize="8.5" fontFamily="monospace">4-HOUR JIRA DBA QUEUE</text>
-                    <rect x="0" y="16" width="300" height="18" rx="9" fill="#27272a" />
-                    <rect x="0" y="16" width="12" height="18" rx="6" fill="#71717a" />
-                    <text x="20" y="28" fill="#E2E8F0" fontSize="7.5" fontFamily="monospace" fontWeight="500">0.01% — Waiting in DBA Triage</text>
-                  </g>
-                </svg>
-
-                {/* Race Trigger Button */}
-                <div className="flex items-center justify-between pt-1">
-                  <button
-                    type="button"
-                    onClick={handleStartRace}
-                    disabled={raceRunning}
-                    className="text-[9.5px] text-zinc-300 hover:text-white px-3 py-1 rounded-md bg-sky-600 hover:bg-sky-500 transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                  >
-                    {raceRunning ? <RotateCcw size={10} className="animate-spin" /> : <Play size={10} />}
-                    <span>{raceRunning ? 'Racing...' : 'Run Velocity Race'}</span>
-                  </button>
-                  {raceFinished && (
-                    <span className="text-[9.5px] text-emerald-400 font-bold flex items-center gap-1">
-                      <CheckCircle2 size={10} />
-                      <span>10,140x Velocity Delta</span>
-                    </span>
-                  )}
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Default row limit</span>
+                  <span style={{ color: 'var(--color-text-primary)' }}>LIMIT 100</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Maximum row cap</span>
+                  <span style={{ color: 'var(--color-text-primary)' }}>500 rows</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Statement timeout</span>
+                  <span style={{ color: 'var(--color-text-primary)' }}>5,000 ms</span>
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold text-zinc-950 dark:text-white tracking-tight">
-                Instant Self-Serve Without Security Risk
-              </h3>
-              <p className="mt-2 text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-                Empower technical analysts and domain stakeholders with direct, natural-language database exploration without creating security reviews or granting raw database credentials.
-              </p>
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+                  Bounded &amp; Audited Execution
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+                  The client never supplies arbitrary SQL directly to execution. Only server-stored preview IDs run after ownership checks, with full history logging.
+                </p>
+              </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between font-mono text-xs text-zinc-500 relative z-10">
-              <span>DBA Deflection</span>
-              <strong className="text-sky-600 dark:text-sky-400 font-mono font-semibold">65% Deflection</strong>
+            <div
+              className="pt-4 flex items-center justify-between text-xs"
+              style={{
+                borderTop: '1px solid var(--color-border-subtle)',
+                color: 'var(--color-text-muted)',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <span>Client Contract</span>
+              <strong style={{ color: 'var(--color-text-primary)' }}>Preview ID Only</strong>
             </div>
           </div>
-
         </div>
-
       </div>
     </section>
   )

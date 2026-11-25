@@ -49,8 +49,8 @@ export const ViewShimmerSkeleton: React.FC<{ title?: string }> = ({ title = 'Loa
             style={{
               height: 104,
               borderRadius: 8,
-              background: 'var(--qt-surface, #ffffff)',
-              border: '1px solid var(--qt-border, #E6E4E0)',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border-subtle)',
             }}
           />
         ))}
@@ -62,8 +62,8 @@ export const ViewShimmerSkeleton: React.FC<{ title?: string }> = ({ title = 'Loa
         style={{
           height: 380,
           borderRadius: 8,
-          background: 'var(--qt-surface, #ffffff)',
-          border: '1px solid var(--qt-border, #E6E4E0)',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border-subtle)',
         }}
       />
     </div>

@@ -5,7 +5,6 @@ import {
   ShieldCheck,
   Database,
   ArrowRight,
-  TrendingDown,
   Layers,
   Clock,
   Terminal,
@@ -50,9 +49,9 @@ export const RoiBenchmarkModal: React.FC<RoiBenchmarkModalProps> = ({
           <div className="roi-header-title-group">
             <span className="roi-beacon-dot" />
             <h2 id="roi-modal-title" className="roi-modal-title">
-              Enterprise Governance Velocity &amp; ROI Telemetry
+              Read-Only Execution &amp; Kernel Architecture
             </h2>
-            <span className="roi-version-pill">PROD-AUDIT-v3.4</span>
+            <span className="roi-version-pill">PostgreSQL 16</span>
           </div>
           <button
             type="button"
@@ -66,50 +65,49 @@ export const RoiBenchmarkModal: React.FC<RoiBenchmarkModalProps> = ({
 
         {/* Modal Body */}
         <div className="roi-modal-body">
-          {/* 4 Swiss Grid KPI Ribbon */}
+          {/* 4 Metric Tiles */}
           <div className="roi-kpi-grid">
             <div className="roi-kpi-tile">
-              <div className="roi-kpi-label" style={{ color: '#38BDF8' }}>
-                <Zap size={12} />
-                <span>Turnaround</span>
+              <div className="roi-kpi-label">
+                <Zap size={12} style={{ color: 'var(--color-accent-link)' }} />
+                <span>Sample query</span>
               </div>
-              <div className="roi-kpi-val">1.42s</div>
-              <div className="roi-kpi-sub" style={{ color: '#34D399' }}>
-                <TrendingDown size={11} />
-                <span>99.9% vs 4h Jira Lag</span>
-              </div>
-            </div>
-
-            <div className="roi-kpi-tile">
-              <div className="roi-kpi-label" style={{ color: '#38BDF8' }}>
-                <Clock size={12} />
-                <span>Deflection</span>
-              </div>
-              <div className="roi-kpi-val">65%</div>
-              <div className="roi-kpi-sub" style={{ color: '#94A3B8' }}>
-                Routine SQL Tickets
+              <div className="roi-kpi-val">1.4 ms</div>
+              <div className="roi-kpi-sub">
+                <span>Bounded SELECT timing</span>
               </div>
             </div>
 
             <div className="roi-kpi-tile">
-              <div className="roi-kpi-label" style={{ color: '#34D399' }}>
-                <ShieldCheck size={12} />
-                <span>Safety Tests</span>
+              <div className="roi-kpi-label">
+                <Clock size={12} style={{ color: 'var(--color-accent-link)' }} />
+                <span>Row limit</span>
               </div>
-              <div className="roi-kpi-val">151/151</div>
-              <div className="roi-kpi-sub" style={{ color: '#34D399' }}>
-                100% Automated Pass
+              <div className="roi-kpi-val">&le; 500</div>
+              <div className="roi-kpi-sub">
+                <span>Clamped in AST parser</span>
               </div>
             </div>
 
             <div className="roi-kpi-tile">
-              <div className="roi-kpi-label" style={{ color: '#34D399' }}>
-                <Terminal size={12} />
-                <span>Forbidden</span>
+              <div className="roi-kpi-label">
+                <ShieldCheck size={12} style={{ color: 'var(--color-status-success-dot)' }} />
+                <span>AST rules</span>
               </div>
-              <div className="roi-kpi-val" style={{ color: '#34D399' }}>0 Runs</div>
-              <div className="roi-kpi-sub" style={{ color: '#34D399' }}>
-                100% Interception
+              <div className="roi-kpi-val">6 / 6</div>
+              <div className="roi-kpi-sub" style={{ color: 'var(--color-status-success-text)' }}>
+                Verified per query
+              </div>
+            </div>
+
+            <div className="roi-kpi-tile">
+              <div className="roi-kpi-label">
+                <Terminal size={12} style={{ color: 'var(--color-status-success-dot)' }} />
+                <span>Write privileges</span>
+              </div>
+              <div className="roi-kpi-val">0</div>
+              <div className="roi-kpi-sub" style={{ color: 'var(--color-status-success-text)' }}>
+                SELECT-only DB role
               </div>
             </div>
           </div>
@@ -117,67 +115,46 @@ export const RoiBenchmarkModal: React.FC<RoiBenchmarkModalProps> = ({
           {/* 3 Core Architecture Pillars */}
           <div>
             <h3 className="roi-section-title">
-              The 3 Architectural Pillars of Zero-Trust NL-to-SQL
+              Layered Enforcement Boundaries
             </h3>
 
             <div className="roi-pillars-grid">
               <div className="roi-pillar-card">
                 <div className="roi-pillar-head">
-                  <Layers size={14} style={{ color: '#38BDF8' }} />
-                  <span>1. SQLGlot Compiler</span>
+                  <Layers size={14} style={{ color: 'var(--color-accent-link)' }} />
+                  <span>1. SQLGlot AST Parser</span>
                 </div>
                 <p className="roi-pillar-desc">
-                  Mathematical Abstract Syntax Tree inspection across 6 deterministic gates. Never trusts LLM prompt instructions for security.
+                  Deterministic syntax tree validation across 6 checks before any SQL string reaches PostgreSQL.
                 </p>
-                <span
-                  className="roi-pillar-badge"
-                  style={{
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                    color: '#38BDF8',
-                    border: '1px solid rgba(56, 189, 248, 0.25)',
-                  }}
-                >
-                  [6/6 Gates Enforced]
+                <span className="roi-pillar-badge">
+                  AST-01 to AST-06
                 </span>
               </div>
 
               <div className="roi-pillar-card">
                 <div className="roi-pillar-head">
-                  <Database size={14} style={{ color: '#34D399' }} />
-                  <span>2. Dual-Role Kernel</span>
+                  <Database size={14} style={{ color: 'var(--color-status-success-dot)' }} />
+                  <span>2. Read-Only Role</span>
                 </div>
                 <p className="roi-pillar-desc">
-                  Dedicated PostgreSQL role <code>qt_ai_readonly</code> with 0 write/DDL permissions enforced by database kernel privileges.
+                  Dedicated PostgreSQL role <code>qt_ai_readonly</code> with only table SELECT grants and no write privileges.
                 </p>
-                <span
-                  className="roi-pillar-badge"
-                  style={{
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    color: '#34D399',
-                    border: '1px solid rgba(16, 185, 129, 0.25)',
-                  }}
-                >
-                  [0 Write/DDL/DCL Perms]
+                <span className="roi-pillar-badge" style={{ color: 'var(--color-status-success-text)' }}>
+                  SELECT-only role
                 </span>
               </div>
 
               <div className="roi-pillar-card">
                 <div className="roi-pillar-head">
-                  <ShieldCheck size={14} style={{ color: '#818CF8' }} />
-                  <span>3. Enterprise Velocity</span>
+                  <ShieldCheck size={14} style={{ color: 'var(--color-accent-link)' }} />
+                  <span>3. Preview Binding</span>
                 </div>
                 <p className="roi-pillar-desc">
-                  Non-technical domain operators query relational fleet data safely in under 1.5s, freeing data engineers from ad-hoc extraction queues.
+                  The browser never submits raw SQL. Execution references a server-validated preview record ID.
                 </p>
-                <span
-                  className="roi-pillar-badge"
-                  style={{
-                    backgroundColor: 'rgba(129, 140, 248, 0.1)',
-                    color: '#818CF8',
-                    border: '1px solid rgba(129, 140, 248, 0.25)',
-                  }}
-                >
-                  [Jira Deflection: 65%]
+                <span className="roi-pillar-badge">
+                  Server preview ID
                 </span>
               </div>
             </div>
@@ -186,14 +163,13 @@ export const RoiBenchmarkModal: React.FC<RoiBenchmarkModalProps> = ({
           {/* Technical Verification Details */}
           <div className="roi-tech-box">
             <div>
-              <strong>Kernel Binding:</strong> PostgreSQL 16.4 | SSL Verify-Full | Role:{' '}
-              <code>qt_ai_readonly</code>
+              <strong>Kernel Binding:</strong> PostgreSQL 16 | Role: <code>qt_ai_readonly</code> | <code>default_transaction_read_only = ON</code>
             </div>
             <div>
-              <strong>AST Engine:</strong> SQLGlot Dialect Parser (PostgreSQL) | AST-01 to AST-06 Pipeline Active
+              <strong>AST Parser:</strong> SQLGlot (PostgreSQL dialect) | Single SELECT statement &amp; table allowlist
             </div>
             <div>
-              <strong>Regression Suite:</strong> 37/37 Benchmark Test Cases Passing | 151 Unit/Integration Tests
+              <strong>Benchmark Suite:</strong> 37-case regression catalog available in AST Safety Proof
             </div>
           </div>
         </div>
@@ -201,7 +177,7 @@ export const RoiBenchmarkModal: React.FC<RoiBenchmarkModalProps> = ({
         {/* Footer */}
         <div className="roi-modal-footer">
           <span className="roi-footer-spec">
-            Zero-Trust Architectural Specification &bull; MIT Licensed
+            Read-only enforcement verified at parser and database layers
           </span>
           <div className="roi-footer-actions">
             {onNavigateToProof && (

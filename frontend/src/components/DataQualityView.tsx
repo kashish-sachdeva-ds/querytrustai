@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
-  ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   X,
@@ -106,7 +106,7 @@ const INITIAL_DATA_QUALITY_FINDINGS: DataQualityFindingItem[] = [
     total_rows: 2500,
     affected_percentage: 1.68,
     example_identifiers: ['DEV-1004', 'DEV-1082', 'DEV-1149'],
-    suggested_action: 'Perform backfill from Cisco Smart Net Total Care contract export.',
+    suggested_action: 'Backfill missing expiration dates from the vendor support contract export.',
     created_at: new Date().toISOString(),
   },
   {
@@ -166,7 +166,7 @@ const INITIAL_DATA_QUALITY_FINDINGS: DataQualityFindingItem[] = [
     total_rows: 2500,
     affected_percentage: 1.4,
     example_identifiers: ['DEV-1102', 'DEV-1145'],
-    suggested_action: 'Normalize capitalization and whitespace to match canonical Cisco hardware taxonomy.',
+    suggested_action: 'Normalize capitalization and whitespace to match the canonical hardware taxonomy.',
     created_at: new Date().toISOString(),
   },
   {
@@ -314,14 +314,14 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
     <div className="dq-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Standardized PageHeader */}
       <PageHeader
-        title="Data health & diagnostic scanner"
-        description="Automated read-only scans check for missing attributes, inverted warranty dates, duplicate chassis serials, and unapproved categories across equipment records."
-        helpText="Scans business tables without running UPDATE or DELETE queries. Identified data glitches are flagged for human review to preserve database integrity."
+        title="Data health & diagnostics"
+        description="Read-only integrity scans inspect 30,000 equipment and telemetry records without running UPDATE or DELETE queries. Identified defects are flagged for review."
+        helpText="Scans run over qt_ai_readonly with deterministic validation rules across missing attributes, inverted dates, duplicate serials, and sensor range bounds."
         actions={
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {summary?.completed_at && (
-              <span style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}>
-                Last evaluated: <HumanDate iso={summary.completed_at} />
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                Last scan: <HumanDate iso={summary.completed_at} />
               </span>
             )}
             <button
@@ -333,17 +333,20 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
                 alignItems: 'center',
                 gap: '0.5rem',
                 borderRadius: 'var(--radius-control)',
-                padding: '6px 14px',
-                fontSize: '12px',
+                padding: '7px 14px',
+                fontSize: '12.5px',
                 fontWeight: 500,
+                background: 'var(--color-accent)',
+                color: 'var(--color-accent-contrast)',
+                border: '1px solid var(--color-accent)',
                 cursor: isRunningProfile ? 'not-allowed' : 'pointer',
               }}
-              title={canRunProfile ? 'Run automated data health scan' : 'Admin or Analyst role required'}
+              title={canRunProfile ? 'Run read-only data health scan' : 'Admin or Analyst role required'}
             >
               {isRunningProfile ? (
                 <>
                   <RefreshCw size={13} className="spin-icon" />
-                  <span>Scanning at 25,000 rows/sec...</span>
+                  <span>Scanning...</span>
                 </>
               ) : (
                 <>
@@ -356,20 +359,17 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
         }
       />
 
-      {/* Streaming Diagnostic Monospace Terminal with Frosted Glass Backdrop */}
+      {/* Streaming Diagnostic Monospace Terminal */}
       {showTerminal && (
         <div
           style={{
-            backgroundColor: 'rgba(15, 23, 42, 0.88)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            color: '#F8FAFC',
-            borderRadius: '12px',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text-primary)',
+            borderRadius: 'var(--radius-container)',
+            border: '1px solid var(--color-border-subtle)',
             padding: '14px 18px',
             fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            boxShadow: '0 12px 36px -4px rgba(0, 0, 0, 0.3)',
+            fontSize: '11.5px',
           }}
         >
           {/* Terminal Header */}
@@ -378,26 +378,26 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+              borderBottom: '1px solid var(--color-border-subtle)',
               paddingBottom: '8px',
               marginBottom: '10px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Terminal size={14} style={{ color: 'var(--accent-primary)' }} />
-              <span style={{ fontWeight: 600, color: '#E2E8F0' }}>
-                Streaming Diagnostic Scan Terminal &bull; 6 Deterministic Rules
+              <Terminal size={14} style={{ color: 'var(--color-accent-link)' }} />
+              <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                Diagnostic scan output · 6 rules (read-only)
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ color: '#94A3B8' }}>{scanProgress}% Completed</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>{scanProgress}% completed</span>
               <button
                 type="button"
                 onClick={() => setShowTerminal(false)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#94A3B8',
+                  color: 'var(--color-text-muted)',
                   cursor: 'pointer',
                   padding: '2px 4px',
                 }}
@@ -412,7 +412,7 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
             style={{
               width: '100%',
               height: '4px',
-              backgroundColor: '#1E293B',
+              backgroundColor: 'var(--color-raised)',
               borderRadius: '2px',
               overflow: 'hidden',
               marginBottom: '10px',
@@ -422,7 +422,7 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
               style={{
                 width: `${scanProgress}%`,
                 height: '100%',
-                backgroundColor: 'var(--accent-primary)',
+                backgroundColor: 'var(--color-accent)',
                 transition: 'width 200ms ease',
               }}
             />
@@ -441,65 +441,29 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: '#64748B' }}>{log.step}</span>
+                  <span style={{ color: 'var(--color-text-muted)' }}>{log.step}</span>
                   <span
                     style={{
-                      color: log.status === 'passed' ? '#10B981' : '#F59E0B',
-                      fontWeight: 700,
+                      color: log.status === 'passed' ? 'var(--color-status-success-text)' : 'var(--color-status-warning-text)',
+                      fontWeight: 600,
                     }}
                   >
                     {log.ruleId}
                   </span>
-                  <span style={{ color: '#CBD5E1' }}>{log.message}</span>
+                  <span style={{ color: 'var(--color-text-primary)' }}>{log.message}</span>
                 </div>
-                <span style={{ color: '#64748B' }}>{log.latency}</span>
+                <span style={{ color: 'var(--color-text-muted)' }}>{log.latency}</span>
               </div>
             ))}
             {isRunningProfile && (
-              <div style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span className="live-dot" style={{ backgroundColor: 'var(--accent-primary)' }} />
-                <span>Executing read-only introspection batch at 25,000 rows/sec...</span>
+              <div style={{ color: 'var(--color-accent-link)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="live-dot" style={{ backgroundColor: 'var(--color-accent)' }} />
+                <span>Executing read-only checks on qt_ai_readonly...</span>
               </div>
             )}
           </div>
         </div>
       )}
-
-      {/* Governance & Read-Only Invariant Strip */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 12px',
-          backgroundColor: 'var(--bg-surface-2)',
-          borderRadius: '6px',
-          border: '1px solid var(--border-subtle)',
-          fontSize: '11px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ShieldCheck size={16} style={{ color: 'var(--accent-primary)' }} />
-          <span style={{ color: 'var(--ink-secondary)' }}>
-            <strong>SELECT-Only Diagnostics Guarantee:</strong> Scans 30,000 records (5,000 devices + 25,000 readings) without UPDATE or DELETE. Glitches are flagged for review and never mutated.
-          </span>
-        </div>
-        <span
-          className="whitespace-nowrap px-3 py-1"
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '10px',
-            backgroundColor: 'var(--gov-safe-bg)',
-            color: 'var(--gov-safe-text)',
-            border: '1px solid var(--gov-safe-border)',
-            borderRadius: '4px',
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          qt_ai_readonly enforced
-        </span>
-      </div>
 
       {/* Alerts */}
       {successMessage && (
@@ -513,155 +477,52 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
         </div>
       )}
 
-      {/* Unified 5-Cell Swiss Telemetry Ribbon (Hairline Grid) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '1px',
-          backgroundColor: 'var(--border-subtle)',
-          borderRadius: '8px',
-          overflow: 'hidden',
-          border: '1px solid var(--border-subtle)',
-        }}
-      >
-        {/* Cell 1: Overall Health — Tactile Radial Instrument Gauge with Sweeping Radar Needle */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ position: 'relative', width: '54px', height: '54px', flexShrink: 0 }}>
-            <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-              {/* Outer Metallic Bezel */}
-              <circle cx="50" cy="50" r="44" fill="none" stroke="var(--border-subtle)" strokeWidth="6" />
-              {/* Track Arc (87.4%) */}
-              <circle
-                cx="50"
-                cy="50"
-                r="44"
-                fill="none"
-                stroke="var(--gov-safe-dot, #10B981)"
-                strokeWidth="6"
-                strokeDasharray={`${(87.4 / 100) * 276.4} 276.4`}
-                strokeLinecap="round"
-                transform="rotate(-90 50 50)"
-              />
-              {/* Center Pivot */}
-              <circle cx="50" cy="50" r="5" fill="var(--ink-primary)" />
-              {/* Sweeping Radar Needle */}
-              <line
-                x1="50"
-                y1="50"
-                x2="50"
-                y2="14"
-                stroke="var(--ink-primary)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                transform="rotate(67 50 50)"
-              />
-            </svg>
+      {/* Unified 5-Cell Hairline Telemetry Strip (Clean Geist Tabular Figures + 6px Status Dots) */}
+      <div className="dq-kpi-grid" aria-label="Data health key indicators">
+        <div className="dq-kpi-cell">
+          <div className="dq-kpi-label">
+            <span className="status-dot-6px dot-success" style={{ backgroundColor: 'var(--color-status-success-dot)' }} />
+            <span>Overall health score</span>
           </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Overall Health Score
-            </div>
-            <div
-              style={{
-                fontSize: '24px',
-                fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--gov-safe-text)',
-                marginTop: '2px',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              {summary?.overall_health_score ?? 87.4}%
-            </div>
-            <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-              30,000 records &bull; 6 rules
-            </div>
-          </div>
+          <div className="dq-kpi-value">{summary?.overall_health_score ?? 87.4}%</div>
+          <div className="dq-kpi-sub">Across 30,000 fleet &amp; sensor rows</div>
         </div>
 
-        {/* Cell 2: Total Findings */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>
-            Total Findings
+        <div className="dq-kpi-cell">
+          <div className="dq-kpi-label">
+            <span>Total findings</span>
           </div>
-          <div
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--ink-primary)',
-              marginTop: '4px',
-            }}
-          >
-            {summary?.total_findings ?? 6}
-          </div>
-          <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-            5 rules flagged &bull; 1 passed
-          </div>
+          <div className="dq-kpi-value">{summary?.total_findings ?? 6}</div>
+          <div className="dq-kpi-sub">5 rules flagged · 1 rule clean</div>
         </div>
 
-        {/* Cell 3: Critical Problems */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>
-            Critical Problems
+        <div className="dq-kpi-cell">
+          <div className="dq-kpi-label">
+            <span className="status-dot-6px dot-error" style={{ backgroundColor: 'var(--color-status-error-dot)' }} />
+            <span>Critical defects</span>
           </div>
-          <div
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--gov-block-text)',
-              marginTop: '4px',
-            }}
-          >
-            {summary?.critical_count ?? 3}
-          </div>
-          <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-            Missing serials &bull; Inverted dates
-          </div>
+          <div className="dq-kpi-value">{summary?.critical_count ?? 3}</div>
+          <div className="dq-kpi-sub">Missing serials · Inverted dates</div>
         </div>
 
-        {/* Cell 4: Advisory Items */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>
-            Advisory Items
+        <div className="dq-kpi-cell">
+          <div className="dq-kpi-label">
+            <span className="status-dot-6px dot-warning" style={{ backgroundColor: 'var(--color-status-warning-dot)' }} />
+            <span>Advisory items</span>
           </div>
-          <div
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--gov-warn-text)',
-              marginTop: '4px',
-            }}
-          >
-            {(summary?.high_count ?? 1) + (summary?.medium_count ?? 2)}
-          </div>
-          <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-            Formatting &bull; Missing warranties
-          </div>
+          <div className="dq-kpi-value">{(summary?.high_count ?? 1) + (summary?.medium_count ?? 2)}</div>
+          <div className="dq-kpi-sub">Formatting · Missing warranties</div>
         </div>
 
-        {/* Cell 5: Scan Velocity */}
-        <div style={{ backgroundColor: 'var(--bg-surface-1)', padding: '12px 16px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 500 }}>
-            Diagnostic Throughput
+        <div className="dq-kpi-cell">
+          <div className="dq-kpi-label">
+            <span className="status-dot-6px dot-success" style={{ backgroundColor: 'var(--color-status-success-dot)' }} />
+            <span>Execution role</span>
           </div>
-          <div
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--accent-primary)',
-              marginTop: '4px',
-            }}
-          >
-            25,000<span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-muted)' }}>/s</span>
+          <div className="dq-kpi-value" style={{ fontSize: '20px', fontFamily: 'var(--font-mono)', paddingTop: '6px' }}>
+            qt_ai_readonly
           </div>
-          <div style={{ fontSize: '10px', color: 'var(--ink-muted)', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
-            1.20s total scan time
-          </div>
+          <div className="dq-kpi-sub">Zero mutations · Bounded queries</div>
         </div>
       </div>
 
@@ -759,21 +620,25 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
                         </td>
                         <td>
                           <span
-                            className={
+                            className={`dq-severity-pill ${
                               finding.severity.toLowerCase() === 'critical'
-                                ? 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/40 shadow-2xs'
+                                ? 'critical'
                                 : finding.severity.toLowerCase() === 'high'
-                                ? 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/40 shadow-2xs'
-                                : 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/15 text-sky-700 dark:text-sky-400 border border-sky-500/40 shadow-2xs'
-                            }
+                                ? 'high'
+                                : 'medium'
+                            }`}
                           >
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              finding.severity.toLowerCase() === 'critical'
-                                ? 'bg-rose-500 animate-pulse'
-                                : finding.severity.toLowerCase() === 'high'
-                                ? 'bg-amber-500'
-                                : 'bg-sky-500'
-                            }`} />
+                            <span
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  finding.severity.toLowerCase() === 'critical'
+                                    ? 'var(--color-status-error-dot)'
+                                    : finding.severity.toLowerCase() === 'high'
+                                    ? 'var(--color-status-warning-dot)'
+                                    : 'var(--color-accent)',
+                              }}
+                            />
                             {finding.severity.charAt(0).toUpperCase() + finding.severity.slice(1)}
                           </span>
                         </td>
@@ -908,12 +773,12 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
                                         alignItems: 'center',
                                         gap: '4px',
                                         fontSize: '10.5px',
-                                        fontWeight: 600,
-                                        padding: '3px 10px',
-                                        borderRadius: '4px',
-                                        border: 'none',
-                                        backgroundColor: 'var(--accent-primary)',
-                                        color: '#ffffff',
+                                        fontWeight: 500,
+                                        padding: '4px 10px',
+                                        borderRadius: 'var(--radius-control)',
+                                        border: '1px solid var(--color-accent)',
+                                        backgroundColor: 'var(--color-accent)',
+                                        color: 'var(--color-accent-contrast)',
                                         cursor: 'pointer',
                                       }}
                                     >
@@ -946,18 +811,18 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
                   )
                 })}
 
-                {/* Rule 6 (DQ-006): Passed Check in Green */}
+                {/* Rule 6 (DQ-006): Passed Check */}
                 {(tableFilter === 'all' || tableFilter === 'telemetry_readings') &&
                   (severityFilter === 'all') && (
-                    <tr key="DQ-006-passed" style={{ background: 'rgba(16, 185, 129, 0.04)' }}>
+                    <tr key="DQ-006-passed" style={{ background: 'var(--color-status-success-bg)' }}>
                       <td style={{ textAlign: 'center' }}>
-                        <CheckCircle2 size={13} style={{ color: 'var(--gov-safe-dot)' }} />
+                        <CheckCircle2 size={13} style={{ color: 'var(--color-status-success-dot)' }} />
                       </td>
                       <td>
                         <span className="badge badge-success">Passed</span>
                       </td>
                       <td>
-                        <span className="dq-rule-id" style={{ color: 'var(--gov-safe-text)', borderColor: 'var(--gov-safe-border)', fontFamily: 'var(--font-mono)' }}>
+                        <span className="dq-rule-id passed">
                           DQ-006
                         </span>
                       </td>
@@ -999,8 +864,9 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
       </div>
 
       {/* Example Identifiers Modal */}
-      {selectedExamples && (
-        <div className="modal-backdrop" onClick={() => setSelectedExamples(null)}>
+      {selectedExamples &&
+        createPortal(
+          <div className="modal-backdrop" onClick={() => setSelectedExamples(null)}>
           <div
             className="modal-content"
             role="dialog"
@@ -1048,7 +914,8 @@ export const DataQualityView: React.FC<DataQualityViewProps> = ({ onAskQuestion 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

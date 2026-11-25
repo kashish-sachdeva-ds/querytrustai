@@ -35,19 +35,25 @@ export const QueryTrustLogo: React.FC<QueryTrustLogoProps> = ({
   const isExplicitDark = theme === 'dark'
   const isExplicitLight = theme === 'light'
 
-  const primaryFill = isExplicitDark
-    ? '#FFFFFF'
+  const primaryStroke = isExplicitDark
+    ? 'rgb(236, 236, 238)'
     : isExplicitLight
-    ? '#09090B'
-    : 'fill-zinc-950 dark:fill-white'
+    ? 'rgb(22, 23, 26)'
+    : undefined
+
+  const primaryFill = isExplicitDark
+    ? 'rgb(236, 236, 238)'
+    : isExplicitLight
+    ? 'rgb(22, 23, 26)'
+    : undefined
 
   const secondaryFill = isExplicitDark
-    ? '#71717A'
+    ? 'rgb(154, 156, 163)'
     : isExplicitLight
-    ? '#71717A'
-    : 'fill-zinc-400 dark:fill-zinc-500'
+    ? 'rgb(84, 87, 94)'
+    : undefined
 
-  const accentFill = '#0EA5E9' // Clean Sky Blue
+  const accentFill = 'var(--color-accent)'
 
   const svgContent = (
     <svg
@@ -75,7 +81,7 @@ export const QueryTrustLogo: React.FC<QueryTrustLogoProps> = ({
            L44 88
            C18 70 12 48 14 26
            C16 14 32 8 50 8Z"
-        stroke={isExplicitDark ? '#FFFFFF' : isExplicitLight ? '#09090B' : undefined}
+        stroke={primaryStroke}
         strokeWidth="6"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -86,22 +92,22 @@ export const QueryTrustLogo: React.FC<QueryTrustLogoProps> = ({
       {/* Top Database Disc Arc */}
       <path
         d="M30 30 C30 24 40 20 50 20 C60 20 70 24 70 30 C70 36 60 40 50 40 C40 40 30 36 30 30 Z"
-        className={!isExplicitDark && !isExplicitLight ? primaryFill : undefined}
-        fill={isExplicitDark ? '#FFFFFF' : isExplicitLight ? '#09090B' : undefined}
+        className={!isExplicitDark && !isExplicitLight ? 'fill-zinc-950 dark:fill-white' : undefined}
+        fill={primaryFill}
       />
 
       {/* Middle Database Plate Cut */}
       <path
         d="M30 42 C36 47 43 49 50 49 C57 49 64 47 70 42 C70 47 62 52 50 52 C38 52 30 47 30 42 Z"
-        className={!isExplicitDark && !isExplicitLight ? secondaryFill : undefined}
-        fill={isExplicitDark ? '#71717A' : isExplicitLight ? '#71717A' : undefined}
+        className={!isExplicitDark && !isExplicitLight ? 'fill-zinc-400 dark:fill-zinc-500' : undefined}
+        fill={secondaryFill}
       />
 
       {/* Lower Database Plate Cut */}
       <path
         d="M32 54 C37 59 43 61 50 61 C57 61 63 59 68 54 C67 59 59 64 50 64 C41 64 33 59 32 54 Z"
-        className={!isExplicitDark && !isExplicitLight ? secondaryFill : undefined}
-        fill={isExplicitDark ? '#71717A' : isExplicitLight ? '#71717A' : undefined}
+        className={!isExplicitDark && !isExplicitLight ? 'fill-zinc-400 dark:fill-zinc-500' : undefined}
+        fill={secondaryFill}
       />
 
       {/* ─── Layer 3: Dynamic Query Vector & Terminal Chevron (`>` Q-Tail) ─── */}
@@ -122,7 +128,7 @@ export const QueryTrustLogo: React.FC<QueryTrustLogoProps> = ({
         strokeLinecap="round"
       />
 
-      {/* Precision Node (Luminous Sky Blue beacon) */}
+      {/* Precision Node */}
       <circle
         cx="82"
         cy="84"
@@ -140,8 +146,12 @@ export const QueryTrustLogo: React.FC<QueryTrustLogoProps> = ({
           width: numSize + 10,
           height: numSize + 10,
           borderRadius: Math.round(numSize * 0.35),
-          background: isExplicitDark ? '#09090B' : isExplicitLight ? '#FFFFFF' : undefined,
-          border: '1px solid rgba(120, 120, 120, 0.2)',
+          background: isExplicitDark
+            ? 'rgb(20, 21, 24)'
+            : isExplicitLight
+            ? 'rgb(255, 255, 255)'
+            : 'var(--color-surface)',
+          border: '1px solid var(--color-border-subtle)',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
         }}
       >

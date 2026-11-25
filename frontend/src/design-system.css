@@ -1,11 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
+/* Self-hosted local WOFF2 fonts (zero external font network dependencies) */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/geist-latin-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/geist-mono-latin-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/fonts/instrument-serif-latin-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/fonts/instrument-serif-latin-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
 
 @theme {
   --font-serif: 'Instrument Serif', Georgia, serif;
   --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Instrument Serif', Georgia, serif;
-  --font-grotesque: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-numeric: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-grotesque: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-numeric: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --color-page: var(--color-page-bg);
@@ -48,6 +79,14 @@
 
 :root,
 [data-theme="light"] {
+  /* Typography Families (Direction A: Instrument Serif H1 + Geist UI + Geist Mono code) */
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-grotesque: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-numeric: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   /* === LIGHT THEME === */
   --color-page-bg: #F7F6F3;
   --color-bg: #F7F6F3;
@@ -59,6 +98,7 @@
   --color-border-strong: #70737C;
 
   --color-text-primary: #16171A;
+  --color-text-main: #16171A;
   --color-text-secondary: #54575E;
   --color-text-muted: #8C8E97;
 
@@ -67,6 +107,7 @@
   --color-accent-active: #3F42CC;
   --color-accent-link: #4A4DD6;
   --color-accent-contrast: #FFFFFF;
+  --color-accent-text: #FFFFFF;
   --color-accent-subtle: rgba(91, 94, 230, 0.08);
   --color-accent-border: rgba(91, 94, 230, 0.22);
   --color-focus-ring: #5B5EE6;
@@ -82,6 +123,17 @@
   --color-status-success-bg: rgba(22, 101, 52, 0.08);
   --color-status-warning-bg: rgba(146, 64, 14, 0.08);
   --color-status-error-bg: rgba(153, 27, 27, 0.08);
+
+  --color-success: var(--color-status-success-dot);
+  --color-success-text: var(--color-status-success-text);
+  --color-success-subtle: var(--color-status-success-bg);
+  --color-warning: var(--color-status-warning-dot);
+  --color-warning-text: var(--color-status-warning-text);
+  --color-warning-subtle: var(--color-status-warning-bg);
+  --color-error: var(--color-status-error-dot);
+  --color-danger: var(--color-status-error-dot);
+  --color-danger-text: var(--color-status-error-text);
+  --color-danger-subtle: var(--color-status-error-bg);
 
   /* Geometry & Radius */
   --radius-control: 8px;
@@ -195,13 +247,16 @@
 [data-theme="dark"] {
   /* === DARK THEME === */
   --color-page-bg: #0E0F11;
+  --color-bg: #0E0F11;
   --color-surface: #141518;
   --color-raised: #1A1B1F;
+  --color-overlay: #22242A;
 
   --color-border-subtle: rgba(255, 255, 255, 0.08);
   --color-border-strong: #60646C;
 
   --color-text-primary: #ECECEE;
+  --color-text-main: #ECECEE;
   --color-text-secondary: #9A9CA3;
   --color-text-muted: #71737B;
 
@@ -210,6 +265,7 @@
   --color-accent-active: #3F42CC;
   --color-accent-link: #9B9EF5;
   --color-accent-contrast: #FFFFFF;
+  --color-accent-text: #FFFFFF;
   --color-accent-subtle: rgba(91, 94, 230, 0.14);
   --color-accent-border: rgba(91, 94, 230, 0.28);
   --color-focus-ring: #5B5EE6;
@@ -225,6 +281,17 @@
   --color-status-success-bg: rgba(78, 190, 89, 0.12);
   --color-status-warning-bg: rgba(245, 167, 66, 0.12);
   --color-status-error-bg: rgba(248, 113, 113, 0.12);
+
+  --color-success: var(--color-status-success-dot);
+  --color-success-text: var(--color-status-success-text);
+  --color-success-subtle: var(--color-status-success-bg);
+  --color-warning: var(--color-status-warning-dot);
+  --color-warning-text: var(--color-status-warning-text);
+  --color-warning-subtle: var(--color-status-warning-bg);
+  --color-error: var(--color-status-error-dot);
+  --color-danger: var(--color-status-error-dot);
+  --color-danger-text: var(--color-status-error-text);
+  --color-danger-subtle: var(--color-status-error-bg);
 
   /* Geometry & Radius */
   --radius-control: 8px;
@@ -1094,6 +1161,7 @@ h1,
 }
 
 @media (max-width: 640px) {
+
   h1,
   .page-title,
   .view-title {
@@ -3715,8 +3783,8 @@ body.command-palette-open {
 }
 
 [data-theme="dark"] .session-item.active {
-  background: rgba(255, 90, 20, 0.16) !important;
-  border-color: rgba(255, 90, 20, 0.4) !important;
+  background: var(--color-accent-subtle) !important;
+  border-color: var(--color-accent-border) !important;
 }
 
 [data-theme="dark"] .session-item-title {
@@ -3740,8 +3808,8 @@ body.command-palette-open {
 }
 
 [data-theme="dark"] .session-delete-btn:hover {
-  color: #f87171 !important;
-  background: rgba(239, 68, 68, 0.18) !important;
+  color: var(--color-status-error-text) !important;
+  background: var(--color-status-error-bg) !important;
 }
 
 [data-theme="dark"] .thoughtspot-intent-card,
@@ -3779,12 +3847,12 @@ body.command-palette-open {
 }
 
 [data-theme="dark"] .clarification-box {
-  background: rgba(217, 119, 6, 0.12) !important;
-  border-color: rgba(217, 119, 6, 0.3) !important;
+  background: var(--color-status-warning-bg) !important;
+  border-color: var(--color-border-strong) !important;
 }
 
 [data-theme="dark"] .clarification-title {
-  color: #fbbf24 !important;
+  color: var(--color-status-warning-text) !important;
 }
 
 [data-theme="dark"] .result-metric-pill,
@@ -3959,21 +4027,27 @@ body.command-palette-open {
 }
 
 .standard-page-title {
-  color: var(--qt-ink);
+  color: var(--color-text-primary);
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 2vw, 2rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-size: 40px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
   margin: 0;
 }
 
+@media (max-width: 768px) {
+  .standard-page-title {
+    font-size: 30px;
+  }
+}
+
 .standard-page-desc {
-  color: var(--qt-muted);
-  font-size: 0.88rem;
-  line-height: 1.45;
-  margin-top: 0.25rem;
-  max-width: 52rem;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 0.35rem;
+  max-width: 44rem;
 }
 
 .standard-page-actions {
@@ -3990,18 +4064,18 @@ body.command-palette-open {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid var(--qt-border);
-  background: var(--qt-surface);
-  color: var(--qt-muted);
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .page-help-button:hover,
 .page-help-button.active {
-  color: var(--qt-accent);
-  border-color: var(--qt-accent);
-  background: var(--qt-accent-soft);
+  color: var(--color-accent-link);
+  border-color: var(--color-accent);
+  background: var(--color-accent-subtle);
 }
 
 .page-help-callout {
@@ -4012,9 +4086,9 @@ body.command-palette-open {
   gap: 1rem;
   margin-top: 0.75rem;
   padding: 0.9rem 1.1rem;
-  border-radius: var(--qt-radius-inner);
-  background: var(--qt-accent-soft);
-  border: 1px solid rgba(255, 79, 0, 0.25);
+  border-radius: var(--radius-control);
+  background: var(--color-accent-subtle);
+  border: 1px solid var(--color-accent-border);
   animation: fadeIn 200ms ease;
 }
 
@@ -4027,29 +4101,34 @@ body.command-palette-open {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--qt-accent);
+  font-weight: 600;
+  color: var(--color-accent-link);
   margin-bottom: 0.25rem;
 }
 
 .page-help-callout-body {
   font-size: 0.88rem;
   line-height: 1.5;
-  color: var(--qt-ink);
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .page-help-callout-close {
   background: transparent;
   border: none;
-  color: var(--qt-muted);
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
 }
 
 .page-help-callout-close:hover {
-  color: var(--qt-ink);
+  color: var(--color-text-primary);
 }
 
-/* --- Mobile Viewport (<= 768px) Adaptation --- */
+@media (max-width: 768px) {
+  .standard-page-header-main {
+    min-width: 0;
+    width: 100%;
+  }
+}

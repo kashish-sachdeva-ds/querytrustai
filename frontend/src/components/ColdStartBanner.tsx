@@ -60,13 +60,25 @@ export const ColdStartBanner: React.FC = () => {
       <div
         role="status"
         aria-live="polite"
-        className="sticky top-0 z-50 w-full h-8 px-4 bg-zinc-100 dark:bg-[#121216] border-b border-zinc-200 dark:border-zinc-800 text-xs font-mono flex items-center justify-between gap-3 text-zinc-800 dark:text-zinc-200 overflow-hidden"
+        style={{
+          background: 'var(--color-raised)',
+          borderBottom: '1px solid var(--color-border-subtle)',
+          color: 'var(--color-text-secondary)',
+        }}
+        className="sticky top-0 z-50 w-full h-8 px-4 text-xs font-mono flex items-center justify-between gap-3 overflow-hidden"
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase tracking-wider bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 flex-shrink-0">
+          <span
+            className="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase tracking-wider flex-shrink-0"
+            style={{
+              background: 'var(--color-accent-subtle)',
+              color: 'var(--color-accent-link)',
+              border: '1px solid var(--color-accent-border)',
+            }}
+          >
             Offline Demo Mode
           </span>
-          <span className="text-[11px] text-zinc-600 dark:text-zinc-400 truncate">
+          <span className="text-[11px] truncate" style={{ color: 'var(--color-text-secondary)' }}>
             Operating with deterministic 5,000-device fixtures and simulated AST validation.
           </span>
         </div>
@@ -75,10 +87,15 @@ export const ColdStartBanner: React.FC = () => {
           <button
             type="button"
             onClick={exitDemoMode}
-            className="h-6 px-2.5 rounded-full text-[10.5px] font-semibold bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+            className="h-6 px-2.5 rounded-full text-[10.5px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+            style={{
+              background: 'var(--color-surface)',
+              color: 'var(--color-text-primary)',
+              border: '1px solid var(--color-border-subtle)',
+            }}
             title="Connect to live backend"
           >
-            <CheckCircle2 size={11} className="text-emerald-500" />
+            <CheckCircle2 size={11} style={{ color: 'var(--color-status-success-dot)' }} />
             <span>Connect Backend</span>
           </button>
           <button

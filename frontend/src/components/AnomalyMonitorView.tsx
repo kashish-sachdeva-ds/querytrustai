@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronRight,
-  Info,
   Zap,
   Search,
   Flame,
@@ -170,21 +169,18 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
         const meta = await fetchAnomalySummary().catch(() => null)
         if (meta) setModelMeta(meta)
       }
-      setIsScanning(true)
       const scan = canManageScan
         ? await runAnomalyScan(scanLimit, 0.50).catch(() => null)
         : await fetchCurrentUnusualActivity().catch(() => null)
       if (scan) {
         setScanResult(scan)
         setAllScanAnomalies(scan.top_anomalies)
-        // Filter by balanced preset (0.65)
         setAnomalies(scan.top_anomalies.filter((a) => a.anomaly_score >= scoreThreshold))
       }
     } catch (err: any) {
       console.warn('Anomaly detection sync fallback:', err)
     } finally {
       setIsLoadingMeta(false)
-      setIsScanning(false)
     }
   }
 
@@ -295,45 +291,18 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
   }, [displayedAnomalies])
 
   return (
-    <div className="view-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="view-container" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
       <PageHeader
         title="Unusual telemetry activity"
-        description="Statistical outlier detection across 25,000 sensor readings (CPU, memory, temperature, packet loss, latency)."
-        helpText="IsolationForest computes multidimensional distance from typical readings. While unusual readings highlight equipment needing review, they are strictly statistical deviations, NEVER calibrated probabilities of hardware failure."
+        description="Unsupervised IsolationForest anomaly scores reflect statistical distance across CPU, memory, temperature, packet loss, and latency—never calibrated failure probabilities."
+        helpText="IsolationForest isolates unusual readings by partitioning multi-dimensional telemetry features. High scores identify unusual operational behavior requiring human inspection, not probability of failure."
+        actions={
+          <ExplainButton
+            title="IsolationForest vs Failure Probability"
+            explanation="An IsolationForest isolates anomalies by randomly partitioning feature dimensions. Outlier scores reflect multidimensional distance from baseline, not calibrated failure risk."
+          />
+        }
       />
-
-      {/* Mandatory Invariant Disclosure Banner */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 14px',
-          backgroundColor: 'var(--bg-surface-2)',
-          borderRadius: '6px',
-          border: '1px solid var(--border-subtle)',
-          fontSize: '11px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Info size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-          <div>
-            <strong style={{ color: 'var(--ink-primary)' }}>
-              Statistical Outlier Architecture (IsolationForest Model)
-            </strong>
-            <div style={{ color: 'var(--ink-muted)', marginTop: '2px' }}>
-              Scores reflect multidimensional distance calculated by an unsupervised scikit-learn tree ensemble.{' '}
-              <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>
-                Invariant: Outlier scores are strictly statistical deviations, NEVER calibrated probabilities of hardware failure.
-              </span>
-            </div>
-          </div>
-        </div>
-        <ExplainButton
-          title="IsolationForest vs Failure Probability"
-          explanation="An IsolationForest isolates anomalies by randomly partitioning feature dimensions. Outliers require fewer splits to isolate, yielding higher anomaly scores. This flags unusual operational behavior, not physical hardware failure."
-        />
-      </div>
 
       {/* Alerts */}
       {successMessage && (
@@ -350,88 +319,89 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
       {/* Interactive Anomaly Horizon / Scatter Distribution Band */}
       <div
         style={{
-          backgroundColor: 'var(--bg-surface-1)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '8px',
-          padding: '14px 16px',
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 'var(--radius-container)',
+          padding: '16px 20px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px',
+          gap: '12px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Activity size={14} style={{ color: 'var(--accent-primary)' }} />
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink-primary)' }}>
-              Telemetry Anomaly Horizon &bull; Distribution Scatter (25,000 Readings)
+            <Activity size={14} style={{ color: 'var(--color-accent-link)' }} />
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+              Anomaly score distribution ({allScanAnomalies.length} outliers across {scanResult?.total_telemetry_scanned?.toLocaleString() ?? '25,000'} readings)
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
-              Baseline: 24,625 normal &bull; Outliers: <strong style={{ color: 'var(--accent-primary)' }}>{anomalies.length}</strong>
+            <span style={{ fontSize: '11.5px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>
+              Showing top {anomalies.length} (&ge; {scoreThreshold.toFixed(2)})
             </span>
             {selectedDotDeviceId && (
               <button
                 type="button"
                 onClick={() => setSelectedDotDeviceId(null)}
                 style={{
-                  fontSize: '10px',
+                  fontSize: '11px',
                   fontFamily: 'var(--font-mono)',
-                  padding: '1px 6px',
-                  backgroundColor: 'var(--bg-surface-3)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '3px',
+                  padding: '2px 8px',
+                  backgroundColor: 'var(--color-raised)',
+                  border: '1px solid var(--color-border-subtle)',
+                  borderRadius: '4px',
                   cursor: 'pointer',
-                  color: 'var(--ink-primary)',
+                  color: 'var(--color-text-primary)',
                 }}
               >
-                Clear Filter (Device #{selectedDotDeviceId}) ✕
+                Clear device #{selectedDotDeviceId} ✕
               </button>
             )}
           </div>
         </div>
 
-        {/* Horizon Strip SVG Canvas */}
+        {/* Horizon Strip SVG Canvas mapped cleanly across [0.50, 1.00] */}
         <div
           style={{
-            height: '72px',
-            backgroundColor: 'var(--bg-canvas)',
-            borderRadius: '6px',
-            border: '1px solid var(--border-subtle)',
+            height: '84px',
+            backgroundColor: 'var(--color-page-bg)',
+            borderRadius: 'var(--radius-control)',
+            border: '1px solid var(--color-border-subtle)',
             position: 'relative',
             overflow: 'hidden',
           }}
         >
           <svg width="100%" height="100%" style={{ display: 'block' }}>
-            {/* Normal Range Background Zone (0% to 65%) */}
-            <rect x="0" y="0" width={`${scoreThreshold * 100}%`} height="100%" fill="var(--bg-surface-2)" />
-            {/* Outlier Alert Background Zone (Threshold to 100%) */}
-            <rect
-              x={`${scoreThreshold * 100}%`}
-              y="0"
-              width={`${(1 - scoreThreshold) * 100}%`}
-              height="100%"
-              fill="rgba(249, 87, 22, 0.08)"
-            />
+            {(() => {
+              const threshPct = Math.max(0, Math.min(100, ((scoreThreshold - 0.5) / 0.5) * 100))
+              return (
+                <>
+                  <rect x="0" y="0" width={`${threshPct}%`} height="100%" fill="var(--color-raised)" />
+                  <rect
+                    x={`${threshPct}%`}
+                    y="0"
+                    width={`${100 - threshPct}%`}
+                    height="100%"
+                    fill="var(--color-accent-subtle)"
+                  />
+                  <line
+                    x1={`${threshPct}%`}
+                    y1="0"
+                    x2={`${threshPct}%`}
+                    y2="100%"
+                    stroke="var(--color-accent)"
+                    strokeWidth="1.5"
+                    strokeDasharray="3 3"
+                  />
+                </>
+              )
+            })()}
+            <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="var(--color-border-subtle)" strokeWidth="1" />
 
-            {/* Threshold Vertical Line */}
-            <line
-              x1={`${scoreThreshold * 100}%`}
-              y1="0"
-              x2={`${scoreThreshold * 100}%`}
-              y2="100%"
-              stroke="var(--accent-primary)"
-              strokeWidth="1.5"
-              strokeDasharray="3 3"
-            />
-
-            {/* Background Density Grid Lines */}
-            <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="var(--border-subtle)" strokeWidth="1" />
-
-            {/* Plot Outlier Points */}
             {allScanAnomalies.map((item, idx) => {
-              const cx = `${item.anomaly_score * 100}%`
-              const cy = 16 + (item.device_id * 13) % 40
+              const normPct = Math.max(2, Math.min(98, ((item.anomaly_score - 0.5) / 0.5) * 94 + 3))
+              const cx = `${normPct}%`
+              const cy = 14 + (item.device_id * 17) % 44
               const isSelected = selectedDotDeviceId === item.device_id
               const isOutlier = item.anomaly_score >= scoreThreshold
 
@@ -440,18 +410,18 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                   key={idx}
                   cx={cx}
                   cy={cy}
-                  r={isSelected ? 6 : isOutlier ? 4 : 2.5}
+                  r={isSelected ? 5.5 : isOutlier ? 3.5 : 2.5}
                   fill={
                     isSelected
-                      ? '#ffffff'
+                      ? 'var(--color-accent-contrast)'
                       : isOutlier
-                      ? item.anomaly_score >= 0.85
-                        ? '#DC2626'
-                        : '#F59E0B'
-                      : '#94A3B8'
+                        ? item.anomaly_score >= 0.85
+                          ? 'var(--color-status-error-dot)'
+                          : 'var(--color-status-warning-dot)'
+                        : 'var(--color-text-muted)'
                   }
-                  stroke={isSelected ? '#0284C7' : isOutlier ? '#ffffff' : 'transparent'}
-                  strokeWidth={isSelected ? 2 : 1}
+                  stroke={isSelected ? 'var(--color-accent)' : 'transparent'}
+                  strokeWidth={isSelected ? 2 : 0}
                   style={{ cursor: 'pointer', transition: 'all 80ms ease' }}
                   onClick={() => setSelectedDotDeviceId(isSelected ? null : item.device_id)}
                 >
@@ -461,36 +431,23 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
             })}
           </svg>
 
-          {/* Horizon Strip Labels */}
           <div
             style={{
               position: 'absolute',
-              bottom: '4px',
-              left: '8px',
-              fontSize: '9.5px',
+              bottom: '5px',
+              left: '10px',
+              right: '10px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              pointerEvents: 'none',
+              fontSize: '10px',
               fontFamily: 'var(--font-mono)',
-              color: 'var(--ink-muted)',
+              color: 'var(--color-text-muted)',
             }}
           >
-            0.00 &bull; Normal Operating Baseline
-          </div>
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '24px',
-              right: '8px',
-              fontSize: '9.5px',
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--accent-primary)',
-              fontWeight: 600,
-              backgroundColor: 'var(--bg-surface-1)',
-              padding: '2px 8px',
-              borderRadius: '9999px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-              border: '1px solid var(--border-subtle)',
-            }}
-          >
-            1.00 &bull; Extreme Outliers
+            <span>0.50 baseline edge</span>
+            <span>1.00 extreme outlier</span>
           </div>
         </div>
       </div>
@@ -504,14 +461,14 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
           flexWrap: 'wrap',
           gap: '12px',
           padding: '10px 14px',
-          backgroundColor: 'var(--bg-surface-1)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '8px',
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 'var(--radius-container)',
         }}
       >
         {/* Preset Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: 'var(--ink-muted)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>
             <Sliders size={13} />
             <span>Sensitivity:</span>
           </div>
@@ -520,24 +477,25 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
             style={{
               display: 'inline-flex',
               gap: '2px',
-              backgroundColor: 'var(--bg-surface-2)',
+              backgroundColor: 'var(--color-raised)',
               padding: '2px',
-              borderRadius: '6px',
-              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-control)',
+              border: '1px solid var(--color-border-subtle)',
+              flexWrap: 'wrap',
             }}
           >
             <button
               type="button"
               onClick={() => handleSelectPreset('conservative')}
               style={{
-                padding: '4px 10px',
-                fontSize: '11px',
+                padding: '5px 10px',
+                fontSize: '11.5px',
                 fontFamily: 'var(--font-mono)',
-                fontWeight: 600,
-                borderRadius: '4px',
+                fontWeight: 500,
+                borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sensitivityPreset === 'conservative' ? 'var(--bg-surface-1)' : 'transparent',
-                color: sensitivityPreset === 'conservative' ? 'var(--ink-primary)' : 'var(--ink-muted)',
+                backgroundColor: sensitivityPreset === 'conservative' ? 'var(--color-accent)' : 'transparent',
+                color: sensitivityPreset === 'conservative' ? 'var(--color-accent-contrast)' : 'var(--color-text-secondary)',
                 cursor: 'pointer',
               }}
             >
@@ -547,31 +505,31 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
               type="button"
               onClick={() => handleSelectPreset('balanced')}
               style={{
-                padding: '4px 10px',
-                fontSize: '11px',
+                padding: '5px 10px',
+                fontSize: '11.5px',
                 fontFamily: 'var(--font-mono)',
-                fontWeight: 600,
-                borderRadius: '4px',
+                fontWeight: 500,
+                borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sensitivityPreset === 'balanced' ? 'var(--accent-primary-subtle)' : 'transparent',
-                color: sensitivityPreset === 'balanced' ? 'var(--accent-primary)' : 'var(--ink-muted)',
+                backgroundColor: sensitivityPreset === 'balanced' ? 'var(--color-accent)' : 'transparent',
+                color: sensitivityPreset === 'balanced' ? 'var(--color-accent-contrast)' : 'var(--color-text-secondary)',
                 cursor: 'pointer',
               }}
             >
-              Balanced (375 items)
+              Balanced ({allScanAnomalies.length} outliers)
             </button>
             <button
               type="button"
               onClick={() => handleSelectPreset('aggressive')}
               style={{
-                padding: '4px 10px',
-                fontSize: '11px',
+                padding: '5px 10px',
+                fontSize: '11.5px',
                 fontFamily: 'var(--font-mono)',
-                fontWeight: 600,
-                borderRadius: '4px',
+                fontWeight: 500,
+                borderRadius: '6px',
                 border: 'none',
-                backgroundColor: sensitivityPreset === 'aggressive' ? 'var(--bg-surface-1)' : 'transparent',
-                color: sensitivityPreset === 'aggressive' ? 'var(--ink-primary)' : 'var(--ink-muted)',
+                backgroundColor: sensitivityPreset === 'aggressive' ? 'var(--color-accent)' : 'transparent',
+                color: sensitivityPreset === 'aggressive' ? 'var(--color-accent-contrast)' : 'var(--color-text-secondary)',
                 cursor: 'pointer',
               }}
             >
@@ -581,20 +539,20 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
         </div>
 
         {/* Scan Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {modelMeta && (
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '10.5px',
                 fontFamily: 'var(--font-mono)',
-                color: 'var(--ink-muted)',
-                backgroundColor: 'var(--bg-surface-2)',
-                padding: '3px 6px',
-                borderRadius: '4px',
-                border: '1px solid var(--border-subtle)',
+                color: 'var(--color-text-secondary)',
+                backgroundColor: 'var(--color-raised)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: '1px solid var(--color-border-subtle)',
               }}
             >
-              {modelMeta.algorithm} v{modelMeta.version} ({((modelMeta.contamination || 0.015) * 100).toFixed(1)}% contamination)
+              {modelMeta.algorithm} v{modelMeta.version}
             </span>
           )}
 
@@ -607,13 +565,14 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '4px 8px',
-                fontSize: '10.5px',
-                fontFamily: 'var(--font-mono)',
-                backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--ink-secondary)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '4px',
+                padding: '6px 10px',
+                fontSize: '12px',
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 500,
+                backgroundColor: 'var(--color-raised)',
+                color: 'var(--color-text-primary)',
+                border: '1px solid var(--color-border-subtle)',
+                borderRadius: 'var(--radius-control)',
                 cursor: isTraining ? 'not-allowed' : 'pointer',
               }}
               title="Refit IsolationForest model with fixed random seed"
@@ -626,7 +585,7 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
             className="select-input"
             value={scanLimit}
             onChange={(e) => setScanLimit(parseInt(e.target.value))}
-            style={{ width: '90px', padding: '4px 8px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}
+            style={{ width: '96px', padding: '5px 8px', fontSize: '12px', fontFamily: 'var(--font-mono)', borderRadius: 'var(--radius-control)' }}
             aria-label="Number of unusual activity rows to show"
           >
             <option value={25}>Show 25</option>
@@ -637,21 +596,23 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
 
           <button
             type="button"
-            className="btn btn-primary inline-flex items-center gap-2"
             onClick={handleScan}
             disabled={isScanning}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '7px',
               padding: '6px 14px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 500,
+              backgroundColor: 'var(--color-accent)',
+              color: 'var(--color-accent-contrast)',
+              border: '1px solid var(--color-accent)',
               borderRadius: 'var(--radius-control)',
               cursor: isScanning ? 'not-allowed' : 'pointer',
             }}
           >
-            <Search size={12} className="shrink-0" />
+            <Search size={13} className="shrink-0" />
             <span>{isScanning ? 'Scanning...' : 'Rescan Telemetry'}</span>
           </button>
         </div>
@@ -660,43 +621,45 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
       {/* Outliers Table */}
       <div
         style={{
-          backgroundColor: 'var(--bg-surface-1)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '8px',
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 'var(--radius-container)',
           overflow: 'hidden',
         }}
       >
         <div
           style={{
-            padding: '10px 14px',
-            borderBottom: '1px solid var(--border-subtle)',
+            padding: '12px 16px',
+            borderBottom: '1px solid var(--color-border-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '8px',
           }}
         >
           <div>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink-primary)' }}>
-              Ranked Telemetry Outliers ({groupedAnomalies.length} Devices)
+            <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+              Ranked telemetry outliers ({groupedAnomalies.length} devices)
             </div>
-            <div style={{ fontSize: '10.5px', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}>
-              Outlier scores represent multidimensional deviation from baseline
+            <div style={{ fontSize: '11.5px', color: 'var(--color-text-secondary)' }}>
+              Sorted by statistical distance from multi-metric operating baseline
             </div>
           </div>
           {scanResult && (
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '11px',
                 fontFamily: 'var(--font-mono)',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                backgroundColor: 'var(--bg-surface-2)',
-                color: 'var(--ink-secondary)',
-                border: '1px solid var(--border-subtle)',
+                padding: '3px 8px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--color-raised)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border-subtle)',
               }}
             >
               <Zap size={10} style={{ display: 'inline', marginRight: 4 }} />
-              25,000 readings checked &bull; {scanResult.scan_time_ms}ms
+              {scanResult.total_telemetry_scanned?.toLocaleString() ?? '25,000'} readings · {scanResult.scan_time_ms} ms
             </span>
           )}
         </div>
@@ -707,10 +670,10 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
             <div className="qt-skeleton" style={{ height: 45, width: '100%' }} />
           </div>
         ) : anomalies.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--ink-muted)' }}>
-            <CheckCircle2 size={32} style={{ color: 'var(--gov-safe-dot)', margin: '0 auto 8px' }} />
-            <h4 style={{ color: 'var(--ink-primary)', margin: '0 0 4px' }}>All Telemetry Within Normal Band</h4>
-            <p style={{ margin: 0, fontSize: '11px' }}>
+          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+            <CheckCircle2 size={32} style={{ color: 'var(--color-status-success-dot)', margin: '0 auto 8px' }} />
+            <h4 style={{ color: 'var(--color-text-primary)', margin: '0 0 4px' }}>All Telemetry Within Normal Band</h4>
+            <p style={{ margin: 0, fontSize: '12px' }}>
               No sensor readings currently cross the {scoreThreshold} sensitivity threshold.
             </p>
           </div>
@@ -720,13 +683,13 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
               <thead>
                 <tr>
                   <th style={{ width: '60px' }}>Rank</th>
-                  <th style={{ width: '160px' }}>Anomaly Score</th>
-                  <th>Observed Patterns</th>
-                  <th style={{ width: '130px' }}>Asset Tag</th>
+                  <th style={{ width: '165px' }}>Anomaly score</th>
+                  <th>Observed patterns</th>
+                  <th style={{ width: '150px' }}>Asset tag</th>
                   <th style={{ width: '160px' }}>Location</th>
-                  <th>Raw Sensor Telemetry</th>
+                  <th>Sensor telemetry</th>
                   <th style={{ width: '110px' }}>Recorded</th>
-                  <th style={{ width: '120px', textAlign: 'right' }}>Action</th>
+                  <th style={{ width: '110px', textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -814,10 +777,10 @@ export const AnomalyMonitorView: React.FC<AnomalyMonitorViewProps> = ({ onOpenDe
                         </div>
                       </td>
                       <td>
-                        <div style={{ fontWeight: 600, color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
                           {item.asset_tag}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'var(--ink-muted)' }}>{item.device_type}</div>
+                        <div style={{ fontSize: '10.5px', color: 'var(--color-text-muted)' }}>{item.device_type}</div>
                       </td>
                       <td>
                         <div style={{ fontWeight: 500, color: 'var(--ink-primary)' }}>{item.site_name}</div>

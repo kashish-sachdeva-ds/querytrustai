@@ -17,11 +17,11 @@ interface MetricConfig {
 }
 
 const METRICS: MetricConfig[] = [
-  { key: 'cpu_utilization_pct', label: 'CPU Utilization', unit: '%', color: '#0284C7' },
-  { key: 'memory_utilization_pct', label: 'Memory', unit: '%', color: '#B45309' },
-  { key: 'temperature_celsius', label: 'Temperature', unit: '°C', color: '#A7382C' },
-  { key: 'packet_loss_pct', label: 'Packet Loss', unit: '%', color: '#34D399' },
-  { key: 'latency_ms', label: 'Latency', unit: 'ms', color: '#7E8594' },
+  { key: 'cpu_utilization_pct', label: 'CPU Utilization', unit: '%', color: 'var(--color-accent-link)' },
+  { key: 'memory_utilization_pct', label: 'Memory', unit: '%', color: 'var(--color-status-warning-dot)' },
+  { key: 'temperature_celsius', label: 'Temperature', unit: '°C', color: 'var(--color-status-error-dot)' },
+  { key: 'packet_loss_pct', label: 'Packet Loss', unit: '%', color: 'var(--color-status-success-dot)' },
+  { key: 'latency_ms', label: 'Latency', unit: 'ms', color: 'var(--color-text-secondary)' },
 ]
 
 export interface TelemetryTimeSeriesChartProps {
@@ -56,9 +56,9 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'var(--qt-surface-muted, #F5F2ED)',
+          background: 'var(--color-raised)',
           borderRadius: 8,
-          color: 'var(--qt-muted, #766F68)',
+          color: 'var(--color-text-muted)',
           fontSize: '0.85rem',
         }}
       >
@@ -91,8 +91,8 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
   return (
     <div
       style={{
-        background: 'var(--qt-surface, #ffffff)',
-        border: '1px solid var(--qt-border, #E6E4E0)',
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border-subtle)',
         borderRadius: 8,
         padding: '16px',
       }}
@@ -113,12 +113,12 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
               margin: 0,
               fontSize: '0.92rem',
               fontWeight: 700,
-              color: 'var(--qt-ink, #191817)',
+              color: 'var(--color-text-primary)',
             }}
           >
             {title}
           </h4>
-          <span style={{ fontSize: '0.74rem', color: 'var(--qt-muted, #766F68)' }}>
+          <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)' }}>
             Real-time multi-dimensional sensor metrics
           </span>
         </div>
@@ -141,9 +141,9 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
                   fontSize: '0.72rem',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  border: `1px solid ${isActive ? m.color : 'var(--qt-border, #E6E4E0)'}`,
-                  background: isActive ? `${m.color}15` : 'transparent',
-                  color: isActive ? m.color : 'var(--qt-muted, #766F68)',
+                  border: `1px solid ${isActive ? m.color : 'var(--color-border-subtle)'}`,
+                  background: isActive ? `color-mix(in srgb, ${m.color} 12%, transparent)` : 'transparent',
+                  color: isActive ? m.color : 'var(--color-text-secondary)',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -152,7 +152,7 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
                     width: 7,
                     height: 7,
                     borderRadius: '50%',
-                    backgroundColor: isActive ? m.color : 'var(--qt-border, #E6E4E0)',
+                    backgroundColor: isActive ? m.color : 'var(--color-border-strong)',
                   }}
                 />
                 {m.label}
@@ -179,7 +179,7 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
                   y1={y}
                   x2={svgWidth - paddingRight}
                   y2={y}
-                  stroke="var(--qt-border, #E6E4E0)"
+                  stroke="var(--color-border-subtle)"
                   strokeDasharray="3 3"
                   strokeWidth={0.75}
                 />
@@ -188,7 +188,7 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
                   y={y + 3}
                   textAnchor="end"
                   fontSize="9"
-                  fill="var(--qt-muted, #766F68)"
+                  fill="var(--color-text-muted)"
                   fontFamily="var(--font-mono, monospace)"
                 >
                   {val}
@@ -220,7 +220,7 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
               y1={paddingTop}
               x2={getX(hoverIndex)}
               y2={paddingTop + plotHeight}
-              stroke="var(--qt-ink, #191817)"
+              stroke="var(--color-text-primary)"
               strokeWidth={1}
               strokeDasharray="2 2"
             />
@@ -252,17 +252,17 @@ export const TelemetryTimeSeriesChart: React.FC<TelemetryTimeSeriesChartProps> =
               position: 'absolute',
               top: 10,
               right: 15,
-              background: 'var(--qt-surface, #ffffff)',
-              border: '1px solid var(--qt-border-strong, #D7D2CA)',
-              borderRadius: 6,
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border-strong)',
+              borderRadius: 8,
               padding: '6px 10px',
               fontSize: '0.72rem',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              boxShadow: 'var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1))',
               pointerEvents: 'none',
               zIndex: 10,
             }}
           >
-            <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--qt-ink, #191817)' }}>
+            <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--color-text-primary)' }}>
               Reading #{hoverIndex + 1}
             </div>
             {METRICS.filter((m) => activeMetrics[m.key]).map((m) => (

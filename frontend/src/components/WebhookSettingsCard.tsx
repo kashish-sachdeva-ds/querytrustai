@@ -283,8 +283,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
               <div
                 onClick={() => setPlatform('discord')}
                 style={{
-                  border: platform === 'discord' ? '2px solid #5865F2' : '1px solid var(--qt-border)',
-                  background: platform === 'discord' ? 'rgba(88, 101, 242, 0.08)' : 'var(--qt-canvas, #151821)',
+                  border: platform === 'discord' ? '2px solid var(--color-accent)' : '1px solid var(--color-border-subtle)',
+                  background: platform === 'discord' ? 'var(--color-accent-subtle)' : 'var(--color-raised)',
                   borderRadius: 8,
                   padding: '10px 14px',
                   cursor: 'pointer',
@@ -299,8 +299,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
                     width: 32,
                     height: 32,
                     borderRadius: 6,
-                    background: '#5865F2',
-                    color: '#fff',
+                    background: 'var(--color-accent)',
+                    color: 'var(--color-accent-contrast)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -311,8 +311,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
                   D
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--qt-ink)' }}>Discord</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>Rich embeds &amp; severity colors</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>Discord</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Rich embeds &amp; severity colors</div>
                 </div>
               </div>
 
@@ -320,8 +320,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
               <div
                 onClick={() => setPlatform('slack')}
                 style={{
-                  border: platform === 'slack' ? '2px solid #4A154B' : '1px solid var(--qt-border)',
-                  background: platform === 'slack' ? 'rgba(74, 21, 75, 0.12)' : 'var(--qt-canvas, #151821)',
+                  border: platform === 'slack' ? '2px solid var(--color-accent)' : '1px solid var(--color-border-subtle)',
+                  background: platform === 'slack' ? 'var(--color-accent-subtle)' : 'var(--color-raised)',
                   borderRadius: 8,
                   padding: '10px 14px',
                   cursor: 'pointer',
@@ -336,8 +336,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
                     width: 32,
                     height: 32,
                     borderRadius: 6,
-                    background: '#4A154B',
-                    color: '#fff',
+                    background: 'var(--color-accent)',
+                    color: 'var(--color-accent-contrast)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -348,8 +348,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
                   S
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--qt-ink)' }}>Slack</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>Interactive Block Kit blocks</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>Slack</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Interactive Block Kit blocks</div>
                 </div>
               </div>
 
@@ -357,8 +357,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
               <div
                 onClick={() => setPlatform('generic')}
                 style={{
-                  border: platform === 'generic' ? '2px solid var(--qt-accent)' : '1px solid var(--qt-border)',
-                  background: platform === 'generic' ? 'rgba(255, 92, 0, 0.08)' : 'var(--qt-canvas, #151821)',
+                  border: platform === 'generic' ? '2px solid var(--color-accent)' : '1px solid var(--color-border-subtle)',
+                  background: platform === 'generic' ? 'var(--color-accent-subtle)' : 'var(--color-raised)',
                   borderRadius: 8,
                   padding: '10px 14px',
                   cursor: 'pointer',
@@ -373,8 +373,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
                     width: 32,
                     height: 32,
                     borderRadius: 6,
-                    background: 'var(--qt-accent)',
-                    color: '#fff',
+                    background: 'var(--color-accent)',
+                    color: 'var(--color-accent-contrast)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -489,8 +489,8 @@ export const WebhookSettingsCard: React.FC<WebhookSettingsCardProps> = ({ onNoti
           {/* Alert Trigger Triggers */}
           <div
             style={{
-              background: 'var(--qt-canvas, #151821)',
-              border: '1px solid var(--qt-border)',
+              background: 'var(--color-raised)',
+              border: '1px solid var(--color-border-subtle)',
               borderRadius: 8,
               padding: '12px 16px',
               marginBottom: '1.4rem',

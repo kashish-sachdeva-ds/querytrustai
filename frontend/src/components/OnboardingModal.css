@@ -1,12 +1,11 @@
 /* ==========================================================================
-   Quickstart & Shortcuts Dialog — Linear / Raycast Style
-   Restrained, concise, accessible dark modal
+   Quickstart & Shortcuts Dialog — Token-Based Light/Dark Design
    ========================================================================== */
 
 .quickstart-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(4, 6, 11, 0.75);
+  background: rgba(14, 15, 17, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 1200;
@@ -25,13 +24,13 @@
 .quickstart-card {
   width: 100%;
   max-width: 480px;
-  background: #111622;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-container);
+  box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.35);
   overflow: hidden;
   animation: qs-scale-up 140ms cubic-bezier(0.16, 1, 0.3, 1);
-  color: #f8fafc;
+  color: var(--color-text-primary);
   box-sizing: border-box;
 }
 
@@ -42,7 +41,7 @@
 
 .quickstart-header {
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--color-border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -51,37 +50,37 @@
 .quickstart-icon-wrap {
   width: 28px;
   height: 28px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-control);
+  background: var(--color-raised);
+  border: 1px solid var(--color-border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #cbd5e1;
+  color: var(--color-accent-link);
 }
 
 .quickstart-title {
   margin: 0;
-  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
   letter-spacing: -0.015em;
 }
 
 .quickstart-subtitle {
   margin: 1px 0 0 0;
-  font-size: 0.72rem;
-  color: #94a3b8;
+  font-size: 0.74rem;
+  color: var(--color-text-secondary);
 }
 
 .quickstart-close-btn {
   background: transparent;
   border: none;
-  color: #64748b;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  color: var(--color-text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-control);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,8 +89,8 @@
 }
 
 .quickstart-close-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #f1f5f9;
+  background: var(--color-raised);
+  color: var(--color-text-primary);
 }
 
 .quickstart-body {
@@ -104,7 +103,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--color-text-muted);
   margin-bottom: 8px;
 }
 
@@ -118,10 +117,10 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  padding: 9px 11px;
+  background: var(--color-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
 }
 
 .principle-icon {
@@ -129,32 +128,31 @@
   margin-top: 2px;
 }
 
-.principle-icon.text-orange { color: #0ea5e9; }
-.principle-icon.text-emerald { color: #10b981; }
-.principle-icon.text-sky { color: #38bdf8; }
+.principle-icon.tone-accent { color: var(--color-accent-link); }
+.principle-icon.tone-success { color: var(--color-status-success-dot); }
 
 .principle-text {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   font-size: 12px;
 }
 
 .principle-text strong {
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--color-text-primary);
 }
 
 .principle-text span {
   font-size: 11.5px;
-  color: #94a3b8;
-  line-height: 1.4;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
 }
 
 .quickstart-shortcuts-table {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  background: var(--color-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
   overflow: hidden;
 }
 
@@ -162,9 +160,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6.5px 12px;
+  padding: 7px 12px;
   font-size: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .shortcut-row:last-child {
@@ -172,41 +170,41 @@
 }
 
 .shortcut-desc {
-  color: #94a3b8;
+  color: var(--color-text-secondary);
 }
 
 .shortcut-kbd {
-  font-family: var(--font-mono, monospace);
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
-  padding: 1.5px 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-primary);
+  padding: 2px 6px;
   border-radius: 4px;
 }
 
 .quickstart-footer {
   padding: 12px 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--color-border-subtle);
   display: flex;
   justify-content: flex-end;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--color-raised);
 }
 
 .quickstart-confirm-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 16px;
-  border-radius: 6px;
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: all 120ms ease;
 }
 
 .quickstart-confirm-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: #ffffff;
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }

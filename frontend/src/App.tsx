@@ -179,7 +179,7 @@ const AppShell: React.FC = () => {
       // Diagnostics & Preferences
       { id: 'trigger-health-scan', label: 'Trigger Fleet Data Health Scan', description: 'Execute all 6 deterministic integrity rules across 30,000 rows', icon: RefreshCw, keywords: ['scan', 'health', 'quality'], run: () => selectTab('data-quality') },
       { id: 'toggle-mode', label: `Switch to ${mode === 'simple' ? 'Expert' : 'Simple'} view`, description: mode === 'simple' ? 'Show SQL, AST inspector, and execution times' : 'Friendly plain English, hide raw SQL', icon: Sparkles, keywords: ['expert', 'simple', 'developer', 'viewer', 'mode'], run: toggleMode },
-      { id: 'toggle-theme', label: `Switch to ${theme === 'light' ? 'Obsidian Dark' : 'Warm Stone Light'} theme`, description: 'Toggle between warm stone (#FAF8F5) and obsidian (#0B0D10)', icon: Moon, keywords: ['theme', 'dark', 'light', 'mode'], run: toggleTheme },
+      { id: 'toggle-theme', label: `Switch to ${theme === 'light' ? 'Dark' : 'Light'} theme`, description: 'Toggle between light and dark workspace appearances', icon: Moon, keywords: ['theme', 'dark', 'light', 'mode'], run: toggleTheme },
       { id: 'onboarding-tour', label: 'Welcome & Role Tour', description: 'Explore roles, sample questions, and zero-trust safeguards', icon: Sparkles, keywords: ['onboarding', 'tour', 'guide', 'help', 'welcome'], run: () => setIsOnboardingOpen(true) },
       { id: 'refresh-overview', label: 'Refresh Fleet Overview', description: 'Fetch the latest live inventory snapshot', icon: RefreshCw, keywords: ['reload', 'live'], run: () => {
         selectTab('overview')
@@ -235,21 +235,25 @@ const AppShell: React.FC = () => {
 
       {/* Invite Workspace Awareness Banner if logged into another account */}
       {joinParam && user && user.workspace_name?.toLowerCase() !== joinParam.toLowerCase() && (
-        <div style={{
-          background: 'linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%)',
-          color: '#ffffff',
-          padding: '9px 18px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '0.82rem',
-          fontWeight: 500,
-          boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
-          zIndex: 9999,
-          flexShrink: 0,
-        }}>
+        <div
+          style={{
+            background: 'var(--color-accent)',
+            color: 'var(--color-accent-contrast)',
+            padding: '10px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '8px',
+            fontSize: '0.82rem',
+            fontWeight: 500,
+            borderBottom: '1px solid var(--color-accent-border)',
+            zIndex: 9999,
+            flexShrink: 0,
+          }}
+        >
           <span>
-            👋 You opened an invite link to join <strong>{joinParam}</strong>, but you are currently signed in as <strong>{user.display_name}</strong> ({user.workspace_name || 'Personal Account'}).
+            You opened an invite link to join <strong>{joinParam}</strong>, while signed in as <strong>{user.display_name}</strong> ({user.workspace_name || 'Personal Account'}).
           </span>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <button
@@ -259,12 +263,12 @@ const AppShell: React.FC = () => {
                 setUnauthView('login')
               }}
               style={{
-                background: '#ffffff',
-                color: '#0284c7',
+                background: 'var(--color-accent-contrast)',
+                color: 'var(--color-accent)',
                 border: 'none',
-                borderRadius: 4,
-                padding: '4px 12px',
-                fontWeight: 700,
+                borderRadius: 'var(--radius-control)',
+                padding: '5px 12px',
+                fontWeight: 600,
                 cursor: 'pointer',
                 fontSize: '0.78rem',
               }}
@@ -281,11 +285,11 @@ const AppShell: React.FC = () => {
                 window.dispatchEvent(new Event('popstate'))
               }}
               style={{
-                background: 'rgba(0,0,0,0.15)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.4)',
-                borderRadius: 4,
-                padding: '4px 10px',
+                background: 'rgba(255,255,255,0.16)',
+                color: 'var(--color-accent-contrast)',
+                border: '1px solid rgba(255,255,255,0.35)',
+                borderRadius: 'var(--radius-control)',
+                padding: '5px 10px',
                 cursor: 'pointer',
                 fontSize: '0.78rem',
               }}

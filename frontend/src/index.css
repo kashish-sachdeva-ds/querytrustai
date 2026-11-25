@@ -58,15 +58,15 @@
    Endcap.design Architectural & Visual Primitives
    ========================================================================== */
 .font-serif-italic {
-  font-family: 'Instrument Serif', Georgia, serif !important;
+  font-family: var(--font-serif) !important;
   font-style: italic !important;
   font-weight: 400 !important;
 }
 
 .font-grotesque {
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
+  font-family: var(--font-sans) !important;
   letter-spacing: -0.02em !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 .blueprint-border-grid {
@@ -1784,8 +1784,8 @@ button:hover .tactile-arrow-circle {
 
 .form-control:focus {
   outline: none;
-  border-color: var(--qt-accent, #ff5c00);
-  box-shadow: 0 0 0 3px rgba(255, 92, 0, 0.18);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
   background: var(--qt-surface);
 }
 
@@ -3073,8 +3073,8 @@ select.form-input {
 
 .query-textarea:focus {
   outline: none;
-  border-color: var(--qt-accent);
-  box-shadow: 0 0 0 2px rgba(255,79,0,.1);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
 }
 
 .input-actions-bar {

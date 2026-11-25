@@ -148,6 +148,7 @@ export default function EvaluationLabView() {
         try {
           const detail = await fetchEvaluationDetail(runs[0].id)
           setRunResult(detail)
+          setSelectedMode(detail.mode === 'baseline' ? 'baseline' : 'guarded')
         } catch {
           // Keep runs summary if detailed fetch fails
         }
@@ -328,8 +329,8 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
         validation: isSec
           ? { ast_violation: `AST-Rule-Enforced: Intercepted ${group.cat}` }
           : { ast_valid: true, row_limit: 200 },
-        latency_ms: Math.floor(18 + Math.random() * 25),
-        failure_reason: pass ? undefined : `Breached baseline sandbox in unshielded mode`,
+        latency_ms: 18 + (i % 7) * 3,
+        failure_reason: pass ? undefined : `Executed without AST rules in baseline mode`,
       })
     }
   }
@@ -338,9 +339,9 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
     evaluation_run_id: `eval_run_live_${Date.now().toString(36)}`,
     benchmark_name: 'QueryTrust AST & Dual-Role Safety Benchmark',
     benchmark_version: 'v2.4-enterprise',
-    dataset_version: 'synth_cisco_net_v1',
-    provider: 'QueryTrust Zero-Trust Kernel',
-    model: 'SQLGlot-PostgreSQL-AST-6L',
+    dataset_version: 'synth_fleet_net_v1',
+    provider: 'QueryTrust Safety Kernel',
+    model: 'SQLGlot-PostgreSQL-AST',
     mode,
     is_demo_mode: true,
     prompt_version: 'sys_guard_v4',
@@ -482,121 +483,71 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
         }
       />
 
-      {/* Board-Ready Executive Trust Card (Ground Truth Project Thesis) */}
-      <section className="executive-trust-card" aria-label="Executive Trust Proof">
+      {/* Calm Factual Executive Summary Strip (Geist Tabular + 6px Status Dots) */}
+      <section className="executive-trust-card" aria-label="Safety Benchmark Summary">
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '10px',
-            width: '100%',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))',
+            gap: '1px',
+            backgroundColor: 'var(--color-border-subtle)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-container)',
+            overflow: 'hidden',
           }}
         >
           {/* Pillar 1 */}
-          <div
-            style={{
-              padding: '1rem 1.25rem',
-              borderRadius: '12px',
-              backgroundColor: 'var(--bg-surface-1)',
-              border: '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '4px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            }}
-          >
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Turnaround Velocity
+          <div style={{ padding: '1.15rem 1.25rem', backgroundColor: 'var(--color-surface)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12.5px', color: 'var(--color-text-secondary)' }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--color-status-success-dot)' }} />
+              <span>Benchmark cases passed</span>
             </div>
-            <div style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#0284C7', fontVariantNumeric: 'tabular-nums' }}>
-              1.42s
+            <div style={{ fontSize: '30px', fontWeight: 500, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginTop: '4px' }}>
+              {runResult ? `${runResult.passed_cases} / ${runResult.total_cases}` : '151 / 151'}
             </div>
-            <div style={{ fontSize: '11px', color: '#10B981', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
-              -99.9% vs 4h Jira Ticket Lag
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+              {runResult ? `Mode: ${runResult.mode}` : 'Guarded AST regression suite'}
             </div>
           </div>
 
           {/* Pillar 2 */}
-          <div
-            style={{
-              padding: '1rem 1.25rem',
-              borderRadius: '12px',
-              backgroundColor: 'var(--bg-surface-1)',
-              border: '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '4px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            }}
-          >
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Ticket Deflection
+          <div style={{ padding: '1.15rem 1.25rem', backgroundColor: 'var(--color-surface)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12.5px', color: 'var(--color-text-secondary)' }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: runResult?.forbidden_execution_count ? 'var(--color-status-error-dot)' : 'var(--color-status-success-dot)' }} />
+              <span>Forbidden mutations run</span>
             </div>
-            <div
-              className="text-slate-900 dark:text-white font-extrabold"
-              style={{
-                fontSize: '24px',
-                fontFamily: 'var(--font-mono)',
-                fontVariantNumeric: 'tabular-nums',
-                color: 'var(--ink-primary)',
-              }}
-            >
-              65.0%
+            <div style={{ fontSize: '30px', fontWeight: 500, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginTop: '4px' }}>
+              {runResult?.forbidden_execution_count ?? 0}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}>
-              Self-Serve Domain Analytics
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+              Blocked prior to PostgreSQL
             </div>
           </div>
 
           {/* Pillar 3 */}
-          <div
-            style={{
-              padding: '1rem 1.25rem',
-              borderRadius: '12px',
-              backgroundColor: 'var(--bg-surface-1)',
-              border: '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '4px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            }}
-          >
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Automated Test Suite
+          <div style={{ padding: '1.15rem 1.25rem', backgroundColor: 'var(--color-surface)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12.5px', color: 'var(--color-text-secondary)' }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--color-accent)' }} />
+              <span>AST rules enforced</span>
             </div>
-            <div style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#10B981', fontVariantNumeric: 'tabular-nums' }}>
-              151 / 151
+            <div style={{ fontSize: '30px', fontWeight: 500, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginTop: '4px' }}>
+              6 / 6
             </div>
-            <div style={{ fontSize: '11px', color: '#10B981', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
-              100% Automated Test Pass Rate
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+              SQLGlot PostgreSQL AST parser
             </div>
           </div>
 
           {/* Pillar 4 */}
-          <div
-            style={{
-              padding: '1rem 1.25rem',
-              borderRadius: '12px',
-              backgroundColor: 'var(--bg-surface-1)',
-              border: '1px solid var(--border-subtle)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: '4px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            }}
-          >
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Forbidden Mutations
+          <div style={{ padding: '1.15rem 1.25rem', backgroundColor: 'var(--color-surface)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12.5px', color: 'var(--color-text-secondary)' }}>
+              <span>Output row limit</span>
             </div>
-            <div style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#10B981', fontVariantNumeric: 'tabular-nums' }}>
-              0 Executed
+            <div style={{ fontSize: '30px', fontWeight: 500, fontFamily: 'var(--font-sans)', color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginTop: '4px' }}>
+              &le; 500
             </div>
-            <div style={{ fontSize: '11px', color: '#10B981', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
-              100% Interception Rate
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+              Clamped in read-only transactions
             </div>
           </div>
         </div>
@@ -661,12 +612,12 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
             {loading ? (
               <>
                 <span className="eval-lab__spinner" />
-                <span>Running 151-vector kinetic suite…</span>
+                <span>Running benchmark suite…</span>
               </>
             ) : (
               <>
                 <Play size={14} fill="currentColor" />
-                <span>▶ Run Live 151-Vector Red-Team Suite</span>
+                <span>Run Safety Benchmark Suite</span>
               </>
             )}
           </button>
@@ -678,55 +629,44 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
         )}
       </div>
 
-      {/* Kinetic Shield Defense Animation Stage during Execution */}
+      {/* Running Progress Panel during Benchmark Execution */}
       {kineticRunning && (
         <div
           style={{
-            padding: '20px 24px',
-            borderRadius: '12px',
-            backgroundColor: 'var(--bg-surface-1)',
-            border: '1px solid var(--accent-primary)',
-            boxShadow: '0 0 24px rgba(212, 234, 90, 0.15)',
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-container)',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-accent-border)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '14px',
-            animation: 'fadeIn 0.2s ease-in',
+            gap: '12px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ position: 'relative', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg style={{ position: 'absolute', inset: 0, animation: 'spin 3s linear infinite' }} viewBox="0 0 44 44">
-                  <circle cx="22" cy="22" r="20" fill="none" stroke="var(--accent-primary)" strokeWidth="1.5" strokeDasharray="6 4" />
-                </svg>
-                <Shield size={22} style={{ color: 'var(--accent-primary)' }} />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Shield size={20} style={{ color: 'var(--color-accent-link)' }} />
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--ink-primary)', letterSpacing: '0.04em' }}>
-                  KINETIC AST SHIELD DEFENSE SUITE
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                  Evaluating AST Safety Benchmark Suite
                 </div>
-                <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
-                  Active Gate: <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>{kineticProgress.currentGate}</span> &bull; {kineticProgress.phase}
+                <div style={{ fontSize: '11.5px', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)' }}>
+                  Stage: <span style={{ color: 'var(--color-accent-link)', fontWeight: 600 }}>{kineticProgress.currentGate}</span> · {kineticProgress.phase}
                 </div>
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '20px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: 'var(--ink-primary)' }}>
-                {kineticProgress.vectorCount} <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>/ 151 VECTORS</span>
-              </div>
-              <div style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: '#10B981', fontWeight: 700 }}>
-                0 Timeouts &bull; &lt; 1.2s Real-Time Proof
+              <div style={{ fontSize: '18px', fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
+                {kineticProgress.vectorCount} <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>/ 151 cases</span>
               </div>
             </div>
           </div>
-          <div style={{ width: '100%', height: 6, backgroundColor: 'var(--bg-surface-2)', borderRadius: 9999, overflow: 'hidden' }}>
+          <div style={{ width: '100%', height: 5, backgroundColor: 'var(--color-raised)', borderRadius: 9999, overflow: 'hidden' }}>
             <div
               style={{
                 width: `${kineticProgress.pct}%`,
                 height: '100%',
-                backgroundColor: 'var(--accent-primary)',
+                backgroundColor: 'var(--color-accent)',
                 transition: 'width 0.15s ease-out',
-                boxShadow: '0 0 10px var(--accent-primary)',
               }}
             />
           </div>
@@ -776,7 +716,7 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
             </div>
             <div style={{ background: 'var(--qt-surface-muted)', border: '1px solid var(--qt-border)', padding: '0.85rem 1rem', borderRadius: 'var(--qt-radius-control)' }}>
               <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Data health score</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--qt-success)', marginTop: 2 }}>{viewerSummary?.healthScore ?? 96.99}%</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--qt-success)', marginTop: 2 }}>{viewerSummary?.healthScore ?? 87.4}%</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--qt-muted)' }}>Across 30,000 records</div>
             </div>
           </div>
@@ -944,12 +884,12 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
             <div className="eval-lab__meta-item">
               <span className="eval-lab__meta-label">Provider</span>
               <span className="eval-lab__meta-value">
-                {runResult.provider} ({runResult.model})
+                {runResult.provider}{runResult.model ? ` (${runResult.model})` : ''}
                 {runResult.is_demo_mode && <span className="eval-lab__demo-badge">Demo</span>}
               </span>
             </div>
             <div className="eval-lab__meta-item">
-              <span className="eval-lab__meta-label">Mode</span>
+              <span className="eval-lab__meta-label">Pipeline mode</span>
               <span className="eval-lab__meta-value mono">{runResult.mode}</span>
             </div>
             {viewMode === 'expert' && (
@@ -1029,7 +969,7 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
                     {runResult.overall_pass_rate}%
                   </div>
                   <span className="eval-lab__stat-sub">
-                    {passedCases.length} of {runResult.total_cases} passed
+                    {runResult.passed_cases ?? passedCases.length} of {runResult.total_cases} passed
                   </span>
                 </div>
                 <div className="eval-lab__stat-card">
@@ -1168,150 +1108,81 @@ const createDeterministicBenchmarkReport = (mode: string): EvaluationRunResponse
         </>
       )}
 
-      {/* Printable Enterprise Cryptographic Compliance Certificate & Benchmark Report */}
-      <section className="printable-safety-report" aria-label="Official QueryTrust AI Audit Certificate">
-        <div style={{ border: '2px solid #0F172A', padding: '24px', borderRadius: '4px' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0F172A', paddingBottom: '16px', marginBottom: '20px' }}>
+      {/* Printable Safety Report */}
+      <section className="printable-safety-report" aria-label="QueryTrust AI Safety Verification Report">
+        <div style={{ border: '2px solid black', padding: '24px', borderRadius: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid black', paddingBottom: '16px', marginBottom: '20px' }}>
             <div>
-              <div style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.02em', color: '#0F172A' }}>
-                QUERYTRUST AI
+              <div style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em' }}>
+                QueryTrust AI
               </div>
-              <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: '#F95716', textTransform: 'uppercase', marginTop: '2px' }}>
-                ZERO-TRUST DATABASE GOVERNANCE &amp; AST SAFETY AUDIT CERTIFICATE
+              <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: '2px' }}>
+                Read-Only Database &amp; AST Safety Verification Report
               </div>
             </div>
-            <div style={{ textAlign: 'right', fontFamily: 'monospace', fontSize: '10px', color: '#64748B' }}>
-              <div>REF: QT-SEC-2026-CERT-9402</div>
-              <div>ISSUED: {new Date().toISOString()}</div>
-              <div>STATUS: VERIFIED (100% IMMUTABILITY)</div>
+            <div style={{ textAlign: 'right', fontFamily: 'monospace', fontSize: '10px' }}>
+              <div>REF: {runResult?.evaluation_run_id || 'EVAL-REPORT'}</div>
+              <div>GENERATED: {new Date().toISOString()}</div>
+              <div>MODE: {(runResult?.mode || selectedMode).toUpperCase()}</div>
             </div>
           </div>
 
-          {/* Cryptographic Hash */}
-          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '10px 14px', borderRadius: '4px', marginBottom: '20px', fontFamily: 'monospace', fontSize: '10px' }}>
-            <span style={{ color: '#64748B' }}>WORKSPACE CRYPTOGRAPHIC HASH: </span>
-            <span style={{ color: '#0F172A', fontWeight: 700 }}>SHA256:7f9b2d8e41a3c09e512478d10b7ef91a243cde681023791aef5912c019a84b12</span>
-          </div>
-
-          {/* 4 Headline Metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
-            <div style={{ border: '1px solid #CBD5E1', padding: '10px', borderRadius: '4px' }}>
-              <div style={{ fontSize: '10px', color: '#64748B' }}>TURNAROUND VELOCITY</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#F95716', fontFamily: 'monospace' }}>1.42s</div>
-              <div style={{ fontSize: '9px', color: '#047857' }}>-99.9% vs 4h Jira Lag</div>
+            <div style={{ border: '1px solid black', padding: '10px', borderRadius: '4px' }}>
+              <div style={{ fontSize: '10px' }}>BENCHMARK CASES</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace' }}>
+                {runResult ? `${runResult.passed_cases} / ${runResult.total_cases}` : '151 / 151'}
+              </div>
             </div>
-            <div style={{ border: '1px solid #CBD5E1', padding: '10px', borderRadius: '4px' }}>
-              <div style={{ fontSize: '10px', color: '#64748B' }}>TICKET DEFLECTION</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A', fontFamily: 'monospace' }}>65.0%</div>
-              <div style={{ fontSize: '9px', color: '#64748B' }}>Self-Serve Domain Analytics</div>
+            <div style={{ border: '1px solid black', padding: '10px', borderRadius: '4px' }}>
+              <div style={{ fontSize: '10px' }}>PASS RATE</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace' }}>
+                {runResult?.overall_pass_rate ?? 100}%
+              </div>
             </div>
-            <div style={{ border: '1px solid #CBD5E1', padding: '10px', borderRadius: '4px' }}>
-              <div style={{ fontSize: '10px', color: '#64748B' }}>AUTOMATED TESTS</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#047857', fontFamily: 'monospace' }}>151 / 151</div>
-              <div style={{ fontSize: '9px', color: '#047857' }}>100% Automated Pass Rate</div>
+            <div style={{ border: '1px solid black', padding: '10px', borderRadius: '4px' }}>
+              <div style={{ fontSize: '10px' }}>UNSAFE MUTATIONS</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace' }}>
+                {runResult?.forbidden_execution_count ?? 0}
+              </div>
             </div>
-            <div style={{ border: '1px solid #CBD5E1', padding: '10px', borderRadius: '4px' }}>
-              <div style={{ fontSize: '10px', color: '#64748B' }}>FORBIDDEN MUTATIONS</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#047857', fontFamily: 'monospace' }}>0 EXECUTED</div>
-              <div style={{ fontSize: '9px', color: '#047857' }}>100% Interception Rate</div>
+            <div style={{ border: '1px solid black', padding: '10px', borderRadius: '4px' }}>
+              <div style={{ fontSize: '10px' }}>EXECUTION ROLE</div>
+              <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: 'monospace' }}>
+                qt_ai_readonly
+              </div>
             </div>
           </div>
 
-          {/* Section 1: 6-Gate AST Verification Engine */}
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, borderBottom: '1px solid #CBD5E1', paddingBottom: '6px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, borderBottom: '1px solid black', paddingBottom: '6px', marginBottom: '10px', textTransform: 'uppercase' }}>
               1. Deterministic 6-Gate SQLGlot AST Safety Pipeline
             </div>
             <div style={{ fontSize: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div style={{ background: '#F8FAFC', padding: '8px', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontWeight: 700, color: '#047857' }}>[AST-01] Statement Classification:</span> Strictly enforces single exp.Select. Prohibits DROP, DELETE, UPDATE, INSERT, ALTER, TRUNCATE.
+              <div style={{ padding: '8px', border: '1px solid gray' }}>
+                <strong>[AST-01] Statement Type:</strong> Single SELECT query only; prohibits DROP, DELETE, UPDATE, INSERT, ALTER, TRUNCATE.
               </div>
-              <div style={{ background: '#F8FAFC', padding: '8px', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontWeight: 700, color: '#047857' }}>[AST-02] Single-Statement Isolation:</span> len(parsed_statements) == 1 enforced. Eliminates multi-statement injection and piggybacking.
+              <div style={{ padding: '8px', border: '1px solid gray' }}>
+                <strong>[AST-02] Single Statement:</strong> Prohibits stacked semicolon statements.
               </div>
-              <div style={{ background: '#F8FAFC', padding: '8px', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontWeight: 700, color: '#047857' }}>[AST-03] Schema &amp; Catalog Isolation:</span> Restricts system catalogs. Blocks pg_catalog, information_schema, and pg_shadow exfiltration.
+              <div style={{ padding: '8px', border: '1px solid gray' }}>
+                <strong>[AST-03] Schema Allowlist:</strong> Blocks pg_catalog, information_schema, and pg_shadow access.
               </div>
-              <div style={{ background: '#F8FAFC', padding: '8px', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontWeight: 700, color: '#047857' }}>[AST-04] Table &amp; Column Whitelist:</span> Mathematical verification against devices, sites, service_events, telemetry_readings.
+              <div style={{ padding: '8px', border: '1px solid gray' }}>
+                <strong>[AST-04] Table Allowlist:</strong> Verifies allowed fleet tables only.
               </div>
-              <div style={{ background: '#F8FAFC', padding: '8px', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontWeight: 700, color: '#047857' }}>[AST-05] Join &amp; Cost Bound Guard:</span> Explicit ON predicates required. Mandates row clamp LIMIT &lt;= 1000 to prevent denial of service.
+              <div style={{ padding: '8px', border: '1px solid gray' }}>
+                <strong>[AST-05] Bounded Execution:</strong> Clamps result rows and blocks recursive DoS constructs.
               </div>
-              <div style={{ background: '#F8FAFC', padding: '8px', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontWeight: 700, color: '#047857' }}>[AST-06] Kernel Execution Role Binding:</span> Routes exclusively to PostgreSQL user qt_ai_readonly with default_transaction_read_only = ON.
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Dual-Role Kernel Proof */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, borderBottom: '1px solid #CBD5E1', paddingBottom: '6px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              2. PostgreSQL Kernel Dual-Role Physical Separation
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ background: '#F1F5F9' }}>
-                  <th style={{ padding: '6px', border: '1px solid #CBD5E1' }}>Role Name</th>
-                  <th style={{ padding: '6px', border: '1px solid #CBD5E1' }}>Purpose</th>
-                  <th style={{ padding: '6px', border: '1px solid #CBD5E1' }}>SELECT</th>
-                  <th style={{ padding: '6px', border: '1px solid #CBD5E1' }}>INSERT / UPDATE / DELETE</th>
-                  <th style={{ padding: '6px', border: '1px solid #CBD5E1' }}>DDL / TRUNCATE</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', fontFamily: 'monospace' }}>qt_admin_migrator</td>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1' }}>Offline Migrations Only</td>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', color: '#047857' }}>GRANTED</td>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', color: '#047857' }}>GRANTED</td>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', color: '#047857' }}>GRANTED</td>
-                </tr>
-                <tr style={{ background: '#ECFDF5' }}>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', fontFamily: 'monospace', fontWeight: 700 }}>qt_ai_readonly</td>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', fontWeight: 700 }}>Active AI Execution Pool</td>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', color: '#047857', fontWeight: 700 }}>GRANTED</td>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', color: '#B91C1C', fontWeight: 700 }}>REVOKED (0 PERMITTED)</td>
-                  <td style={{ padding: '6px', border: '1px solid #CBD5E1', color: '#B91C1C', fontWeight: 700 }}>REVOKED (KERNEL LOCK)</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Section 3: 37-Case Benchmark Suite */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, borderBottom: '1px solid #CBD5E1', paddingBottom: '6px', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              3. Versioned Safety Benchmark Results (querytrust_core_v1 • 37/37 Cases)
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', fontSize: '10px' }}>
-              <div style={{ border: '1px solid #E2E8F0', padding: '8px' }}>
-                <div style={{ fontWeight: 700, color: '#0F172A' }}>Red-Team Adversarial Injections</div>
-                <div style={{ color: '#047857', fontWeight: 600, marginTop: '2px' }}>6 / 6 Intercepted (100%)</div>
-                <div style={{ color: '#64748B', fontSize: '9px' }}>Multi-statement, DROP TABLE, UPDATE, pg_shadow, pg_sleep</div>
-              </div>
-              <div style={{ border: '1px solid #E2E8F0', padding: '8px' }}>
-                <div style={{ fontWeight: 700, color: '#0F172A' }}>Domain Query Verification</div>
-                <div style={{ color: '#047857', fontWeight: 600, marginTop: '2px' }}>23 / 23 Validated (100%)</div>
-                <div style={{ color: '#64748B', fontSize: '9px' }}>Filters, aggregations, date ranges, multi-table joins, semantic terms</div>
-              </div>
-              <div style={{ border: '1px solid #E2E8F0', padding: '8px' }}>
-                <div style={{ fontWeight: 700, color: '#0F172A' }}>Ambiguity &amp; Guardrails</div>
-                <div style={{ color: '#047857', fontWeight: 600, marginTop: '2px' }}>8 / 8 Handled (100%)</div>
-                <div style={{ color: '#64748B', fontSize: '9px' }}>Clarification prompts triggered, unsupported domain questions rejected</div>
+              <div style={{ padding: '8px', border: '1px solid gray' }}>
+                <strong>[AST-06] Read-Only Role:</strong> Routes execution to qt_ai_readonly with default_transaction_read_only = ON.
               </div>
             </div>
           </div>
 
-          {/* Signoff */}
-          <div style={{ borderTop: '2px solid #0F172A', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: '#64748B' }}>
-            <div>
-              <span>AUTHENTICATION AUTHORITY: </span>
-              <strong style={{ color: '#0F172A' }}>QueryTrust AI Automated Verification Kernel</strong>
-            </div>
-            <div style={{ fontFamily: 'monospace' }}>
-              SEAL: [HMAC-SHA256-VERIFIED-VALID]
-            </div>
+          <div style={{ borderTop: '1px solid black', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px' }}>
+            <span>QueryTrust AI Read-Only SQL Governance</span>
+            <span style={{ fontFamily: 'monospace' }}>End of Report</span>
           </div>
         </div>
       </section>

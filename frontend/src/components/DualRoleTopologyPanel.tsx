@@ -94,19 +94,19 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public FROM qt_a
           <div
             style={{
               padding: '6px',
-              borderRadius: '6px',
-              backgroundColor: 'var(--accent-primary-subtle)',
-              color: 'var(--accent-primary)',
+              borderRadius: 'var(--radius-control)',
+              backgroundColor: 'var(--color-accent-subtle)',
+              color: 'var(--color-accent-link)',
             }}
           >
             <Lock size={16} />
           </div>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink-primary)' }}>
-              Dual-Role PostgreSQL Kernel Architecture &bull; Zero Data Corruption Guarantee
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+              Dual-Role PostgreSQL Isolation
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)' }}>
-              Physical separation of AI query execution (qt_ai_readonly) from schema migrator (qt_admin_migrator)
+            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>
+              Separates natural-language execution role (qt_ai_readonly) from offline schema migration role (qt_admin_migrator)
             </div>
           </div>
         </div>
@@ -119,76 +119,76 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public FROM qt_a
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '5px 12px',
-            fontSize: '11px',
-            fontWeight: 600,
-            backgroundColor: isRunningCheck ? 'var(--bg-surface-3)' : 'var(--gov-safe-bg)',
-            color: 'var(--gov-safe-text)',
-            border: '1px solid var(--gov-safe-border)',
-            borderRadius: '4px',
+            padding: '6px 12px',
+            fontSize: '12px',
+            fontWeight: 500,
+            backgroundColor: isRunningCheck ? 'var(--color-raised)' : 'var(--color-accent)',
+            color: isRunningCheck ? 'var(--color-text-secondary)' : 'var(--color-accent-contrast)',
+            border: `1px solid ${isRunningCheck ? 'var(--color-border-subtle)' : 'var(--color-accent)'}`,
+            borderRadius: 'var(--radius-control)',
             cursor: isRunningCheck ? 'not-allowed' : 'pointer',
           }}
         >
           <Play size={11} fill="currentColor" />
-          <span>{isRunningCheck ? 'Verifying Kernel...' : 'Verify Kernel Privileges (has_table_privilege)'}</span>
+          <span>{isRunningCheck ? 'Verifying privileges...' : 'Verify table privileges'}</span>
         </button>
       </div>
 
-      {/* Visual Dual-Role Architecture Flow Diagram */}
+      {/* Dual-Role Comparison Cards */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))',
           gap: '12px',
-          backgroundColor: 'var(--bg-surface-2)',
+          backgroundColor: 'var(--color-raised)',
           padding: '12px',
-          borderRadius: '6px',
-          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-control)',
+          border: '1px solid var(--color-border-subtle)',
         }}
       >
         {/* Role A: Active AI Analytics Reader */}
         <div
           style={{
-            backgroundColor: 'var(--bg-surface-1)',
-            border: '1px solid var(--gov-safe-border)',
-            borderRadius: '6px',
-            padding: '12px',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-control)',
+            padding: '14px',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
             <span
               style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: 'var(--gov-safe-text)',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--color-status-success-text)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
               }}
             >
               <ShieldCheck size={14} />
-              <span>Role: qt_ai_readonly (ACTIVE RUNTIME)</span>
+              <span>qt_ai_readonly (Active role)</span>
             </span>
             <span
               style={{
-                fontSize: '9.5px',
+                fontSize: '10.5px',
                 fontFamily: 'var(--font-mono)',
-                backgroundColor: 'var(--gov-safe-bg)',
-                color: 'var(--gov-safe-text)',
-                padding: '1px 5px',
-                borderRadius: '3px',
-                fontWeight: 600,
+                backgroundColor: 'var(--color-status-success-bg)',
+                color: 'var(--color-status-success-text)',
+                padding: '2px 7px',
+                borderRadius: '4px',
+                fontWeight: 500,
               }}
             >
-              0 WRITE PERMISSIONS
+              SELECT only
             </span>
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
-            Used for all natural-language query previews and executions. Connection pool executes with{' '}
-            <code style={{ fontSize: '10px', backgroundColor: 'var(--bg-surface-3)', padding: '1px 4px', borderRadius: '3px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: 1.45 }}>
+            Used for all natural-language query previews and executions with{' '}
+            <code style={{ fontSize: '11px', backgroundColor: 'var(--color-raised)', padding: '1px 4px', borderRadius: '3px' }}>
               SET default_transaction_read_only = ON
             </code>
             .
@@ -197,83 +197,79 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public FROM qt_a
             style={{
               display: 'flex',
               alignItems: 'center',
+              flexWrap: 'wrap',
               gap: '6px',
-              fontSize: '10px',
+              fontSize: '11px',
               fontFamily: 'var(--font-mono)',
-              color: 'var(--ink-muted)',
-              borderTop: '1px dashed var(--border-subtle)',
-              paddingTop: '6px',
+              color: 'var(--color-text-muted)',
+              borderTop: '1px solid var(--color-border-subtle)',
+              paddingTop: '8px',
             }}
           >
-            <span>Target: PostgreSQL Replica</span>
-            <span>&bull;</span>
-            <span>SSL: Require</span>
-            <span>&bull;</span>
-            <span style={{ color: 'var(--gov-safe-text)', fontWeight: 600 }}>SELECT-Only Verified</span>
+            <span>0 INSERT / UPDATE / DELETE</span>
+            <span>·</span>
+            <span style={{ color: 'var(--color-status-success-text)', fontWeight: 500 }}>Read-only verified</span>
           </div>
         </div>
 
         {/* Role B: Offline Migration Admin */}
         <div
           style={{
-            backgroundColor: 'var(--bg-surface-1)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '6px',
-            padding: '12px',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-control)',
+            padding: '14px',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
-            opacity: 0.85,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
             <span
               style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: 'var(--ink-primary)',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--color-text-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
               }}
             >
-              <Cpu size={14} style={{ color: 'var(--ink-muted)' }} />
-              <span>Role: qt_admin_migrator (OFFLINE ONLY)</span>
+              <Cpu size={14} style={{ color: 'var(--color-text-muted)' }} />
+              <span>qt_admin_migrator (Schema only)</span>
             </span>
             <span
               style={{
-                fontSize: '9.5px',
+                fontSize: '10.5px',
                 fontFamily: 'var(--font-mono)',
-                backgroundColor: 'var(--bg-surface-3)',
-                color: 'var(--ink-muted)',
-                padding: '1px 5px',
-                borderRadius: '3px',
+                backgroundColor: 'var(--color-raised)',
+                color: 'var(--color-text-secondary)',
+                padding: '2px 7px',
+                borderRadius: '4px',
               }}
             >
-              AIR-GAPPED FROM AI
+              Offline migrations
             </span>
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>
-            Reserved strictly for Alembic database migrations and seed data scripts. Completely isolated from the
-            web app runtime and LLM inference engine.
+          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: 1.45 }}>
+            Used strictly during offline Alembic migrations and database setup. Excluded from natural-language runtime execution.
           </div>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
+              flexWrap: 'wrap',
               gap: '6px',
-              fontSize: '10px',
+              fontSize: '11px',
               fontFamily: 'var(--font-mono)',
-              color: 'var(--ink-muted)',
-              borderTop: '1px dashed var(--border-subtle)',
-              paddingTop: '6px',
+              color: 'var(--color-text-muted)',
+              borderTop: '1px solid var(--color-border-subtle)',
+              paddingTop: '8px',
             }}
           >
-            <span>Target: Primary Master</span>
-            <span>&bull;</span>
-            <span>CLI Invocation Only</span>
-            <span>&bull;</span>
-            <span>0 LLM Access</span>
+            <span>CLI / Alembic only</span>
+            <span>·</span>
+            <span>No web NL route</span>
           </div>
         </div>
       </div>

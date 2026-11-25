@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { ArrowUpRight, Terminal } from 'lucide-react'
 import { QueryTrustLogo } from './QueryTrustLogo'
 
@@ -13,129 +13,161 @@ export const CyberFooter: React.FC<CyberFooterProps> = ({
   onLaunchAnalyst,
   onLaunchAdmin,
 }) => {
-  const [isHoveringPortal, setIsHoveringPortal] = useState(false)
-
   return (
-    <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-[#F4F2EC] dark:bg-[#080C14] text-zinc-900 dark:text-white pt-16 pb-32 sm:pb-40 relative text-left transition-colors overflow-hidden" style={{ paddingBottom: '128px' }}>
-      
-      {/* 3D Portal Vortex Warp Grid Background */}
-      <div
-        className="pointer-events-none absolute inset-0 transition-transform duration-700 ease-out"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at center, rgba(255,255,255,0.06) 0%, transparent 65%), linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)',
-          backgroundSize: '100% 100%, 36px 36px, 36px 36px',
-          transform: isHoveringPortal ? 'scale(1.08) perspective(600px) rotateX(10deg)' : 'scale(1)',
-          opacity: isHoveringPortal ? 0.8 : 0.35,
-        }}
-        aria-hidden="true"
-      />
-
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
-        
-        {/* Giant Editorial Statement & 3D Portal CTA */}
-        <div className="pb-14 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="text-xs font-mono font-semibold text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-3">
-            06 // ZERO-TRUST DATABASE GOVERNANCE
+    <footer
+      className="py-16 text-left transition-colors"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderTop: '1px solid var(--color-border-subtle)',
+        color: 'var(--color-text-primary)',
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        {/* Top Editorial CTA */}
+        <div
+          className="pb-12"
+          style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
+        >
+          <div
+            className="text-xs font-medium uppercase tracking-wider mb-3"
+            style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
+          >
+            Interactive Workbench
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight leading-[1.15] text-zinc-950 dark:text-white max-w-3xl">
-            Ready to deploy zero-trust natural language analytics?
+          <h2
+            className="text-3xl sm:text-4xl font-normal tracking-tight leading-[1.12] max-w-2xl"
+            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}
+          >
+            Inspect natural-language SQL governance in action.
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-2xl font-normal">
-            Explore the full 8-tab governance workbench or evaluate conversational natural-language SQL generation in a live, isolated sandbox.
+          <p
+            className="mt-3 text-sm sm:text-base leading-relaxed max-w-xl"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            Explore the full 8-tab workbench across synthetic infrastructure fixtures, or launch the read-only Analyst sandbox.
           </p>
-          
-          <div className="mt-8 flex items-center gap-3.5 flex-wrap">
+
+          <div className="mt-6 flex items-center gap-3 flex-wrap">
             <button
               type="button"
-              onMouseEnter={() => setIsHoveringPortal(true)}
-              onMouseLeave={() => setIsHoveringPortal(false)}
               onClick={onLaunchAdmin}
-              className="px-7 py-3.5 rounded-full bg-zinc-950 hover:bg-black text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 font-semibold text-xs shadow-lg shadow-sky-500/10 dark:shadow-sky-400/10 transition-all flex items-center gap-2.5 cursor-pointer active:scale-[0.98] relative group"
+              className="px-5 py-2.5 text-[13px] font-medium inline-flex items-center gap-2 cursor-pointer landing-control-primary"
             >
-              <span>Launch Admin Studio</span>
-              <span className="tactile-arrow-circle"><ArrowUpRight size={13} /></span>
+              <span>Open Admin Studio</span>
+              <ArrowUpRight size={14} />
             </button>
             <button
               type="button"
               onClick={onLaunchAnalyst}
-              className="px-5 py-3.5 rounded-full bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 font-medium text-xs transition-all flex items-center gap-2 shadow-2xs cursor-pointer active:scale-[0.98]"
+              className="px-4 py-2.5 text-[13px] font-medium inline-flex items-center gap-2 cursor-pointer landing-control-secondary"
             >
-              <Terminal size={14} className="text-sky-500" />
-              <span>Explore Analyst Sandbox</span>
+              <Terminal size={14} style={{ color: 'var(--color-accent-link)' }} />
+              <span>Try Analyst Sandbox</span>
             </button>
             <button
               type="button"
               onClick={onGoToLogin}
-              className="px-4 py-3.5 rounded-full text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white text-xs font-medium transition-colors cursor-pointer"
+              className="px-3 py-2 text-[13px] font-medium transition-colors cursor-pointer hover:underline"
+              style={{ color: 'var(--color-text-secondary)' }}
             >
-              Sign in to workspace &rarr;
+              Sign in &rarr;
             </button>
           </div>
         </div>
 
         {/* Technical Specification Matrix */}
-        <div className="py-12 grid grid-cols-1 md:grid-cols-4 gap-8 text-xs font-mono border-b border-zinc-200 dark:border-zinc-800">
+        <div
+          className="py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-xs"
+          style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
+        >
           <div>
-            <div className="text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-2.5 font-bold">Compiler Architecture</div>
-            <div className="text-zinc-600 dark:text-zinc-400 space-y-1.5">
+            <div
+              className="uppercase tracking-wider mb-2.5 font-semibold"
+              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
+            >
+              AST Validation
+            </div>
+            <div className="space-y-1.5" style={{ color: 'var(--color-text-secondary)' }}>
               <div>SQLGlot PostgreSQL Dialect</div>
-              <div>6 Deterministic AST Gates</div>
-              <div>Strict exp.Select Enforcement</div>
-              <div>P95 Compile Latency: 1.42ms</div>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-2.5 font-bold">Database Kernel</div>
-            <div className="text-zinc-600 dark:text-zinc-400 space-y-1.5">
-              <div>PostgreSQL 16 Engine</div>
-              <div>Role: <code className="text-zinc-950 dark:text-white font-semibold">qt_ai_readonly</code></div>
-              <div>SELECT Privileges Only</div>
-              <div>0 Bytes Mutated Guaranteed</div>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-2.5 font-bold">Security Standard</div>
-            <div className="text-zinc-600 dark:text-zinc-400 space-y-1.5">
-              <div>Zero-Trust Data Isolation</div>
-              <div>Synthetic Educational Telemetry</div>
-              <div>Automated Security Tests: 151/151</div>
-              <div>Deterministic Row Clamping (100)</div>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sky-600 dark:text-sky-400 uppercase tracking-wider mb-2.5 font-bold">Execution Safety</div>
-            <div className="text-zinc-600 dark:text-zinc-400 space-y-1.5">
-              <div>5,000ms Hard Statement Timeout</div>
-              <div>Cartesian Join Interception</div>
+              <div>6 Deterministic AST Checks</div>
+              <div>Single SELECT Root Policy</div>
               <div>Server-Stored Preview IDs</div>
-              <div>Untrusted Client Browser Model</div>
+            </div>
+          </div>
+
+          <div>
+            <div
+              className="uppercase tracking-wider mb-2.5 font-semibold"
+              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
+            >
+              Database Reader
+            </div>
+            <div className="space-y-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+              <div>PostgreSQL 16 Engine</div>
+              <div>
+                Role:{' '}
+                <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
+                  qt_ai_readonly
+                </code>
+              </div>
+              <div>SELECT Grants Only</div>
+              <div>Zero Write Privileges</div>
+            </div>
+          </div>
+
+          <div>
+            <div
+              className="uppercase tracking-wider mb-2.5 font-semibold"
+              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
+            >
+              Synthetic Dataset
+            </div>
+            <div className="space-y-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+              <div>5,000 Synthetic Devices</div>
+              <div>50 Infrastructure Sites</div>
+              <div>25,000 Telemetry Readings</div>
+              <div>1,500 Service Events</div>
+            </div>
+          </div>
+
+          <div>
+            <div
+              className="uppercase tracking-wider mb-2.5 font-semibold"
+              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
+            >
+              Execution Limits
+            </div>
+            <div className="space-y-1.5" style={{ color: 'var(--color-text-secondary)' }}>
+              <div>5,000 ms Statement Timeout</div>
+              <div>100-Row Default Preview Clamp</div>
+              <div>500-Row Server Maximum</div>
+              <div>Schema Allowlist Enforced</div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Credits & Status Row */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
-          <div className="flex items-center gap-3">
-            <QueryTrustLogo size={24} />
-            <span className="font-bold text-zinc-950 dark:text-white">QueryTrust AI</span>
-            <span>&bull;</span>
-            <span>Governed Natural Language Analytics Workbench</span>
+        {/* Bottom Attribution Row */}
+        <div
+          className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"
+          style={{ color: 'var(--color-text-muted)' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <QueryTrustLogo size={20} />
+            <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              QueryTrust AI
+            </span>
+            <span>&middot;</span>
+            <span>Governed Natural-Language SQL Workbench</span>
           </div>
 
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>PostgreSQL Kernel &bull; AST Compiler Operational</span>
-          </div>
-
-          <div>
-            &copy; {new Date().getFullYear()} QueryTrust AI. All rights reserved.
+          <div className="flex items-center gap-2" style={{ fontFamily: 'var(--font-mono)' }}>
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: 'var(--color-status-success-dot)' }}
+            />
+            <span>PostgreSQL 16 &middot; Read-Only Architecture</span>
           </div>
         </div>
-
       </div>
     </footer>
   )

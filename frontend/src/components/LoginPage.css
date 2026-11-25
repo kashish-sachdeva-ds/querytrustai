@@ -1,16 +1,25 @@
 /* ==========================================================================
-   QueryTrust AI — Minimalist Classy Centered Sign-In Styles
+   QueryTrust AI — Centered Authentication Styles
+   100% Design Token Architecture — Zero Hardcoded Hex Literals
    ========================================================================== */
 
 .login-page-root {
   min-height: 100vh;
-  background-color: var(--bg-page);
-  color: var(--text-main);
+  background-color: var(--color-page-bg);
+  color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
 
 .login-page-root input:focus {
   outline: none;
-  border-color: var(--brand, #0EA5E9);
-  box-shadow: 0 0 0 1px var(--brand, #0EA5E9);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
+}
+
+.login-input-with-icon {
+  padding-left: 38px !important;
+}
+
+.login-input-with-trailing {
+  padding-right: 38px !important;
 }

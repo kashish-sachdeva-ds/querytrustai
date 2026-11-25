@@ -144,9 +144,10 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
+        flex: 1,
+        minHeight: 0,
         height: '100%',
         backgroundColor: 'var(--bg-surface-1)',
-        borderLeft: '1px solid var(--border-subtle)',
         overflow: 'hidden',
       }}
     >
@@ -156,12 +157,15 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '6px 10px',
+          flexWrap: 'wrap',
+          gap: '6px',
+          padding: '8px 10px',
           borderBottom: '1px solid var(--border-subtle)',
           backgroundColor: 'var(--bg-surface-2)',
+          flexShrink: 0,
         }}
       >
-        <div style={{ display: 'flex', gap: '4px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
           <button
             type="button"
             onClick={() => setActiveTab('gates')}
@@ -172,9 +176,9 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
               padding: '4px 8px',
               borderRadius: '4px',
               cursor: 'pointer',
-              border: activeTab === 'gates' ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+              border: activeTab === 'gates' ? '1px solid var(--color-accent-link)' : '1px solid var(--border-subtle)',
               backgroundColor: activeTab === 'gates' ? 'var(--accent-primary-subtle)' : 'transparent',
-              color: activeTab === 'gates' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
+              color: activeTab === 'gates' ? 'var(--color-accent-link)' : 'var(--ink-secondary)',
             }}
           >
             6-Gate AST
@@ -189,9 +193,9 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
               padding: '4px 8px',
               borderRadius: '4px',
               cursor: 'pointer',
-              border: activeTab === 'ast-tree' ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+              border: activeTab === 'ast-tree' ? '1px solid var(--color-accent-link)' : '1px solid var(--border-subtle)',
               backgroundColor: activeTab === 'ast-tree' ? 'var(--accent-primary-subtle)' : 'transparent',
-              color: activeTab === 'ast-tree' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
+              color: activeTab === 'ast-tree' ? 'var(--color-accent-link)' : 'var(--ink-secondary)',
             }}
           >
             Visual AST Tree
@@ -206,16 +210,16 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
               padding: '4px 8px',
               borderRadius: '4px',
               cursor: 'pointer',
-              border: activeTab === 'kernel-proof' ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+              border: activeTab === 'kernel-proof' ? '1px solid var(--color-accent-link)' : '1px solid var(--border-subtle)',
               backgroundColor: activeTab === 'kernel-proof' ? 'var(--accent-primary-subtle)' : 'transparent',
-              color: activeTab === 'kernel-proof' ? 'var(--accent-primary)' : 'var(--ink-secondary)',
+              color: activeTab === 'kernel-proof' ? 'var(--color-accent-link)' : 'var(--ink-secondary)',
             }}
           >
             Kernel Proof
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
           <span
             style={{
               width: '6px',
@@ -241,8 +245,9 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
       <div
         style={{
           flex: 1,
+          minHeight: 0,
           overflowY: 'auto',
-          padding: '8px 10px',
+          padding: '10px 12px',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
@@ -266,7 +271,7 @@ export const AstInspectorPanel: React.FC<AstInspectorPanelProps> = ({
               <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
                 {provider || 'SQLGlot Dialect: postgresql'} {queryRunId ? `• ${queryRunId.slice(0, 8)}` : ''}
               </span>
-              <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)', fontWeight: 600 }}>
+              <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--color-accent-link)', fontWeight: 600 }}>
                 {isExecuting ? 'Verifying AST...' : `AST Latency: ${executionLatencyMs || 1.42}ms`}
               </span>
             </div>

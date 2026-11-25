@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Database,
   CheckCircle2,
@@ -197,7 +198,7 @@ export const DataSourcesView: React.FC = () => {
       await loadData()
       setNotification({
         type: 'success',
-        message: 'Switched back to the pre-loaded Networking Demo Sandbox (Synthetic Cisco Telemetry & Assets).',
+        message: 'Switched back to the pre-loaded Networking Demo Sandbox (Synthetic Telemetry & Assets).',
       })
     } catch (err) {
       setNotification({
@@ -254,9 +255,9 @@ export const DataSourcesView: React.FC = () => {
     <div className="admin-container">
       {/* Header */}
       <PageHeader
-        title="Data sources & connections"
-        description="Connect your organization's live PostgreSQL databases or query the pre-configured Networking Demo Sandbox."
-        helpText="QueryTrust AI connects with SELECT-only reader privileges. We introspect tables and foreign keys without copying or mutating your records."
+        title="Sources & kernel"
+        description="Connect PostgreSQL databases with read-only privileges or inspect the pre-configured demo fleet database."
+        helpText="QueryTrust AI connects using SELECT-only reader privileges. It introspects schema metadata without copying or modifying source records."
         actions={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
@@ -295,9 +296,9 @@ export const DataSourcesView: React.FC = () => {
           style={{ marginBottom: '1.25rem' }}
         >
           {notification.type === 'success' ? (
-            <CheckCircle2 size={16} style={{ color: 'var(--qt-success)' }} />
+            <CheckCircle2 size={16} style={{ color: 'var(--color-status-success-text)' }} />
           ) : (
-            <AlertTriangle size={16} style={{ color: 'var(--qt-danger)' }} />
+            <AlertTriangle size={16} style={{ color: 'var(--color-status-error-text)' }} />
           )}
           <span>{notification.message}</span>
         </div>
@@ -306,160 +307,18 @@ export const DataSourcesView: React.FC = () => {
       {/* Dual-Role PostgreSQL Kernel Architecture & Privilege Introspection Showcase */}
       <DualRoleTopologyPanel />
 
-      {/* Physical Dual-Key Kernel Vault Switchboard */}
-      <div
-        style={{
-          padding: '16px 20px',
-          borderRadius: '10px',
-          backgroundColor: 'var(--bg-surface-1)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          marginBottom: '1.5rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '6px',
-                backgroundColor: 'rgba(212, 234, 90, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--ink-primary)',
-              }}
-            >
-              <Server size={18} />
-            </div>
-            <div>
-              <div style={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--ink-primary)', letterSpacing: '0.03em' }}>
-                PHYSICAL DUAL-KEY KERNEL VAULT SWITCHBOARD
-              </div>
-              <div style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-muted)' }}>
-                Hardware &amp; connection segregation for zero natural-language database tampering
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span
-              style={{
-                fontSize: '10px',
-                fontFamily: 'var(--font-mono)',
-                padding: '3px 8px',
-                borderRadius: 4,
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                color: '#10B981',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
-                fontWeight: 700,
-              }}
-            >
-              KERNEL ISOLATION: ACTIVE
-            </span>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
-          {/* Key A: qt_ai_readonly */}
-          <div
-            style={{
-              padding: '14px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--bg-surface-2)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#10B981', boxShadow: '0 0 8px #10B981' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 800, color: 'var(--ink-primary)' }}>
-                  KEY A: qt_ai_readonly
-                </span>
-              </div>
-              <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '2px 6px', borderRadius: 4 }}>
-                ARMED &bull; LIVE RUNTIME
-              </span>
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginBottom: 8 }}>
-              Dedicated execution user for natural-language queries.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '10px', fontFamily: 'var(--font-mono)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10B981' }}>
-                <span>SELECT Privilege:</span>
-                <span>GRANTED (4 / 4 Tables)</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--ink-muted)' }}>
-                <span>INSERT / UPDATE / DELETE:</span>
-                <span style={{ color: '#EF4444' }}>HARDWARE REVOKED</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--ink-muted)' }}>
-                <span>DROP / ALTER / TRUNCATE:</span>
-                <span style={{ color: '#EF4444' }}>PERMISSION DENIED</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Key B: qt_admin_migrator */}
-          <div
-            style={{
-              padding: '14px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--bg-surface-2)',
-              border: '1px solid var(--border-subtle)',
-              position: 'relative',
-              overflow: 'hidden',
-              opacity: 0.85,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#F59E0B' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 800, color: 'var(--ink-primary)' }}>
-                  KEY B: qt_admin_migrator
-                </span>
-              </div>
-              <span style={{ fontSize: '9.5px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#F59E0B', backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: '2px 6px', borderRadius: 4 }}>
-                COLD VAULT &bull; OFFLINE
-              </span>
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--ink-muted)', marginBottom: 8 }}>
-              Restricted schema maintenance user for migrations only.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '10px', fontFamily: 'var(--font-mono)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--ink-muted)' }}>
-                <span>Web API Binding:</span>
-                <span style={{ color: '#EF4444' }}>NO ROUTE (Zero Ingress)</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--ink-muted)' }}>
-                <span>LLM Translator Ingress:</span>
-                <span style={{ color: '#EF4444' }}>PHYSICALLY BLOCKED</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--ink-muted)' }}>
-                <span>Execution Context:</span>
-                <span>Alembic CLI / CI/CD Only</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Active Target Mode Switcher Banner */}
       <div
         className="content-card full-width-card"
         style={{
           marginBottom: '1.5rem',
-          padding: '1.2rem 1.4rem',
+          padding: '1.25rem 1.4rem',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
-          background: 'linear-gradient(180deg, var(--qt-surface) 0%, var(--qt-surface-elevated) 100%)',
-          border: '1px solid var(--qt-border)',
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 'var(--radius-container)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -470,24 +329,23 @@ export const DataSourcesView: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: activeSource?.mode === 'connected' ? 'var(--qt-success)' : 'var(--qt-accent)',
-                  boxShadow: `0 0 8px ${activeSource?.mode === 'connected' ? 'var(--qt-success)' : 'var(--qt-accent)'}`,
+                  background: activeSource?.mode === 'connected' ? 'var(--color-status-success-dot)' : 'var(--color-accent)',
                 }}
               />
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--qt-ink-muted)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>
                 Active Analytics Target
               </span>
               <span className={`badge ${activeSource?.mode === 'connected' ? 'badge-success' : 'badge-neutral'}`}>
                 {activeSource?.mode === 'connected' ? 'Live Enterprise Database' : 'Evaluator Sandbox'}
               </span>
             </div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '2px 0 6px 0', color: 'var(--qt-ink)' }}>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: 600, margin: '2px 0 6px 0', color: 'var(--color-text-primary)' }}>
               {activeSource?.name || 'Loading data target…'}
             </h2>
-            <p style={{ fontSize: '0.82rem', color: 'var(--qt-muted)', margin: 0 }}>
+            <p style={{ fontSize: '0.84rem', color: 'var(--color-text-secondary)', margin: 0 }}>
               {activeSource?.mode === 'connected'
                 ? `Host: ${activeSource.host} · Database: ${activeSource.database_name} · ${activeSource.table_count} tables detected`
-                : 'Synthetic Cisco networking inventory, warranty lifecycles, and device telemetry (Pre-seeded for instant evaluation).'}
+                : 'Synthetic network inventory, warranty lifecycles, and device telemetry seeded for evaluation.'}
             </p>
           </div>
 
@@ -525,9 +383,9 @@ export const DataSourcesView: React.FC = () => {
         {(() => {
           const defaultSandboxTables = [
             { name: 'devices', rows: '5,000', cols: 18, desc: 'Hardware fleet & lifecycle' },
-            { name: 'sites', rows: '50', cols: 8, desc: 'Datacenters & regional metro pops' },
-            { name: 'service_events', rows: '1,500', cols: 11, desc: 'Fault tickets & RMA events' },
-            { name: 'telemetry_readings', rows: '25,000', cols: 9, desc: 'High-frequency sensor stream' },
+            { name: 'sites', rows: '50', cols: 8, desc: 'Facilities & regions' },
+            { name: 'service_events', rows: '1,500', cols: 11, desc: 'Repair events & incidents' },
+            { name: 'telemetry_readings', rows: '25,000', cols: 9, desc: 'Sensor metrics stream' },
           ]
           const tableList = activeSource?.tables && activeSource.tables.length > 0
             ? activeSource.tables.map((t) => ({ name: t, rows: 'Live', cols: '-', desc: 'Introspected remote table' }))
@@ -537,38 +395,38 @@ export const DataSourcesView: React.FC = () => {
             : tableList.length
 
           return (
-            <div style={{ marginTop: 8, paddingTop: 14, borderTop: '1px solid var(--qt-border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-primary)' }}>
+            <div style={{ marginTop: 8, paddingTop: 14, borderTop: '1px solid var(--color-border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                   Introspected Tables ({count}) Available in Query Studio:
                 </div>
-                <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)', fontWeight: 600 }}>
-                  Zero Data Leakage &bull; Schema-Only AST Bound
+                <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--color-accent-link)', fontWeight: 500 }}>
+                  Schema allowlist bound
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '8px' }}>
                 {tableList.map((t) => (
                   <div
                     key={t.name}
                     style={{
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      backgroundColor: 'var(--bg-surface-2)',
-                      border: '1px solid var(--border-subtle)',
+                      padding: '9px 12px',
+                      borderRadius: 'var(--radius-control)',
+                      backgroundColor: 'var(--color-raised)',
+                      border: '1px solid var(--color-border-subtle)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '2px',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: 'var(--ink-primary)' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                         {t.name}
                       </span>
-                      <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)', fontWeight: 600 }}>
+                      <span style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--color-accent-link)', fontWeight: 500 }}>
                         {t.rows} rows
                       </span>
                     </div>
-                    <div style={{ fontSize: '10.5px', color: 'var(--ink-muted)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
                       {t.desc} ({t.cols} cols)
                     </div>
                   </div>
@@ -756,8 +614,9 @@ export const DataSourcesView: React.FC = () => {
       </div>
 
       {/* Connect Database Modal */}
-      {showConnectModal && (
-        <div className="modal-backdrop-centered" onClick={() => setShowConnectModal(false)}>
+      {showConnectModal &&
+        createPortal(
+          <div className="modal-backdrop-centered" onClick={() => setShowConnectModal(false)}>
           <div
             className="modal-card"
             style={{ maxWidth: 620, width: '100%' }}
@@ -769,12 +628,12 @@ export const DataSourcesView: React.FC = () => {
                   style={{
                     width: 38,
                     height: 38,
-                    borderRadius: 8,
-                    background: 'rgba(255, 92, 0, 0.12)',
+                    borderRadius: 'var(--radius-control)',
+                    background: 'var(--color-accent-subtle)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--qt-accent)',
+                    color: 'var(--color-accent-link)',
                     flexShrink: 0,
                   }}
                 >
@@ -1007,7 +866,8 @@ export const DataSourcesView: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

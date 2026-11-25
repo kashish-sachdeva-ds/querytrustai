@@ -12,12 +12,16 @@ interface VirtualizedResultsGridProps {
   result?: ExecuteResponse | null
   executionLatencyMs?: number | null
   queryRunId?: string | null
+  onRunPreviewedQuery?: () => void
+  isExecuting?: boolean
 }
 
 export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
   result,
   executionLatencyMs = 1.42,
   queryRunId: _queryRunId,
+  onRunPreviewedQuery,
+  isExecuting = false,
 }) => {
   const [copiedCell, setCopiedCell] = useState<string | null>(null)
   const [sortCol, setSortCol] = useState<string | null>(null)
@@ -68,17 +72,43 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
     return (
       <div
         style={{
-          padding: '2rem',
+          padding: '2.25rem 1.5rem',
           textAlign: 'center',
-          backgroundColor: 'var(--bg-surface-1)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '6px',
-          color: 'var(--ink-muted)',
-          fontSize: '12px',
-          fontFamily: 'var(--font-mono)',
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 'var(--radius-container)',
+          color: 'var(--color-text-secondary)',
+          fontSize: '13px',
+          fontFamily: 'var(--font-sans)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '12px',
         }}
       >
-        Execute a governed query to inspect relational results in the virtualized grid.
+        <span>
+          {isExecuting
+            ? 'Executing read-only query against PostgreSQL...'
+            : 'SQL preview validated. Execute the query or choose a preset above to inspect matching rows.'}
+        </span>
+        {onRunPreviewedQuery && !isExecuting && (
+          <button
+            type="button"
+            onClick={onRunPreviewedQuery}
+            style={{
+              backgroundColor: 'var(--color-accent)',
+              color: 'var(--color-accent-contrast)',
+              border: '1px solid var(--color-accent)',
+              borderRadius: 'var(--radius-control)',
+              padding: '7px 14px',
+              fontSize: '12.5px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            Run validated query
+          </button>
+        )}
       </div>
     )
   }
@@ -139,12 +169,11 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        backgroundColor: 'rgba(11, 13, 17, 0.85)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '12px',
+        width: '100%',
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border-subtle)',
+        borderRadius: 'var(--radius-container)',
         overflow: 'hidden',
-        boxShadow: 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
       }}
     >
       {/* Grid Toolbar & Telemetry Execution Strip */}
@@ -153,9 +182,9 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 14px',
-          backgroundColor: 'rgba(14, 16, 22, 0.95)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+          padding: '10px 14px',
+          backgroundColor: 'var(--color-raised)',
+          borderBottom: '1px solid var(--color-border-subtle)',
           flexWrap: 'wrap',
           gap: '8px',
         }}
@@ -166,16 +195,15 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
               width: '6px',
               height: '6px',
               borderRadius: '50%',
-              backgroundColor: '#10B981',
-              boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
+              backgroundColor: 'var(--color-status-success-dot)',
             }}
           />
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#34D399', fontWeight: 600 }}>
-            Executed in {executionLatencyMs ? `${executionLatencyMs}ms` : '1.42ms'} via qt_ai_readonly
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11.5px', color: 'var(--color-status-success-text)', fontWeight: 500 }}>
+            Executed in {executionLatencyMs ? `${executionLatencyMs} ms` : '1.42 ms'} via qt_ai_readonly
           </span>
-          <span style={{ color: 'rgba(255, 255, 255, 0.2)' }}>&bull;</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#94A3B8' }}>
-            {rows.length} rows &bull; {columns.length} columns
+          <span style={{ color: 'var(--color-text-muted)' }}>·</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11.5px', color: 'var(--color-text-secondary)' }}>
+            {rows.length} rows · {columns.length} columns
           </span>
         </div>
 
@@ -185,26 +213,25 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
             style={{
               display: 'flex',
               gap: '2px',
-              backgroundColor: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border-subtle)',
               padding: '2px',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-control)',
             }}
           >
             <button
               type="button"
               onClick={() => setViewMode('table')}
               style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                fontWeight: 600,
+                fontFamily: 'var(--font-sans)',
+                fontSize: '11.5px',
+                fontWeight: 500,
                 padding: '3px 10px',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 border: 'none',
                 cursor: 'pointer',
-                backgroundColor: viewMode === 'table' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                color: viewMode === 'table' ? '#FFFFFF' : '#94A3B8',
-                boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0, 0, 0, 0.3)' : 'none',
+                backgroundColor: viewMode === 'table' ? 'var(--color-raised)' : 'transparent',
+                color: viewMode === 'table' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                 transition: 'all 120ms ease',
               }}
             >
@@ -214,20 +241,19 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
               type="button"
               onClick={() => setViewMode('chart')}
               style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                fontWeight: 600,
+                fontFamily: 'var(--font-sans)',
+                fontSize: '11.5px',
+                fontWeight: 500,
                 padding: '3px 10px',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 border: 'none',
                 cursor: 'pointer',
-                backgroundColor: viewMode === 'chart' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                color: viewMode === 'chart' ? '#FFFFFF' : '#94A3B8',
-                boxShadow: viewMode === 'chart' ? '0 1px 3px rgba(0, 0, 0, 0.3)' : 'none',
+                backgroundColor: viewMode === 'chart' ? 'var(--color-raised)' : 'transparent',
+                color: viewMode === 'chart' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                 transition: 'all 120ms ease',
               }}
             >
-              Visual
+              Summary
             </button>
           </div>
 
@@ -239,10 +265,10 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              backgroundColor: 'rgba(255, 255, 255, 0.04)',
-              color: '#CBD5E1',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '6px',
+              backgroundColor: 'var(--color-surface)',
+              color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border-subtle)',
+              borderRadius: 'var(--radius-control)',
               padding: '4px 9px',
               fontSize: '11px',
               fontFamily: 'var(--font-mono)',
@@ -262,10 +288,10 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              backgroundColor: 'rgba(255, 255, 255, 0.04)',
-              color: '#CBD5E1',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '6px',
+              backgroundColor: 'var(--color-surface)',
+              color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border-subtle)',
+              borderRadius: 'var(--radius-control)',
               padding: '4px 9px',
               fontSize: '11px',
               fontFamily: 'var(--font-mono)',
@@ -281,15 +307,15 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
         </div>
       </div>
 
-      {/* Main Grid or Visual Chart */}
-      <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+      {/* Main Grid or Visual Summary */}
+      <div style={{ flex: 1, minHeight: 0, maxHeight: '480px', overflow: 'auto', position: 'relative' }}>
         {viewMode === 'table' ? (
           <table
             spellCheck={false}
             style={{
               width: '100%',
               borderCollapse: 'collapse',
-              fontSize: '11px',
+              fontSize: '12px',
               fontFamily: 'var(--font-mono)',
               textAlign: 'left',
               fontVariantNumeric: 'tabular-nums',
@@ -299,12 +325,11 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
             <thead>
               <tr
                 style={{
-                  backgroundColor: 'rgba(16, 18, 24, 0.98)',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                  backgroundColor: 'var(--color-raised)',
+                  borderBottom: '1px solid var(--color-border-subtle)',
                   position: 'sticky',
                   top: 0,
                   zIndex: 10,
-                  backdropFilter: 'blur(8px)',
                 }}
               >
                 {columns.map((col) => {
@@ -315,39 +340,38 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
                       key={col}
                       onClick={() => toggleSort(col)}
                       style={{
-                        padding: '8px 12px',
-                        fontWeight: 600,
-                        color: '#F1F5F9',
+                        padding: '9px 12px',
+                        fontWeight: 500,
+                        color: 'var(--color-text-secondary)',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         userSelect: 'none',
-                        borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+                        borderRight: '1px solid var(--color-border-subtle)',
                       }}
                       title={`Click to sort by ${col}`}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ letterSpacing: '-0.01em' }}>{col}</span>
+                          <span style={{ letterSpacing: '-0.01em', color: 'var(--color-text-primary)' }}>{col}</span>
                           <span
                             style={{
                               fontSize: '9px',
                               fontFamily: 'var(--font-mono)',
                               padding: '1px 5px',
-                              borderRadius: '9999px',
-                              backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              color: '#94A3B8',
+                              borderRadius: '4px',
+                              backgroundColor: 'var(--color-surface)',
+                              border: '1px solid var(--color-border-subtle)',
+                              color: 'var(--color-text-muted)',
                               fontWeight: 500,
-                              letterSpacing: '0.02em',
                             }}
                           >
                             {type}
                           </span>
                         </div>
                         {isSorted ? (
-                          sortDir === 'asc' ? <ArrowUp size={11} style={{ color: '#38BDF8' }} /> : <ArrowDown size={11} style={{ color: '#38BDF8' }} />
+                          sortDir === 'asc' ? <ArrowUp size={11} style={{ color: 'var(--color-accent-link)' }} /> : <ArrowDown size={11} style={{ color: 'var(--color-accent-link)' }} />
                         ) : (
-                          <ArrowUpDown size={11} style={{ opacity: 0.3 }} />
+                          <ArrowUpDown size={11} style={{ opacity: 0.4 }} />
                         )}
                       </div>
                     </th>
@@ -360,16 +384,9 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
                 <tr
                   key={rIdx}
                   style={{
-                    backgroundColor: rIdx % 2 === 0 ? 'rgba(11, 13, 17, 0.6)' : 'rgba(16, 18, 24, 0.6)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                    backgroundColor: rIdx % 2 === 0 ? 'var(--color-surface)' : 'var(--color-raised)',
+                    borderBottom: '1px solid var(--color-border-subtle)',
                     transition: 'background-color 80ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      rIdx % 2 === 0 ? 'rgba(11, 13, 17, 0.6)' : 'rgba(16, 18, 24, 0.6)'
                   }}
                 >
                   {columns.map((col) => {
@@ -384,9 +401,9 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
                         onClick={() => handleCellClick(rawVal, cellKey)}
                         spellCheck={false}
                         style={{
-                          padding: '7px 12px',
-                          color: rawVal === null ? '#64748B' : '#E2E8F0',
-                          borderRight: '1px solid rgba(255, 255, 255, 0.04)',
+                          padding: '8px 12px',
+                          color: rawVal === null ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+                          borderRight: '1px solid var(--color-border-subtle)',
                           cursor: 'pointer',
                           whiteSpace: 'nowrap',
                           maxWidth: '280px',
@@ -398,7 +415,7 @@ export const VirtualizedResultsGrid: React.FC<VirtualizedResultsGridProps> = ({
                         title={`Click to copy: ${val}`}
                       >
                         {isCopied ? (
-                          <span style={{ color: '#34D399', fontWeight: 600 }}>✓ Copied</span>
+                          <span style={{ color: 'var(--color-status-success-text)', fontWeight: 500 }}>✓ Copied</span>
                         ) : (
                           val
                         )}

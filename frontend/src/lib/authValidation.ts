@@ -83,7 +83,7 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
       score: 0,
       level: 'weak',
       label: 'Too Short',
-      color: 'var(--qt-muted, #71717a)',
+      color: 'var(--color-text-muted)',
       requirements,
     }
   }
@@ -93,7 +93,7 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
       score: 1,
       level: 'weak',
       label: 'Weak',
-      color: '#ef4444', // Red
+      color: 'var(--color-status-error-dot)',
       requirements,
     }
   }
@@ -103,7 +103,7 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
       score: 2,
       level: 'fair',
       label: 'Fair',
-      color: '#f59e0b', // Amber
+      color: 'var(--color-status-warning-dot)',
       requirements,
     }
   }
@@ -113,7 +113,7 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
       score: 3,
       level: 'good',
       label: 'Good',
-      color: '#3b82f6', // Blue
+      color: 'var(--color-accent-link)',
       requirements,
     }
   }
@@ -122,7 +122,7 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
     score: 4,
     level: 'strong',
     label: 'Strong',
-    color: '#10b981', // Emerald green
+    color: 'var(--color-status-success-dot)',
     requirements,
   }
 }

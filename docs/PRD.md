@@ -219,8 +219,7 @@ querytrust-ai/
 └── scripts/
     ├── setup_db.sql                # PostgreSQL database and dual-role setup
     ├── seed.ps1 / seed.sh          # Database migration and seeding helpers
-    ├── run_evaluation.ps1 / .sh    # CLI regression benchmark runners
-    └── generate_prd_pdf.py         # PRD to PDF compiler with headless Chrome/Edge
+    └── run_evaluation.ps1 / .sh    # CLI regression benchmark runners
 ```
 
 ---

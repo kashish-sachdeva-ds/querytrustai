@@ -43,11 +43,11 @@
 }
 
 .studio-page-title {
-  font-family: var(--font-serif);
-  font-size: 40px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
   color: var(--color-text-main);
   margin: 0 0 0.4rem;
 }
@@ -795,8 +795,8 @@
   position: fixed;
   top: 0;
   bottom: 0;
-  width: 420px;
-  max-width: 92vw;
+  width: 470px;
+  max-width: 94vw;
   background: var(--color-surface);
   border-left: 1px solid var(--color-border-subtle);
   z-index: 1501;

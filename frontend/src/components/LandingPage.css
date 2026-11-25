@@ -3,6 +3,10 @@
    100% design-system tokenized (zero hardcoded hex colors).
    ========================================================================== */
 
+html {
+  scroll-behavior: smooth;
+}
+
 .landing-page-root {
   min-height: 100vh;
   background-color: var(--color-page-bg);
@@ -20,27 +24,160 @@
   border-color: var(--color-border-subtle);
 }
 
+/* Architectural radial-masked grid backdrop */
+.landing-hero-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-border-subtle) 65%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-border-subtle) 65%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 25%, black 20%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 25%, black 20%, transparent 80%);
+}
+
+/* Kinetic editorial text shimmer */
+@keyframes landing-text-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.landing-gradient-text {
+  background: linear-gradient(
+    115deg,
+    var(--color-text-secondary) 0%,
+    var(--color-accent-link) 45%,
+    var(--color-text-primary) 75%,
+    var(--color-text-secondary) 100%
+  );
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: landing-text-shimmer 7s ease-in-out infinite;
+}
+
+/* Live sonar dot */
+@keyframes landing-ping-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.landing-live-dot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  height: 8px;
+}
+
+.landing-live-dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background-color: var(--color-status-success-dot);
+  animation: landing-ping-ring 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.landing-live-dot::after {
+  content: '';
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: var(--color-status-success-dot);
+}
+
+/* Bento & Spotlight Cards */
 .landing-card {
+  position: relative;
   background-color: var(--color-surface);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-container);
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 220ms ease;
 }
 
 .landing-card:hover {
-  border-color: var(--color-border-strong);
+  border-color: color-mix(in srgb, var(--color-accent) 32%, var(--color-border-strong));
+  box-shadow: 0 12px 32px -12px color-mix(in srgb, var(--color-text-primary) 10%, transparent);
 }
 
+.landing-spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 240ms ease;
+  background: radial-gradient(
+    360px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    color-mix(in srgb, var(--color-accent) 11%, transparent),
+    transparent 65%
+  );
+  z-index: 0;
+}
+
+.landing-spotlight-card:hover::before {
+  opacity: 1;
+}
+
+.landing-spotlight-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Tactile Controls with subtle specular sweep */
 .landing-control-primary {
+  position: relative;
+  overflow: hidden;
   background-color: var(--color-accent);
   color: var(--color-accent-contrast);
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-control);
-  transition: background-color 140ms ease, transform 120ms ease;
+  transition: background-color 140ms ease, transform 140ms ease, box-shadow 180ms ease;
+}
+
+.landing-control-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-110%) skewX(-18deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-accent-contrast) 22%, transparent) 50%,
+    transparent 100%
+  );
+  transition: transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
 }
 
 .landing-control-primary:hover {
   background-color: var(--color-accent-hover);
+  box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+
+.landing-control-primary:hover::after {
+  transform: translateX(120%) skewX(-18deg);
 }
 
 .landing-control-secondary {
@@ -48,7 +185,7 @@
   color: var(--color-text-primary);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-control);
-  transition: border-color 140ms ease, background-color 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
 }
 
 .landing-control-secondary:hover {
@@ -62,4 +199,17 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-control);
   color: var(--color-text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .landing-gradient-text,
+  .landing-live-dot::before {
+    animation: none;
+  }
+  .landing-control-primary::after {
+    display: none;
+  }
 }

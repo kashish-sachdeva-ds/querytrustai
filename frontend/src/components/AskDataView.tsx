@@ -832,10 +832,14 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
             type="button"
             className="studio-pill-btn primary"
             onClick={() => setIsAstDrawerOpen(true)}
-            title="Inspect 6-Gate Mathematical AST Compiler Proof and Read-Only Kernel Isolation"
+            title="Inspect the 6 SQL safety checks and read-only database rules"
           >
             <ShieldCheck size={14} />
-            <span>AST proof (6/6 pass)</span>
+            <span>
+              {activePreview && !activePreview.validation.passed
+                ? 'Safety checks (Blocked)'
+                : 'Safety checks (6/6)'}
+            </span>
           </button>
         </div>
       </div>
@@ -1353,9 +1357,9 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
               onClick={() => setIsAstDrawerOpen(false)}
               aria-hidden="true"
             />
-            <aside className="studio-drawer right" role="dialog" aria-modal="true" aria-label="AST Safety Proof Inspector">
+            <aside className="studio-drawer right" role="dialog" aria-modal="true" aria-label="SQL Safety Checks">
             <div className="studio-drawer-header">
-              <h3 className="studio-drawer-title">AST Compiler Proof &amp; Invariants</h3>
+              <h3 className="studio-drawer-title">SQL Safety Checks</h3>
               <button
                 type="button"
                 className="studio-drawer-close-btn"
@@ -1364,8 +1368,8 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                   e.stopPropagation()
                   setIsAstDrawerOpen(false)
                 }}
-                title="Close inspector drawer (Esc)"
-                aria-label="Close inspector drawer"
+                title="Close safety checks drawer (Esc)"
+                aria-label="Close safety checks drawer"
               >
                 <X size={15} />
               </button>
@@ -1376,9 +1380,9 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
                 sql={activePreview?.sql_preview}
                 isValid={activePreview ? activePreview.validation.passed : true}
                 violations={activePreview?.validation.violations || []}
-                executionLatencyMs={activeResult?.execution_duration_ms || 1.42}
+                executionLatencyMs={activeResult?.execution_duration_ms ?? null}
                 queryRunId={activeRunId}
-                provider={activePreview?.provider || 'Deterministic Semantic Template + SQLGlot AST'}
+                provider={activePreview?.provider || 'SQLGlot PostgreSQL Parser'}
                 assumptions={activePreview?.assumptions || []}
                 isExecuting={isLoading || Boolean(executingId)}
               />

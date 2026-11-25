@@ -1,14 +1,13 @@
-import React from 'react'
-import { ArrowUpRight, Terminal, ShieldCheck, Activity, Database, Lock } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { ArrowUpRight, Terminal } from 'lucide-react'
+import { MotionConfig, animate, motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { CyberHeader } from './CyberHeader'
 import { HeroCinematicBackground } from './HeroCinematicBackground'
 import { HeroVisualStage } from './HeroVisualStage'
-import { ASTCompilerLab } from './ASTCompilerLab'
 import { PlatformShowcase } from './PlatformShowcase'
 import { ArchitecturalMonoliths } from './ArchitecturalMonoliths'
 import { AttackDefenseMatrix } from './AttackDefenseMatrix'
-import { MetricsStrip } from './MetricsStrip'
 import { CyberFooter } from './CyberFooter'
 import './LandingPage.css'
 
@@ -16,229 +15,236 @@ interface LandingPageProps {
   onGoToLogin: () => void
 }
 
-const HERO_SPECS = [
-  {
-    icon: Activity,
-    label: 'Synthetic Fleet',
-    value: '5,000',
-    detail: 'Across 50 sites',
-    mono: false,
-  },
-  {
-    icon: ShieldCheck,
-    label: 'Execution Role',
-    value: 'Read-Only',
-    detail: 'qt_ai_readonly',
-    mono: false,
-  },
-  {
-    icon: Database,
-    label: 'AST Safety Checks',
-    value: '6 Gates',
-    detail: 'Single SELECT only',
-    mono: false,
-  },
-  {
-    icon: Lock,
-    label: 'Statement Cap',
-    value: '5,000 ms',
-    detail: '500-row hard max',
-    mono: false,
-  },
+const EASE_EXPO = [0.16, 1, 0.3, 1] as const
+
+interface HeroStat {
+  label: string
+  target: number
+  suffix: string
+  detail: string
+}
+
+const HERO_STATS: HeroStat[] = [
+  { label: 'Synthetic Fleet', target: 5000, suffix: '', detail: 'Devices across 50 sites' },
+  { label: 'AST Validation', target: 6, suffix: ' Checks', detail: 'Single SELECT only' },
+  { label: 'Query Bounds', target: 5000, suffix: ' ms', detail: '500-row hard cap' },
 ]
+
+const AnimatedStatValue: React.FC<{ target: number; suffix: string; delay?: number }> = ({
+  target,
+  suffix,
+  delay = 0.2,
+}) => {
+  const [display, setDisplay] = useState(target)
+
+  useEffect(() => {
+    setDisplay(0)
+    const controls = animate(0, target, {
+      duration: 0.75,
+      delay,
+      ease: EASE_EXPO,
+      onUpdate: (latest) => setDisplay(Math.round(latest)),
+    })
+    return () => controls.stop()
+  }, [target, delay])
+
+  return (
+    <span>
+      {display.toLocaleString('en-US')}
+      {suffix}
+    </span>
+  )
+}
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
   const { enterDemoMode } = useAuth()
 
   return (
-    <div className="landing-page-root relative overflow-x-hidden transition-colors">
-      <CyberHeader
-        onSignIn={onGoToLogin}
-        onLaunchAnalyst={() => enterDemoMode('analyst')}
-        onLaunchAdmin={() => enterDemoMode('admin')}
-      />
+    <MotionConfig reducedMotion="user">
+      <div className="landing-page-root relative overflow-x-hidden transition-colors">
+        <CyberHeader
+          onSignIn={onGoToLogin}
+          onLaunchAnalyst={() => enterDemoMode('analyst')}
+          onLaunchAdmin={() => enterDemoMode('admin')}
+        />
 
-      {/* Above-the-Fold Hero Section */}
-      <section className="relative pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24 px-4 sm:px-8 overflow-hidden">
-        <HeroCinematicBackground />
+        {/* Above-the-Fold Hero Section */}
+        <section className="relative pt-14 sm:pt-20 lg:pt-24 pb-16 sm:pb-24 px-4 sm:px-8 overflow-hidden">
+          <HeroCinematicBackground />
 
-        <div className="max-w-7xl mx-auto relative z-10 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
-            {/* Left Column: Editorial Headline, Summary, Actions & Spec Strip */}
-            <div className="col-span-12 lg:col-span-6 text-left space-y-6">
-              <div
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11.5px] font-medium"
-                style={{
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-border-subtle)',
-                  color: 'var(--color-text-secondary)',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: 'var(--color-status-success-dot)' }}
-                />
-                <span>PostgreSQL 16 &middot; Read-Only SQL Governance</span>
-              </div>
-
-              <div className="space-y-4">
-                <h1
-                  className="text-[34px] sm:text-[44px] lg:text-[52px] font-normal tracking-[-0.02em] leading-[1.08]"
+          <div className="max-w-7xl mx-auto relative z-10 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+              {/* Left Column: Choreographed Editorial Reveal */}
+              <div className="col-span-12 lg:col-span-6 text-left space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: EASE_EXPO }}
+                  className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full text-[11.5px] font-medium"
                   style={{
-                    color: 'var(--color-text-primary)',
-                    fontFamily: 'var(--font-serif)',
+                    backgroundColor: 'var(--color-surface)',
+                    border: '1px solid var(--color-border-subtle)',
+                    color: 'var(--color-text-secondary)',
+                    fontFamily: 'var(--font-mono)',
                   }}
                 >
-                  Ask your fleet database anything.{' '}
-                  <span style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
-                    Read-only by construction.
-                  </span>
-                </h1>
+                  <span className="landing-live-dot" aria-hidden="true" />
+                  <span>PostgreSQL 16 &middot; Read-Only SQL</span>
+                </motion.div>
 
-                <p
-                  className="text-[15px] sm:text-base leading-relaxed max-w-xl"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
-                  Let operators and analysts query infrastructure telemetry in plain English. Every generated query passes a 6-check SQLGlot AST validator before executing under the dedicated{' '}
-                  <code
-                    className="px-1.5 py-0.5 rounded-[4px] text-[13px]"
+                <div className="space-y-4">
+                  <h1
+                    className="text-[34px] sm:text-[44px] lg:text-[50px] font-semibold tracking-[-0.03em] leading-[1.1]"
                     style={{
-                      fontFamily: 'var(--font-mono)',
-                      backgroundColor: 'var(--color-raised)',
-                      color: 'var(--color-accent-link)',
+                      color: 'var(--color-text-primary)',
+                      fontFamily: 'var(--font-display)',
                     }}
                   >
-                    qt_ai_readonly
-                  </code>{' '}
-                  database role.
-                </p>
-              </div>
+                    <span className="block overflow-hidden">
+                      <motion.span
+                        className="block"
+                        initial={{ y: '105%', opacity: 0 }}
+                        animate={{ y: '0%', opacity: 1 }}
+                        transition={{ duration: 0.7, delay: 0.08, ease: EASE_EXPO }}
+                      >
+                        Ask your fleet database anything.
+                      </motion.span>
+                    </span>
+                    <span className="block overflow-hidden mt-1">
+                      <motion.span
+                        className="block landing-gradient-text"
+                        initial={{ y: '105%', opacity: 0 }}
+                        animate={{ y: '0%', opacity: 1 }}
+                        transition={{ duration: 0.7, delay: 0.18, ease: EASE_EXPO }}
+                      >
+                        Read-only by construction.
+                      </motion.span>
+                    </span>
+                  </h1>
 
-              {/* Actions */}
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => enterDemoMode('admin')}
-                  className="px-5 py-2.5 text-[13.5px] font-medium inline-flex items-center gap-2 cursor-pointer landing-control-primary"
+                  <motion.p
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.28, ease: EASE_EXPO }}
+                    className="text-[15.5px] leading-relaxed max-w-lg"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    Query fleet telemetry in plain English. Every query passes 6 SQLGlot AST checks and runs under the read-only{' '}
+                    <code
+                      className="px-1.5 py-0.5 rounded-[4px] text-[13px]"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        backgroundColor: 'var(--color-raised)',
+                        color: 'var(--color-accent-link)',
+                      }}
+                    >
+                      qt_ai_readonly
+                    </code>{' '}
+                    role.
+                  </motion.p>
+                </div>
+
+                {/* Tactile Actions */}
+                <motion.div
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.36, ease: EASE_EXPO }}
+                  className="flex flex-wrap items-center gap-3 pt-1"
                 >
-                  <span>Open Admin Studio</span>
-                  <ArrowUpRight size={15} />
-                </button>
+                  <motion.button
+                    type="button"
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => enterDemoMode('admin')}
+                    className="group px-5 py-2.5 text-[13.5px] font-medium inline-flex items-center gap-2 whitespace-nowrap cursor-pointer landing-control-primary"
+                  >
+                    <span>Open Admin Studio</span>
+                    <ArrowUpRight
+                      size={15}
+                      className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </motion.button>
 
-                <button
-                  type="button"
-                  onClick={() => enterDemoMode('analyst')}
-                  className="px-4 py-2.5 text-[13.5px] font-medium inline-flex items-center gap-2 cursor-pointer landing-control-secondary"
+                  <motion.button
+                    type="button"
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => enterDemoMode('analyst')}
+                    className="px-4 py-2.5 text-[13.5px] font-medium inline-flex items-center gap-2 whitespace-nowrap cursor-pointer landing-control-secondary"
+                  >
+                    <Terminal size={14} style={{ color: 'var(--color-accent-link)' }} />
+                    <span>Analyst Demo</span>
+                  </motion.button>
+
+                  <button
+                    type="button"
+                    onClick={onGoToLogin}
+                    className="px-2.5 py-2 text-[13px] font-medium whitespace-nowrap transition-colors cursor-pointer hover:underline"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    Sign in &rarr;
+                  </button>
+                </motion.div>
+
+                {/* Animated 3-Stat Strip */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.65, delay: 0.44, ease: EASE_EXPO }}
+                  className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-6"
+                  style={{ borderTop: '1px solid var(--color-border-subtle)' }}
                 >
-                  <Terminal size={14} style={{ color: 'var(--color-accent-link)' }} />
-                  <span>Try Analyst Sandbox</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onGoToLogin}
-                  className="px-3 py-2 text-[13px] font-medium transition-colors cursor-pointer hover:underline"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
-                  Sign in to workspace &rarr;
-                </button>
-              </div>
-
-              {/* Grounded Architectural Spec Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3">
-                {HERO_SPECS.map((spec) => {
-                  const Icon = spec.icon
-                  return (
-                    <div key={spec.label} className="landing-card p-3.5 text-left">
+                  {HERO_STATS.map((stat, idx) => (
+                    <div key={stat.label} className="text-left">
                       <div
-                        className="flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-wider mb-1.5"
+                        className="text-[11px] font-medium uppercase tracking-wider mb-1"
                         style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}
                       >
-                        <Icon size={12} />
-                        <span className="truncate">{spec.label}</span>
+                        {stat.label}
                       </div>
                       <div
-                        className="text-lg font-semibold tracking-tight"
-                        style={{
-                          color: 'var(--color-text-primary)',
-                          fontFamily: spec.mono ? 'var(--font-mono)' : 'var(--font-sans)',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
+                        className="text-xl font-semibold tracking-tight"
+                        style={{ color: 'var(--color-text-primary)', fontVariantNumeric: 'tabular-nums' }}
                       >
-                        {spec.value}
+                        <AnimatedStatValue
+                          target={stat.target}
+                          suffix={stat.suffix}
+                          delay={0.22 + idx * 0.06}
+                        />
                       </div>
-                      <div
-                        className="text-[11px] mt-0.5 truncate"
-                        style={{ color: 'var(--color-text-secondary)' }}
-                      >
-                        {spec.detail}
+                      <div className="text-[12.5px] mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                        {stat.detail}
                       </div>
                     </div>
-                  )
-                })}
+                  ))}
+                </motion.div>
               </div>
-            </div>
 
-            {/* Right Column: Live Interactive Query & AST Verifier Card */}
-            <div className="col-span-12 lg:col-span-6 w-full">
-              <HeroVisualStage onOpenStudio={() => enterDemoMode('analyst')} />
+              {/* Right Column: Live Interactive Query & AST Verifier Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 28, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.75, delay: 0.22, ease: EASE_EXPO }}
+                className="col-span-12 lg:col-span-6 w-full"
+              >
+                <HeroVisualStage onOpenStudio={() => enterDemoMode('analyst')} />
+              </motion.div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Interactive Live AST Check Lab */}
-      <section
-        id="compiler-lab"
-        className="py-16 sm:py-20 text-left transition-colors"
-        style={{
-          backgroundColor: 'var(--color-surface)',
-          borderTop: '1px solid var(--color-border-subtle)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-            <div>
-              <div
-                className="text-xs font-medium uppercase tracking-wider mb-2"
-                style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
-              >
-                AST Validation Workbench
-              </div>
-              <h2
-                className="text-2xl sm:text-3xl font-normal tracking-tight"
-                style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}
-              >
-                Test read queries against adversarial inputs
-              </h2>
-            </div>
-            <div
-              className="text-xs flex items-center gap-1.5"
-              style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}
-            >
-              <ShieldCheck size={14} style={{ color: 'var(--color-status-success-dot)' }} />
-              <span>SQLGlot PostgreSQL AST pipeline</span>
-            </div>
-          </div>
+        <ArchitecturalMonoliths />
 
-          <ASTCompilerLab />
-        </div>
-      </section>
+        <PlatformShowcase />
 
-      <PlatformShowcase />
+        <AttackDefenseMatrix />
 
-      <ArchitecturalMonoliths />
-
-      <AttackDefenseMatrix />
-
-      <MetricsStrip />
-
-      <CyberFooter
-        onGoToLogin={onGoToLogin}
-        onLaunchAnalyst={() => enterDemoMode('analyst')}
-        onLaunchAdmin={() => enterDemoMode('admin')}
-      />
-    </div>
+        <CyberFooter
+          onGoToLogin={onGoToLogin}
+          onLaunchAnalyst={() => enterDemoMode('analyst')}
+          onLaunchAdmin={() => enterDemoMode('admin')}
+        />
+      </div>
+    </MotionConfig>
   )
 }

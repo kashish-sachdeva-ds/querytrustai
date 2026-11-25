@@ -1,5 +1,14 @@
 import React, { useState } from 'react'
-import { Shield, Lock, FileCheck, XCircle, CheckCircle2 } from 'lucide-react'
+import { Shield, Lock, FileCheck } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+
+const EASE_EXPO = [0.16, 1, 0.3, 1] as const
+
+const handleSpotlightMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const rect = e.currentTarget.getBoundingClientRect()
+  e.currentTarget.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`)
+  e.currentTarget.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`)
+}
 
 export const ArchitecturalMonoliths: React.FC = () => {
   const [writeTestState, setWriteTestState] = useState<'idle' | 'denied'>('idle')
@@ -7,269 +16,178 @@ export const ArchitecturalMonoliths: React.FC = () => {
   return (
     <section
       id="three-invariants"
-      className="py-16 sm:py-24 text-left transition-colors"
+      className="py-16 sm:py-22 text-left transition-colors"
       style={{
         backgroundColor: 'var(--color-surface)',
         borderTop: '1px solid var(--color-border-subtle)',
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-8">
-        <div className="max-w-2xl mb-10">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: EASE_EXPO }}
+          className="max-w-xl mb-10"
+        >
           <div
             className="text-xs font-medium uppercase tracking-wider mb-2"
             style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
           >
-            Core Safeguards
+            Safeguards
           </div>
           <h2
-            className="text-2xl sm:text-4xl font-normal tracking-tight leading-[1.15]"
-            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}
+            className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] leading-[1.15]"
+            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
           >
-            Two independent enforcement layers
+            Read-only enforcement at every step
           </h2>
-          <p className="mt-3 text-sm sm:text-base leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-            Natural-language queries pass strict AST verification before reaching the database, and the database role itself refuses mutations.
+          <p className="mt-2.5 text-sm sm:text-base leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+            LLM instructions are never a security boundary. Three independent layers keep data safe.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Card 1: AST Parser */}
-          <div className="landing-card p-6 flex flex-col justify-between gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                  style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
-                >
-                  <Shield size={14} />
-                  <span>SQLGlot AST</span>
-                </span>
-                <span
-                  className="px-2 py-0.5 rounded-[6px] text-[11px] font-medium"
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Layer 1 */}
+          <motion.div
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.55, delay: 0.05, ease: EASE_EXPO }}
+            whileHover={{ y: -4 }}
+            onPointerMove={handleSpotlightMove}
+            className="group landing-card landing-spotlight-card p-6 space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div
+                className="w-9 h-9 rounded-[8px] flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
+                style={{
+                  backgroundColor: 'var(--color-accent-subtle)',
+                  color: 'var(--color-accent-link)',
+                }}
+              >
+                <Shield size={16} />
+              </div>
+              <span
+                className="text-[11px] font-medium"
+                style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}
+              >
+                01
+              </span>
+            </div>
+            <h3 className="text-base font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+              SQLGlot AST Validation
+            </h3>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              Every generated statement is parsed before execution. Multi-statement queries, writes, and system tables are rejected immediately.
+            </p>
+          </motion.div>
+
+          {/* Layer 2 */}
+          <motion.div
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.55, delay: 0.14, ease: EASE_EXPO }}
+            whileHover={{ y: -4 }}
+            onPointerMove={handleSpotlightMove}
+            className="group landing-card landing-spotlight-card p-6 space-y-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-[8px] flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
                   style={{
                     backgroundColor: 'var(--color-status-success-bg)',
                     color: 'var(--color-status-success-text)',
-                    fontFamily: 'var(--font-mono)',
                   }}
                 >
-                  PostgreSQL Dialect
-                </span>
-              </div>
-
-              <div
-                className="p-4 rounded-[8px] space-y-2 text-xs"
-                style={{
-                  backgroundColor: 'var(--color-raised)',
-                  border: '1px solid var(--color-border-subtle)',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                {[
-                  ['01', 'Single SELECT root', 'Allowed'],
-                  ['02', 'Catalog allowlist', '4 tables'],
-                  ['03', 'DDL / DML nodes', 'Blocked'],
-                  ['04', 'Join & row limits', 'Clamped'],
-                ].map(([num, label, status]) => (
-                  <div key={num} className="flex items-center justify-between">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>
-                      <strong style={{ color: 'var(--color-text-primary)' }}>{num}</strong> {label}
-                    </span>
-                    <span
-                      style={{
-                        color:
-                          status === 'Blocked'
-                            ? 'var(--color-status-error-text)'
-                            : 'var(--color-status-success-text)',
-                      }}
-                    >
-                      {status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
-                  Deterministic Syntax Validation
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                  Every candidate statement is parsed and revalidated via SQLGlot on execution. Multi-statement batches, DDL, DML, and system tables are rejected before connecting.
-                </p>
-              </div>
-            </div>
-
-            <div
-              className="pt-4 flex items-center justify-between text-xs"
-              style={{
-                borderTop: '1px solid var(--color-border-subtle)',
-                color: 'var(--color-text-muted)',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              <span>Parser Mode</span>
-              <strong style={{ color: 'var(--color-text-primary)' }}>6 AST Checks</strong>
-            </div>
-          </div>
-
-          {/* Card 2: Read-Only DB Role */}
-          <div className="landing-card p-6 flex flex-col justify-between gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                  style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
-                >
-                  <Lock size={14} />
-                  <span>Reader Role</span>
-                </span>
-                <span
-                  className="px-2 py-0.5 rounded-[6px] text-[11px] font-medium"
-                  style={{
-                    backgroundColor: 'var(--color-accent-subtle)',
-                    color: 'var(--color-accent-link)',
-                    fontFamily: 'var(--font-mono)',
-                  }}
-                >
-                  qt_ai_readonly
-                </span>
-              </div>
-
-              <div
-                className="p-4 rounded-[8px] space-y-3 text-xs"
-                style={{
-                  backgroundColor: 'var(--color-raised)',
-                  border: '1px solid var(--color-border-subtle)',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--color-text-primary)' }}>SELECT</span>
-                  <span className="inline-flex items-center gap-1" style={{ color: 'var(--color-status-success-text)' }}>
-                    <CheckCircle2 size={12} />
-                    <span>Granted</span>
-                  </span>
+                  <Lock size={16} />
                 </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--color-text-primary)' }}>INSERT / UPDATE / DROP</span>
-                  <span className="inline-flex items-center gap-1" style={{ color: 'var(--color-status-error-text)' }}>
-                    <XCircle size={12} />
-                    <span>Revoked</span>
-                  </span>
-                </div>
-                <div className="pt-1 flex items-center justify-between gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => setWriteTestState('denied')}
-                    className="px-2.5 py-1 rounded-[6px] text-[11px] font-medium cursor-pointer landing-control-secondary"
+                <span
+                  className="text-[11px] font-medium"
+                  style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}
+                >
+                  02
+                </span>
+              </div>
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setWriteTestState(writeTestState === 'denied' ? 'idle' : 'denied')}
+                className="px-2.5 py-1 rounded-[6px] text-[11px] font-medium cursor-pointer landing-control-secondary"
+              >
+                {writeTestState === 'denied' ? 'Reset test' : 'Test write call'}
+              </motion.button>
+            </div>
+            <h3 className="text-base font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+              Dedicated Reader Role
+            </h3>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              Queries connect via{' '}
+              <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
+                qt_ai_readonly
+              </code>{' '}
+              with <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>SELECT</code>-only grants and zero write privileges.
+            </p>
+            <AnimatePresence>
+              {writeTestState === 'denied' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, x: -6 }}
+                  animate={{ opacity: 1, height: 'auto', x: [0, -4, 4, -2, 0] }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: EASE_EXPO }}
+                  className="overflow-hidden"
+                >
+                  <div
+                    className="px-3 py-2 rounded-[6px] text-[11.5px]"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      backgroundColor: 'var(--color-status-error-bg)',
+                      color: 'var(--color-status-error-text)',
+                    }}
                   >
-                    Simulate write call
-                  </button>
-                  {writeTestState === 'denied' && (
-                    <span className="text-[11px] font-medium" style={{ color: 'var(--color-status-error-text)' }}>
-                      ERROR: permission denied for table devices
-                    </span>
-                  )}
-                </div>
-              </div>
+                    ERROR: permission denied for table devices
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
-              <div>
-                <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
-                  Least-Privilege Database Role
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                  Analytics queries run over a dedicated read-only PostgreSQL credential with{' '}
-                  <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
-                    default_transaction_read_only
-                  </code>{' '}
-                  and zero mutation privileges.
-                </p>
-              </div>
-            </div>
-
-            <div
-              className="pt-4 flex items-center justify-between text-xs"
-              style={{
-                borderTop: '1px solid var(--color-border-subtle)',
-                color: 'var(--color-text-muted)',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              <span>Write Privileges</span>
-              <strong style={{ color: 'var(--color-status-success-text)' }}>None</strong>
-            </div>
-          </div>
-
-          {/* Card 3: Preview IDs & Bounds */}
-          <div className="landing-card p-6 flex flex-col justify-between gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold"
-                  style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
-                >
-                  <FileCheck size={14} />
-                  <span>Execution Bounds</span>
-                </span>
-                <span
-                  className="px-2 py-0.5 rounded-[6px] text-[11px] font-medium"
-                  style={{
-                    backgroundColor: 'var(--color-raised)',
-                    color: 'var(--color-text-secondary)',
-                    fontFamily: 'var(--font-mono)',
-                  }}
-                >
-                  Audited Runs
-                </span>
-              </div>
-
+          {/* Layer 3 */}
+          <motion.div
+            initial={{ opacity: 0, y: 22 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.55, delay: 0.23, ease: EASE_EXPO }}
+            whileHover={{ y: -4 }}
+            onPointerMove={handleSpotlightMove}
+            className="group landing-card landing-spotlight-card p-6 space-y-3"
+          >
+            <div className="flex items-center justify-between">
               <div
-                className="p-4 rounded-[8px] space-y-2 text-xs"
+                className="w-9 h-9 rounded-[8px] flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
                 style={{
                   backgroundColor: 'var(--color-raised)',
-                  border: '1px solid var(--color-border-subtle)',
-                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--color-text-primary)',
                 }}
               >
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--color-text-secondary)' }}>Execution target</span>
-                  <span style={{ color: 'var(--color-text-primary)' }}>Server Preview ID</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--color-text-secondary)' }}>Default row limit</span>
-                  <span style={{ color: 'var(--color-text-primary)' }}>LIMIT 100</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--color-text-secondary)' }}>Maximum row cap</span>
-                  <span style={{ color: 'var(--color-text-primary)' }}>500 rows</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span style={{ color: 'var(--color-text-secondary)' }}>Statement timeout</span>
-                  <span style={{ color: 'var(--color-text-primary)' }}>5,000 ms</span>
-                </div>
+                <FileCheck size={16} />
               </div>
-
-              <div>
-                <h3 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
-                  Bounded &amp; Audited Execution
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                  The client never supplies arbitrary SQL directly to execution. Only server-stored preview IDs run after ownership checks, with full history logging.
-                </p>
-              </div>
+              <span
+                className="text-[11px] font-medium"
+                style={{ color: 'var(--color-text-muted)', fontFamily: 'var(--font-mono)' }}
+              >
+                03
+              </span>
             </div>
-
-            <div
-              className="pt-4 flex items-center justify-between text-xs"
-              style={{
-                borderTop: '1px solid var(--color-border-subtle)',
-                color: 'var(--color-text-muted)',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              <span>Client Contract</span>
-              <strong style={{ color: 'var(--color-text-primary)' }}>Preview ID Only</strong>
-            </div>
-          </div>
+            <h3 className="text-base font-semibold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
+              Bounded Preview IDs
+            </h3>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              Browsers never send raw SQL to execution. Only server-stored preview IDs run, capped at 500 rows and 5,000 ms.
+            </p>
+          </motion.div>
         </div>
       </div>
     </section>

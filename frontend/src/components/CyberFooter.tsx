@@ -1,5 +1,6 @@
 import React from 'react'
 import { ArrowUpRight, Terminal } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { QueryTrustLogo } from './QueryTrustLogo'
 
 interface CyberFooterProps {
@@ -8,6 +9,8 @@ interface CyberFooterProps {
   onLaunchAdmin: () => void
 }
 
+const EASE_EXPO = [0.16, 1, 0.3, 1] as const
+
 export const CyberFooter: React.FC<CyberFooterProps> = ({
   onGoToLogin,
   onLaunchAnalyst,
@@ -15,141 +18,89 @@ export const CyberFooter: React.FC<CyberFooterProps> = ({
 }) => {
   return (
     <footer
-      className="py-16 text-left transition-colors"
+      className="relative py-16 text-left transition-colors overflow-hidden"
       style={{
-        backgroundColor: 'var(--color-surface)',
+        backgroundColor: 'var(--color-page-bg)',
         borderTop: '1px solid var(--color-border-subtle)',
         color: 'var(--color-text-primary)',
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-8">
-        {/* Top Editorial CTA */}
-        <div
-          className="pb-12"
-          style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
-        >
-          <div
-            className="text-xs font-medium uppercase tracking-wider mb-3"
-            style={{ color: 'var(--color-accent-link)', fontFamily: 'var(--font-mono)' }}
-          >
-            Interactive Workbench
-          </div>
-          <h2
-            className="text-3xl sm:text-4xl font-normal tracking-tight leading-[1.12] max-w-2xl"
-            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-serif)' }}
-          >
-            Inspect natural-language SQL governance in action.
-          </h2>
-          <p
-            className="mt-3 text-sm sm:text-base leading-relaxed max-w-xl"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Explore the full 8-tab workbench across synthetic infrastructure fixtures, or launch the read-only Analyst sandbox.
-          </p>
+      {/* Subtle Top Accent Hairline Glow */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[520px] max-w-full h-[1px]"
+        style={{
+          background:
+            'linear-gradient(90deg, transparent, var(--color-accent), transparent)',
+        }}
+      />
 
-          <div className="mt-6 flex items-center gap-3 flex-wrap">
-            <button
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-10 relative z-10">
+        {/* Clean CTA Row */}
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.6, ease: EASE_EXPO }}
+          className="flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+        >
+          <div className="max-w-xl">
+            <h2
+              className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] leading-[1.15]"
+              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)' }}
+            >
+              Inspect natural-language SQL governance live.
+            </h2>
+            <p
+              className="mt-2 text-sm sm:text-base leading-relaxed"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              Try the read-only Analyst sandbox or open the full Admin Studio.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <motion.button
               type="button"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
               onClick={onLaunchAdmin}
-              className="px-5 py-2.5 text-[13px] font-medium inline-flex items-center gap-2 cursor-pointer landing-control-primary"
+              className="group px-5 py-2.5 text-[13px] font-medium inline-flex items-center gap-2 cursor-pointer landing-control-primary"
             >
               <span>Open Admin Studio</span>
-              <ArrowUpRight size={14} />
-            </button>
-            <button
+              <ArrowUpRight
+                size={14}
+                className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </motion.button>
+            <motion.button
               type="button"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
               onClick={onLaunchAnalyst}
               className="px-4 py-2.5 text-[13px] font-medium inline-flex items-center gap-2 cursor-pointer landing-control-secondary"
             >
               <Terminal size={14} style={{ color: 'var(--color-accent-link)' }} />
-              <span>Try Analyst Sandbox</span>
-            </button>
+              <span>Analyst Demo</span>
+            </motion.button>
             <button
               type="button"
               onClick={onGoToLogin}
-              className="px-3 py-2 text-[13px] font-medium transition-colors cursor-pointer hover:underline"
+              className="px-2.5 py-2 text-[13px] font-medium transition-colors cursor-pointer hover:underline"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               Sign in &rarr;
             </button>
           </div>
-        </div>
-
-        {/* Technical Specification Matrix */}
-        <div
-          className="py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-xs"
-          style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
-        >
-          <div>
-            <div
-              className="uppercase tracking-wider mb-2.5 font-semibold"
-              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
-            >
-              AST Validation
-            </div>
-            <div className="space-y-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-              <div>SQLGlot PostgreSQL Dialect</div>
-              <div>6 Deterministic AST Checks</div>
-              <div>Single SELECT Root Policy</div>
-              <div>Server-Stored Preview IDs</div>
-            </div>
-          </div>
-
-          <div>
-            <div
-              className="uppercase tracking-wider mb-2.5 font-semibold"
-              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
-            >
-              Database Reader
-            </div>
-            <div className="space-y-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-              <div>PostgreSQL 16 Engine</div>
-              <div>
-                Role:{' '}
-                <code style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
-                  qt_ai_readonly
-                </code>
-              </div>
-              <div>SELECT Grants Only</div>
-              <div>Zero Write Privileges</div>
-            </div>
-          </div>
-
-          <div>
-            <div
-              className="uppercase tracking-wider mb-2.5 font-semibold"
-              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
-            >
-              Synthetic Dataset
-            </div>
-            <div className="space-y-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-              <div>5,000 Synthetic Devices</div>
-              <div>50 Infrastructure Sites</div>
-              <div>25,000 Telemetry Readings</div>
-              <div>1,500 Service Events</div>
-            </div>
-          </div>
-
-          <div>
-            <div
-              className="uppercase tracking-wider mb-2.5 font-semibold"
-              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
-            >
-              Execution Limits
-            </div>
-            <div className="space-y-1.5" style={{ color: 'var(--color-text-secondary)' }}>
-              <div>5,000 ms Statement Timeout</div>
-              <div>100-Row Default Preview Clamp</div>
-              <div>500-Row Server Maximum</div>
-              <div>Schema Allowlist Enforced</div>
-            </div>
-          </div>
-        </div>
+        </motion.div>
 
         {/* Bottom Attribution Row */}
         <div
           className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"
-          style={{ color: 'var(--color-text-muted)' }}
+          style={{
+            borderTop: '1px solid var(--color-border-subtle)',
+            color: 'var(--color-text-muted)',
+          }}
         >
           <div className="flex items-center gap-2.5">
             <QueryTrustLogo size={20} />
@@ -161,11 +112,8 @@ export const CyberFooter: React.FC<CyberFooterProps> = ({
           </div>
 
           <div className="flex items-center gap-2" style={{ fontFamily: 'var(--font-mono)' }}>
-            <span
-              className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: 'var(--color-status-success-dot)' }}
-            />
-            <span>PostgreSQL 16 &middot; Read-Only Architecture</span>
+            <span className="landing-live-dot" aria-hidden="true" />
+            <span>PostgreSQL 16 &middot; Read-Only</span>
           </div>
         </div>
       </div>

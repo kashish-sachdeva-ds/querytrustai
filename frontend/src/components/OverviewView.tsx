@@ -713,7 +713,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <span className="w-2 h-2 rounded-full bg-[var(--color-status-success-dot)] animate-ping" />
                 <span>HARDWARE FLEET CHASSIS BLADE · AMER-WEST-01</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-serif text-[var(--color-text-primary)] tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-semibold text-[var(--color-text-primary)] tracking-tight">
                 High-Density Optical Switch Fabric
               </h3>
               <p className="text-xs text-[var(--color-text-secondary)] font-sans leading-relaxed max-w-xl">

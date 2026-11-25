@@ -58,9 +58,9 @@
    Endcap.design Architectural & Visual Primitives
    ========================================================================== */
 .font-serif-italic {
-  font-family: var(--font-serif) !important;
-  font-style: italic !important;
-  font-weight: 400 !important;
+  font-family: var(--font-display) !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
 }
 
 .font-grotesque {

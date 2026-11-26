@@ -80,6 +80,18 @@ const TAB_LABELS: Record<string, string> = {
   admin: 'People & Access',
 }
 
+const TAB_CATEGORIES: Record<string, string> = {
+  overview: 'Workspace',
+  devices: 'Workspace',
+  'ask-data': 'Workspace',
+  'data-quality': 'Data Health',
+  anomalies: 'Data Health',
+  evaluations: 'Governance',
+  'data-sources': 'Governance',
+  admin: 'Governance',
+  history: 'Audit',
+}
+
 function getInitials(name?: string, email?: string): string {
   if (name && name.trim()) {
     const parts = name.trim().split(/\s+/)
@@ -191,16 +203,29 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header
-        className="app-top-navbar h-12 min-h-[48px] max-h-[48px] border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-3.5 flex items-center justify-between gap-3 z-30 flex-shrink-0 transition-colors"
+        className="app-top-navbar relative h-12 min-h-[48px] max-h-[48px] border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]/95 backdrop-blur-md px-3.5 sm:px-4 flex items-center justify-between gap-3 z-30 flex-shrink-0 transition-colors"
         role="banner"
         aria-label="Top Navigation Bar"
+        style={{
+          boxShadow: 'inset 0 1px 0 color-mix(in srgb, var(--color-accent-contrast) 6%, transparent)',
+        }}
       >
+        {/* Subtle top radial accent sheen */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none opacity-45"
+          style={{
+            background:
+              'radial-gradient(50% 100% at 50% 0%, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 72%)',
+          }}
+        />
+
         {/* ─── Left Side: Mobile Menu + Architectural Breadcrumbs ─── */}
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="relative z-10 flex items-center gap-2 min-w-0">
           <button
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent('querytrust:toggle-mobile-sidebar'))}
-            className="flex md:hidden w-8 h-8 rounded-lg items-center justify-center bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer flex-shrink-0"
+            className="flex md:hidden w-8 h-8 rounded-[9px] items-center justify-center bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer flex-shrink-0"
             aria-label="Open navigation menu"
             title="Navigation menu"
           >
@@ -213,45 +238,57 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={() => onNavigate?.('overview')}
-              className="text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0"
-              title="QueryTrust AI"
+              className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-raised)] transition-colors cursor-pointer flex-shrink-0"
+              title="Back to Fleet Overview"
             >
-              <span>QueryTrust</span>
+              <span>{activeTab ? TAB_CATEGORIES[activeTab] || 'Workspace' : 'Workspace'}</span>
             </button>
-            <span className="text-[var(--color-text-muted)] font-normal select-none">/</span>
-            <span className="font-medium text-xs text-[var(--color-text-primary)] tracking-tight truncate">
-              {activeTab ? TAB_LABELS[activeTab] || activeTab : 'Fleet Overview'}
+            <span className="hidden sm:inline text-[var(--color-text-muted)] font-normal select-none">/</span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--color-raised)]/80 border border-[var(--color-border-subtle)] font-semibold text-xs text-[var(--color-text-primary)] tracking-tight truncate">
+              <span
+                aria-hidden="true"
+                className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] flex-shrink-0"
+              />
+              <span className="truncate">{activeTab ? TAB_LABELS[activeTab] || activeTab : 'Fleet Overview'}</span>
             </span>
           </nav>
         </div>
 
         {/* ─── Center: ⌘K Command Palette Trigger (Desktop) ─── */}
-        <div className="hidden md:flex items-center justify-center flex-1 max-w-[280px] mx-2 min-w-0">
+        <div className="relative z-10 hidden md:flex items-center justify-center flex-1 max-w-[330px] mx-2 min-w-0">
           <button
             type="button"
             onClick={onOpenCommandPalette}
-            className="group flex items-center justify-between w-full h-7.5 px-3 rounded-lg bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] text-xs text-[var(--color-text-secondary)] transition-all cursor-pointer min-w-0"
+            className="group flex items-center justify-between w-full h-8 px-3 rounded-[9px] bg-[var(--color-raised)]/85 border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-border)] hover:bg-[var(--color-raised)] text-xs text-[var(--color-text-secondary)] transition-all cursor-pointer min-w-0"
+            style={{
+              boxShadow: 'inset 0 1px 0 color-mix(in srgb, var(--color-text-primary) 4%, transparent)',
+            }}
             title="Press ⌘K or Ctrl+K to open global command palette"
           >
             <span className="flex items-center gap-2 min-w-0 truncate">
-              <Search size={13} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)] transition-colors flex-shrink-0" />
-              <span className="text-[11px] truncate whitespace-nowrap text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">
-                Search or ask query...
+              <Search size={13} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-link)] transition-colors flex-shrink-0" />
+              <span className="text-[11.5px] truncate whitespace-nowrap text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
+                Search tables, queries, or commands…
               </span>
             </span>
-            <kbd className="font-mono text-[9.5px] font-medium px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] transition-colors flex-shrink-0 ml-1.5">
+            <kbd
+              className="font-mono text-[10px] font-medium px-1.5 py-0.5 rounded-[5px] bg-[var(--color-surface)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors flex-shrink-0 ml-2"
+              style={{
+                boxShadow: '0 1px 0 var(--color-border-subtle)',
+              }}
+            >
               ⌘K
             </kbd>
           </button>
         </div>
 
         {/* ─── Right Side: Precision Toolbar Controls ─── */}
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        <div className="relative z-10 flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           {/* Quick search icon trigger for compact viewports */}
           <button
             type="button"
             onClick={onOpenCommandPalette}
-            className="flex md:hidden w-8 h-8 rounded-lg items-center justify-center bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
+            className="flex md:hidden w-8 h-8 rounded-[9px] items-center justify-center bg-[var(--color-raised)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
             title="Open search (⌘K)"
             aria-label="Open search command palette"
           >
@@ -262,14 +299,27 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={() => setRoiModalOpen(true)}
-            className="hidden lg:inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] text-[11px] font-mono text-[var(--color-text-secondary)] transition-all cursor-pointer"
+            className="hidden lg:inline-flex items-center gap-2 h-8 px-2.5 rounded-[9px] text-[11px] font-mono transition-all cursor-pointer hover:brightness-105"
+            style={{
+              backgroundColor: 'var(--color-status-success-bg)',
+              color: 'var(--color-status-success-text)',
+              border: '1px solid color-mix(in srgb, var(--color-status-success-dot) 24%, transparent)',
+            }}
             title="Kernel Status: 6/6 AST Gates Enforced · Dedicated SELECT-Only Replica · Click for details"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-status-success-dot)]" />
-            <span className="font-medium text-[var(--color-text-primary)]">Read-Only</span>
-            <span className="text-[var(--color-text-muted)]">·</span>
-            <span className="font-medium text-[var(--color-text-secondary)]">Sample query: 1.4 ms</span>
+            <span className="relative flex h-2 w-2 flex-shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-status-success-dot)] opacity-60" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-status-success-dot)]" />
+            </span>
+            <span className="font-semibold tracking-tight">Read-Only</span>
+            <span className="opacity-45">·</span>
+            <span className="opacity-90">1.4 ms P95</span>
           </button>
+
+          <span
+            aria-hidden="true"
+            className="hidden lg:block h-4 w-px bg-[var(--color-border-subtle)] mx-0.5 flex-shrink-0"
+          />
 
           {/* Instant 1-Click Role Switcher Dropdown */}
           <div className="relative">
@@ -277,12 +327,23 @@ export const Header: React.FC<HeaderProps> = ({
               ref={roleTriggerRef}
               type="button"
               onClick={() => setRoleSwitcherOpen((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] text-[var(--color-text-primary)]"
+              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[9px] text-xs font-medium transition-all cursor-pointer bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] text-[var(--color-text-primary)]"
+              style={{
+                boxShadow: 'inset 0 1px 0 color-mix(in srgb, var(--color-accent-contrast) 6%, transparent)',
+              }}
               title="Click to switch evaluation persona (Admin, Analyst, Viewer)"
               aria-label={`Current role: ${roleDisplay}. Click to switch role`}
               aria-expanded={roleSwitcherOpen}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  userRole === 'admin'
+                    ? 'bg-[var(--color-accent)]'
+                    : userRole === 'analyst'
+                    ? 'bg-[var(--color-status-success-dot)]'
+                    : 'bg-[var(--color-text-muted)]'
+                }`}
+              />
               <span>{roleDisplay}</span>
               {switchingRole ? (
                 <Loader2 size={11} className="animate-spin text-[var(--color-accent-link)]" />
@@ -356,7 +417,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={toggleTheme}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] transition-all cursor-pointer"
+            className="w-8 h-8 rounded-[9px] flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] transition-all cursor-pointer"
             title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} mode`}
             aria-label="Toggle visual theme"
           >
@@ -369,11 +430,16 @@ export const Header: React.FC<HeaderProps> = ({
               ref={profileTriggerRef}
               type="button"
               onClick={() => setProfileOpen((prev) => !prev)}
-              className="flex items-center gap-1.5 h-8 pl-1 pr-2 rounded-lg bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] transition-all cursor-pointer"
+              className="flex items-center gap-1.5 h-8 pl-1 pr-2 rounded-[9px] bg-[var(--color-raised)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] transition-all cursor-pointer"
               aria-label="User account menu"
               aria-expanded={profileOpen}
             >
-              <div className="w-5.5 h-5.5 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-contrast)] font-mono text-[9.5px] font-semibold flex items-center justify-center">
+              <div
+                className="w-5.5 h-5.5 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-contrast)] font-mono text-[9.5px] font-semibold flex items-center justify-center"
+                style={{
+                  boxShadow: '0 0 0 1px color-mix(in srgb, var(--color-accent-contrast) 18%, transparent)',
+                }}
+              >
                 {initials}
               </div>
               <ChevronDown

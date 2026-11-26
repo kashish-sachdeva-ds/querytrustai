@@ -1,7 +1,21 @@
 # QueryTrust AI — Build Status
 
-**Last updated:** 2026-11-25  
-**Current milestone:** 64 — Direction A Tokenized Editorial Redesign, Zero Component Hex Literals & Landing/Workbench Polish  
+**Last updated:** 2026-11-26  
+**Current milestone:** 65 — Floating Glass Dock Landing Navbar & Executive App Shell Header Polish  
+**Overall status:** Upgraded both the public Landing Page navbar and the authenticated Workbench top bar while maintaining `0` component hex literals and verified Playwright captures across dark, light, and mobile viewports:
+1. ✅ **Floating Glass Dock Landing Navbar (`CyberHeader.tsx`, `LandingPage.tsx`, `LandingPage.css`):**
+   - Replaced `overflow-x-hidden` with `overflow-x-clip` on `.landing-page-root` so `position: sticky` pins reliably across the entire page scroll, and added `scroll-margin-top: 76px` on `section[id]` targets.
+   - Implemented zero-layout-shift scroll morphing: flush full-width header at scroll top transitioning smoothly into a centered frosted glass dock (`max-w-6xl`, `rounded-2xl`, `backdrop-filter: blur(18px)`) on scroll with a clipped top radial sheen and reading-progress hairline.
+   - Added a `READ-ONLY` status badge, a recessed segmented nav capsule (`01 Safeguards`, `02 Workbench`, `03 Guardrails`) backed by `IntersectionObserver` scroll-spy and Framer Motion `layoutId="header-nav-pill"`, vertical action divider, `Terminal`-badged `Analyst demo`, and a responsive `md:hidden` mobile navigation dropdown (`Sign in` + `Launch Analyst demo`) verified overlap-free at `390px`.
+2. ✅ **App Shell Top Header Polish (`Header.tsx`):**
+   - Added subtle top specular sheen, category-aware breadcrumb badge (`Workspace / Fleet Overview`), recessed `⌘K` Command Palette bar with keycap styling, pulsing emerald `Read-Only · 1.4 ms P95` status pill, vertical divider, and role-colored indicator dot on the persona switcher.
+3. ✅ **Verification:**
+   - `npm --prefix frontend run lint:hex`: `[PASS]` (`Component Hex Count: 0`, `Token Files Hex Count: 223`).
+   - `npm --prefix frontend run lint`: `Found 0 warnings and 0 errors` (`oxlint`, 86 files).
+   - `npm --prefix frontend run build`: `tsc -b && vite build` passed cleanly (`✓ built in 5.30s`, 2,470 modules transformed).
+   - Playwright inspection against built `vite preview` verified dark/light desktop (top & scrolled) and `390px` mobile drawer rendering with zero layout overlaps.
+
+**Previous milestone:** 64 — Direction A Tokenized Editorial Redesign, Zero Component Hex Literals & Landing/Workbench Polish  
 **Overall status:** Completed the Direction A visual, UX, and copy overhaul across the public Landing Page, Sign-In Page, App Shell/Modals, and all workbench views without modifying backend logic or API contracts:
 1. ✅ **Canonical Direction A Token & Font System (`frontend/index.html`, `frontend/src/design-system.css`, `frontend/src/index.css`):**
    - Self-hosted woff2 fonts (`Inter`, `JetBrains Mono`) via local `@font-face` rules in `design-system.css` and removed Google Fonts `<link>` tags from `frontend/index.html`.

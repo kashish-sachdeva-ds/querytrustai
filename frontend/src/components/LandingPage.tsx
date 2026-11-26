@@ -61,7 +61,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGoToLogin }) => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="landing-page-root relative overflow-x-hidden transition-colors">
+      <div className="landing-page-root relative overflow-x-clip transition-colors">
         <CyberHeader
           onSignIn={onGoToLogin}
           onLaunchAnalyst={() => enterDemoMode('analyst')}

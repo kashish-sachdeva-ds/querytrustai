@@ -360,12 +360,227 @@ const DEFAULT_INITIAL_MESSAGES: MessageItem[] = [
   },
 ]
 
+interface OfflineDemoTurn {
+  preview: PreviewResponse
+  result?: ExecuteResponse
+}
+
+function buildOfflineDemoTurn(questionText: string): OfflineDemoTurn {
+  const lower = questionText.toLowerCase()
+  const runId = `offline-demo-${Date.now()}`
+  const now = new Date().toISOString()
+
+  // 1. Detect obvious SQL injection / DDL / prohibited table probes
+  if (
+    lower.includes('drop ') ||
+    lower.includes('delete ') ||
+    lower.includes('insert ') ||
+    lower.includes('update ') ||
+    lower.includes('pg_sleep') ||
+    lower.includes('information_schema') ||
+    lower.includes('pg_catalog') ||
+    lower.includes('users') ||
+    lower.includes(';')
+  ) {
+    return {
+      preview: {
+        query_run_id: runId,
+        status: 'blocked',
+        intent_status: 'ready',
+        interpreted_question: questionText,
+        sql_preview: questionText.includes(';')
+          ? questionText
+          : 'SELECT * FROM users; -- Blocked by AST policy',
+        validation: {
+          passed: false,
+          checks: ['single_statement', 'select_only', 'table_allowlist', 'schema_isolation', 'prohibited_functions', 'row_limit_clamping'],
+          violations: [
+            'Offline Demo AST Policy: Query violates read-only single-statement or table-allowlist rules.',
+          ],
+          warnings: [],
+          tables_referenced: [],
+        },
+        assumptions: ['Offline Demo Mode (No Live Backend)'],
+        business_terms_used: [],
+        can_execute: false,
+        provider: 'Offline Demo AST Guard',
+        model: 'offline-demo-simulator',
+        is_demo_mode: true,
+        created_at: now,
+      },
+    }
+  }
+
+  // 2. Detect unsupported business metrics outside schema
+  if (
+    lower.includes('revenue') ||
+    lower.includes('salary') ||
+    lower.includes('profit') ||
+    lower.includes('churn') ||
+    lower.includes('invoice')
+  ) {
+    return {
+      preview: {
+        query_run_id: runId,
+        status: 'unsupported',
+        intent_status: 'unsupported',
+        interpreted_question: questionText,
+        sql_preview: null,
+        validation: {
+          passed: false,
+          checks: [],
+          violations: [
+            'Requested metric is outside the approved fleet schema (devices, sites, service_events, telemetry_readings).',
+          ],
+          warnings: [],
+          tables_referenced: [],
+        },
+        assumptions: ['Offline Demo Mode (No Live Backend)'],
+        business_terms_used: [],
+        can_execute: false,
+        provider: 'Offline Demo Semantic Guard',
+        model: 'offline-demo-simulator',
+        is_demo_mode: true,
+        created_at: now,
+      },
+    }
+  }
+
+  // 3. Detect ambiguous queries
+  if (lower.includes('high-risk') || lower.includes('high risk') || lower.includes('risky')) {
+    return {
+      preview: {
+        query_run_id: runId,
+        status: 'clarification_needed',
+        intent_status: 'clarification_needed',
+        interpreted_question: questionText,
+        sql_preview: null,
+        clarification_question: 'Multiple operational definitions exist for "high-risk devices". Did you mean Offline/Maintenance status devices or devices with open Critical service incidents?',
+        validation: { passed: true, checks: [], violations: [], warnings: [], tables_referenced: [] },
+        assumptions: ['Offline Demo Mode (No Live Backend)'],
+        business_terms_used: [],
+        can_execute: false,
+        provider: 'Offline Demo Semantic Guard',
+        model: 'offline-demo-simulator',
+        is_demo_mode: true,
+        created_at: now,
+      },
+    }
+  }
+
+  // 4. Region active devices query
+  if (lower.includes('region')) {
+    const rows = [
+      { region: 'US-East', active_devices: 1120, total_sites: 14 },
+      { region: 'US-West', active_devices: 940, total_sites: 12 },
+      { region: 'EU-Central', active_devices: 865, total_sites: 10 },
+      { region: 'APAC-South', active_devices: 615, total_sites: 8 },
+      { region: 'LATAM', active_devices: 380, total_sites: 6 },
+    ]
+    return {
+      preview: {
+        query_run_id: runId,
+        status: 'previewed',
+        intent_status: 'ready',
+        interpreted_question: questionText,
+        sql_preview:
+          "SELECT s.region, COUNT(d.id) AS active_devices, COUNT(DISTINCT s.id) AS total_sites\nFROM devices d\nJOIN sites s ON d.site_id = s.id\nWHERE LOWER(TRIM(d.status)) = 'active'\nGROUP BY s.region\nORDER BY active_devices DESC\nLIMIT 200;",
+        validation: {
+          passed: true,
+          checks: ['single_statement', 'select_only', 'table_allowlist', 'schema_isolation', 'prohibited_functions', 'row_limit_clamping'],
+          violations: [],
+          warnings: [],
+          tables_referenced: ['devices', 'sites'],
+        },
+        assumptions: [
+          'Offline Demo Mode (synthetic sample data — backend not connected)',
+          "Normalized active status using LOWER(TRIM(d.status)) = 'active'",
+          'Clamped to LIMIT 200',
+        ],
+        business_terms_used: ['active_device', 'region'],
+        can_execute: true,
+        provider: 'Offline Demo Mode (No Live Backend)',
+        model: 'offline-demo-simulator',
+        is_demo_mode: true,
+        created_at: now,
+      },
+      result: {
+        query_run_id: runId,
+        status: 'executed',
+        row_count: rows.length,
+        columns: ['region', 'active_devices', 'total_sites'],
+        rows,
+        truncated: false,
+        execution_duration_ms: 1.24,
+        executed_at: now,
+        chart_recommendation: {
+          chart_type: 'bar',
+          x_axis: 'region',
+          y_axis: 'active_devices',
+          title: 'Active Devices by Region (Offline Demo)',
+        },
+        result_summary: 'Offline Demo: 5 regions returned from synthetic sample fixtures.',
+      },
+    }
+  }
+
+  // 5. Generic valid fleet query fallback in offline demo mode
+  const fallbackRows = [
+    { asset_tag: 'SW-CORE-DAL-01', model: 'OmniSwitch 9300', device_type: 'Switch', site: 'Dallas Datacenter', warranty_expiry: '2026-11-15', status: 'Active' },
+    { asset_tag: 'SW-DIST-DAL-04', model: 'OmniSwitch 9300', device_type: 'Switch', site: 'Dallas Datacenter', warranty_expiry: '2026-11-28', status: 'Active' },
+    { asset_tag: 'RTR-CORE-MIA-01', model: 'SkyBridge Core-9000', device_type: 'Router', site: 'Miami DC 2', warranty_expiry: '2026-12-18', status: 'Active' },
+    { asset_tag: 'SW-ACCESS-FRA-08', model: 'NetMatrix 480', device_type: 'Switch', site: 'Frankfurt DC 1', warranty_expiry: '2026-12-24', status: 'Active' },
+  ]
+  return {
+    preview: {
+      query_run_id: runId,
+      status: 'previewed',
+      intent_status: 'ready',
+      interpreted_question: questionText,
+      sql_preview:
+        "SELECT d.asset_tag, d.model, d.device_type, s.name AS site, d.warranty_expiry, d.status\nFROM devices d\nJOIN sites s ON d.site_id = s.id\nWHERE LOWER(TRIM(d.status)) = 'active'\nORDER BY d.warranty_expiry ASC\nLIMIT 200;",
+      validation: {
+        passed: true,
+        checks: ['single_statement', 'select_only', 'table_allowlist', 'schema_isolation', 'prohibited_functions', 'row_limit_clamping'],
+        violations: [],
+        warnings: [],
+        tables_referenced: ['devices', 'sites'],
+      },
+      assumptions: [
+        'Offline Demo Mode (synthetic sample data — backend not connected)',
+        'Clamped to LIMIT 200',
+      ],
+      business_terms_used: ['active_device'],
+      can_execute: true,
+      provider: 'Offline Demo Mode (No Live Backend)',
+      model: 'offline-demo-simulator',
+      is_demo_mode: true,
+      created_at: now,
+    },
+    result: {
+      query_run_id: runId,
+      status: 'executed',
+      row_count: fallbackRows.length,
+      columns: ['asset_tag', 'model', 'device_type', 'site', 'warranty_expiry', 'status'],
+      rows: fallbackRows,
+      truncated: false,
+      execution_duration_ms: 1.38,
+      executed_at: now,
+      chart_recommendation: {
+        chart_type: 'table',
+        title: 'Fleet Query Results (Offline Demo)',
+      },
+      result_summary: `Offline Demo: ${fallbackRows.length} synthetic sample rows returned.`,
+    },
+  }
+}
+
 interface AskDataViewProps {
   initialQuestion?: string | null
 }
 
 export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => {
-  const { user } = useAuth()
+  const { user, isOfflineDemo, logout } = useAuth()
   const isViewer = user?.role === 'viewer'
 
   // Input & Execution State
@@ -464,6 +679,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   }, [])
 
   const loadSessions = async () => {
+    if (isOfflineDemo) return
     try {
       const data = await fetchChatSessions()
       setSessions(data)
@@ -553,6 +769,22 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
   }
 
   const handleCreateNewSession = async () => {
+    if (isOfflineDemo) {
+      const localSession: ChatSessionSummary = {
+        id: `offline-session-${Date.now()}`,
+        title: `Offline Demo ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        message_count: 0,
+      }
+      setSessions((prev) => [localSession, ...prev])
+      setActiveSessionId(localSession.id)
+      setMessages([])
+      setErrorMessage(null)
+      setIsLeftDrawerOpen(false)
+      searchInputRef.current?.focus()
+      return
+    }
     try {
       const newSession = await createChatSession(
         `Session ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
@@ -612,6 +844,45 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
     setErrorMessage(null)
     setIsPresetsOpen(false)
 
+    if (isOfflineDemo) {
+      let targetSessionId = activeSessionId
+      if (!targetSessionId) {
+        const localSession: ChatSessionSummary = {
+          id: `offline-session-${Date.now()}`,
+          title: 'Offline Demo Investigation',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          message_count: 0,
+        }
+        setSessions((prev) => [localSession, ...prev])
+        setActiveSessionId(localSession.id)
+        targetSessionId = localSession.id
+      }
+      const tempUserMsg: MessageItem = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: questionText,
+        createdAt: new Date().toISOString(),
+      }
+      const offlineTurn = buildOfflineDemoTurn(questionText)
+      const assistantMsg: MessageItem = {
+        id: offlineTurn.preview.query_run_id,
+        role: 'assistant',
+        content: offlineTurn.preview.interpreted_question,
+        previewData: offlineTurn.preview,
+        createdAt: offlineTurn.preview.created_at,
+      }
+      setMessages((prev) => [...prev, tempUserMsg, assistantMsg])
+      setFocusedRunId(offlineTurn.preview.query_run_id)
+      if (offlineTurn.result) {
+        setResultsMap((prev) => ({
+          ...prev,
+          [offlineTurn.preview.query_run_id]: offlineTurn.result!,
+        }))
+      }
+      return
+    }
+
     let targetSessionId = activeSessionId
     if (!targetSessionId) {
       try {
@@ -620,7 +891,12 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
         setActiveSessionId(newSession.id)
         targetSessionId = newSession.id
       } catch (err: unknown) {
-        setErrorMessage(err instanceof Error ? err.message : 'Failed to initialize session.')
+        const msg = err instanceof Error ? err.message : 'Failed to initialize session.'
+        setErrorMessage(
+          msg.includes('401')
+            ? 'Your session expired (401). Please sign in again to run live queries.'
+            : msg
+        )
         return
       }
     }
@@ -873,29 +1149,52 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
       })()}
 
       {/* Security Defense Intercept / Error Alert */}
-      {errorMessage && (
-        <div className="studio-error-card">
-          <div className="studio-error-content">
-            <AlertTriangle size={16} className="studio-check-icon" style={{ color: 'var(--color-error)' }} />
-            <div>
-              <div className="studio-error-title">
-                Security Boundary Enforcement
-              </div>
-              <div className="studio-error-desc">
-                {errorMessage}
+      {errorMessage && (() => {
+        const isAuthError = errorMessage.includes('401') || errorMessage.toLowerCase().includes('sign in')
+        const isSecurityError =
+          !isAuthError &&
+          (errorMessage.toLowerCase().includes('blocked') ||
+            errorMessage.toLowerCase().includes('violation') ||
+            errorMessage.toLowerCase().includes('security'))
+        return (
+          <div className="studio-error-card">
+            <div className="studio-error-content">
+              <AlertTriangle size={16} className="studio-check-icon" style={{ color: 'var(--color-error)' }} />
+              <div>
+                <div className="studio-error-title">
+                  {isAuthError
+                    ? 'Session Expired (401)'
+                    : isSecurityError
+                    ? 'Security Boundary Enforcement'
+                    : 'Query Request Error'}
+                </div>
+                <div className="studio-error-desc">
+                  {errorMessage}
+                </div>
               </div>
             </div>
+            {isAuthError ? (
+              <button
+                type="button"
+                className="studio-pill-btn primary"
+                onClick={() => logout()}
+              >
+                <span>Sign in again</span>
+                <ArrowRight size={12} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="studio-pill-btn"
+                onClick={() => setIsAstDrawerOpen(true)}
+              >
+                <span>Inspect defense proof</span>
+                <ArrowRight size={12} />
+              </button>
+            )}
           </div>
-          <button
-            type="button"
-            className="studio-pill-btn"
-            onClick={() => setIsAstDrawerOpen(true)}
-          >
-            <span>Inspect defense proof</span>
-            <ArrowRight size={12} />
-          </button>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ─── 3. QUESTION BOX (Prompt Container) ─── */}
       <section className="studio-prompt-container" aria-label="Ask Governed Query">
@@ -1375,7 +1674,7 @@ export const AskDataView: React.FC<AskDataViewProps> = ({ initialQuestion }) => 
               </button>
             </div>
 
-            <div className="studio-drawer-body" style={{ padding: 0 }}>
+            <div className="studio-drawer-body" style={{ padding: 0, overflow: 'hidden' }}>
               <AstInspectorPanel
                 sql={activePreview?.sql_preview}
                 isValid={activePreview ? activePreview.validation.passed : true}

@@ -1,7 +1,20 @@
 # QueryTrust AI — Build Status
 
 **Last updated:** 2026-11-26  
-**Current milestone:** 65 — Floating Glass Dock Landing Navbar & Executive App Shell Header Polish  
+**Current milestone:** 66 — AST Drawer Scroll Performance & Offline Demo / 401 UX Fix  
+**Overall status:** Eliminated AST inspector drawer scroll lag and fixed Query Studio behavior for Offline Demo mode and expired `401` sessions:
+1. ✅ **Drawer Scroll Performance (`AskDataView.css`, `AskDataView.tsx`, `AstInspectorPanel.tsx`):**
+   - Removed full-viewport `backdrop-filter: blur(2px)` on `.studio-drawer-backdrop` (replaced with clean `rgba(0, 0, 0, 0.58)` scrim) so drawer scrolling never forces full-page GPU blur recompositing.
+   - Added GPU layer isolation (`contain: layout style paint`, `transform: translateZ(0)`, `will-change: transform`) on `.studio-drawer`, `overscroll-behavior: contain` on drawer scroll containers, and eliminated nested `overflow-y: auto` inside the AST drawer wrapper.
+2. ✅ **Offline Demo Query Studio & 401 Error Labeling (`AskDataView.tsx`):**
+   - Added `buildOfflineDemoTurn` so users in `isOfflineDemo` mode (Analyst demo / role switcher without a backend JWT) get deterministic, visibly labelled `Offline Demo Mode (No Live Backend)` responses (including region aggregates, AST block simulations, clarification prompts, and unsupported metric guards) instead of hitting `Failed to create chat session: 401`.
+   - Updated the Query Studio error banner so `401` errors render **"Session Expired (401)"** with a **Sign in again** CTA instead of mislabeling them as **"Security Boundary Enforcement"**.
+3. ✅ **Verification:**
+   - `npm --prefix frontend run lint:hex`: `[PASS]` (`Component Hex Count: 0`).
+   - `npm --prefix frontend run lint`: `Found 0 warnings and 0 errors` (`oxlint`, 86 files).
+   - `npm --prefix frontend run build`: `tsc -b && vite build` passed cleanly (`✓ built in 5.39s`, 2,470 modules).
+
+**Previous milestone:** 65 — Floating Glass Dock Landing Navbar & Executive App Shell Header Polish  
 **Overall status:** Upgraded both the public Landing Page navbar and the authenticated Workbench top bar while maintaining `0` component hex literals and verified Playwright captures across dark, light, and mobile viewports:
 1. ✅ **Floating Glass Dock Landing Navbar (`CyberHeader.tsx`, `LandingPage.tsx`, `LandingPage.css`):**
    - Replaced `overflow-x-hidden` with `overflow-x-clip` on `.landing-page-root` so `position: sticky` pins reliably across the entire page scroll, and added `scroll-margin-top: 76px` on `section[id]` targets.
